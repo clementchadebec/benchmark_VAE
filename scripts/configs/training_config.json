@@ -1,0 +1,12 @@
+{
+  "output_dir": "outputs/my_model_from_script",
+  "batch_size": 200,
+  "max_epochs": 2,
+  "learning_rate": 1e-3,
+  "train_early_stopping": 50,
+  "eval_early_stopping": null,
+  "steps_saving": 1000,
+  "seed": 8,
+  "no_cuda": false,
+  "verbose": true
+}

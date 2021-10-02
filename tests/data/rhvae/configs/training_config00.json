@@ -1,0 +1,9 @@
+{
+    "output_dir": null,
+    "batch_size": 3,
+    "max_epochs": 2,
+    "learning_rate": 1e-5,
+    "train_early_stopping": 10,
+    "no_cuda": false,
+    "verbose": true
+  }

@@ -1,0 +1,6 @@
+{
+    "batch_size": 3,
+    "mcmc_steps_nbr": 3,
+    "n_lf": 2,
+    "eps_lf": 0.003
+}

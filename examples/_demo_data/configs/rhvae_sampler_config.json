@@ -1,0 +1,10 @@
+{
+    "output_dir": "outputs/my_generated_data_from_script",
+    "batch_size": 50,
+    "samples_per_save": 500,
+    "no_cuda": false,
+    "mcmc_steps_nbr": 100,
+    "n_lf": 15,
+    "eps_lf": 0.03,
+    "beta_zero": 1.0
+  }

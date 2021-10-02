@@ -1,0 +1,10 @@
+{
+  "input_dim": 784,
+  "latent_dim": 10,
+  "n_lf": 3,
+  "eps_lf": 0.0001,
+  "beta_zero": 0.3,
+  "temperature": 1.5,
+  "regularization": 0.01,
+  "uses_default_metric": true
+}

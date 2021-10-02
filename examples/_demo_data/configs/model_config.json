@@ -1,0 +1,4 @@
+{
+  "input_dim": 784,
+  "latent_dim": 10
+}
