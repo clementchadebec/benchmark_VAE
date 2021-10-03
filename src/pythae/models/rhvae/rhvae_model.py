@@ -146,9 +146,11 @@ class RHVAE(VAE):
 
         x = inputs["data"]
 
-        mu, log_var = self.encoder(x)
-        std = torch.exp(0.5 * log_var)
-        z0, eps0 = self._sample_gauss(mu, std)
+
+        encoder_output = self.encoder(x)
+        mu, log_var = encoder_output.embedding, encoder_output.log_covariance
+
+        z0, eps0 = self._sample_gauss(mu, log_var)
 
         z = z0
 
@@ -530,13 +532,21 @@ class RHVAE(VAE):
 
         return 1 / beta_k
 
-    def _log_p_x_given_z(self, recon_x, x, reduction="none"):
-        r"""Estimate the decoder's log-density modelled as follows:
-            p(x|z)     = \prod_i Bernouilli(x_i|pi_{theta}(z_i))
-            p(x = s|z) = \prod_i (pi(z_i))^x_i * (1 - pi(z_i)^(1 - x_i))"""
-        return -F.binary_cross_entropy(
-            recon_x, x.reshape(-1, self.input_dim), reduction=reduction
-        ).sum(dim=1)
+    def _log_p_x_given_z(self, recon_x, x):
+
+        if self.model_config.reconstruction_loss == 'mse':
+
+            recon_loss =  F.mse_loss(
+                recon_x.reshape(x.shape[0], -1), x.reshape(x.shape[0], -1), reduction='none'
+            ).sum()
+
+        elif self.model_config.reconstruction_loss == 'bce':
+
+            recon_loss = F.binary_cross_entropy(
+            recon_x.reshape(x.shape[0], -1), x.reshape(x.shape[0], -1), reduction="none"
+            ).sum()
+        
+        return recon_loss
 
     def _log_z(self, z):
         """
