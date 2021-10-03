@@ -1,7 +1,7 @@
 """The purpose of the preprocessor is to ensure the data is not corrupted (no nan), reshape
 it in case inconsistencies are detected, normalize it and converted it to a format handled by the
-:class:`~pyraug.trainers.Trainer`. In particular, an input data is converted to a
-:class:`torch.Tensor` and all the data is gather into a :class:`~pyraug.data.datastest.BaseDatset`
+:class:`~pythae.trainers.Trainer`. In particular, an input data is converted to a
+:class:`torch.Tensor` and all the data is gather into a :class:`~pythae.data.datastest.BaseDatset`
 instance.
 
 By choice, we do not provided very advanced preprocessing functions (such as image registrations)
@@ -15,7 +15,7 @@ from typing import List, Optional, Tuple, Union
 import numpy as np
 import torch
 
-from pyraug.data.datasets import BaseDataset
+from pythae.data.datasets import BaseDataset
 
 logger = logging.getLogger(__name__)
 
@@ -99,7 +99,7 @@ class DataProcessor:
     @staticmethod
     def to_dataset(data: torch.Tensor, labels: Optional[torch.Tensor] = None):
         """This method converts a set of ``torch.Tensor`` to a
-        :class:`~pyraug.data.datasets.BaseDataset`
+        :class:`~pythae.data.datasets.BaseDataset`
 
         Args:
             data (torch.Tensor): The set of data as a big torch.Tensor

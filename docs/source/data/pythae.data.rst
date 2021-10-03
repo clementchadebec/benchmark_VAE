@@ -1,5 +1,5 @@
 **********************************
-pyraug.data
+pythae.data
 **********************************
 
 
@@ -8,23 +8,23 @@ pyraug.data
 .. toctree::
    :maxdepth: 1
 
-   pyraug.data.datasets
-   pyraug.data.loaders
-   pyraug.data.preprocessors
+   pythae.data.datasets
+   pythae.data.loaders
+   pythae.data.preprocessors
 
 
 .. automodule::
-    pyraug.data
+    pythae.data
 
 
 Datasets
 --------------
 
 .. automodule::
-    pyraug.data.datasets
+    pythae.data.datasets
 
 .. autosummary::
-    ~pyraug.data.datasets.BaseDataset
+    ~pythae.data.datasets.BaseDataset
     :nosignatures:
     
 
@@ -32,11 +32,11 @@ Loaders
 ---------------
 
 .. automodule::
-    pyraug.data.loaders
+    pythae.data.loaders
 
 .. autosummary::
-    ~pyraug.data.loaders.BaseDataGetter
-    ~pyraug.data.loaders.ImageGetterFromFolder
+    ~pythae.data.loaders.BaseDataGetter
+    ~pythae.data.loaders.ImageGetterFromFolder
     :nosignatures:
     
 
@@ -46,8 +46,8 @@ Preprocessors
 
 
 .. automodule::
-    pyraug.data.preprocessors
+    pythae.data.preprocessors
 
 .. autosummary::
-    ~pyraug.data.preprocessors.DataProcessor
+    ~pythae.data.preprocessors.DataProcessor
     :nosignatures:

@@ -6,10 +6,10 @@ import pytest
 import torch
 from torch.optim import SGD, Adadelta, Adagrad, Adam, RMSprop
 
-from pyraug.models import RHVAE
-from pyraug.models.rhvae import RHVAEConfig
-from pyraug.pipelines.training import TrainingPipeline
-from pyraug.trainers.training_config import TrainingConfig
+from pythae.models import RHVAE
+from pythae.models.rhvae import RHVAEConfig
+from pythae.pipelines.training import TrainingPipeline
+from pythae.trainers.training_config import TrainingConfig
 from tests.data.rhvae.custom_architectures import (
     Decoder_MLP_Custom,
     Encoder_MLP_Custom,

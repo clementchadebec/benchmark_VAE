@@ -1,14 +1,14 @@
 **********************************
-pyraug.trainer
+pythae.trainer
 **********************************
 
 .. automodule::
-   pyraug.trainers
+   pythae.trainers
 
 
-.. autoclass:: pyraug.trainers.training_config.TrainingConfig
+.. autoclass:: pythae.trainers.training_config.TrainingConfig
    :inherited-members:
    :members:
 
-.. autoclass:: pyraug.trainers.Trainer
+.. autoclass:: pythae.trainers.Trainer
    :members:

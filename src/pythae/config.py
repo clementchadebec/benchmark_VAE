@@ -14,7 +14,7 @@ class BaseConfig:
 
     @classmethod
     def from_dict(cls, config_dict: Dict[str, Any]) -> "BaseConfig":
-        """Creates a :class:`~pyraug.config.BaseConfig` instance from a dictionnary
+        """Creates a :class:`~pythae.config.BaseConfig` instance from a dictionnary
 
         Args:
             config_dict (dict): The Python dictionnary containing all the parameters
@@ -49,7 +49,7 @@ class BaseConfig:
 
     @classmethod
     def from_json_file(cls, json_path: str) -> "BaseConfig":
-        """Creates a :class:`~pyraug.config.BaseConfig` instance from a JSON config file
+        """Creates a :class:`~pythae.config.BaseConfig` instance from a JSON config file
 
         Args:
             json_path (str): The path to the json file containing all the parameters

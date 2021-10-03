@@ -1,7 +1,6 @@
 **********************************
-BaseDecoder
+BaseMetric
 **********************************
 
-.. autoclass:: pyraug.models.nn.BaseDecoder
+.. autoclass:: pythae.models.nn.BaseMetric
    :members:
-

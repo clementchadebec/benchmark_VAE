@@ -1,6 +1,6 @@
 .. role:: hidden
     :class: hidden-section
-.. currentmodule:: pyraug.pipelines
+.. currentmodule:: pythae.pipelines
 
 
 **********************************
@@ -8,5 +8,5 @@ GenerationPipeline
 **********************************
 
 .. autoclass::
-    pyraug.pipelines.GenerationPipeline
+    pythae.pipelines.GenerationPipeline
     :members: __call__

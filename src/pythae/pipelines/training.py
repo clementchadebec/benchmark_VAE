@@ -4,13 +4,13 @@ import numpy as np
 import torch
 from torch.optim import Optimizer
 
-from pyraug.customexception import LoadError
-from pyraug.data.loaders import BaseDataGetter, ImageGetterFromFolder
-from pyraug.data.preprocessors import DataProcessor
-from pyraug.models import RHVAE, BaseVAE
-from pyraug.models.rhvae import RHVAEConfig
-from pyraug.trainers import Trainer
-from pyraug.trainers.training_config import TrainingConfig
+from ..customexception import LoadError
+from ..data.loaders import BaseDataGetter, ImageGetterFromFolder
+from ..data.preprocessors import DataProcessor
+from ..models import RHVAE, BaseAE
+from ..models.rhvae import RHVAEConfig
+from ..trainers import Trainer
+from ..trainers.training_config import TrainingConfig
 
 from .base_pipeline import Pipeline
 
@@ -19,7 +19,7 @@ class TrainingPipeline(Pipeline):
     """
     This Pipeline provides an end to end way to train your VAE model.
     The trained model will be saved in ``output_dir`` stated in the
-    :class:`~pyraug.trainers.training_config.TrainingConfig`. A folder
+    :class:`~pythae.trainers.training_config.TrainingConfig`. A folder
     ``training_YYYY-MM-DD_hh-mm-ss`` is
     created where checkpoints and final model will be saved. Checkpoints are saved in
     ``checkpoint_epoch_{epoch}`` folder (optimizer and training config
@@ -31,23 +31,23 @@ class TrainingPipeline(Pipeline):
 
         data_loader (Optional[BaseDataGetter]): The data loader you want to use to load your
             data. This is usefull to get the data from a particular format and in a specific folder
-            for instance. If None, the :class:`~pyraug.data.loaders.ImageGetterFromFolder` is used.
+            for instance. If None, the :class:`~pythae.data.loaders.ImageGetterFromFolder` is used.
             Default: None.
 
         data_processor (Optional[DataProcessor]): The data preprocessor you want to use to
             preprocess your data (*e.g.* normalization, reshaping, type conversion). If None,
-            a basic :class:`~pyraug.data.preprocessors.DataProcessor` is used (by default data
+            a basic :class:`~pythae.data.preprocessors.DataProcessor` is used (by default data
             is normalized such that the max value of each data is 1 and the min 0). Default: None.
 
-        model (Optional[BaseVAE]): An instance of :class:`~pyraug.models.BaseVAE` you want to train.
-            If None, a default :class:`~pyraug.models.RHVAE` model is used. Default: None.
+        model (Optional[BaseAE]): An instance of :class:`~pythae.models.BaseAE` you want to train.
+            If None, a default :class:`~pythae.models.RHVAE` model is used. Default: None.
 
         optimizer (Optional[~torch.optim.Optimizer]): An instance of :class:`~torch.optim.Optimizer`
             used to train the model. If None we provide an instance of
             :class:`~torch.optim.Adam` optimizer. Default: None.
 
         training_config (Optional[TrainingConfig]=None): An instance of
-            :class:`~pyraug.trainers.training_config.TrainingConfig` stating the training
+            :class:`~pythae.trainers.training_config.TrainingConfig` stating the training
             parameters. If None, a default configuration is used.
 
     .. note::
@@ -59,7 +59,7 @@ class TrainingPipeline(Pipeline):
         self,
         data_loader: Optional[BaseDataGetter] = None,
         data_processor: Optional[DataProcessor] = None,
-        model: Optional[BaseVAE] = None,
+        model: Optional[BaseAE] = None,
         optimizer: Optional[Optimizer] = None,
         training_config: Optional[TrainingConfig] = None,
     ):

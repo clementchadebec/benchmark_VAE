@@ -2,15 +2,15 @@ from typing import Union
 
 from pydantic.dataclasses import dataclass
 
-from pyraug.config import BaseConfig
+from pythae.config import BaseConfig
 
 
 @dataclass
 class TrainingConfig(BaseConfig):
     """
-    :class:`~pyraug.trainers.training_config.TrainingConfig` is the class in which all the training arguments
+    :class:`~pythae.trainers.training_config.TrainingConfig` is the class in which all the training arguments
     are stored.
-    This instance is then provided to a :class:`~pyraug.trainers.Trainer` instance which performs
+    This instance is then provided to a :class:`~pythae.trainers.Trainer` instance which performs
     a model training.
 
     Parameters:

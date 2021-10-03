@@ -1,18 +1,17 @@
 **********************************
-pyraug.models
+Samplers
 **********************************
 
 .. toctree::
     :maxdepth: 1
 
-    pyraug.models.baseAE
-    pyraug.models.ae
+    pythae.samplers.basesampler
+    
 
 .. automodule::
-    pyraug.models
+    pythae.samplers
     
 
 .. autosummary::
-    ~pyraug.models.BaseAE
-    ~pyraug.models.AE
+    ~pythae.samplers.BaseSampler
     :nosignatures:

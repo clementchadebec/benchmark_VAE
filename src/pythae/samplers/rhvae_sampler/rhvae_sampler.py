@@ -51,7 +51,7 @@ class RHVAESampler(BaseSampler):
         HMC sampling with a RHVAE.
 
         The data is saved in the ``output_dir`` (folder passed in the
-        :class:`~pyraug.models.base.base_config.BaseSamplerConfig` instance) in a folder named
+        :class:`~pythae.models.base.base_config.BaseSamplerConfig` instance) in a folder named
         ``generation_YYYY-MM-DD_hh-mm-ss``. If ``output_dir`` is None, a folder named
         ``dummy_output_dir`` is created in this folder.
 

@@ -3,6 +3,6 @@ TrainingPipeline
 **********************************
 
 .. autoclass::
-    pyraug.pipelines.TrainingPipeline
+    pythae.pipelines.TrainingPipeline
     :members: __call__
    

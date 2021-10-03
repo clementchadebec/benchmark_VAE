@@ -1,8 +1,6 @@
 **********************************
-BaseEncoder
+pythae.config
 **********************************
 
-
-
-.. autoclass:: pyraug.models.nn.BaseEncoder
+.. autoclass:: pythae.config.BaseConfig
    :members:

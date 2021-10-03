@@ -4,8 +4,8 @@ import numpy as np
 import pytest
 import torch
 
-from pyraug.data.loaders import ImageGetterFromFolder
-from pyraug.data.preprocessors import DataProcessor
+from pythae.data.loaders import ImageGetterFromFolder
+from pythae.data.preprocessors import DataProcessor
 
 PATH = os.path.dirname(os.path.abspath(__file__))
 

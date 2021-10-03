@@ -3,8 +3,8 @@ import os
 
 import torch
 
-from .base_config import BaseSamplerConfig
-from .base_ae_model import BaseAE
+from .base_sampler_config import BaseSamplerConfig
+from ...models import BaseAE
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +23,7 @@ class BaseSampler:
             parameters is made available. If None a default configuration is used. Default: None
     """
 
-    def __init__(self, model: BaseVAE, sampler_config: BaseSamplerConfig = None):
+    def __init__(self, model: BaseAE, sampler_config: BaseSamplerConfig = None):
 
         if sampler_config.output_dir is None:
             output_dir = "dummy_output_dir"
@@ -57,7 +57,7 @@ class BaseSampler:
     def sample(self, num_samples):
         """Main sampling function of the samplers. The data is saved in the
         ``output_dir/generation_``
-        folder passed in the `~pyraug.models.model_config.SamplerConfig` instance. If ``output_dir``
+        folder passed in the `~pythae.models.model_config.SamplerConfig` instance. If ``output_dir``
         if None, a folder named ``dummy_output_dir`` is created in this folder.
 
         Args:

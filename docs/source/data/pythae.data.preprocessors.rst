@@ -2,6 +2,6 @@
 preprocessors
 **********************************
 
-.. autoclass:: pyraug.data.preprocessors.DataProcessor
+.. autoclass:: pythae.data.preprocessors.DataProcessor
    :members:
 

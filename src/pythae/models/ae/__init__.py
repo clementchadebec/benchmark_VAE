@@ -3,8 +3,8 @@
 Available samplers:
 
 .. autosummary::
-    ~pyraug.samplers
-    ~pyraug.models.AE
+    ~pythae.samplers
+    ~pythae.models.AE
     :nosignatures:
 
 - |

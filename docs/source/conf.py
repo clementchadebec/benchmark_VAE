@@ -22,7 +22,7 @@ sys.path.insert(0, os.path.abspath("../../src/"))
 
 # -- Project information -----------------------------------------------------
 
-project = "pyraug"
+project = "pythae"
 copyright = "2021, Clement Chadebec"
 author = "Clement Chadebec"
 

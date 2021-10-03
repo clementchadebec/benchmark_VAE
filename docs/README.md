@@ -1,4 +1,4 @@
-**The latest version of the documentation is available on [readthedocs](https://pyraug.readthedocs.io/en/latest/)** 
+**The latest version of the documentation is available on [readthedocs](https://pythae.readthedocs.io/en/latest/)** 
 
 To generate the documentation locally, do the following:
 

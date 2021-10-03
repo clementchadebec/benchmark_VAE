@@ -1,12 +1,12 @@
 from pydantic.dataclasses import dataclass
 
-from pyraug.config import BaseConfig
+from pythae.config import BaseConfig
 
 
 @dataclass
 class BaseAEConfig(BaseConfig):
     """This is the base configuration instance of the models deriving from
-    :class:`~pyraug.config.BaseConfig`.
+    :class:`~pythae.config.BaseConfig`.
 
     Parameters:
         input_dim (int): The input_data dimension

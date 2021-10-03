@@ -6,9 +6,9 @@ import dill
 import torch
 import torch.nn as nn
 
-from pyraug.customexception import BadInheritanceError
-from pyraug.models.nn import BaseDecoder, BaseEncoder
-from pyraug.models.nn.default_architectures import Encoder_AE_MLP, Decoder_AE_MLP
+from ...customexception import BadInheritanceError
+from ..nn import BaseDecoder, BaseEncoder
+from ..nn.default_architectures import Encoder_AE_MLP, Decoder_AE_MLP
 
 from .base_config import BaseAEConfig
 
@@ -19,7 +19,7 @@ class BaseAE(nn.Module):
     """Base class for AutoEncoder based models.
 
     Args:
-        model_config (BaseAEConfig): An instance of BaseModelConfig in which any model's parameters is
+        model_config (BaseAEConfig): An instance of BaseAEConfig in which any model's parameters is
             made available.
 
         encoder (BaseEncoder): An instance of BaseEncoder (inheriting from `torch.nn.Module` which
@@ -40,7 +40,6 @@ class BaseAE(nn.Module):
     def __init__(
         self,
         model_config: BaseAEConfig,
-        encoder: Optional[BaseEncoder] = None,
         decoder: Optional[BaseDecoder] = None,
     ):
 
@@ -51,37 +50,21 @@ class BaseAE(nn.Module):
 
         self.model_config = model_config
 
-        if encoder is None:
-            if model_config.input_dim is None:
-                raise AttributeError(
-                    "No input dimension provided !"
-                    "'input_dim' parameter of BaseModelConfig instance must be set to 'data_shape' where "
-                    "the shape of the data is [mini_batch x data_shape]. Unable to build encoder "
-                    "automatically"
-                )
-
-            encoder = Encoder_MLP(model_config)
-            self.model_config.uses_default_encoder = True
-
-        else:
-            self.model_config.uses_default_encoder = False
-
         if decoder is None:
             if model_config.input_dim is None:
                 raise AttributeError(
                     "No input dimension provided !"
-                    "'input_dim' parameter of BaseModelConfig instance must be set to 'data_shape' where "
+                    "'input_dim' parameter of BaseAEConfig instance must be set to 'data_shape' where "
                     "the shape of the data is [mini_batch x data_shape]. Unable to build decoder"
                     "automatically"
                 )
 
-            decoder = Decoder_MLP(model_config)
+            decoder = Decoder_AE_MLP(model_config)
             self.model_config.uses_default_decoder = True
 
         else:
             self.model_config.uses_default_decoder = False
 
-        self.set_encoder(encoder)
         self.set_decoder(decoder)
 
         self.device = None
@@ -94,7 +77,7 @@ class BaseAE(nn.Module):
             inputs (Dict[str, torch.Tensor]): The training data with labels, masks etc...
 
         Returns:
-            output (~pyraug.models.base.base_utils.ModelOutput): A ModelOutput instance providing the
+            output (~pythae.models.base.base_utils.ModelOutput): A ModelOutput instance providing the
                 outputs of the model.
 
         .. note::
@@ -157,13 +140,12 @@ class BaseAE(nn.Module):
             )
 
         path_to_model_config = os.path.join(dir_path, "model_config.json")
-        model_config = BaseModelConfig.from_json_file(path_to_model_config)
+        model_config = BaseAEConfig.from_json_file(path_to_model_config)
 
         return model_config
 
     @classmethod
     def _load_model_weights_from_folder(cls, dir_path):
-
         file_list = os.listdir(dir_path)
 
         if "model.pt" not in file_list:
@@ -271,7 +253,7 @@ class BaseAE(nn.Module):
             raise BadInheritanceError(
                 (
                     "Encoder must inherit from BaseEncoder class from "
-                    "pyraug.models.base_architectures.BaseEncoder. Refer to documentation."
+                    "pythae.models.base_architectures.BaseEncoder. Refer to documentation."
                 )
             )
         self.encoder = encoder
@@ -282,7 +264,7 @@ class BaseAE(nn.Module):
             raise BadInheritanceError(
                 (
                     "Decoder must inherit from BaseDecoder class from "
-                    "pyraug.models.base_architectures.BaseDecoder. Refer to documentation."
+                    "pythae.models.base_architectures.BaseDecoder. Refer to documentation."
                 )
             )
         self.decoder = decoder

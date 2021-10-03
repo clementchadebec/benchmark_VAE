@@ -5,7 +5,7 @@ scripts/data
 __pycache__
 notebooks
 #docs
-src/pyraug.egg-info
+src/pythae.egg-info
 .vscode
 OLD
 .ipynb_checkpoints

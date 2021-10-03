@@ -1,6 +1,6 @@
-"""The pyraug's Datasets inherit from
+"""The pythae's Datasets inherit from
 :class:`torch.utils.data.Dataset` and must be used to convert the data before
-training. As of today, it only contains the :class:`pyraug.data.BaseDatset` useful to train a
+training. As of today, it only contains the :class:`pythae.data.BaseDatset` useful to train a
 VAE model but other Datatsets will be added as models are added.
 """
 import torch
@@ -8,22 +8,22 @@ from torch.utils.data import Dataset
 
 
 class BaseDataset(Dataset):
-    """This class is the Base class for pyraug's dataset
+    """This class is the Base class for pythae's dataset
 
     A ``__getitem__`` is redefined and outputs a python dictionnary
     with the keys corresponding to `data`, `labels` etc...
     This Class should be used for any new data sets.
     """
 
-    def __init__(self, digits, labels, binarize=False):
+    def __init__(self, data, labels, binarize=False):
 
         self.labels = labels.type(torch.float)
 
         if binarize:
-            self.data = (torch.rand_like(digits) < digits).type(torch.float)
+            self.data = (torch.rand_like(digits) < data).type(torch.float)
 
         else:
-            self.data = digits.type(torch.float)
+            self.data = data.type(torch.float)
 
     def __len__(self):
         return len(self.data)

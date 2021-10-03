@@ -4,11 +4,11 @@ import numpy as np
 import pytest
 import torch
 
-from pyraug.models import RHVAE, BaseVAE
-from pyraug.models.base.base_config import BaseModelConfig, BaseSamplerConfig
-from pyraug.models.base.base_sampler import BaseSampler
-from pyraug.models.rhvae import RHVAEConfig, RHVAESamplerConfig
-from pyraug.models.rhvae.rhvae_sampler import RHVAESampler
+from pythae.models import RHVAE, BaseAE
+from pythae.models.base.base_config import BaseAEConfig, BaseSamplerConfig
+from pythae.models.base.base_sampler import BaseSampler
+from pythae.models.rhvae import RHVAEConfig, RHVAESamplerConfig
+from pythae.models.rhvae.rhvae_sampler import RHVAESampler
 
 PATH = os.path.dirname(os.path.abspath(__file__))
 
@@ -21,7 +21,7 @@ def dummy_data():
 
 @pytest.fixture
 def model_sample():
-    return BaseVAE((BaseModelConfig(input_dim=784)))
+    return BaseAE((BaseAEConfig(input_dim=784)))
 
 
 @pytest.fixture()

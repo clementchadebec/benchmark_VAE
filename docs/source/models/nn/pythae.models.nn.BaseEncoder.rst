@@ -1,6 +1,8 @@
 **********************************
-BaseMetric
+BaseEncoder
 **********************************
 
-.. autoclass:: pyraug.models.nn.BaseMetric
+
+
+.. autoclass:: pythae.models.nn.BaseEncoder
    :members:

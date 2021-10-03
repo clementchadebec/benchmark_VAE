@@ -5,9 +5,9 @@ import pytest
 import torch
 from nibabel.testing import data_path
 
-from pyraug.customexception import LoadError
-from pyraug.data.datasets import BaseDataset
-from pyraug.data.loaders import ImageGetterFromFolder
+from pythae.customexception import LoadError
+from pythae.data.datasets import BaseDataset
+from pythae.data.loaders import ImageGetterFromFolder
 
 PATH = os.path.dirname(os.path.abspath(__file__))
 

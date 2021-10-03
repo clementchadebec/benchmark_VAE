@@ -1,26 +1,26 @@
 **********************************
-pyraug.models.nn
+pythae.models.nn
 **********************************
 
 
 .. automodule::
-   pyraug.models.nn
+   pythae.models.nn
 
 
 .. toctree::
    :maxdepth: 1
 
-   pyraug.models.nn.BaseEncoder
-   pyraug.models.nn.BaseDecoder
-   pyraug.models.nn.BaseMetric
+   pythae.models.nn.BaseEncoder
+   pythae.models.nn.BaseDecoder
+   pythae.models.nn.BaseMetric
 
 The Base Architectures
 -----------------------
 
 .. autosummary::
-   ~pyraug.models.nn.BaseEncoder
-   ~pyraug.models.nn.BaseDecoder
-   ~pyraug.models.nn.BaseMetric
+   ~pythae.models.nn.BaseEncoder
+   ~pythae.models.nn.BaseDecoder
+   ~pythae.models.nn.BaseMetric
    :nosignatures:
 
 

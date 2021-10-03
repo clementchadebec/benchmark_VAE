@@ -1,6 +1,6 @@
 from pydantic.dataclasses import dataclass
 
-from pyraug.config import BaseConfig
+from pythae.config import BaseConfig
 
 @dataclass
 class BaseSamplerConfig(BaseConfig):

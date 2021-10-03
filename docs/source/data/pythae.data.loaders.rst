@@ -2,9 +2,9 @@
 loaders
 **********************************
 
-.. autoclass:: pyraug.data.loaders.BaseDataGetter
+.. autoclass:: pythae.data.loaders.BaseDataGetter
    :members:
 
-.. autoclass:: pyraug.data.loaders.ImageGetterFromFolder
+.. autoclass:: pythae.data.loaders.ImageGetterFromFolder
    :members:
 

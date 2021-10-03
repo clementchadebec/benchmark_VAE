@@ -9,17 +9,18 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd import grad
 
-from pyraug.customexception import BadInheritanceError
-from pyraug.models.base.base_utils import ModelOuput
-from pyraug.models.base.base_vae import BaseVAE
-from pyraug.models.nn import BaseDecoder, BaseEncoder, BaseMetric
-from pyraug.models.nn.default_architectures import Metric_MLP
-from pyraug.models.rhvae.rhvae_config import RHVAEConfig
+from ...customexception import BadInheritanceError
+from ...data.datasets import BaseDataset
+from ..base.base_utils import ModelOuput
+from ...models import VAE
+from ..nn import BaseEncoder, BaseDecoder, BaseMetric
+from ..nn.default_architectures import Metric_MLP
+from .rhvae_config import RHVAEConfig
 
 from .rhvae_utils import create_inverse_metric, create_metric
 
 
-class RHVAE(BaseVAE):
+class RHVAE(VAE):
     r"""
     This is an implementation of the Riemannian Hamiltonian VAE model proposed in
     (https://arxiv.org/pdf/2010.11518.pdf). This model provides a way to
@@ -49,7 +50,7 @@ class RHVAE(BaseVAE):
         metric: Optional[BaseMetric] = None,
     ):
 
-        BaseVAE.__init__(
+        VAE.__init__(
             self, model_config=model_config, encoder=encoder, decoder=decoder
         )
 
@@ -122,7 +123,7 @@ class RHVAE(BaseVAE):
             raise BadInheritanceError(
                 (
                     "Metric must inherit from BaseMetric class from "
-                    "pyraug.models.base_architectures.BaseMetric. Refer to documentation."
+                    "pythae.models.base_architectures.BaseMetric. Refer to documentation."
                 )
             )
 

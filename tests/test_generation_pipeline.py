@@ -4,10 +4,10 @@ import numpy as np
 import pytest
 import torch
 
-from pyraug.models import RHVAE
-from pyraug.models.rhvae import RHVAEConfig, RHVAESamplerConfig
-from pyraug.models.rhvae.rhvae_sampler import RHVAESampler
-from pyraug.pipelines import GenerationPipeline
+from pythae.models import RHVAE
+from pythae.models.rhvae import RHVAEConfig, RHVAESamplerConfig
+from pythae.models.rhvae.rhvae_sampler import RHVAESampler
+from pythae.pipelines import GenerationPipeline
 
 
 class Test_Pipeline:

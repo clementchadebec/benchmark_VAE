@@ -1,6 +1,7 @@
 **********************************
-pyraug.config
+BaseDecoder
 **********************************
 
-.. autoclass:: pyraug.config.BaseConfig
+.. autoclass:: pythae.models.nn.BaseDecoder
    :members:
+

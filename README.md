@@ -1,31 +1,31 @@
 
 <p align="center">
     <br>
-    <img src="https://raw.githubusercontent.com/clementchadebec/pyraug/main/docs/source/imgs/logo_pyraug_2.jpeg" width="400"/>
+    <img src="https://raw.githubusercontent.com/clementchadebec/pythae/main/docs/source/imgs/logo_pythae_2.jpeg" width="400"/>
     <br>
 <p>
 
 <p align="center">
-<a href='https://pypi.org/project/pyraug/'>
-	    <img src='https://badge.fury.io/py/pyraug.svg' />
+<a href='https://pypi.org/project/pythae/'>
+	    <img src='https://badge.fury.io/py/pythae.svg' />
 	</a>
 	<a href='https://opensource.org/licenses/Apache-2.0'>
-	    <img src='https://img.shields.io/github/license/clementchadebec/pyraug?color=blue' />
+	    <img src='https://img.shields.io/github/license/clementchadebec/pythae?color=blue' />
 	</a>
-	<a href='https://pyraug.readthedocs.io/en/latest/?badge=latest'>
-	    <img src='https://readthedocs.org/projects/pyraug/badge/?version=latest' alt='Documentation 	Status' />
+	<a href='https://pythae.readthedocs.io/en/latest/?badge=latest'>
+	    <img src='https://readthedocs.org/projects/pythae/badge/?version=latest' alt='Documentation 	Status' />
 	</a>
-	<a href='https://pepy.tech/project/pyraug'>
-	    <img src='https://static.pepy.tech/personalized-badge/pyraug?period=month&units=international_system&left_color=grey&right_color=orange&left_text=downloads' alt='Downloads 	Status' />
+	<a href='https://pepy.tech/project/pythae'>
+	    <img src='https://static.pepy.tech/personalized-badge/pythae?period=month&units=international_system&left_color=grey&right_color=orange&left_text=downloads' alt='Downloads 	Status' />
 	</a>
 </p>
 <p align="center">
-  <a href="https://pyraug.readthedocs.io/en/latest/">Documentation</a>
+  <a href="https://pythae.readthedocs.io/en/latest/">Documentation</a>
 </p>
 	
 
 
-# Pyraug 
+# pythae 
 
 This library provides a way to perform Data Augmentation using Variational Autoencoders in a 
 reliable way even in challenging contexts such as high dimensional and low sample size 
@@ -37,34 +37,34 @@ data.
 To install the library from [pypi.org](https://pypi.org/) run the following using ``pip``
 
 ```bash
-$ pip install pyraug
+$ pip install pythae
 ``` 
 
 
 or alternatively you can clone the github repo to access to tests, tutorials and scripts.
 ```bash
-$ git clone https://github.com/clementchadebec/pyraug.git
+$ git clone https://github.com/clementchadebec/pythae.git
 ```
 and install the library
 ```bash
-$ cd pyraug
+$ cd pythae
 $ pip install .
 ``` 
 
 # Augmenting your Data
 
 
-In Pyraug, a typical augmentation process is divided into 2 distinct parts:
+In pythae, a typical augmentation process is divided into 2 distinct parts:
 
-1. Train a model using the Pyraug's ```TrainingPipeline``` or using the provided ``scripts/training.py`` script
-2. Generate new data from a trained model using Pyraug's ```GenerationPipeline``` or using the provided ``scripts/generation.py`` script
+1. Train a model using the pythae's ```TrainingPipeline``` or using the provided ``scripts/training.py`` script
+2. Generate new data from a trained model using pythae's ```GenerationPipeline``` or using the provided ``scripts/generation.py`` script
 
-There exist two ways to augment your data pretty straightforwardly using Pyraug's built-in functions. 
+There exist two ways to augment your data pretty straightforwardly using pythae's built-in functions. 
 
 
-## Using Pyraug's Pipelines
+## Using pythae's Pipelines
 
-Pyraug provides two pipelines that may be used to either train a model on your own data or generate new data with a pretrained model.
+pythae provides two pipelines that may be used to either train a model on your own data or generate new data with a pretrained model.
 
 
 **note**: These pipelines are independent of the choice of the model and sampler. Hence, they can be used even if you want to access to more advanced features such as defining your own autoencoding architecture. 
@@ -77,7 +77,7 @@ In its most basic version the `TrainingPipeline` can be built without any argume
 This will by default train a `RHVAE` model with default autoencoding architecture and parameters.
 
 ```python
->>> from pyraug.pipelines import TrainingPipeline
+>>> from pythae.pipelines import TrainingPipeline
 >>> pipeline = TrainingPipeline()
 >>> pipeline(train_data=dataset_to_augment)
 ```
@@ -88,8 +88,8 @@ More generally, you can instantiate your own model and train it with the `Traini
 
 
 ```python
->>> from pyraug.models import RHVAE
->>> from pyraug.models.rhvae import RHVAEConfig
+>>> from pythae.models import RHVAE
+>>> from pythae.models.rhvae import RHVAEConfig
 >>> model_config = RHVAEConfig(
 ...    input_dim=int(intput_dim)
 ... ) # input_dim is the shape of a flatten input data
@@ -98,16 +98,16 @@ More generally, you can instantiate your own model and train it with the `Traini
 ```
 
 
-In case you instantiate yourself a model as shown above and you do not provided all the network architectures (encoder, decoder & metric if applicable), the `ModelConfig` instance will expect you to provide the input dimension of your data which equals to ``n_channels x height x width x ...``. Pyraug's VAE models' networks indeed default to Multi Layer Perceptron neural networks which automatically adapt to the input data shape. 
+In case you instantiate yourself a model as shown above and you do not provided all the network architectures (encoder, decoder & metric if applicable), the `ModelConfig` instance will expect you to provide the input dimension of your data which equals to ``n_channels x height x width x ...``. pythae's VAE models' networks indeed default to Multi Layer Perceptron neural networks which automatically adapt to the input data shape. 
 
-**note**: In case you have different size of data, Pyraug will reshape it to the minimum size ``min_n_channels x min_height x min_width x ...``
+**note**: In case you have different size of data, pythae will reshape it to the minimum size ``min_n_channels x min_height x min_width x ...``
 
 
 
 Then the `TrainingPipeline` can be launched by running:
 
 ```python
->>> from pyraug.pipelines import TrainingPipeline
+>>> from pythae.pipelines import TrainingPipeline
 >>> pipe = TrainingPipeline(model=model)
 >>> pipe(train_data=dataset_to_augment)
 ```
@@ -115,7 +115,7 @@ Then the `TrainingPipeline` can be launched by running:
 At the end of training, the model weights ``models.pt`` and model config ``model_config.json`` file 
 will be saved in a folder ``outputs/my_model/training_YYYY-MM-DD_hh-mm-ss/final_model``. 
 
-**Important**: For high dimensional data we advice you to provide you own network architectures and potentially adapt the training and model parameters see [documentation](https://pyraug.readthedocs.io/en/latest/advanced_use.html) for more details.
+**Important**: For high dimensional data we advice you to provide you own network architectures and potentially adapt the training and model parameters see [documentation](https://pythae.readthedocs.io/en/latest/advanced_use.html) for more details.
 
 
 ### Launching data generation
@@ -124,8 +124,8 @@ will be saved in a folder ``outputs/my_model/training_YYYY-MM-DD_hh-mm-ss/final_
 To launch the data generation process from a trained model, run the following.
 
 ```python
->>> from pyraug.pipelines import GenerationPipeline
->>> from pyraug.models import RHVAE
+>>> from pythae.pipelines import GenerationPipeline
+>>> from pythae.models import RHVAE
 >>> model = RHVAE.load_from_folder('path/to/your/trained/model') # reload the model
 >>> pipe = GenerationPipeline(model=model) # define pipeline
 >>> pipe(samples_number=10) # This will generate 10 data points
@@ -148,11 +148,11 @@ Generated data can then be loaded pretty easily by running
 ## Using the provided scripts
 
 
-Pyraug provides two scripts allowing you to augment your data directly with commandlines.
+pythae provides two scripts allowing you to augment your data directly with commandlines.
 
 
-**note**: To access to the predefined scripts you should first clone the Pyraug's repository.
-The following scripts are located in [scripts folder](https://github.com/clementchadebec/pyraug/tree/main/scripts). For the time being, only `RHVAE` model training and generation is handled by the provided scripts. Models will be added as they are implemented in [pyraug.models](https://github.com/clementchadebec/pyraug/tree/main/src/pyraug/models) 
+**note**: To access to the predefined scripts you should first clone the pythae's repository.
+The following scripts are located in [scripts folder](https://github.com/clementchadebec/pythae/tree/main/scripts). For the time being, only `RHVAE` model training and generation is handled by the provided scripts. Models will be added as they are implemented in [pythae.models](https://github.com/clementchadebec/pythae/tree/main/src/pythae/models) 
 
 
 ### Launching a model training:
@@ -185,7 +185,7 @@ The generated data is stored in several ``.pt`` files in ``outputs/my_generated_
 
 
 
-**Important**:  In the simplest configuration, default configurations are used in the scripts. You can easily override as explained in [documentation](https://pyraug.readthedocs.io/en/latest/advanced/setting_configs.html). See tutorials for a more in depth example.
+**Important**:  In the simplest configuration, default configurations are used in the scripts. You can easily override as explained in [documentation](https://pythae.readthedocs.io/en/latest/advanced/setting_configs.html). See tutorials for a more in depth example.
 
 
 
@@ -202,16 +202,16 @@ Generated data can then be loaded pretty easily by running
 
 ## Getting your hands on the code
 
-To help you to understand the way Pyraug works and how you can augment your data with this library we also
-provide tutorials that can be found in [examples folder](https://github.com/clementchadebec/pyraug/tree/main/examples):
+To help you to understand the way pythae works and how you can augment your data with this library we also
+provide tutorials that can be found in [examples folder](https://github.com/clementchadebec/pythae/tree/main/examples):
 
-- [getting_started.ipynb](https://github.com/clementchadebec/pyraug/tree/main/examples) explains you how to train a model and generate new data using Pyraug's Pipelines [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/pyraug/blob/main/examples/getting_started.ipynb)
-- [playing_with_configs.ipynb](https://github.com/clementchadebec/pyraug/tree/main/examples) shows you how to amend the predefined configuration to adapt them to you data [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/pyraug/blob/main/examples/playing_with_configs.ipynb)
-- [making_your_own_autoencoder.ipynb](https://github.com/clementchadebec/pyraug/tree/main/examples) shows you how to pass your own networks to the models implemented in Pyraug [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/pyraug/blob/main/examples/making_your_own_autoencoder.ipynb)
+- [getting_started.ipynb](https://github.com/clementchadebec/pythae/tree/main/examples) explains you how to train a model and generate new data using pythae's Pipelines [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/pythae/blob/main/examples/getting_started.ipynb)
+- [playing_with_configs.ipynb](https://github.com/clementchadebec/pythae/tree/main/examples) shows you how to amend the predefined configuration to adapt them to you data [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/pythae/blob/main/examples/playing_with_configs.ipynb)
+- [making_your_own_autoencoder.ipynb](https://github.com/clementchadebec/pythae/tree/main/examples) shows you how to pass your own networks to the models implemented in pythae [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/pythae/blob/main/examples/making_your_own_autoencoder.ipynb)
 
 ## Dealing with issues
 
-If you are experiencing any issues while running the code or request new features please [open an issue on github](https://github.com/clementchadebec/pyraug/issues)
+If you are experiencing any issues while running the code or request new features please [open an issue on github](https://github.com/clementchadebec/pythae/issues)
 
 
 ## Citing

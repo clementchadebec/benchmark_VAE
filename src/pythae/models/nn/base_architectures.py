@@ -12,7 +12,7 @@ class BaseEncoder(nn.Module):
     def forward(self, x):
         r"""This function must be implemented in a child class.
         It takes the input data and returns an instance of 
-         :class:`~pyraug.models.base.base_utils.ModelOutput in that order.
+         :class:`~pythae.models.base.base_utils.ModelOutput in that order.
         If you decide to provide your own encoder network, you must make your
         model inherit from this class by setting and the define your forward function as
         such:
@@ -33,7 +33,7 @@ class BaseEncoder(nn.Module):
             x (torch.Tensor): The input data that must be encoded
 
         Returns:
-            output (~pyraug.models.base.base_utils.ModelOutput): The output of the encoder
+            output (~pythae.models.base.base_utils.ModelOutput): The output of the encoder
         """
         raise NotImplementedError()
 
@@ -68,7 +68,7 @@ class BaseDecoder(nn.Module):
             z (torch.Tensor): The latent data that must be decoded
 
         Returns:
-            output (~pyraug.models.base.base_utils.ModelOutput): The output of the encoder
+            output (~pythae.models.base.base_utils.ModelOutput): The output of the encoder
            
         .. note::
 
@@ -109,6 +109,6 @@ class BaseMetric(nn.Module):
             x (torch.Tensor): The input data that must be encoded
 
         Returns:
-            output (~pyraug.models.base.base_utils.ModelOutput): The output of the metric
+            output (~pythae.models.base.base_utils.ModelOutput): The output of the metric
         """
         raise NotImplementedError()

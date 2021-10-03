@@ -36,17 +36,17 @@ Generative models: A new hope
 The recent rise in performance of generative models such as GAN or VAE has made them very attractive models to perform DA. However, the main limitation to a wider use of these models is that they most of the time produce blurry and fuzzy samples. This undesirable effect is even more emphasized when they are trained with a small number of samples which makes them very hard to use in practice to perform DA in the high dimensional (very) low sample size (HDLSS) setting.
 
 
-**This is why Pyraug was born!**
+**This is why pythae was born!**
 
 
 ************************************************
-A Flavour of Pyraug's Results
+A Flavour of pythae's Results
 ************************************************
 
 Case Study 1: Classification on 3D MRI (ADNI & AIBL) 
 ===================================================== 
 
-A :class:`~pyraug.models.RHVAE` model was used to perform Data Augmentation in the High Dimensional Low Sample Size Setting on 3D MRI neuroimaging data from ADNI (http://adni.loni.usc.edu/) and AIBL (https://aibl.csiro.au/) database. The model was used to try to enhance the classification task consisting in finding Alzheimer's disease patients (AD) from Cognitively Normal participants (CN) using T1-weighted MR images :cite:p:`chadebec_data_2021`.
+A :class:`~pythae.models.RHVAE` model was used to perform Data Augmentation in the High Dimensional Low Sample Size Setting on 3D MRI neuroimaging data from ADNI (http://adni.loni.usc.edu/) and AIBL (https://aibl.csiro.au/) database. The model was used to try to enhance the classification task consisting in finding Alzheimer's disease patients (AD) from Cognitively Normal participants (CN) using T1-weighted MR images :cite:p:`chadebec_data_2021`.
 
 
 Classification set up
@@ -94,7 +94,7 @@ To perform such classification task a CNN was used with two different paradigms 
 Augmentation Set up
 -------------------------------------------------------
 
-On the meantime, a :class:`~pyraug.models.RHVAE` was trained on each class of the train sets (*train-50* or *train-full*) to be able to generate new synthetic data. Noteworthy is the fact that the VAE and the CNN shared the **same training set** and no augmentation was performed on the validation set or the test set.
+On the meantime, a :class:`~pythae.models.RHVAE` was trained on each class of the train sets (*train-50* or *train-full*) to be able to generate new synthetic data. Noteworthy is the fact that the VAE and the CNN shared the **same training set** and no augmentation was performed on the validation set or the test set.
 
 
 .. centered::
@@ -104,7 +104,7 @@ On the meantime, a :class:`~pyraug.models.RHVAE` was trained on each class of th
 .. |pic5| image:: imgs/DA_diagram.png
 
 
-Then the **baseline** (resp. **optimized**) CNN networks were then trained for 100 (resp. 50) epochs using the cross entropy loss for training and validation losses. Balanced accuracy was also computed at the end of each epoch. The models were trained on either 1) only the *real* images; 2) only the synthetic samples created by the :class:`~pyraug.models.RHVAE` or 3) the augmented training set (*real* + synthetic) on 20 independent runs for each experiment. The final model  was chosen as the one that obtained the highest validation balanced accuracy during training.  
+Then the **baseline** (resp. **optimized**) CNN networks were then trained for 100 (resp. 50) epochs using the cross entropy loss for training and validation losses. Balanced accuracy was also computed at the end of each epoch. The models were trained on either 1) only the *real* images; 2) only the synthetic samples created by the :class:`~pythae.models.RHVAE` or 3) the augmented training set (*real* + synthetic) on 20 independent runs for each experiment. The final model  was chosen as the one that obtained the highest validation balanced accuracy during training.  
 
 
 Results

@@ -4,8 +4,8 @@ import os
 
 import torch
 
-from pyraug.models import RHVAE
-from pyraug.models.rhvae.rhvae_sampler import RHVAESampler, RHVAESamplerConfig
+from pythae.models import RHVAE
+from pythae.models.rhvae.rhvae_sampler import RHVAESampler, RHVAESamplerConfig
 
 PATH = os.path.dirname(os.path.abspath(__file__))
 

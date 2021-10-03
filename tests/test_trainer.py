@@ -5,12 +5,12 @@ import pytest
 import torch
 from torch.optim import SGD, Adadelta, Adagrad, Adam, RMSprop
 
-from pyraug.customexception import ModelError
-from pyraug.models import RHVAE, BaseVAE
-from pyraug.models.base.base_config import BaseModelConfig
-from pyraug.models.rhvae.rhvae_config import RHVAEConfig
-from pyraug.trainers.trainers import Trainer
-from pyraug.trainers.training_config import TrainingConfig
+from pythae.customexception import ModelError
+from pythae.models import RHVAE, BaseAE
+from pythae.models.base.base_config import BaseAEConfig
+from pythae.models.rhvae.rhvae_config import RHVAEConfig
+from pythae.trainers.trainers import Trainer
+from pythae.trainers.training_config import TrainingConfig
 from tests.data.rhvae.custom_architectures import *
 
 PATH = os.path.dirname(os.path.abspath(__file__))
@@ -23,7 +23,7 @@ def train_dataset():
 
 @pytest.fixture()
 def model_sample():
-    return BaseVAE(BaseModelConfig(input_dim=784))
+    return BaseAE(BaseAEConfig(input_dim=784))
 
 
 @pytest.fixture

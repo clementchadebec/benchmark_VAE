@@ -2,6 +2,6 @@
 datasets
 **********************************
 
-.. autoclass:: pyraug.data.datasets.BaseDataset
+.. autoclass:: pythae.data.datasets.BaseDataset
    :members: __getitem__
 

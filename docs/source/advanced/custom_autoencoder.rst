@@ -10,28 +10,28 @@ for the encoder and decoder and metric (if applicable) which automatically adapt
 
 .. code-block:: python
 
-    >>> from pyraug.models.base.base_config import BaseModelConfig
-    >>> from pyraug.models import BaseVAE
-    >>> config = BaseModelConfig()
-    >>> BaseVAE(model_config=config)
+    >>> from pythae.models.base.base_config import BaseAEConfig
+    >>> from pythae.models import BaseAE
+    >>> config = BaseAEConfig()
+    >>> BaseAE(model_config=config)
         Traceback (most recent call last):
           File "<stdin>", line 1, in <module>
-          File "/home/clement/Documents/these/implem/pyraug/src/pyraug/models/base/base_vae.py", line 57, in __init__
+          File "/home/clement/Documents/these/implem/pythae/src/pythae/models/base/base_vae.py", line 57, in __init__
             raise AttributeError("No input dimension provided !"
         AttributeError: No input dimension provided !'input_dim' parameter of 
-            BaseModelConfig instance must be set to 'data_shape' where the shape of the data is [mini_batch x data_shape] . Unable to build encoder automatically
+            BaseAEConfig instance must be set to 'data_shape' where the shape of the data is [mini_batch x data_shape] . Unable to build encoder automatically
 
 .. note::
 
-    In case you have different size of data, Pyraug will reshape it to the minimum size ``min_n_channels x min_height x min_width x ...``
+    In case you have different size of data, pythae will reshape it to the minimum size ``min_n_channels x min_height x min_width x ...``
 
 
 Hence building a basic network which used the basic provided architectures may be done as follows:
 
 .. code-block:: python
 
-    >>> from pyraug.models.my_model.my_model_config import MyModelConfig
-    >>> from pyraug.models.my_model.my_model import MyModelConfig
+    >>> from pythae.models.my_model.my_model_config import MyModelConfig
+    >>> from pythae.models.my_model.my_model import MyModelConfig
     >>> config = MyModelConfig(
     ...    input_dim=10 # Setting the data input dimension is needed if you do not use your own autoencoding architecture
     ...    # you parameters goes here
@@ -42,19 +42,19 @@ Hence building a basic network which used the basic provided architectures may b
 
 However, these networks are often not the best suited to generate. Hence, depending on your data, you may want to override the default architecture and use your own networks instead. Doing so is pretty easy! The only thing you have to do is
 define you own encoder or decoder ensuring that they 
-inherit from the :class:`~pyraug.models.nn.BaseEncoder` or :class:`~pyraug.models.nn.BaseDecoder`.
+inherit from the :class:`~pythae.models.nn.BaseEncoder` or :class:`~pythae.models.nn.BaseDecoder`.
 
 ************************************************
 Setting your Encoder
 ************************************************
 
-To build your on encoder only makes it inherit from :class:`~pyraug.models.nn.BaseEncoder`, define your architecture and code the :class:`forward` method.
+To build your on encoder only makes it inherit from :class:`~pythae.models.nn.BaseEncoder`, define your architecture and code the :class:`forward` method.
 Your own Encoder should look as follows:
 
 
 .. code-block:: python
 
-    >>> from pyraug.models.nn import BaseEncoder
+    >>> from pythae.models.nn import BaseEncoder
 
     >>> class MyEncoder(BaseEncoder):
     ...     def __init__(self, args):
@@ -74,12 +74,12 @@ For a complete example, please see tutorial (using_your_architectures.ipynb)
 Setting your decoder
 ************************************************
 
-Likewise the encoder, to build your on encoder only makes it inherit from :class:`~pyraug.models.nn.BaseDecoder`, define your architecture and code the :class:`forward` method.
+Likewise the encoder, to build your on encoder only makes it inherit from :class:`~pythae.models.nn.BaseDecoder`, define your architecture and code the :class:`forward` method.
 Your own Decoder should look as follows:
 
  .. code-block::
 
-    >>> from pyraug.models.nn import BaseDecoder
+    >>> from pythae.models.nn import BaseDecoder
 
     >>> class My_decoder(BaseDecoder):
     ...     def __init__(self):

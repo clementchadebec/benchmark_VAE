@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-from pyraug.models.nn import BaseEncoder, BaseDecoder, BaseMetric
+from pythae.models.nn import BaseEncoder, BaseDecoder, BaseMetric
 from ..base.base_utils import ModelOuput
 
 
@@ -40,7 +40,7 @@ class Encoder_VAE_MLP(BaseEncoder):
 
         output = ModelOuput(
             embedding=self.mu(out),
-            log_covariance_matrix=self.std(out)
+            log_covariance=self.std(out)
         )
 
         return output

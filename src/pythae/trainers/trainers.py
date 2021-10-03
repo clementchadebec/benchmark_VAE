@@ -8,11 +8,11 @@ import torch
 import torch.optim as optim
 from torch.utils.data import DataLoader
 
-from pyraug.customexception import ModelError
-from pyraug.data.datasets import BaseDataset
-from pyraug.models import BaseVAE
-from pyraug.trainers.trainer_utils import set_seed
-from pyraug.trainers.training_config import TrainingConfig
+from ..customexception import ModelError
+from ..data.datasets import BaseDataset
+from ..models import BaseAE
+from .trainer_utils import set_seed
+from .training_config import TrainingConfig
 
 logger = logging.getLogger(__name__)
 
@@ -26,9 +26,9 @@ class Trainer:
     """Trainer is the main class to perform model training.
 
     Args:
-        model (BaseVAE): The model to train
+        model (BaseAE): The model to train
 
-        train_dataset (BaseDataset): The training dataset of type :class:`~pyraug.`
+        train_dataset (BaseDataset): The training dataset of type :class:`~pythae.`
 
         training_args (TrainingConfig): The training arguments summarizing the main parameters used
             for training. If None, a basic training instance of :class:`TrainingConfig` is used.
@@ -40,7 +40,7 @@ class Trainer:
 
     def __init__(
         self,
-        model: BaseVAE,
+        model: BaseAE,
         train_dataset: BaseDataset,
         eval_dataset: Optional[BaseDataset] = None,
         training_config: Optional[TrainingConfig] = None,
@@ -123,7 +123,7 @@ class Trainer:
             shuffle=False,
         )
 
-    def set_default_optimizer(self, model: BaseVAE) -> torch.optim.Optimizer:
+    def set_default_optimizer(self, model: BaseAE) -> torch.optim.Optimizer:
 
         optimizer = optim.Adam(
             model.parameters(), lr=self.training_config.learning_rate

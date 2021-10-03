@@ -6,12 +6,12 @@ import os
 import numpy as np
 import torch
 
-from pyraug.data.loaders import ImageGetterFromFolder
-from pyraug.data.preprocessors import DataProcessor
-from pyraug.models import RHVAE
-from pyraug.models.rhvae import RHVAEConfig
-from pyraug.trainers import Trainer
-from pyraug.trainers.training_config import TrainingConfig
+from pythae.data.loaders import ImageGetterFromFolder
+from pythae.data.preprocessors import DataProcessor
+from pythae.models import RHVAE
+from pythae.models.rhvae import RHVAEConfig
+from pythae.trainers import Trainer
+from pythae.trainers.training_config import TrainingConfig
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
