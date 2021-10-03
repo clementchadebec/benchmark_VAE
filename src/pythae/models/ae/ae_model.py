@@ -64,10 +64,10 @@ class AE(BaseAE):
         """The input data is encoded and decoded
         
         Args:
-            inputs (~pythae.data.datassets.BaseDataset): An instance of pythae's datasets
+            inputs (BaseDataset): An instance of pythae's datasets
             
         Returns:
-            output (ModelOutput): An instance of ModelOutput containing all the relevant parameters
+            ModelOuput: An instance of ModelOutput containing all the relevant parameters
         """
 
         x = inputs["data"]

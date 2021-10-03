@@ -66,6 +66,13 @@ class VAE(BaseAE):
     def forward(self, inputs: BaseDataset):
         """
         The VAE model
+
+        Args:
+            inputs (BaseDataset): The training datasat with labels
+
+        Returns:
+            ModelOuput: An instance of ModelOutput containing all the relevant parameters
+
         """
 
         x = inputs["data"]

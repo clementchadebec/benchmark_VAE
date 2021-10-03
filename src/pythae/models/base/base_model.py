@@ -8,6 +8,7 @@ import torch.nn as nn
 
 from ...customexception import BadInheritanceError
 from ..nn import BaseDecoder, BaseEncoder
+from ...data.datasets import BaseDataset
 from ..nn.default_architectures import Encoder_AE_MLP, Decoder_AE_MLP
 
 from .base_config import BaseAEConfig
@@ -69,16 +70,15 @@ class BaseAE(nn.Module):
 
         self.device = None
 
-    def forward(self, inputs):
+    def forward(self, inputs: BaseDataset) -> ModelOuput:
         """Main forward pass outputing the VAE outputs
         This function should output an model_output instance gathering all the model outputs
 
         Args:
-            inputs (Dict[str, torch.Tensor]): The training data with labels, masks etc...
+            inputs (BaseDataset): The training data with labels, masks etc...
 
         Returns:
-            output (~pythae.models.base.base_utils.ModelOutput): A ModelOutput instance providing the
-                outputs of the model.
+            ModelOuput: A ModelOutput instance providing the outputs of the model.
 
         .. note::
             The loss must be computed in this forward pass and accessed through

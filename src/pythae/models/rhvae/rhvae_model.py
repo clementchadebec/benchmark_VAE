@@ -109,7 +109,11 @@ class RHVAE(VAE):
         self.G_inv = G_inv
 
     def update(self):
-        self.update_metric()
+        r"""
+        As soon as the model has seen all the data points (i.e. at the end of 1 loop)
+        we update the final metric function using \mu(x_i) as centroids
+        """
+        self._update_metric()
 
     def set_metric(self, metric: BaseMetric) -> None:
         r"""This method is called to set the metric network outputing the
@@ -129,7 +133,7 @@ class RHVAE(VAE):
 
         self.metric = metric
 
-    def forward(self, inputs):
+    def forward(self, inputs: BaseDataset) -> ModelOuput:
         r"""
         The input data is first encoded. The reparametrization is used to produce a sample
         :math:`z_0` from the approximate posterior :math:`q_{\phi}(z|x)`. Then Riemannian
@@ -138,10 +142,10 @@ class RHVAE(VAE):
         :math:`L_{\psi}`. The metric is computed and used with the integrator.
 
         Args:
-            inputs (Dict[str, torch.Tensor]): The training data with labels
+            inputs (BaseDataset): The training data with labels
 
         Returns:
-            output (ModelOutput): An instance of ModelOutput containing all the relevant parameters
+            ModelOuput: An instance of ModelOutput containing all the relevant parameters
         """
 
         x = inputs["data"]
@@ -431,7 +435,7 @@ class RHVAE(VAE):
     def _hamiltonian(self, recon_x, x, z, rho, G_inv=None, G_log_det=None):
         """
         Computes the Hamiltonian function.
-        used for HVAE and RHVAE
+        used for RHVAE
         """
         norm = (
             torch.transpose(rho.unsqueeze(-1), 1, 2) @ G_inv @ rho.unsqueeze(-1)
@@ -439,11 +443,7 @@ class RHVAE(VAE):
 
         return -self._log_p_xz(recon_x, x, z).sum() + 0.5 * norm + 0.5 * G_log_det.sum()
 
-    def update_metric(self):
-        r"""
-        As soon as the model has seen all the data points (i.e. at the end of 1 loop)
-        we update the final metric function using \mu(x_i) as centroids
-        """
+    def _update_metric(self):
         # convert to 1 big tensor
         self.M_tens = torch.cat(self.M)
         self.centroids_tens = torch.cat(self.centroids)
