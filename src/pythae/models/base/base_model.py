@@ -41,6 +41,7 @@ class BaseAE(nn.Module):
     def __init__(
         self,
         model_config: BaseAEConfig,
+        encoder: Optional[BaseDecoder] = None,
         decoder: Optional[BaseDecoder] = None,
     ):
 

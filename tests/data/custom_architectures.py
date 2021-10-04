@@ -2,6 +2,7 @@ import typing
 
 import torch
 import torch.nn as nn
+import numpy as np
 
 from pythae.models.nn import *
 from pythae.models.base.base_utils import ModelOuput
@@ -34,9 +35,7 @@ class Encoder_AE_Conv(BaseEncoder):
 
     def forward(self, x):
         out = self.layers(
-            x.reshape(
-                -1, self.n_channels, int(x.shape[-1] ** 0.5), int(x.shape[-1] ** 0.5)
-            )
+            x
         )
         out = self.fc1(out.reshape(x.shape[0], -1))
 
@@ -74,9 +73,7 @@ class Encoder_VAE_Conv(BaseEncoder):
 
     def forward(self, x):
         out = self.layers(
-            x.reshape(
-                -1, self.n_channels, int(x.shape[-1] ** 0.5), int(x.shape[-1] ** 0.5)
-            )
+            x
         )
         out = self.fc1(out.reshape(x.shape[0], -1))
 
@@ -128,7 +125,7 @@ class Decoder_AE_Conv(BaseDecoder):
     def forward(self, z):
         out = self.fc1(z)
         out = self.layers(out.reshape(z.shape[0], 32, 4, 4))
-        return out.reshape(z.shape[0], -1)
+        return out
 
 
 class Metric_Custom(BaseMetric):
@@ -175,7 +172,7 @@ class Decoder_MLP_Custom(BaseDecoder):
         self.layers = nn.Sequential(
             nn.Linear(args.latent_dim, 10),
             nn.ReLU(),
-            nn.Linear(10, args.input_dim),
+            nn.Linear(10, np.prod(args.input_dim)),
             nn.Sigmoid(),
         )
 
@@ -198,14 +195,14 @@ class Metric_MLP_Custom(BaseMetric):
         self.input_dim = args.input_dim
         self.latent_dim = args.latent_dim
 
-        self.layers = nn.Sequential(nn.Linear(self.input_dim, 10), nn.ReLU())
+        self.layers = nn.Sequential(nn.Linear(np.prod(self.input_dim), 10), nn.ReLU())
         self.diag = nn.Linear(10, self.latent_dim)
         k = int(self.latent_dim * (self.latent_dim - 1) / 2)
         self.lower = nn.Linear(10, k)
 
     def forward(self, x):
 
-        h1 = self.layers(x.reshape(-1, self.input_dim))
+        h1 = self.layers(x.reshape(-1, np.prod(self.input_dim)))
         h21, h22 = self.diag(h1), self.lower(h1)
 
         L = torch.zeros((x.shape[0], self.latent_dim, self.latent_dim)).to(x.device)

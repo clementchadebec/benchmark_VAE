@@ -25,8 +25,8 @@ def model_configs_no_input_dim(request):
 
 
 @pytest.fixture(params=[
-    VAMPConfig(input_dim=784, latent_dim=10, reconstruction_loss='bce'),
-    VAMPConfig(input_dim=100, number_components=10, latent_dim=5)])
+    VAMPConfig(input_dim=(1, 28, 28), latent_dim=10, reconstruction_loss='bce'),
+    VAMPConfig(input_dim=(1, 2, 18), number_components=10, latent_dim=5)])
 def model_configs(request):
     return request.param
 
@@ -277,7 +277,7 @@ class Test_Model_forward:
 
     @pytest.fixture
     def vamp(self, model_configs, demo_data):
-        model_configs.input_dim = demo_data["data"][0].shape[-1]
+        model_configs.input_dim = tuple(demo_data["data"][0].shape)
         return VAMP(model_configs)   
 
      

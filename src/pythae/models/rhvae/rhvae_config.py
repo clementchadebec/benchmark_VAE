@@ -18,8 +18,6 @@ class RHVAEConfig(VAEConfig):
         uses_default_metric (bool): Whether it uses a `custom` or `default` metric architecture.
             This is updated automatically.
         """
-    input_dim: int = None
-    latent_dim: int = 10
     n_lf: int = 3
     eps_lf: float = 0.001
     beta_zero: float = 0.3

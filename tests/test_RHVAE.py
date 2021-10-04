@@ -28,8 +28,8 @@ def model_configs_no_input_dim(request):
 
 
 @pytest.fixture(params=[
-    RHVAEConfig(input_dim=784, latent_dim=10, reconstruction_loss='bce'),
-    RHVAEConfig(input_dim=100, latent_dim=5)])
+    RHVAEConfig(input_dim=(1, 28, 28), latent_dim=10, reconstruction_loss='bce'),
+    RHVAEConfig(input_dim=(1, 2, 18), latent_dim=5)])
 def model_configs(request):
     return request.param
 
@@ -384,7 +384,7 @@ class Test_Model_forward:
 
     @pytest.fixture
     def rhvae(self, model_configs, demo_data):
-        model_configs.input_dim = demo_data["data"][0].shape[-1]
+        model_configs.input_dim = tuple(demo_data["data"][0].shape)
         return RHVAE(model_configs)
 
     def test_model_train_output(self, rhvae, demo_data):

@@ -51,15 +51,19 @@ class Decoder_AE_MLP(BaseDecoder):
     def __init__(self, args: dict):
         BaseDecoder.__init__(self)
 
+        self.input_dim = args.input_dim
+
+        #assert 0, np.prod(args.input_dim)
+
         self.layers = nn.Sequential(
             nn.Linear(args.latent_dim, 500),
             nn.ReLU(),
-            nn.Linear(500, np.prod(args.input_dim)),
+            nn.Linear(500, int(np.prod(args.input_dim))),
             nn.Sigmoid(),
         )
 
     def forward(self, z):
-        return self.layers(z)
+        return self.layers(z).reshape((z.shape[0],) + self.input_dim)
 
 
 class Metric_MLP(BaseMetric):

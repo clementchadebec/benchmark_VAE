@@ -25,8 +25,8 @@ def model_configs_no_input_dim(request):
 
 
 @pytest.fixture(params=[
-    VAEConfig(input_dim=784, latent_dim=10, reconstruction_loss='bce'),
-    VAEConfig(input_dim=100, latent_dim=5)])
+    VAEConfig(input_dim=(1, 28, 28), latent_dim=10, reconstruction_loss='bce'),
+    VAEConfig(input_dim=(1, 28), latent_dim=5)])
 def model_configs(request):
     return request.param
 
@@ -275,7 +275,7 @@ class Test_Model_forward:
 
     @pytest.fixture
     def vae(self, model_configs, demo_data):
-        model_configs.input_dim = demo_data["data"][0].shape[-1]
+        model_configs.input_dim = tuple(demo_data["data"][0].shape)
         return VAE(model_configs)   
 
      

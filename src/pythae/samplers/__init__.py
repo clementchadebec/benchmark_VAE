@@ -11,8 +11,11 @@ in which are located 4 modules:
 """
 
 from .base import BaseSampler, BaseSamplerConfig
+from .normal_sampling import NormalSampler, NormalSampler_Config
 
 __all__ = [
     "BaseSampler",
-    "BaseSamplerConfig"
+    "BaseSamplerConfig",
+    "NormalSampler"
+    "NormalSampler_Config"
 ]

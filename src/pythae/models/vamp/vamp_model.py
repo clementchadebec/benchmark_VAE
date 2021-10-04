@@ -53,7 +53,7 @@ class VAMP(VAE):
             raise AttributeError("Provide input dim to build pseudo input network")
 
         self.pseudo_inputs = nn.Sequential(
-            nn.Linear(model_config.number_components, np.prod(model_config.input_dim)),
+            nn.Linear(model_config.number_components, int(np.prod(model_config.input_dim))),
             nn.Hardtanh(0.0, 1.0)
         )
         self.idle_input = torch.eye(model_config.number_components, requires_grad=False)
@@ -124,7 +124,7 @@ class VAMP(VAE):
 
         C = self.number_components
 
-        x = self.pseudo_inputs(self.idle_input)
+        x = self.pseudo_inputs(self.idle_input).reshape((C,) + self.model_config.input_dim)
 
         encoder_output = self.encoder(x)
         prior_mu, prior_log_var = encoder_output.embedding, encoder_output.log_covariance

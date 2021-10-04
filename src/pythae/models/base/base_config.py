@@ -1,5 +1,7 @@
 from pydantic.dataclasses import dataclass
 
+from typing import Union, Tuple
+
 from pythae.config import BaseConfig
 
 
@@ -9,13 +11,13 @@ class BaseAEConfig(BaseConfig):
     :class:`~pythae.config.BaseConfig`.
 
     Parameters:
-        input_dim (int): The input_data dimension
+        input_dim (tuple): The input_data dimension (channels X x_dim X y_dim)
         latent_dim (int): The latent space dimension. Default: None.
         default_encoder (bool): Whether the encoder default. Default: True.
         default_decoder (bool): Whether the encoder default. Default: True.
         """
 
-    input_dim: int = None
+    input_dim: Union[Tuple[int, ...], None] = None
     latent_dim: int = 10
     uses_default_encoder: bool = True
     uses_default_decoder: bool = True
