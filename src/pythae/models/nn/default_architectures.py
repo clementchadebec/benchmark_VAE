@@ -1,4 +1,5 @@
 import torch
+import numpy as np
 import torch.nn as nn
 
 from pythae.models.nn import BaseEncoder, BaseDecoder, BaseMetric
@@ -12,11 +13,11 @@ class Encoder_AE_MLP(BaseEncoder):
         self.input_dim = args.input_dim
         self.latent_dim = args.latent_dim
 
-        self.layers = nn.Sequential(nn.Linear(args.input_dim, 500), nn.ReLU())
+        self.layers = nn.Sequential(nn.Linear(np.prod(args.input_dim), 500), nn.ReLU())
         self.mu = nn.Linear(500, self.latent_dim)
 
     def forward(self, x):
-        out = self.layers(x.reshape(-1, self.input_dim))
+        out = self.layers(x.reshape(-1, np.prod(self.input_dim)))
 
         output = ModelOuput(
             embedding=self.mu(out)
@@ -31,12 +32,12 @@ class Encoder_VAE_MLP(BaseEncoder):
         self.input_dim = args.input_dim
         self.latent_dim = args.latent_dim
 
-        self.layers = nn.Sequential(nn.Linear(args.input_dim, 500), nn.ReLU())
+        self.layers = nn.Sequential(nn.Linear(np.prod(args.input_dim), 500), nn.ReLU())
         self.mu = nn.Linear(500, self.latent_dim)
         self.std = nn.Linear(500, self.latent_dim)
 
     def forward(self, x):
-        out = self.layers(x.reshape(-1, self.input_dim))
+        out = self.layers(x.reshape(-1, np.prod(self.input_dim)))
 
         output = ModelOuput(
             embedding=self.mu(out),
@@ -53,7 +54,7 @@ class Decoder_AE_MLP(BaseDecoder):
         self.layers = nn.Sequential(
             nn.Linear(args.latent_dim, 500),
             nn.ReLU(),
-            nn.Linear(500, args.input_dim),
+            nn.Linear(500, np.prod(args.input_dim)),
             nn.Sigmoid(),
         )
 
@@ -76,14 +77,14 @@ class Metric_MLP(BaseMetric):
         self.input_dim = args.input_dim
         self.latent_dim = args.latent_dim
 
-        self.layers = nn.Sequential(nn.Linear(self.input_dim, 400), nn.ReLU())
+        self.layers = nn.Sequential(nn.Linear(np.prod(args.input_dim), 400), nn.ReLU())
         self.diag = nn.Linear(400, self.latent_dim)
         k = int(self.latent_dim * (self.latent_dim - 1) / 2)
         self.lower = nn.Linear(400, k)
 
     def forward(self, x):
 
-        h1 = self.layers(x.reshape(-1, self.input_dim))
+        h1 = self.layers(x.reshape(-1, np.prod(self.input_dim)))
         h21, h22 = self.diag(h1), self.lower(h1)
 
         L = torch.zeros((x.shape[0], self.latent_dim, self.latent_dim)).to(x.device)
