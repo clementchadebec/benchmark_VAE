@@ -27,9 +27,10 @@
 
 # pythae 
 
-This library provides a way to perform Data Augmentation using Variational Autoencoders in a 
-reliable way even in challenging contexts such as high dimensional and low sample size 
-data.
+This library implements some of the most common Variational Autoencoder. In particular it provides 
+the possibility to perform benchmark experiments by training the models with the same autoencoding 
+neural architecture. The feature make your own autoencoder allows you to train any of these models 
+with your own data and Encoder and Decoder neural networks.  
 
 
 # Installation
@@ -51,15 +52,21 @@ $ cd pythae
 $ pip install .
 ``` 
 
-# Augmenting your Data
+# Models
+|Models \ Samplers		 	| $\mathcal{N}(0, I_d)$ |Mixture of $\mathcal{N}$
+----------------------------|-----------------------|-------------------------
+|Autoencoder				|		X				|			X
+|Variational Autoencoder	|		X				|			X
+| Wassertein Autoencoder	|		X				|			X
 
 
-In pythae, a typical augmentation process is divided into 2 distinct parts:
 
-1. Train a model using the pythae's ```TrainingPipeline``` or using the provided ``scripts/training.py`` script
-2. Generate new data from a trained model using pythae's ```GenerationPipeline``` or using the provided ``scripts/generation.py`` script
 
-There exist two ways to augment your data pretty straightforwardly using pythae's built-in functions. 
+
+
+
+
+
 
 
 ## Using pythae's Pipelines
