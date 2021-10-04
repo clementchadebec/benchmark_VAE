@@ -1,5 +1,5 @@
 **********************************
-RHVAE
+Riemannian Hamiltonian VAE
 **********************************
 
 .. automodule::

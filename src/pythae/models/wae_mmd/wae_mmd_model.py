@@ -14,7 +14,7 @@ from typing import Optional
 import torch.nn.functional as F
 
 class WAE_MMD(AE):
-    """Wasserstein Autoencoder model.
+    """Wasserstein Autoencoder model (https://arxiv.org/pdf/1711.01558.pdf).
     
     Args:
         model_config(WAE_MMD_Config): The Autoencoder configuration seting the main parameters of the

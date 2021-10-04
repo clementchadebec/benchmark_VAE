@@ -1,4 +1,5 @@
-"""Implementation of a VAMP prior Variational Auto Encoder
+"""This modules is the implementation of a VAMP prior Variational Auto Encoder proposed in 
+https://arxiv.org/pdf/1705.07120.pdf.
 
 Available samplers:
 
