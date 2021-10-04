@@ -17,6 +17,7 @@ in which are located 4 modules:
 
 from .base import BaseAE, BaseAEConfig
 from .ae import AE, AEConfig
+from .wae_mmd import WAE_MMD, WAE_MMD_Config
 from .vae import VAE, VAEConfig
 from .vamp import VAMP, VAMPConfig
 from .hvae import HVAE, HVAEConfig
@@ -29,6 +30,8 @@ __all__ = [
     "BaseAEConfig",
     "AE",
     "AEConfig",
+    "WAE_MMD",
+    "WAE_MMD_Config",
     "VAE",
     "VAEConfig",
     "VAMP",
