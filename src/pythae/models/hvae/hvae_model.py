@@ -40,7 +40,7 @@ class HVAE(VAE):
             requires_grad=True if model_config.learn_eps_lf else False)
         self.beta_zero_sqrt =  nn.Parameter(
             torch.tensor([model_config.beta_zero])**0.5,
-            requires_grad=True if model_config.beta_zero else False)
+            requires_grad=True if model_config.learn_beta_zero else False)
 
 
     def forward(self, inputs: BaseDataset) -> ModelOuput:

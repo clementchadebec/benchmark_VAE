@@ -25,8 +25,8 @@ def model_configs_no_input_dim(request):
 
 
 @pytest.fixture(params=[
-    HVAEConfig(input_dim=784, latent_dim=10, reconstruction_loss='bce'),
-    HVAEConfig(input_dim=100, latent_dim=5, eps_lf=0.0001, learn_beta_zero=True)])
+    HVAEConfig(input_dim=784, latent_dim=10, reconstruction_loss='bce', learn_beta_zero=True),
+    HVAEConfig(input_dim=100, latent_dim=5, eps_lf=0.0001, learn_eps_lf=True)])
 def model_configs(request):
     return request.param
 
@@ -313,7 +313,7 @@ class Test_HVAE_Training:
         return torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))
 
     @pytest.fixture(params=[
-            TrainingConfig(max_epochs=3, steps_saving=2, learning_rate=1e-5),
+            TrainingConfig(max_epochs=3, steps_saving=2, learning_rate=1e-3),
         ])
     def training_configs(self, tmpdir, request):
         tmpdir.mkdir("dummy_folder")
@@ -391,6 +391,19 @@ class Test_HVAE_Training:
                 for key in start_model_state_dict.keys()
             ]
         )
+
+        if hvae.model_config.learn_eps_lf:
+            assert start_model_state_dict['eps_lf'] != step_1_model_state_dict['eps_lf']
+
+        else:
+            assert start_model_state_dict['eps_lf'] == step_1_model_state_dict['eps_lf']
+
+        if hvae.model_config.learn_beta_zero:
+            assert start_model_state_dict['beta_zero_sqrt'] != step_1_model_state_dict['beta_zero_sqrt']
+
+        else:
+            assert start_model_state_dict['beta_zero_sqrt'] == step_1_model_state_dict['beta_zero_sqrt']
+
 
     def test_hvae_eval_step(
         self, hvae, train_dataset, training_configs, optimizers
