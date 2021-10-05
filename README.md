@@ -1,10 +1,3 @@
-
-<p align="center">
-    <br>
-    <img src="https://raw.githubusercontent.com/clementchadebec/pythae/main/docs/source/imgs/logo_pythae_2.jpeg" width="400"/>
-    <br>
-<p>
-
 <p align="center">
 <a href='https://pypi.org/project/pythae/'>
 	    <img src='https://badge.fury.io/py/pythae.svg' />
@@ -53,21 +46,15 @@ $ pip install .
 ``` 
 
 # Models
-|Models \ Samplers		 	| $\mathcal{N}(0, I_d)$ |Mixture of $\mathcal{N}$
-----------------------------|-----------------------|-------------------------
-|Autoencoder				|		X				|			X
-|Variational Autoencoder	|		X				|			X
-| Wassertein Autoencoder	|		X				|			X
-
-
-
-
-
-
-
-
-
-
+| Models / samplers       | Standard Gaussian | Mixture of Gaussian | Manifold Sampler |                 Paper                |      Official Implementation      |
+|-------------------------|:-----------------:|:-------------------:|:----------------:|:------------------------------------:|:---------------------------------:|
+| Autoencoder             |         X         |          X          |                  |                                      |                                   |
+| Variational Autoencoder |         X         |          X          |                  |  https://arxiv.org/pdf/1312.6114.pdf |                                   |
+| Wasserstein Autoencoder |         X         |          X          |                  | https://arxiv.org/pdf/1711.01558.pdf | https://github.com/tolstikhin/wae |
+| VAMP Autoencoder        |         X         |          X          |                  |                                      |                                   |
+|                         |                   |                     |                  |                                      |                                   |
+|                         |                   |                     |                  |                                      |                                   |
+|                         |                   |                     |                  |                                      |                                   |
 
 ## Using pythae's Pipelines
 
