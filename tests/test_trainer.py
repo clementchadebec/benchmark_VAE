@@ -9,7 +9,7 @@ from pythae.customexception import ModelError
 from pythae.models import BaseAE, BaseAEConfig, AE, AEConfig, RHVAE, RHVAEConfig
 from pythae.trainers.trainers import Trainer
 from pythae.trainers.training_config import TrainingConfig
-from tests.data.rhvae.custom_architectures import *
+from tests.data.custom_architectures import *
 
 PATH = os.path.dirname(os.path.abspath(__file__))
 
@@ -172,33 +172,33 @@ class Test_Device_Checks:
         return request.param
 
     @pytest.fixture
-    def custom_encoder(self, rhvae_config):
-        return Encoder_MLP_Custom(rhvae_config)
+    def custom_encoder(self, ae_config):
+        return Encoder_MLP_Custom(ae_config)
 
     @pytest.fixture
-    def custom_decoder(self, rhvae_config):
-        return Decoder_MLP_Custom(rhvae_config)
+    def custom_decoder(self, ae_config):
+        return Decoder_MLP_Custom(ae_config)
 
     @pytest.fixture(params=[torch.rand(1), torch.rand(1), torch.rand(1)])
     def ae(
-        self, rhvae_config, custom_encoder, custom_decoder, custom_metric, request
+        self, ae_config, custom_encoder, custom_decoder, request
     ):
         # randomized
 
         alpha = request.param
 
         if alpha < 0.25:
-            model = AE(model_configs)
+            model = AE(ae_config)
 
         elif 0.25 <= alpha < 0.5:
-            model = AE(model_configs, encoder=custom_encoder)
+            model = AE(ae_config, encoder=custom_encoder)
 
         elif 0.5 <= alpha < 0.75:
-            model = AE(model_configs, decoder=custom_decoder)
+            model = AE(ae_config, decoder=custom_decoder)
 
         else:
             model = AE(
-                model_configs,
+                ae_config,
                 encoder=custom_encoder,
                 decoder=custom_decoder
             )
@@ -275,9 +275,8 @@ class Test_Sanity_Checks:
         alpha = request.param
 
         if alpha < 0.125:
-            rhvae_config.input_dim = (
-                rhvae_config.input_dim - 1
-            )  # create error on input dim
+            rhvae_config.input_dim = rhvae_config.input_dim[:-1] + (rhvae_config.input_dim[-1] - 1,)
+            # create error on input dim
             model = RHVAE(rhvae_config)
 
         elif 0.125 <= alpha < 0.25:
@@ -318,17 +317,17 @@ class Test_Sanity_Checks:
         self, rhvae, train_dataset, training_config
     ):
         trainer = Trainer(
-            model=ae,
+            model=rhvae,
             train_dataset=train_dataset,
             training_config=training_config,
         )
 
         with pytest.raises(ModelError):
-            trainer._run_model_sanity_check(ae, train_dataset)
+            trainer._run_model_sanity_check(rhvae, train_dataset)
 
 
 class Test_Main_Training:
-    @pytest.fixture(params=[TrainingConfig(max_epochs=3)])
+    @pytest.fixture(params=[TrainingConfig(num_epochs=3)])
     def training_configs(self, tmpdir, request):
         tmpdir.mkdir("dummy_folder")
         dir_path = os.path.join(tmpdir, "dummy_folder")
@@ -343,11 +342,11 @@ class Test_Main_Training:
 
     @pytest.fixture
     def custom_encoder(self, ae_config):
-        return Encoder_MLP_Custom(rhvae_config)
+        return Encoder_MLP_Custom(ae_config)
 
     @pytest.fixture
     def custom_decoder(self, ae_config):
-        return Decoder_MLP_Custom(rhvae_config)
+        return Decoder_MLP_Custom(ae_config)
 
 
     @pytest.fixture(
@@ -360,24 +359,24 @@ class Test_Main_Training:
         ]
     )
     def ae(
-        self, rhvae_config, custom_encoder, custom_decoder, custom_metric, request
+        self, ae_config, custom_encoder, custom_decoder, request
     ):
         # randomized
 
         alpha = request.param
 
         if alpha < 0.25:
-            model = AE(model_configs)
+            model = AE(ae_config)
 
         elif 0.25 <= alpha < 0.5:
-            model = AE(model_configs, encoder=custom_encoder)
+            model = AE(ae_config, encoder=custom_encoder)
 
         elif 0.5 <= alpha < 0.75:
-            model = AE(model_configs, decoder=custom_decoder)
+            model = AE(ae_config, decoder=custom_decoder)
 
         else:
             model = AE(
-                model_configs,
+                ae_config,
                 encoder=custom_encoder,
                 decoder=custom_decoder
             )
@@ -481,7 +480,7 @@ class Test_Logging:
 
     @pytest.fixture
     def model_sample(self):
-        return RHVAE(RHVAEConfig(input_dim=784))
+        return RHVAE(RHVAEConfig(input_dim=(1, 28, 28)))
 
     def test_create_log_file(
         self, tmpdir, model_sample, train_dataset, training_config

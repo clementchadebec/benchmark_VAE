@@ -148,13 +148,19 @@ class Encoder_MLP_Custom(BaseEncoder):
         self.input_dim = args.input_dim
         self.latent_dim = args.latent_dim
 
-        self.layers = nn.Sequential(nn.Linear(args.input_dim, 10), nn.ReLU())
+        self.layers = nn.Sequential(nn.Linear(np.prod(args.input_dim), 10), nn.ReLU())
         self.mu = nn.Linear(10, self.latent_dim)
         self.std = nn.Linear(10, self.latent_dim)
 
     def forward(self, x):
-        out = self.layers(x.reshape(-1, self.input_dim))
-        return self.mu(out), self.std(out)
+        out = self.layers(x.reshape(-1, int(np.prod(self.input_dim))))
+
+        out = ModelOuput(
+            embedding=self.mu(out),
+            log_covariance=self.std(out)
+        )
+
+        return out
 
 
 class Decoder_MLP_Custom(BaseDecoder):
@@ -202,7 +208,7 @@ class Metric_MLP_Custom(BaseMetric):
 
     def forward(self, x):
 
-        h1 = self.layers(x.reshape(-1, np.prod(self.input_dim)))
+        h1 = self.layers(x.reshape(-1, int(np.prod(self.input_dim))))
         h21, h22 = self.diag(h1), self.lower(h1)
 
         L = torch.zeros((x.shape[0], self.latent_dim, self.latent_dim)).to(x.device)
@@ -223,17 +229,17 @@ class EncoderWrongInputDim(BaseEncoder):
     def __init__(self, args):
         BaseEncoder.__init__(self)
         self.input_dim = args.input_dim
-        self.fc = nn.Linear(args.input_dim - 1, args.latent_dim)
+        self.fc = nn.Linear(int(np.prod(args.input_dim)) - 1, args.latent_dim)
 
     def forward(self, x):
-        return self.fc(x.reshape(-1, self.input_dim))
+        return self.fc(x.reshape(-1, int(np.prod(self.input_dim))))
 
 
 class DecoderWrongInputDim(BaseDecoder):
     def __init__(self, args):
         BaseDecoder.__init__(self)
         self.latent_dim = args.latent_dim
-        self.fc = nn.Linear(args.latent_dim - 1, args.input_dim)
+        self.fc = nn.Linear(args.latent_dim - 1, int(np.prod(args.input_dim)))
 
     def forward(self, z):
         return self.fc(z.reshape(-1, self.latent_dim))
@@ -243,17 +249,17 @@ class MetricWrongInputDim(BaseMetric):
     def __init__(self, args):
         BaseMetric.__init__(self)
         self.input_dim = args.input_dim
-        self.fc = nn.Linear(args.input_dim - 1, args.latent_dim)
+        self.fc = nn.Linear(int(np.prod(args.input_dim)) - 1, args.latent_dim)
 
     def forward(self, x):
-        return self.fc(x.reshape(-1, self.input_dim))
+        return self.fc(x.reshape(-1, int(np.prod(self.input_dim))))
 
 
 class EncoderWrongOutputDim(BaseEncoder):
     def __init__(self, args):
         BaseEncoder.__init__(self)
         self.input_dim = args.input_dim
-        self.fc = nn.Linear(args.input_dim, args.latent_dim - 1)
+        self.fc = nn.Linear(int(np.prod(args.input_dim)), args.latent_dim - 1)
 
     def forward(self, x):
         return self.fc(x.reshape(-1, self.input_dim))
@@ -263,7 +269,7 @@ class DecoderWrongOutputDim(BaseDecoder):
     def __init__(self, args):
         BaseDecoder.__init__(self)
         self.latent_dim = args.latent_dim
-        self.fc = nn.Linear(args.latent_dim, args.input_dim - 1)
+        self.fc = nn.Linear(args.latent_dim, int(np.prod(args.input_dim)) - 1)
 
     def forward(self, z):
         return self.fc(z.reshape(-1, self.latent_dim))
@@ -273,27 +279,27 @@ class MetricWrongOutputDim(BaseMetric):
     def __init__(self, args):
         BaseMetric.__init__(self)
         self.input_dim = args.input_dim
-        self.fc = nn.Linear(args.input_dim, args.latent_dim - 1)
+        self.fc = nn.Linear(int(np.prod(args.input_dim)), args.latent_dim - 1)
 
     def forward(self, x):
-        return self.fc(x.reshape(-1, self.input_dim))
+        return self.fc(x.reshape(-1, int(np.prod(self.input_dim))))
 
 
 class EncoderWrongOutput(BaseEncoder):
     def __init__(self, args):
         BaseEncoder.__init__(self)
         self.input_dim = args.input_dim
-        self.fc = nn.Linear(args.input_dim, args.latent_dim)
+        self.fc = nn.Linear(int(np.prod(args.input_dim)), args.latent_dim)
 
     def forward(self, x):
-        return self.fc(x.reshape(-1, self.input_dim))
+        return self.fc(x.reshape(-1, int(np.prod(self.input_dim))))
 
 
 class DecoderWrongOutput(BaseDecoder):
     def __init__(self, args):
         BaseDecoder.__init__(self)
         self.latent_dim = args.latent_dim
-        self.fc = nn.Linear(args.latent_dim, args.input_dim)
+        self.fc = nn.Linear(args.latent_dim, int(np.prod(args.input_dim)))
 
     def forward(self, z):
         out = self.fc(z.reshape(-1, self.latent_dim))
@@ -304,7 +310,7 @@ class MetricWrongOutput(BaseMetric):
     def __init__(self, args):
         BaseMetric.__init__(self)
         self.input_dim = args.input_dim
-        self.fc = nn.Linear(args.input_dim, args.latent_dim)
+        self.fc = nn.Linear(int(np.prod(args.input_dim)), args.latent_dim)
 
     def forward(self, x):
         out = self.fc(x.reshape(-1, self.input_dim))
@@ -315,7 +321,7 @@ class MetricWrongOutputDimBis(BaseMetric):
     def __init__(self, args):
         BaseMetric.__init__(self)
         self.latent_dim = args.latent_dim
-        self.fc = nn.Linear(args.input_dim, args.latent_dim)
+        self.fc = nn.Linear(int(np.prod(args.input_dim)), args.latent_dim)
 
     def forward(self, x):
         # out = self.fc(x.reshape(-1, self.input_dim))

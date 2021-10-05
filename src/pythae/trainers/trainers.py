@@ -237,9 +237,7 @@ class Trainer:
 
             file_logger.info("Training started !\n")
             file_logger.info(
-                f"Training params:\n - max_epochs: {self.training_config.max_epochs}\n"
-                f" - train es: {self.training_config.train_early_stopping}\n"
-                f" - eval es: {self.training_config.eval_early_stopping}\n"
+                f"Training params:\n - max_epochs: {self.training_config.num_epochs}\n"
                 f" - batch_size: {self.training_config.batch_size}\n"
                 f" - checkpoint saving every {self.training_config.steps_saving}\n"
             )
