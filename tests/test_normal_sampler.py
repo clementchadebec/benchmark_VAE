@@ -18,8 +18,8 @@ def dummy_data():
 
 @pytest.fixture(
     params=[
-        AE(AEConfig(input_dim=784)),
-        VAE(VAEConfig(input_dim=784))
+        AE(AEConfig(input_dim=(1, 28, 28))),
+        VAE(VAEConfig(input_dim=(1, 28, 28)))
     ]
 )
 def model(request):
@@ -29,12 +29,21 @@ def model(request):
 @pytest.fixture()
 def sampler_sample(tmpdir, model):
     tmpdir.mkdir("dummy_folder")
-    return BaseSampler(
+    return NormalSampler(
         model=model,
-        sampler_config=NormalSamplerConfig(
-            batch_size=2
+        sampler_config=NormalSampler_Config(
         ),
     )
+
+@pytest.fixture(
+    params=[
+        (4, 2),
+        (5, 5),
+        (2, 3)
+    ]
+)
+def num_sample_and_batch_size(request):
+    return request.param
 
 
 class Test_NormalSampler_saving:
@@ -49,25 +58,52 @@ class Test_NormalSampler_saving:
 
         assert os.path.isfile(sampler_config_file)
 
-        generation_config_rec = BaseSamplerConfig.from_json_file(sampler_config_file)
+        generation_config_rec = NormalSampler_Config.from_json_file(sampler_config_file)
 
         assert generation_config_rec.__dict__ == sampler_sample.sampler_config.__dict__
 
 
-class Test_Sampler_Set_up:
-    @pytest.fixture(
-        params=[
-            BaseSamplerConfig(
-                batch_size=1
-            ),  # (target full batch number, target last full batch size, target_batch_number)
-            BaseSamplerConfig(batch_size=2),
-        ]
-    )
-    def sampler_config(self, tmpdir, request):
-        return request.param
+class Test_NormalSampler_Sampling:
 
-    def test_sampler_set_up(self, model_sample, sampler_config):
-        sampler = BaseSampler(model=model_sample, sampler_config=sampler_config)
+    def test_return_sampling(self, model, sampler_sample, num_sample_and_batch_size):
 
-        assert sampler.batch_size == sampler_config.batch_size
-        assert sampler.samples_per_save == sampler_config.samples_per_save
+        num_samples, batch_size = num_sample_and_batch_size[0], num_sample_and_batch_size[1]
+
+        gen_samples = sampler_sample.sample(
+            num_samples=num_samples,
+            batch_size=batch_size,
+            return_gen=True
+        )
+
+        assert gen_samples.shape[0] == num_samples
+
+
+    def test_save_sampling(self, tmpdir, model, sampler_sample, num_sample_and_batch_size):
+
+        dir_path = os.path.join(tmpdir, "dummy_folder")
+        num_samples, batch_size = num_sample_and_batch_size[0], num_sample_and_batch_size[1]
+
+        gen_samples = sampler_sample.sample(
+            num_samples=num_samples,
+            batch_size=batch_size,
+            output_dir=dir_path,
+            return_gen=True
+        )
+
+        assert gen_samples.shape[0] == num_samples
+        assert len(os.listdir(dir_path)) == num_samples
+
+#class Test_Sampler_Set_up:
+#    @pytest.fixture(
+#        params=[# (target full batch number, target last full batch size, target_batch_number)
+#            NormalSampler_Config(),
+#        ]
+#    )
+#    def sampler_config(self, tmpdir, request):
+#        return request.param
+#
+#    def test_sampler_set_up(self, model, sampler_config):
+#        sampler = NormalSampler(model=model, sampler_config=sampler_config)
+#
+#        assert sampler.batch_size == sampler_config.batch_size
+#        assert sampler.samples_per_save == sampler_config.samples_per_save

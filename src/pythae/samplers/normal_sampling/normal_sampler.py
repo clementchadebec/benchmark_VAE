@@ -19,12 +19,13 @@ class NormalSampler(BaseSampler):
         BaseSampler.__init__(self, model=model, sampler_config=sampler_config)
 
         
-    def sample(self, num_samples: int) -> torch.Tensor:
+    def sample(
         self,
         num_samples: int=1,
         batch_size: int = 500,
         output_dir:str=None,
-        return_gen: bool=True):
+        return_gen: bool=True
+     ) -> torch.Tensor:
         """Main sampling function of the sampler.
 
         Args:
@@ -38,21 +39,33 @@ class NormalSampler(BaseSampler):
         Returns:
             ~torch.Tensor: The generated images
         """
-        
-        full_batch_nbr = int(num_samples / self.sampler_config.batch_size)
-        last_batch_samples_nbr = num_samples % self.sampler_config.batch_size
+        full_batch_nbr = int(num_samples / batch_size)
+        last_batch_samples_nbr = num_samples % batch_size
 
         x_gen_list = []
 
         for i in range(full_batch_nbr):
-            z = torch.randn(num_samples).to(self.device)
+            z = torch.randn(batch_size, self.model.latent_dim).to(self.device)
             x_gen = self.model.decoder(z)
+
+            if output_dir is not None:
+                for j in range(batch_size):
+                    self.save_img(x_gen[j], output_dir, '%08d.png' % int(batch_size*i + j))
+
+
             x_gen_list.append(x_gen)
 
         if last_batch_samples_nbr > 0:
-            z = torch.randn(last_batch_samples_nbr).to(self.device)
+            z = torch.randn(last_batch_samples_nbr, self.model.latent_dim).to(self.device)
             x_gen = self.model.decoder(z)
+
+            if output_dir is not None:
+                for j in range(last_batch_samples_nbr):
+                    self.save_img(
+                        x_gen[j], output_dir, '%08d.png' % int(batch_size*full_batch_nbr + j))
+
+
             x_gen_list.append(x_gen)
 
-
-        return torch.cat(x_gen)
+        if return_gen:
+            return torch.cat(x_gen_list, dim=0)
