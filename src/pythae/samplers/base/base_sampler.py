@@ -1,7 +1,9 @@
 import logging
 import os
+import numpy as np
 
 import torch
+from imageio import imwrite
 
 from .base_sampler_config import BaseSamplerConfig
 from ...models import BaseAE
@@ -25,25 +27,16 @@ class BaseSampler:
 
     def __init__(self, model: BaseAE, sampler_config: BaseSamplerConfig = None):
 
-        if sampler_config.output_dir is None:
-            output_dir = "dummy_output_dir"
-            sampler_config.output_dir = output_dir
+        if sampler_config is None:
+            sampler_config = BaseSamplerConfig()
 
-        if not os.path.exists(sampler_config.output_dir):
-            os.makedirs(sampler_config.output_dir)
-            logger.info(
-                f"Created {sampler_config.output_dir} folder since did not exist.\n"
-            )
 
         self.model = model
         self.sampler_config = sampler_config
 
-        self.batch_size = sampler_config.batch_size
-        self.samples_per_save = self.sampler_config.samples_per_save
-
         self.device = (
             "cuda"
-            if torch.cuda.is_available() and not sampler_config.no_cuda
+            if torch.cuda.is_available()
             else "cpu"
         )
 
@@ -80,6 +73,32 @@ class BaseSampler:
         file in ``dir_path``"""
 
         self.sampler_config.save_json(dir_path, "sampler_config")
+
+    def save_img(self, img_tensor: torch.Tensor, dir_path: str, img_name: str):
+        """Saves a data point as .png file in dir_path with img_name as name.
+
+        Args:
+            img_tensor (torch.Tensor): The image of shape CxHxW in the range [0-1]
+            dir_path (str): The folder where in which the images must be saved
+            ig_name (str): The name to apply to the file containing the image.
+        """
+
+        if not os.path.exists(dir_path):
+            os.makedirs(dir_path)
+            print(f"--> Created folder {dir_path}. Image will be saved here")        
+
+        img = 255. * torch.movedim(img_tensor, 0, 2).cpu().detach().numpy()
+        if img.shape[-1]==1:
+            img = np.repeat(img, repeats=3, axis=-1)
+        
+        img = img.astype('uint8')
+        imwrite(os.path.join(dir_path, f"{img_name}.png"), img)
+
+
+
+
+
+
 
     #def save_data_batch(self, data, dir_path, number_of_samples, batch_idx):
     #    """

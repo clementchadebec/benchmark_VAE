@@ -3,6 +3,7 @@ import os
 import numpy as np
 import pytest
 import torch
+from imageio import imread
 
 from pythae.models import BaseAE, BaseAEConfig
 from pythae.samplers import BaseSampler, BaseSamplerConfig
@@ -15,10 +16,20 @@ def dummy_data():
     ### 3 imgs from mnist that are used to simulated generated ones
     return torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample")).data
 
+@pytest.fixture(
+    params=[
+        torch.rand(3, 10, 20),
+        torch.rand(1, 2, 2)
+    ]
+)
+def img_tensors(request):
+    return request.param
+
+
 
 @pytest.fixture
 def model_sample():
-    return BaseAE((BaseAEConfig(input_dim=784)))
+    return BaseAE((BaseAEConfig(input_dim=(1, 28, 28))))
 
 
 @pytest.fixture()
@@ -27,7 +38,6 @@ def sampler_sample(tmpdir, model_sample):
     return BaseSampler(
         model=model_sample,
         sampler_config=BaseSamplerConfig(
-            output_dir=os.path.join(tmpdir, "dummy_folder"), batch_size=2
         ),
     )
 
@@ -48,24 +58,41 @@ class Test_BaseSampler_saving:
 
         assert generation_config_rec.__dict__ == sampler_sample.sampler_config.__dict__
 
+    def test_save_image_tensor(self, img_tensors, tmpdir, sampler_sample):
 
-class Test_Sampler_Set_up:
-    @pytest.fixture(
-        params=[
-            BaseSamplerConfig(
-                batch_size=1
-            ),  # (target full batch number, target last full batch size, target_batch_number)
-            BaseSamplerConfig(batch_size=2),
-        ]
-    )
-    def sampler_config(self, tmpdir, request):
-        return request.param
+        sampler = sampler_sample
 
-    def test_sampler_set_up(self, model_sample, sampler_config):
-        sampler = BaseSampler(model=model_sample, sampler_config=sampler_config)
+        dir_path = os.path.join(tmpdir, "dummy_folder")
+        img_path = os.path.join(dir_path, 'test_img.png')
 
-        assert sampler.batch_size == sampler_config.batch_size
-        assert sampler.samples_per_save == sampler_config.samples_per_save
+        sampler.save_img(img_tensors, dir_path, 'test_img')
+
+        assert os.path.isdir(dir_path)
+        assert os.path.isfile(img_path)
+
+        rec_img = torch.tensor(imread(img_path)) / 255.
+
+        assert 1 >= rec_img.max() >= 0
+
+
+
+#class Test_Sampler_Set_up:
+#    @pytest.fixture(
+#        params=[
+#            BaseSamplerConfig(
+#                batch_size=1
+#            ),  # (target full batch number, target last full batch size, target_batch_number)
+#            BaseSamplerConfig(),
+#        ]
+#    )
+#    def sampler_config(self, tmpdir, request):
+#        return request.param
+#
+#    def test_sampler_set_up(self, model_sample, sampler_config):
+#        sampler = BaseSampler(model=model_sample, sampler_config=sampler_config)
+#
+#        assert sampler.batch_size == sampler_config.batch_size
+#        assert sampler.samples_per_save == sampler_config.samples_per_save
 
 
 #class Test_RHVAE_Sampler:
