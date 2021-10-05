@@ -54,6 +54,8 @@ class RHVAE(VAE):
             self, model_config=model_config, encoder=encoder, decoder=decoder
         )
 
+        self.model_name = "RHVAE"
+
         if metric is None:
             metric = Metric_MLP(model_config)
             self.model_config.uses_default_metric = True

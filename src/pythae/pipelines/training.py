@@ -1,5 +1,6 @@
 from typing import Optional, Union
 
+import logging
 import numpy as np
 import torch
 from torch.optim import Optimizer
@@ -14,6 +15,12 @@ from ..trainers.training_config import TrainingConfig
 
 from .base_pipeline import Pipeline
 
+logger = logging.getLogger(__name__)
+
+# make it print to the console.
+console = logging.StreamHandler()
+logger.addHandler(console)
+logger.setLevel(logging.INFO)
 
 class TrainingPipeline(Pipeline):
     """
@@ -104,6 +111,7 @@ class TrainingPipeline(Pipeline):
         """
 
         if self.data_loader is None:
+            logger.info('Preprocessing train data...')
             if isinstance(train_data, str):
 
                 self.data_loader = ImageGetterFromFolder()
@@ -136,6 +144,7 @@ class TrainingPipeline(Pipeline):
             self._set_default_model(train_data)
 
         if eval_data is not None:
+            logger.info('Preprocessing eval data...')
             if self.data_loader is None:
                 if isinstance(eval_data, str):
 

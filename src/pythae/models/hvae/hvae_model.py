@@ -34,6 +34,8 @@ class HVAE(VAE):
                 self, model_config=model_config, encoder=encoder, decoder=decoder
             )
 
+        self.model_name = "HVAE"
+
         self.n_lf = model_config.n_lf
         self.eps_lf =  nn.Parameter(
             torch.tensor([model_config.eps_lf]),

@@ -43,6 +43,8 @@ class AE(BaseAE):
             self, model_config=model_config, decoder=decoder
             )
 
+        self.model_name = "AE"
+
         if encoder is None:
             if model_config.input_dim is None:
                 raise AttributeError(

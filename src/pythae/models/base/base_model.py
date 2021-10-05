@@ -47,6 +47,8 @@ class BaseAE(nn.Module):
 
         nn.Module.__init__(self)
 
+        self.model_name = "BaseAE"
+
         self.input_dim = model_config.input_dim
         self.latent_dim = model_config.latent_dim
 

@@ -214,7 +214,8 @@ class Trainer:
         )
 
         training_dir = os.path.join(
-            self.training_config.output_dir, f"training_{self._training_signature}"
+            self.training_config.output_dir,
+            f"{self.model.model_name}_training_{self._training_signature}"
         )
 
         if not os.path.exists(training_dir):

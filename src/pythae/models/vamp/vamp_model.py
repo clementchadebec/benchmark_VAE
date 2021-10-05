@@ -47,6 +47,8 @@ class VAMP(VAE):
             self, model_config=model_config, encoder=encoder, decoder=decoder
             )
 
+        self.model_name = "VAMP"
+
         self.number_components = model_config.number_components
 
         if model_config.input_dim is None:

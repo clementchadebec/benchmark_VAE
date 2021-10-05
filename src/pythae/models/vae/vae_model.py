@@ -45,6 +45,8 @@ class VAE(BaseAE):
             self, model_config=model_config, decoder=decoder
             )
 
+        self.model_name = "VAE"
+
         if encoder is None:
             if model_config.input_dim is None:
                 raise AttributeError(

@@ -46,6 +46,8 @@ class WAE_MMD(AE):
             self, model_config=model_config, encoder=encoder, decoder=decoder
             )
 
+        self.model_name = "WAE_MMD"
+
         self.kernel_choice = model_config.kernel_choice
     
     def forward(self, inputs: BaseDataset) -> ModelOuput:

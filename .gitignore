@@ -14,7 +14,7 @@ examples/my_model/*
 examples/my_model_with_custom_archi/*
 examples/my_generated_data_with_custom_parameters/*
 examples/my_model_with_custom_parameters/*
-examples/dummy_output_dir/
+examples/models_training/my_model/*
 
 
 
@@ -149,3 +149,4 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+examples/models_training/my_model/VAE_training_2021-10-05_16-02-02/final_model/model_config.json
