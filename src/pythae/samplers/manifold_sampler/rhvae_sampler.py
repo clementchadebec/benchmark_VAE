@@ -5,15 +5,8 @@ import os
 import torch
 
 from ..base.base_sampler import BaseSampler
-from .rhvae_config import RHVAESamplerConfig
-from .rhvae_model import RHVAE
-
-logger = logging.getLogger(__name__)
-
-# make it print to the console.
-console = logging.StreamHandler()
-logger.addHandler(console)
-logger.setLevel(logging.INFO)
+from ...models import RHVAE, RHVAEConfig
+from .rhvae_sampler_config import RHVAESamplerConfig
 
 
 class RHVAESampler(BaseSampler):
@@ -31,8 +24,6 @@ class RHVAESampler(BaseSampler):
 
         BaseSampler.__init__(self, model=model, sampler_config=sampler_config)
 
-        self.sampler_config = sampler_config
-
         self.model.M_tens = self.model.M_tens.to(self.device)
         self.model.centroids_tens = self.model.centroids_tens.to(self.device)
 
@@ -46,100 +37,64 @@ class RHVAESampler(BaseSampler):
         self.log_pi = RHVAESampler.log_sqrt_det_G_inv
         self.grad_func = RHVAESampler.grad_log_prop
 
-    def sample(self, samples_number):
-        """
-        HMC sampling with a RHVAE.
-
-        The data is saved in the ``output_dir`` (folder passed in the
-        :class:`~pythae.models.base.base_config.BaseSamplerConfig` instance) in a folder named
-        ``generation_YYYY-MM-DD_hh-mm-ss``. If ``output_dir`` is None, a folder named
-        ``dummy_output_dir`` is created in this folder.
+    def sample(
+        self,
+        num_samples: int=1,
+        batch_size: int = 500,
+        output_dir:str=None,
+        return_gen: bool=True,
+        save_sampler_config: bool=False
+     ) -> torch.Tensor:
+        """Main sampling function of the sampler.
 
         Args:
             num_samples (int): The number of samples to generate
+            batch_size (int): The batch size to use during sampling
+            output_dir (str): The directory where the images will be saved. If does not exist the 
+                folder is created. If None: the images are not saved. Defaults: None.
+            return_gen (bool): Whether the sampler should directly return a tensor of generated 
+                data. Default: True.
+            save_sampler_config (bool): Whether to save the sampler config. It is saved in 
+                output_dir
+        
+        Returns:
+            ~torch.Tensor: The generated images
         """
 
-        assert samples_number > 0, "Provide a number of samples > 0"
+        full_batch_nbr = int(num_samples / batch_size)
+        last_batch_samples_nbr = num_samples % batch_size
 
-        self._sampling_signature = (
-            str(datetime.datetime.now())[0:19].replace(" ", "_").replace(":", "-")
-        )
-
-        sampling_dir = os.path.join(
-            self.sampler_config.output_dir, f"generation_{self._sampling_signature}"
-        )
-
-        if not os.path.exists(sampling_dir):
-            os.makedirs(sampling_dir)
-            logger.info(
-                f"Created {sampling_dir}. "
-                "Generated data and sampler config will be saved here.\n"
-            )
-
-        full_batch_nbr = int(samples_number / self.sampler_config.batch_size)
-        last_batch_samples_nbr = samples_number % self.sampler_config.batch_size
-
-        generated_data = []
-
-        file_count = 0
-        data_count = 0
-
-        logger.info("Generation successfully launched !\n")
+        x_gen_list = []
 
         for i in range(full_batch_nbr):
 
-            samples = self.hmc_sampling(self.batch_size)
+            samples = self.hmc_sampling(batch_size)
             x_gen = self.model.decoder(z=samples).detach()
-            assert len(x_gen.shape) == 2
-            generated_data.append(x_gen)
-            data_count += self.batch_size
 
-            while data_count >= self.samples_per_save:
-                self.save_data_batch(
-                    data=torch.cat(generated_data)[: self.samples_per_save],
-                    dir_path=sampling_dir,
-                    number_of_samples=self.samples_per_save,
-                    batch_idx=file_count,
-                )
+            if output_dir is not None:
+                for j in range(batch_size):
+                    self.save_img(x_gen[j], output_dir, '%08d.png' % int(batch_size*i + j))
 
-                file_count += 1
-                data_count -= self.samples_per_save
-                generated_data = list(
-                    torch.cat(generated_data)[self.samples_per_save :].unsqueeze(0)
-                )
+            x_gen_list.append(x_gen)
 
         if last_batch_samples_nbr > 0:
             samples = self.hmc_sampling(last_batch_samples_nbr)
             x_gen = self.model.decoder(z=samples).detach()
-            generated_data.append(x_gen)
 
-            data_count += last_batch_samples_nbr
+            if output_dir is not None:
+                for j in range(last_batch_samples_nbr):
+                    self.save_img(
+                        x_gen[j], output_dir, '%08d.png' % int(batch_size*full_batch_nbr + j))
 
-            while data_count >= self.samples_per_save:
-                self.save_data_batch(
-                    data=torch.cat(generated_data)[: self.samples_per_save],
-                    dir_path=sampling_dir,
-                    number_of_samples=self.samples_per_save,
-                    batch_idx=file_count,
-                )
+            x_gen_list.append(x_gen)
 
-                file_count += 1
-                data_count -= self.samples_per_save
-                generated_data = list(
-                    torch.cat(generated_data)[self.samples_per_save :].unsqueeze(0)
-                )
+        if save_sampler_config:
+            self.save(output_dir)
 
-        if data_count > 0:
-            self.save_data_batch(
-                data=torch.cat(generated_data),
-                dir_path=sampling_dir,
-                number_of_samples=data_count,
-                batch_idx=file_count,
-            )
+        if return_gen:
+            return torch.cat(x_gen_list, dim=0)
 
-        self.save(sampling_dir)
-
-    def hmc_sampling(self, n_samples):
+    def hmc_sampling(self, n_samples: int):
 
         with torch.no_grad():
 

@@ -4,8 +4,8 @@ import numpy as np
 import pytest
 import torch
 
-from pythae.models import AE, AEConfig, VAE, VAEConfig
-from pythae.samplers import NormalSampler, NormalSamplerConfig
+from pythae.models import RHVAE, RHVAEConfig
+from pythae.samplers import RHVAESampler, RHVAESamplerConfig
 
 PATH = os.path.dirname(os.path.abspath(__file__))
 
@@ -18,20 +18,45 @@ def dummy_data():
 
 @pytest.fixture(
     params=[
-        AE(AEConfig(input_dim=(1, 28, 28))),
-        VAE(VAEConfig(input_dim=(1, 28, 28)))
+        RHVAE(RHVAEConfig(input_dim=(1, 28, 28), latent_dim=3)),
+        RHVAE(RHVAEConfig(input_dim=(1, 28, 28), latent_dim=2))
     ]
 )
 def model(request):
     return request.param
 
 
-@pytest.fixture()
-def sampler(model):
-    return NormalSampler(
-        model=model,
-        sampler_config=NormalSamplerConfig(
+@pytest.fixture(
+    params=[
+        RHVAESamplerConfig(
+            n_lf=1,
+            mcmc_steps_nbr=2,
+            eps_lf=0.00001
         ),
+        RHVAESamplerConfig(
+            n_lf=3,
+            mcmc_steps_nbr=2,
+            eps_lf=0.001
+        ),
+        RHVAESamplerConfig(
+            n_lf=3,
+            mcmc_steps_nbr=2,
+            beta_zero=0.1
+        ),
+    ]
+)
+def sampler_config(request):
+    return request.param
+
+@pytest.fixture()
+def sampler(model, sampler_config):
+
+    # simulates learned metric
+    model.centroids_tens = torch.randn(20, model.latent_dim)
+    model.M_tens = torch.randn(20, model.latent_dim, model.latent_dim)
+    return RHVAESampler(
+        model=model,
+        sampler_config=sampler_config
     )
 
 @pytest.fixture(
@@ -45,9 +70,9 @@ def num_sample_and_batch_size(request):
     return request.param
 
 
-class Test_NormalSampler_saving:
+class Test_RHVAESampler_saving:
     def test_save_config(self, tmpdir, sampler):
-
+    
         tmpdir.mkdir("dummy_folder")
         dir_path = os.path.join(tmpdir, "dummy_folder")
 
@@ -57,12 +82,12 @@ class Test_NormalSampler_saving:
 
         assert os.path.isfile(sampler_config_file)
 
-        generation_config_rec = NormalSamplerConfig.from_json_file(sampler_config_file)
+        generation_config_rec = RHVAESamplerConfig.from_json_file(sampler_config_file)
 
         assert generation_config_rec.__dict__ == sampler.sampler_config.__dict__
 
 
-class Test_NormalSampler_Sampling:
+class Test_RHVAESampler_Sampling:
 
     def test_return_sampling(self, model, sampler, num_sample_and_batch_size):
 

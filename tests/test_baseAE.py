@@ -78,7 +78,7 @@ class Test_Model_Saving:
     def test_default_model_saving(self, tmpdir, model_config_with_input_dim):
 
         tmpdir.mkdir("dummy_folder")
-        dir_path = dir_path = os.path.join(tmpdir, "dummy_folder")
+        dir_path = os.path.join(tmpdir, "dummy_folder")
 
         model = BaseAE(model_config_with_input_dim)
 

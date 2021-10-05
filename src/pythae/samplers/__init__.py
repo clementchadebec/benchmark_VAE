@@ -11,11 +11,14 @@ in which are located 4 modules:
 """
 
 from .base import BaseSampler, BaseSamplerConfig
-from .normal_sampling import NormalSampler, NormalSampler_Config
+from .normal_sampling import NormalSampler, NormalSamplerConfig
+from .manifold_sampler import RHVAESampler, RHVAESamplerConfig
 
 __all__ = [
     "BaseSampler",
     "BaseSamplerConfig",
-    "NormalSampler"
-    "NormalSampler_Config"
+    "NormalSampler",
+    "NormalSamplerConfig",
+    "RHVAESampler",
+    "RHVAESamplerConfig"
 ]

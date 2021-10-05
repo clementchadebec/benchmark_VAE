@@ -24,7 +24,8 @@ class NormalSampler(BaseSampler):
         num_samples: int=1,
         batch_size: int = 500,
         output_dir:str=None,
-        return_gen: bool=True
+        return_gen: bool=True,
+        save_sampler_config: bool=False
      ) -> torch.Tensor:
         """Main sampling function of the sampler.
 
@@ -35,6 +36,8 @@ class NormalSampler(BaseSampler):
                 folder is created. If None: the images are not saved. Defaults: None.
             return_gen (bool): Whether the sampler should directly return a tensor of generated 
                 data. Default: True.
+            save_sampler_config (bool): Whether to save the sampler config. It is saved in 
+                output_dir
         
         Returns:
             ~torch.Tensor: The generated images
@@ -46,7 +49,7 @@ class NormalSampler(BaseSampler):
 
         for i in range(full_batch_nbr):
             z = torch.randn(batch_size, self.model.latent_dim).to(self.device)
-            x_gen = self.model.decoder(z)
+            x_gen = self.model.decoder(z).detach()
 
             if output_dir is not None:
                 for j in range(batch_size):
@@ -66,6 +69,9 @@ class NormalSampler(BaseSampler):
 
 
             x_gen_list.append(x_gen)
+
+        if save_sampler_config:
+            self.save(output_dir)
 
         if return_gen:
             return torch.cat(x_gen_list, dim=0)
