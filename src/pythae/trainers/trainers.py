@@ -89,9 +89,6 @@ class Trainer:
 
         self.device = device
 
-        # set early stopping flags
-        self._set_earlystopping_flags(train_dataset, eval_dataset, training_config)
-
         # Define the loaders
         train_loader = self.get_train_dataloader(train_dataset)
 
@@ -99,6 +96,8 @@ class Trainer:
             eval_loader = self.get_eval_dataloader(eval_dataset)
 
         else:
+            logger.info('! No eval dataset provided ! -> keeping best model on train.\n')
+            self.training_config.keep_best_on_train = True
             eval_loader = None
 
         self.train_loader = train_loader
@@ -146,23 +145,6 @@ class Trainer:
                 "input data.\n"
                 f"Exception raised: {type(e)} with message: " + str(e)
             ) from e
-
-    #
-    def _set_earlystopping_flags(self, train_dataset, eval_dataset, training_config):
-
-        # Initialize early_stopping flags
-        self.make_eval_early_stopping = False
-        self.make_train_early_stopping = False
-
-        if training_config.train_early_stopping is not None:
-            self.make_train_early_stopping = True
-
-        # Check if eval_dataset is provided
-        if eval_dataset is not None and training_config.eval_early_stopping is not None:
-            self.make_eval_early_stopping = True
-
-            # By default we make the early stopping on evaluation dataset
-            self.make_train_early_stopping = False
 
     def _set_optimizer_on_device(self, optim, device):
         for param in optim.state.values():
@@ -271,64 +253,27 @@ class Trainer:
         best_train_loss = 1e10
         best_eval_loss = 1e10
 
-        epoch_es_train = 0
-        epoch_es_eval = 0
-
-        for epoch in range(1, self.training_config.max_epochs):
+        for epoch in range(1, self.training_config.num_epochs):
 
             epoch_train_loss = self.train_step()
 
             if self.eval_dataset is not None:
                 epoch_eval_loss = self.eval_step()
 
-            # early stopping
-            if self.make_eval_early_stopping:
+            else:
+                epoch_eval_loss = best_eval_loss
 
-                if epoch_eval_loss < best_eval_loss:
-                    epoch_es_eval = 0
-                    best_eval_loss = epoch_eval_loss
-
-                else:
-                    epoch_es_eval += 1
-
-                    if (
-                        epoch_es_eval >= self.training_config.eval_early_stopping
-                        and log_verbose
-                    ):
-                        logger.info(
-                            f"Training ended at epoch {epoch}! "
-                            f" Eval loss did not improve for {epoch_es_eval} epochs."
-                        )
-                        file_logger.info(
-                            f"Training ended at epoch {epoch}! "
-                            f" Eval loss did not improve for {epoch_es_eval} epochs."
-                        )
-
-                        break
-
-            elif self.make_train_early_stopping:
-
-                if epoch_train_loss < best_train_loss:
-                    epoch_es_train = 0
-                    best_train_loss = epoch_train_loss
-
-                else:
-                    epoch_es_train += 1
-
-                    if (
-                        epoch_es_train >= self.training_config.train_early_stopping
-                        and log_verbose
-                    ):
-                        logger.info(
-                            f"Training ended at epoch {epoch}! "
-                            f" Train loss did not improve for {epoch_es_train} epochs."
-                        )
-                        file_logger.info(
-                            f"Training ended at epoch {epoch}! "
-                            f" Train loss did not improve for {epoch_es_train} epochs."
-                        )
-
-                        break
+            if epoch_eval_loss < best_eval_loss and not self.training_config.keep_best_on_train:
+                best_model_epoch = epoch
+                best_eval_loss = epoch_eval_loss
+                best_model = deepcopy(self.model)
+                self._best_model = best_model
+            
+            elif epoch_train_loss < best_train_loss and self.training_config.keep_best_on_train:
+                best_model_epoch = epoch
+                best_train_loss = epoch_train_loss
+                best_model = deepcopy(self.model)
+                self._best_model = best_model
 
             # save checkpoints
             if (
@@ -343,47 +288,28 @@ class Trainer:
 
             if log_verbose and epoch % 10 == 0:
                 if self.eval_dataset is not None:
-                    if self.make_eval_early_stopping:
-                        file_logger.info(
-                            f"Epoch {epoch} / {self.training_config.max_epochs}\n"
-                            f"- Current Train loss: {epoch_train_loss:.2f}\n"
-                            f"- Current Eval loss: {epoch_eval_loss:.2f}\n"
-                            f"- Eval Early Stopping: {epoch_es_eval}/{self.training_config.eval_early_stopping}"
-                            f" (Best: {best_eval_loss:.2f})\n"
-                        )
-                    elif self.make_train_early_stopping:
-                        file_logger.info(
-                            f"Epoch {epoch} / {self.training_config.max_epochs}\n"
-                            f"- Current Train loss: {epoch_train_loss:.2f}\n"
-                            f"- Current Eval loss: {epoch_eval_loss:.2f}\n"
-                            f"- Train Early Stopping: {epoch_es_train}/{self.training_config.train_early_stopping}"
-                            f" (Best: {best_train_loss:.2f})\n"
-                        )
+                    logger.info(
+                        '----------------------------------------------------------------')
+                    logger.info(
+                        f'Epoch {epoch}: Train loss: {np.round(train_loss, 10)}')
+                    logger.info(
+                        f'Epoch {epoch}: Eval loss: {np.round(val_loss, 10)}')
+                    logger.info(
+                        '----------------------------------------------------------------')
 
-                    else:
-                        file_logger.info(
-                            f"Epoch {epoch} / {self.training_config.max_epochs}\n"
-                            f"- Current Train loss: {epoch_train_loss:.2f}\n"
-                            f"- Current Eval loss: {epoch_eval_loss:.2f}\n"
-                        )
+                   
                 else:
-                    if self.make_train_early_stopping:
-                        file_logger.info(
-                            f"Epoch {epoch} / {self.training_config.max_epochs}\n"
-                            f"- Current Train loss: {epoch_train_loss:.2f}\n"
-                            f"- Train Early Stopping: {epoch_es_train}/{self.training_config.train_early_stopping}"
-                            f" (Best: {best_train_loss:.2f})\n"
-                        )
+                    logger.info(
+                        '----------------------------------------------------------------')
+                    logger.info(
+                        f'Epoch {epoch}: Train loss: {np.round(train_loss, 10)}')
+                    logger.info(
+                        '----------------------------------------------------------------')
 
-                    else:
-                        file_logger.info(
-                            f"Epoch {epoch} / {self.training_config.max_epochs}\n"
-                            f"- Current Train loss: {epoch_train_loss:.2f}\n"
-                        )
 
         final_dir = os.path.join(training_dir, "final_model")
 
-        self.save_model(dir_path=final_dir)
+        self.save_model(best_model, dir_path=final_dir)
         logger.info("----------------------------------")
         logger.info("Training ended!")
         logger.info(f"Saved final model in {final_dir}")
@@ -446,10 +372,11 @@ class Trainer:
 
         return epoch_loss
 
-    def save_model(self, dir_path):
+    def save_model(self, model: BaseAE, dir_path: str):
         """This method saves the final model along with the config files
 
         Args:
+            model (BaseAE): The model to be saved
             dir_path (str): The folder where the model and config files should be saved
         """
 
@@ -457,7 +384,7 @@ class Trainer:
             os.makedirs(dir_path)
 
         # save model
-        self.model.save(dir_path)
+        model.save(dir_path)
 
         # save training config
         self.training_config.save_json(dir_path, "training_config")

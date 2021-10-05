@@ -10,6 +10,7 @@ from pythae.models.base.base_utils import ModelOuput
 from pythae.models import VAE, VAEConfig
 
 from pythae.trainers.trainers import Trainer, TrainingConfig
+from pythae.pipelines import TrainingPipeline
 from tests.data.custom_architectures import (
     Decoder_AE_Conv,
     Encoder_VAE_Conv,
@@ -308,7 +309,7 @@ class Test_VAE_Training:
         return torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))
 
     @pytest.fixture(params=[
-            TrainingConfig(max_epochs=3, steps_saving=2, learning_rate=1e-5),
+            TrainingConfig(num_epochs=3, steps_saving=2, learning_rate=1e-5),
         ])
     def training_configs(self, tmpdir, request):
         tmpdir.mkdir("dummy_folder")
@@ -552,7 +553,7 @@ class Test_VAE_Training:
 
         trainer.train()
 
-        training_dir = os.path.join(dir_path, f"training_{trainer._training_signature}")
+        training_dir = os.path.join(dir_path, f"VAE_training_{trainer._training_signature}")
         assert os.path.isdir(training_dir)
 
         checkpoint_dir = os.path.join(
@@ -608,9 +609,9 @@ class Test_VAE_Training:
 
         trainer.train()
 
-        model = deepcopy(trainer.model)
+        model = deepcopy(trainer._best_model)
 
-        training_dir = os.path.join(dir_path, f"training_{trainer._training_signature}")
+        training_dir = os.path.join(dir_path, f"VAE_training_{trainer._training_signature}")
         assert os.path.isdir(training_dir)
 
         final_dir = os.path.join(training_dir, f"final_model")
@@ -636,6 +637,68 @@ class Test_VAE_Training:
         else:
             assert not "encoder.pkl" in files_list
 
+
+        # check reload full model
+        model_rec = VAE.load_from_folder(os.path.join(final_dir))
+
+        assert all(
+            [
+                torch.equal(
+                    model_rec.state_dict()[key].cpu(), model.state_dict()[key].cpu()
+                )
+                for key in model.state_dict().keys()
+            ]
+        )
+
+        assert type(model_rec.encoder.cpu()) == type(model.encoder.cpu())
+        assert type(model_rec.decoder.cpu()) == type(model.decoder.cpu())
+
+    def test_vae_training_pipeline(
+        self, tmpdir, vae, train_dataset, training_configs, optimizers
+    ):
+
+        dir_path = training_configs.output_dir
+
+        # build pipeline
+        pipeline = TrainingPipeline(
+            model=vae,
+            optimizer=optimizers,
+            training_config=training_configs
+        )
+
+        # Launch Pipeline
+        pipeline(
+            train_data=train_dataset.data, # gives tensor to pipeline
+            eval_data=train_dataset.data # gives tensor to pipeline
+        )
+
+        model = deepcopy(pipeline.trainer._best_model)
+
+        training_dir = os.path.join(dir_path, f"VAE_training_{pipeline.trainer._training_signature}")
+        assert os.path.isdir(training_dir)
+
+        final_dir = os.path.join(training_dir, f"final_model")
+        assert os.path.isdir(final_dir)
+
+        files_list = os.listdir(final_dir)
+
+        assert set(["model.pt", "model_config.json", "training_config.json"]).issubset(
+            set(files_list)
+        )
+
+        # check pickled custom decoder
+        if not vae.model_config.uses_default_decoder:
+            assert "decoder.pkl" in files_list
+
+        else:
+            assert not "decoder.pkl" in files_list
+
+        # check pickled custom encoder
+        if not vae.model_config.uses_default_encoder:
+            assert "encoder.pkl" in files_list
+
+        else:
+            assert not "encoder.pkl" in files_list
 
         # check reload full model
         model_rec = VAE.load_from_folder(os.path.join(final_dir))

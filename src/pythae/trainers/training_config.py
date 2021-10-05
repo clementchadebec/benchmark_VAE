@@ -20,17 +20,13 @@ class TrainingConfig(BaseConfig):
 
         batch_size (int): The number of training samples per batch. Default 50
 
-        max_epochs (int): The maximal number of epochs for training. Default: 10000
+        num_epochs (int): The maximal number of epochs for training. Default: 10000
 
         learning_rate (int): The learning rate applied to the `Optimizer`. Default: 1e-3
 
-        train_early_stopping (int): The maximal number of epochs authorized without train loss
-            improvement. If None no early stopping is performed. Default: 50
-
-        eval_early_stopping (int): The maximal number of epochs authorized without eval loss
-            improvement. If None no early stopping is performed. Default: None
-
         steps_saving (int): A model checkpoint will be saved every `steps_saving` epoch
+
+        keep_best_on_train (bool): Whether to keep the best model on the train set. Default: False.
 
         seed (int): The random seed for reprodicibility
 
@@ -41,11 +37,10 @@ class TrainingConfig(BaseConfig):
 
     output_dir: str = None
     batch_size: int = 50
-    max_epochs: int = 10000
+    num_epochs: int = 100
     learning_rate: float = 1e-4
-    train_early_stopping: Union[int, None] = 50
-    eval_early_stopping: Union[int, None] = None
     steps_saving: Union[int, None] = None
+    keep_best_on_train: bool = False
     seed: int = 8
     no_cuda: bool = False
     verbose: bool = True

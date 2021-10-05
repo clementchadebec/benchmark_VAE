@@ -20,8 +20,8 @@
 
 # pythae 
 
-This library implements some of the most common Variational Autoencoder. In particular it provides 
-the possibility to perform benchmark experiments by training the models with the same autoencoding 
+This library implements some of the most common (Variational) Autoencoder models. In particular it 
+provides the possibility to perform benchmark experiments by training the models with the same autoencoding 
 neural architecture. The feature make your own autoencoder allows you to train any of these models 
 with your own data and Encoder and Decoder neural networks.  
 
@@ -45,36 +45,32 @@ $ cd pythae
 $ pip install .
 ``` 
 
-# Models
-| Models / samplers       | Standard Gaussian | Mixture of Gaussian | Manifold Sampler |                 Paper                |      Official Implementation      |
-|-------------------------|:-----------------:|:-------------------:|:----------------:|:------------------------------------:|:---------------------------------:|
-| Autoencoder             |         X         |          X          |                  |                                      |                                   |
-| Variational Autoencoder |         X         |          X          |                  |  https://arxiv.org/pdf/1312.6114.pdf |                                   |
-| Wasserstein Autoencoder |         X         |          X          |                  | https://arxiv.org/pdf/1711.01558.pdf | https://github.com/tolstikhin/wae |
-| VAMP Autoencoder        |         X         |          X          |                  |                                      |                                   |
-|                         |                   |                     |                  |                                      |                                   |
-|                         |                   |                     |                  |                                      |                                   |
-|                         |                   |                     |                  |                                      |                                   |
-
-## Using pythae's Pipelines
-
-pythae provides two pipelines that may be used to either train a model on your own data or generate new data with a pretrained model.
+## Available Models
 
 
-**note**: These pipelines are independent of the choice of the model and sampler. Hence, they can be used even if you want to access to more advanced features such as defining your own autoencoding architecture. 
 
-### Launching a model training
-
+|               Models               |                                                                                    Training example                                                                                    |                     Paper                    |                           Official Implementation                          |
+|:----------------------------------:|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|:--------------------------------------------:|:--------------------------------------------------------------------------:|
+| Autoencoder (AE)                   | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/pythae/blob/main/examples/getting_started.ipynb) |                                              |                                                                            |
+| Variational Autoencoder (VAE)      | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/pythae/blob/main/examples/getting_started.ipynb) | [link](https://arxiv.org/pdf/1312.6114.pdf)  |                                                                            |
+| Wasserstein Autoencoder (WAE)      | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/pythae/blob/main/examples/getting_started.ipynb) | [link](https://arxiv.org/pdf/1711.01558.pdf) | [link](https://github.com/tolstikhin/wae)                                  |
+| VAMP Autoencoder (VAMP)            | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/pythae/blob/main/examples/getting_started.ipynb) | [link](https://arxiv.org/pdf/1705.07120.pdf) | [link](https://github.com/jmtomczak/vae_vampprior)                         |
+| Hamiltonian VAE (HVAE)             | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/pythae/blob/main/examples/getting_started.ipynb) | [link](https://arxiv.org/pdf/1805.11328.pdf) | [link](https://github.com/anthonycaterini/hvae-nips)                       |
+| Riemannian Hamiltonian VAE (RHVAE) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/pythae/blob/main/examples/getting_started.ipynb) | [link](https://arxiv.org/pdf/2010.11518.pdf) | [link](https://github.com/clementchadebec/Data_Augmentation_with_VAE-DALI) |
+## Launching a model training
 
 To launch a model training, you only need to call a `TrainingPipeline` instance. 
-In its most basic version the `TrainingPipeline` can be built without any arguments.
-This will by default train a `RHVAE` model with default autoencoding architecture and parameters.
 
 ```python
 >>> from pythae.pipelines import TrainingPipeline
->>> pipeline = TrainingPipeline()
->>> pipeline(train_data=dataset_to_augment)
+>>> from pythae.models import VAE, VAEConfig
+>>> training_config = TrainingConfig(
+...    	output_dir='my_model',
+...		train_early_stopping=50,
+...		learning_rate=1e-3,
+...		batch_size=200
 ```
+
 
 where ``dataset_to_augment`` is either a `numpy.ndarray`, `torch.Tensor` or a path to a folder where each file is a data (handled data format are ``.pt``, ``.nii``, ``.nii.gz``, ``.bmp``, ``.jpg``, ``.jpeg``, ``.png``). 
 
