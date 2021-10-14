@@ -19,6 +19,7 @@ from .base import BaseAE, BaseAEConfig
 from .ae import AE, AEConfig
 from .wae_mmd import WAE_MMD, WAE_MMD_Config
 from .vae import VAE, VAEConfig
+from .beta_vae import BetaVAE, BetaVAEConfig
 from .vamp import VAMP, VAMPConfig
 from .hvae import HVAE, HVAEConfig
 from .rhvae import RHVAE, RHVAEConfig
@@ -34,6 +35,8 @@ __all__ = [
     "WAE_MMD_Config",
     "VAE",
     "VAEConfig",
+    "BetaVAE",
+    "BetaVAEConfig",
     "VAMP",
     "VAMPConfig",
     "HVAE",
