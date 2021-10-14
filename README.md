@@ -71,20 +71,20 @@ To launch a model training, you only need to call a `TrainingPipeline` instance.
 
 >>> # Set up the training configuration
 >>> my_training_config = TrainingConfig(
-...		output_dir='my_model',
-...		num_epochs=50,
-...		learning_rate=1e-3,
-...		batch_size=200,
-...		steps_saving=None
+...	output_dir='my_model',
+...	num_epochs=50,
+...	learning_rate=1e-3,
+...	batch_size=200,
+...	steps_saving=None
 ... )
 >>> # Set up the model configuration 
 >>> my_vae_config = model_config = VAEConfig(
-...		input_dim=(1, 28, 28),
-...		latent_dim=10
+...	input_dim=(1, 28, 28),
+...	latent_dim=10
 ... )
 >>> # Build the model
 >>> my_vae_model = VAE(
-...		model_config=my_vae_config
+...	model_config=my_vae_config
 ... )
 >>> # Build the Pipeline
 >>> pipeline = TrainingPipeline(
@@ -93,8 +93,8 @@ To launch a model training, you only need to call a `TrainingPipeline` instance.
 ...	)
 >>> # Launch the Pipeline
 >>> pipeline(
-...		train_data=your_train_data, # must be torch.Tensor or np.array 
-...		eval_data=your_eval_data # must be torch.Tensor or np.array
+...	train_data=your_train_data, # must be torch.Tensor or np.array 
+...	eval_data=your_eval_data # must be torch.Tensor or np.array
 ...	)
 ```
 
@@ -111,18 +111,18 @@ Several samplers are available for each models please check here to see which on
 >>> from pythae.samplers import NormalSampler
 >>> # Retrieve the trained model
 >>> my_trained_vae = VAE.load_from_folder(
-...		'path/to/your/trained/model'
+...	'path/to/your/trained/model'
 ...	)
 >>> # Define your sampler
 >>> my_samper = NormalSampler(
-...		model=my_trained_vae
+...	model=my_trained_vae
 ...	)
 >>> # Generate samples
 >>> gen_data = normal_samper.sample(
-...		num_samples=50,
-...		batch_size=10,
-...		output_dir=None,
-...		return_gen=True
+...	num_samples=50,
+...	batch_size=10,
+...	output_dir=None,
+...	return_gen=True
 ...	)
 ```
 If you set `output_dir` to a specific path the generated images will be saved as `.png` files named `00000000.png`, `00000001.png` ...
@@ -169,15 +169,15 @@ And now build the model
 >>> from pythae.models import WAE_MMD, WAE_MMD_Config
 >>> # Set up the model configuration 
 >>> my_wae_config = model_config = WAE_MMD_Config(
-...		input_dim=(1, 28, 28),
-...		latent_dim=10
+...	input_dim=(1, 28, 28),
+...	latent_dim=10
 ... )
 ...
 >>> # Build the model
 >>> my_wae_model = WAE_MMD(
-...		model_config=my_wae_config,
-...		encoder=my_encoder, # pass your encoder as argument when building the model
-...		decoder=my_decoder # pass your decoder as argument when building the model
+...	model_config=my_wae_config,
+...	encoder=my_encoder, # pass your encoder as argument when building the model
+...	decoder=my_decoder # pass your decoder as argument when building the model
 ... )
 ```
 
@@ -186,7 +186,7 @@ You may also find predefined neural network architecture for the most common dat
 
 ```python
 >>> for pythae.models.nn.benchmark.mnist import (
-...		Encoder_AE_MNIST, # For AE based model (only return embeddings)
+...	Encoder_AE_MNIST, # For AE based model (only return embeddings)
 ... 	Encoder_VAE_MNIST, # For VAE based model (return embeddings and log_covariances)
 ... 	Decoder_AE_MNIST
 )
