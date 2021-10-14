@@ -5,7 +5,7 @@ from ...models import VAEConfig
 
 @dataclass
 class RHVAEConfig(VAEConfig):
-    r"""Riemannian Hamiltonian Auto Encoder config class
+    r"""Riemannian Hamiltonian Variatoinal Auto Encoder config class
 
     Parameters:
         latent_dim (int): The latent dimension used for the latent space. Default: 10

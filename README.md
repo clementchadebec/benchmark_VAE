@@ -22,7 +22,7 @@
 
 This library implements some of the most common (Variational) Autoencoder models. In particular it 
 provides the possibility to perform benchmark experiments by training the models with the same autoencoding 
-neural architecture. The feature make your own autoencoder allows you to train any of these models 
+neural architecture. The feature *make your own autoencoder* allows you to train any of these models 
 with your own data and Encoder and Decoder neural networks.  
 
 
@@ -47,6 +47,7 @@ $ pip install .
 
 ## Available Models
 
+Below is the list of the models currently implemented in the library.
 
 
 |               Models               |                                                                                    Training example                                                                                    |                     Paper                    |                           Official Implementation                          |
@@ -57,6 +58,8 @@ $ pip install .
 | VAMP Autoencoder (VAMP)            | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/pythae/blob/main/examples/getting_started.ipynb) | [link](https://arxiv.org/pdf/1705.07120.pdf) | [link](https://github.com/jmtomczak/vae_vampprior)                         |
 | Hamiltonian VAE (HVAE)             | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/pythae/blob/main/examples/getting_started.ipynb) | [link](https://arxiv.org/pdf/1805.11328.pdf) | [link](https://github.com/anthonycaterini/hvae-nips)                       |
 | Riemannian Hamiltonian VAE (RHVAE) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/pythae/blob/main/examples/getting_started.ipynb) | [link](https://arxiv.org/pdf/2010.11518.pdf) | [link](https://github.com/clementchadebec/Data_Augmentation_with_VAE-DALI) |
+
+
 ## Launching a model training
 
 To launch a model training, you only need to call a `TrainingPipeline` instance. 
@@ -64,128 +67,118 @@ To launch a model training, you only need to call a `TrainingPipeline` instance.
 ```python
 >>> from pythae.pipelines import TrainingPipeline
 >>> from pythae.models import VAE, VAEConfig
->>> training_config = TrainingConfig(
+
+>>> # Set up the training configuration
+>>> my_training_config = TrainingConfig(
 ...    	output_dir='my_model',
-...		train_early_stopping=50,
+...		num_epochs=50,
 ...		learning_rate=1e-3,
-...		batch_size=200
+...		batch_size=200,
+...		steps_saving=None
+... )
+>>> # Set up the model configuration 
+>>> my_vae_config = model_config = VAEConfig(
+...		input_dim=(1, 28, 28),
+...		latent_dim=10
+... )
+>>> # Build the model
+>>> my_vae_model = VAE(
+...		model_config=my_vae_config
+... )
+>>> # Build the Pipeline
+>>> pipeline = TrainingPipeline(
+... 	training_config=my_training_config,
+... 	model=my_vae_model
+...	)
+>>> # Launch the Pipeline
+>>> pipeline(
+...	    train_data=your_train_data, # must be torch.Tensor or np.array 
+...	    eval_data=your_eval_data # must be torch.Tensor or np.array
+...	)
 ```
 
+At the end of training, the best model weights, model configuration and training configuration are stored in a `final_model` folder available in  `my_model/MODEL_NAME_training_YYYY-MM-DD_hh-mm-ss` (with `my_model` being the `output_dir` argument of the `TrainingConfig`). If you further set the `steps_saving` argument to a a certain value, folders named `checkpoint_epoch_k` containing the best model weights, configuration and training configuration at epoch *k* will also appear in `my_model/MODEL_NAME_training_YYYY-MM-DD_hh-mm-ss`.
 
-where ``dataset_to_augment`` is either a `numpy.ndarray`, `torch.Tensor` or a path to a folder where each file is a data (handled data format are ``.pt``, ``.nii``, ``.nii.gz``, ``.bmp``, ``.jpg``, ``.jpeg``, ``.png``). 
+## Launching data generation
 
-More generally, you can instantiate your own model and train it with the `TrainingPipeline`. For instance, if you want to instantiate a basic `RHVAE` run:
-
+To launch the data generation process from a trained model, you only need to build you sampler and retrieve your 
+Several samplers are available for each models please check here to see which ones apply to your vae.
+, run the following.
 
 ```python
->>> from pythae.models import RHVAE
->>> from pythae.models.rhvae import RHVAEConfig
->>> model_config = RHVAEConfig(
-...    input_dim=int(intput_dim)
-... ) # input_dim is the shape of a flatten input data
-...   # needed if you do not provided your own architectures
->>> model = RHVAE(model_config)
+>>> from pythae.models import VAE
+>>> from pythae.samplers import NormalSampler
+>>> # Retrieve the trained model
+>>> my_trained_vae = VAE.load_from_folder(
+...		'path/to/your/trained/model'
+...	)
+>>> # Define your sampler
+>>> my_samper = NormalSampler(
+...		model=my_trained_vae
+...	)
+>>> # Generate samples
+>>> gen_data = normal_samper.sample(
+...		num_samples=50,
+        batch_size=10,
+        output_dir=None,
+        return_gen=True,
+		return
+...	)
 ```
+If you set `output_dir` to a specific path the generated images will be saved as `.png` files named `00000000.png`, `00000001.png` ...
 
 
-In case you instantiate yourself a model as shown above and you do not provided all the network architectures (encoder, decoder & metric if applicable), the `ModelConfig` instance will expect you to provide the input dimension of your data which equals to ``n_channels x height x width x ...``. pythae's VAE models' networks indeed default to Multi Layer Perceptron neural networks which automatically adapt to the input data shape. 
-
-**note**: In case you have different size of data, pythae will reshape it to the minimum size ``min_n_channels x min_height x min_width x ...``
-
-
-
-Then the `TrainingPipeline` can be launched by running:
+## Define you own Autoencoder architecture
+ 
+Say you want to train a Wassertstein AE with a specific encoder and decoder. Pythae provides you the possibility to define your own neural networks as follows
 
 ```python
->>> from pythae.pipelines import TrainingPipeline
->>> pipe = TrainingPipeline(model=model)
->>> pipe(train_data=dataset_to_augment)
+>>>	from pythae.models.nn import BaseEncoder, BaseDecoder
+>>> from pythae.models.base.base_utils import ModelOuput
+>>>	class My_Encoder(BaseEncoder):
+...		def __init__(self, args=None): # Args is a ModelConfig instance
+...			BaseEncoder.__init__(self)
+...			self.layers = my_nn_layers()
+...		
+...		def forward(self, x:torch.Tensor) -> ModelOuput:
+...			out = self.layers(x)
+...			output = ModelOuput(
+...	            embedding=out # Set the output from the encoder in a ModelOuput instance 
+...			)
+...			return output
+...
+class My_Decoder(BaseEncoder):
+...		def __init__(self, args=None):
+...			BaseEncoder.__init__(self)
+...			self.layers = my_nn_layers()
+...		
+...		def forward(self, x:torch.Tensor) -> ModelOuput:
+...			out = self.layers(x)
+...			output = ModelOuput(
+...	            reconstruction=out # Set the output from the decoder in a ModelOuput instance
+...			)
+...			return output
+...
+>>> my_encoder = My_Encoder()
+>>>, my_decoder = My_Decoder()
 ```
 
-At the end of training, the model weights ``models.pt`` and model config ``model_config.json`` file 
-will be saved in a folder ``outputs/my_model/training_YYYY-MM-DD_hh-mm-ss/final_model``. 
-
-**Important**: For high dimensional data we advice you to provide you own network architectures and potentially adapt the training and model parameters see [documentation](https://pythae.readthedocs.io/en/latest/advanced_use.html) for more details.
-
-
-### Launching data generation
-
-
-To launch the data generation process from a trained model, run the following.
+And now build the model
 
 ```python
->>> from pythae.pipelines import GenerationPipeline
->>> from pythae.models import RHVAE
->>> model = RHVAE.load_from_folder('path/to/your/trained/model') # reload the model
->>> pipe = GenerationPipeline(model=model) # define pipeline
->>> pipe(samples_number=10) # This will generate 10 data points
-```
-
-The generated data is in ``.pt`` files in ``dummy_output_dir/generation_YYYY-MM-DD_hh-mm-ss``. By default, it stores batch data of a maximum of 500 samples.
-
-
-
-### Retrieve generated data
-
-Generated data can then be loaded pretty easily by running
-
-```python
->>> import torch
->>> data = torch.load('path/to/generated_data.pt')
-
-```
-
-## Using the provided scripts
-
-
-pythae provides two scripts allowing you to augment your data directly with commandlines.
-
-
-**note**: To access to the predefined scripts you should first clone the pythae's repository.
-The following scripts are located in [scripts folder](https://github.com/clementchadebec/pythae/tree/main/scripts). For the time being, only `RHVAE` model training and generation is handled by the provided scripts. Models will be added as they are implemented in [pythae.models](https://github.com/clementchadebec/pythae/tree/main/src/pythae/models) 
-
-
-### Launching a model training:
-
-To launch a model training, run 
-
-```
-$ python scripts/training.py --path_to_train_data "path/to/your/data/folder" 
-```
-
-
-The data must be located in ``path/to/your/data/folder`` where each input data is a file. Handled image types are ``.pt``, ``.nii``, ``.nii.gz``, ``.bmp``, ``.jpg``, ``.jpeg``, ``.png``. Depending on the usage, other types will be progressively added.
-
-
-At the end of training, the model weights ``models.pt`` and model config ``model_config.json`` file 
-will be saved in a folder ``outputs/my_model_from_script/training_YYYY-MM-DD_hh-mm-ss/final_model``. 
-
-
-### Launching data generation
-
-
-Then, to launch the data generation process from a trained model, you only need to run 
-
-```
-$ python scripts/generation.py --num_samples 10 --path_to_model_folder 'path/to/your/trained/model/folder' 
-```
-
-
-The generated data is stored in several ``.pt`` files in ``outputs/my_generated_data_from_script/generation_YYYY-MM-DD_hh_mm_ss``. By default, it stores batch data of 500 samples.
-
-
-
-**Important**:  In the simplest configuration, default configurations are used in the scripts. You can easily override as explained in [documentation](https://pythae.readthedocs.io/en/latest/advanced/setting_configs.html). See tutorials for a more in depth example.
-
-
-
-### Retrieve generated data
-
-Generated data can then be loaded pretty easily by running
-
-```python
->>> import torch
->>> data = torch.load('path/to/generated_data.pt')
+>>> from pythae.models import WAE_MMD, WAE_MMD_Config
+>>> # Set up the model configuration 
+>>> my_wae_config = model_config = WAE_MMD_Config(
+...		input_dim=(1, 28, 28),
+...		latent_dim=10
+... )
+...
+>>> # Build the model
+>>> my_wae_model = VAE(
+...		model_config=my_vae_config,
+... 	encoder=my_encoder,# pass your encoder as argument when building the model
+...		decoder=my_decoder # pass your decoder as argument when building the model
+... )
 ```
 
 
@@ -201,35 +194,5 @@ provide tutorials that can be found in [examples folder](https://github.com/clem
 
 ## Dealing with issues
 
-If you are experiencing any issues while running the code or request new features please [open an issue on github](https://github.com/clementchadebec/pythae/issues)
+If you are experiencing any issues while running the code or request new features/models to be implemented please [open an issue on github](https://github.com/clementchadebec/pythae/issues).
 
-
-## Citing
-
-If you use this library please consider citing us:
-
-```bibtex
-@article{chadebec_data_2021,
-	title = {Data {Augmentation} in {High} {Dimensional} {Low} {Sample} {Size} {Setting} {Using} a {Geometry}-{Based} {Variational} {Autoencoder}},
-	copyright = {All rights reserved},
-	journal = {arXiv preprint arXiv:2105.00026},
-  	arxiv = {2105.00026},
-	author = {Chadebec, Clément and Thibeau-Sutre, Elina and Burgos, Ninon and Allassonnière, Stéphanie},
-	year = {2021}
-}
-```
-```bibtex
-@article{chadebec_geometry-aware_2020,
-	title = {Geometry-{Aware} {Hamiltonian} {Variational} {Auto}-{Encoder}},
-	copyright = {All rights reserved},
-	journal = {arXiv preprint arXiv:2010.11518},
-    	arxiv = {2010.11518},
-	author = {Chadebec, Clément and Mantoux, Clément and Allassonnière, Stéphanie},
-	year = {2020}
-}
-
-
-```
-
-### Credits
-Logo: [SaulLu](https://github.com/saullu)

@@ -9,7 +9,7 @@ from pythae.customexception import BadInheritanceError
 from pythae.models.base.base_utils import ModelOuput
 from pythae.models import HVAE, HVAEConfig
 
-from pythae.trainers.trainers import Trainer, TrainingConfig
+from pythae.trainers import BaseTrainer, BaseTrainingConfig
 from pythae.pipelines import TrainingPipeline
 from tests.data.custom_architectures import (
     Decoder_AE_Conv,
@@ -314,7 +314,7 @@ class Test_HVAE_Training:
         return torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))
 
     @pytest.fixture(params=[
-            TrainingConfig(num_epochs=3, steps_saving=2, learning_rate=1e-3),
+            BaseTrainingConfig(num_epochs=3, steps_saving=2, learning_rate=1e-3),
         ])
     def training_configs(self, tmpdir, request):
         tmpdir.mkdir("dummy_folder")
@@ -372,7 +372,7 @@ class Test_HVAE_Training:
     def test_hvae_train_step(
         self, hvae, train_dataset, training_configs, optimizers
     ):
-        trainer = Trainer(
+        trainer = BaseTrainer(
             model=hvae,
             train_dataset=train_dataset,
             training_config=training_configs,
@@ -409,7 +409,7 @@ class Test_HVAE_Training:
     def test_hvae_eval_step(
         self, hvae, train_dataset, training_configs, optimizers
     ):
-        trainer = Trainer(
+        trainer = BaseTrainer(
             model=hvae,
             train_dataset=train_dataset,
             eval_dataset=train_dataset,
@@ -435,7 +435,7 @@ class Test_HVAE_Training:
         self, tmpdir, hvae, train_dataset, training_configs, optimizers
     ):
 
-        trainer = Trainer(
+        trainer = BaseTrainer(
             model=hvae,
             train_dataset=train_dataset,
             eval_dataset=train_dataset,
@@ -464,7 +464,7 @@ class Test_HVAE_Training:
 
         dir_path = training_configs.output_dir
 
-        trainer = Trainer(
+        trainer = BaseTrainer(
             model=hvae,
             train_dataset=train_dataset,
             training_config=training_configs,
@@ -560,7 +560,7 @@ class Test_HVAE_Training:
 
         dir_path = training_configs.output_dir
 
-        trainer = Trainer(
+        trainer = BaseTrainer(
             model=hvae,
             train_dataset=train_dataset,
             training_config=training_configs,
@@ -618,7 +618,7 @@ class Test_HVAE_Training:
 
         dir_path = training_configs.output_dir
 
-        trainer = Trainer(
+        trainer = BaseTrainer(
             model=hvae,
             train_dataset=train_dataset,
             training_config=training_configs,

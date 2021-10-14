@@ -63,7 +63,7 @@ class WAE_MMD(AE):
         x = inputs["data"]
 
         z = self.encoder(x).embedding
-        recon_x = self.decoder(z)
+        recon_x = self.decoder(z)['reconstruction']
 
         z_prior = torch.randn_like(z, device=x.device)
 

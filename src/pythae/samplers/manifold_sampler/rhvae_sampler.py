@@ -69,7 +69,7 @@ class RHVAESampler(BaseSampler):
         for i in range(full_batch_nbr):
 
             samples = self.hmc_sampling(batch_size)
-            x_gen = self.model.decoder(z=samples).detach()
+            x_gen = self.model.decoder(z=samples)['reconstruction'].detach()
 
             if output_dir is not None:
                 for j in range(batch_size):
@@ -79,7 +79,7 @@ class RHVAESampler(BaseSampler):
 
         if last_batch_samples_nbr > 0:
             samples = self.hmc_sampling(last_batch_samples_nbr)
-            x_gen = self.model.decoder(z=samples).detach()
+            x_gen = self.model.decoder(z=samples)['reconstruction'].detach()
 
             if output_dir is not None:
                 for j in range(last_batch_samples_nbr):

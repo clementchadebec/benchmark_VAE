@@ -2,11 +2,11 @@ from typing import Union
 
 from pydantic.dataclasses import dataclass
 
-from pythae.config import BaseConfig
+from ...config import BaseConfig
 
 
 @dataclass
-class TrainingConfig(BaseConfig):
+class BaseTrainingConfig(BaseConfig):
     """
     :class:`~pythae.trainers.training_config.TrainingConfig` is the class in which all the training arguments
     are stored.
@@ -19,19 +19,12 @@ class TrainingConfig(BaseConfig):
             model will be stored. Default: None.
 
         batch_size (int): The number of training samples per batch. Default 50
-
         num_epochs (int): The maximal number of epochs for training. Default: 10000
-
         learning_rate (int): The learning rate applied to the `Optimizer`. Default: 1e-3
-
         steps_saving (int): A model checkpoint will be saved every `steps_saving` epoch
-
         keep_best_on_train (bool): Whether to keep the best model on the train set. Default: False.
-
         seed (int): The random seed for reprodicibility
-
         no_cuda (bool): Disable `cuda` training. Default: False
-
         verbose (bool): Allow verbosity
     """
 

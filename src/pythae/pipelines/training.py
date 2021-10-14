@@ -10,8 +10,7 @@ from ..data.loaders import BaseDataGetter, ImageGetterFromFolder
 from ..data.preprocessors import DataProcessor
 from ..models import RHVAE, BaseAE
 from ..models.rhvae import RHVAEConfig
-from ..trainers import Trainer
-from ..trainers.training_config import TrainingConfig
+from ..trainers import BaseTrainer, BaseTrainingConfig
 
 from .base_pipeline import Pipeline
 
@@ -26,7 +25,7 @@ class TrainingPipeline(Pipeline):
     """
     This Pipeline provides an end to end way to train your VAE model.
     The trained model will be saved in ``output_dir`` stated in the
-    :class:`~pythae.trainers.training_config.TrainingConfig`. A folder
+    :class:`~pythae.trainers.BaseTrainingConfig`. A folder
     ``training_YYYY-MM-DD_hh-mm-ss`` is
     created where checkpoints and final model will be saved. Checkpoints are saved in
     ``checkpoint_epoch_{epoch}`` folder (optimizer and training config
@@ -53,8 +52,8 @@ class TrainingPipeline(Pipeline):
             used to train the model. If None we provide an instance of
             :class:`~torch.optim.Adam` optimizer. Default: None.
 
-        training_config (Optional[TrainingConfig]=None): An instance of
-            :class:`~pythae.trainers.training_config.TrainingConfig` stating the training
+        training_config (Optional[BaseTrainingConfig]=None): An instance of
+            :class:`~pythae.trainers.BaseTrainingConfig` stating the training
             parameters. If None, a default configuration is used.
 
     .. note::
@@ -68,7 +67,7 @@ class TrainingPipeline(Pipeline):
         data_processor: Optional[DataProcessor] = None,
         model: Optional[BaseAE] = None,
         optimizer: Optional[Optimizer] = None,
-        training_config: Optional[TrainingConfig] = None,
+        training_config: Optional[BaseTrainingConfig] = None,
     ):
 
         # model_name = model_name.upper()
@@ -174,7 +173,7 @@ class TrainingPipeline(Pipeline):
         else:
             eval_dataset = None
 
-        trainer = Trainer(
+        trainer = BaseTrainer(
             model=self.model,
             train_dataset=train_dataset,
             eval_dataset=eval_dataset,

@@ -14,13 +14,27 @@ from typing import Optional
 
 class HVAE(VAE):
     r"""
-    This is an implementation of the Hamilronian VAE models proposed in 
+    This is an implementation of the Hamiltonian VAE models proposed in 
     (https://proceedings.neurips.cc/paper/2018/file/3202111cf90e7c816a472aaceb72b0df-Paper.pdf). 
     This models combines Hamiltonian and normalizing flows together to improve the true posterior 
     estimate within the VAE framework.
 
     Args:
-         model_config (HVAEConfig): A model configuration setting the main parameters of the model
+        model_config (HVAEConfig): A model configuration setting the main parameters of the model
+
+        encoder (BaseEncoder): An instance of BaseEncoder (inheriting from `torch.nn.Module` which
+            plays the role of encoder. This argument allows you to use your own neural networks
+            architectures if desired. If None is provided, a simple Multi Layer Preception
+            (https://en.wikipedia.org/wiki/Multilayer_perceptron) is used. Default: None.
+
+        decoder (BaseDecoder): An instance of BaseDecoder (inheriting from `torch.nn.Module` which
+            plays the role of encoder. This argument allows you to use your own neural networks
+            architectures if desired. If None is provided, a simple Multi Layer Preception
+            (https://en.wikipedia.org/wiki/Multilayer_perceptron) is used. Default: None.
+
+    .. note::
+        For high dimensional data we advice you to provide you own network architectures. With the
+        provided MLP you may end up with a ``MemoryError``.
     """
 
     def __init__(
@@ -69,7 +83,7 @@ class HVAE(VAE):
         z = z0
         beta_sqrt_old = self.beta_zero_sqrt
 
-        recon_x = self.decoder(z)
+        recon_x = self.decoder(z)['reconstruction']
 
         for k in range(self.n_lf):
 
@@ -87,7 +101,7 @@ class HVAE(VAE):
             # 2nd leapfrog step
             z = z + self.eps_lf * rho_
 
-            recon_x = self.decoder(z)
+            recon_x = self.decoder(z)['reconstruction']
 
             U = -self._log_p_xz(recon_x, x, z).sum()
             g = grad(U, z, create_graph=True)[0]

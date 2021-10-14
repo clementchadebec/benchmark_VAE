@@ -7,8 +7,7 @@ from torch.optim import SGD, Adadelta, Adagrad, Adam, RMSprop
 
 from pythae.customexception import ModelError
 from pythae.models import BaseAE, BaseAEConfig, AE, AEConfig, RHVAE, RHVAEConfig
-from pythae.trainers.trainers import Trainer
-from pythae.trainers.training_config import TrainingConfig
+from pythae.trainers import BaseTrainer, BaseTrainingConfig
 from tests.data.custom_architectures import *
 
 PATH = os.path.dirname(os.path.abspath(__file__))
@@ -28,15 +27,15 @@ def model_sample():
 def training_config(tmpdir):
     tmpdir.mkdir("dummy_folder")
     dir_path = os.path.join(tmpdir, "dummy_folder")
-    return TrainingConfig(output_dir=dir_path)
+    return BaseTrainingConfig(output_dir=dir_path)
 
 
 class Test_DataLoader:
     @pytest.fixture(
         params=[
-            TrainingConfig(),
-            TrainingConfig(batch_size=100),
-            TrainingConfig(batch_size=10),
+            BaseTrainingConfig(),
+            BaseTrainingConfig(batch_size=100),
+            BaseTrainingConfig(batch_size=10),
         ]
     )
     def training_config_batch_size(self, request, tmpdir):
@@ -48,7 +47,7 @@ class Test_DataLoader:
     def test_build_train_data_loader(
         self, model_sample, train_dataset, training_config_batch_size
     ):
-        trainer = Trainer(
+        trainer = BaseTrainer(
             model=model_sample,
             train_dataset=train_dataset,
             training_config=training_config_batch_size,
@@ -64,7 +63,7 @@ class Test_DataLoader:
     def test_build_eval_data_loader(
         self, model_sample, train_dataset, training_config_batch_size
     ):
-        trainer = Trainer(
+        trainer = BaseTrainer(
             model=model_sample,
             train_dataset=train_dataset,
             training_config=training_config_batch_size,
@@ -80,7 +79,7 @@ class Test_DataLoader:
 
 class Test_Set_Training_config:
     @pytest.fixture(
-        params=[TrainingConfig(), TrainingConfig(batch_size=10, learning_rate=1e-5)]
+        params=[BaseTrainingConfig(), BaseTrainingConfig(batch_size=10, learning_rate=1e-5)]
     )
     def training_configs(self, request, tmpdir):
         tmpdir.mkdir("dummy_folder")
@@ -89,7 +88,7 @@ class Test_Set_Training_config:
         return request.param
 
     def test_set_training_config(self, model_sample, train_dataset, training_configs):
-        trainer = Trainer(
+        trainer = BaseTrainer(
             model=model_sample,
             train_dataset=train_dataset,
             training_config=training_configs,
@@ -97,7 +96,7 @@ class Test_Set_Training_config:
 
         # check if default config is set
         if training_configs is None:
-            assert trainer.training_config == TrainingConfig(
+            assert trainer.training_config == BaseTrainingConfig(
                 output_dir="dummy_output_dir"
             )
 
@@ -106,7 +105,7 @@ class Test_Set_Training_config:
 
 
 class Test_Build_Optimizer:
-    @pytest.fixture(params=[TrainingConfig(), TrainingConfig(learning_rate=1e-5)])
+    @pytest.fixture(params=[BaseTrainingConfig(), BaseTrainingConfig(learning_rate=1e-5)])
     def training_configs_learning_rate(self, tmpdir, request):
         request.param.output_dir = tmpdir.mkdir("dummy_folder")
         return request.param
@@ -123,7 +122,7 @@ class Test_Build_Optimizer:
         self, model_sample, train_dataset, training_configs_learning_rate
     ):
 
-        trainer = Trainer(
+        trainer = BaseTrainer(
             model=model_sample,
             train_dataset=train_dataset,
             training_config=training_configs_learning_rate,
@@ -139,7 +138,7 @@ class Test_Build_Optimizer:
     def test_set_custom_optimizer(
         self, model_sample, train_dataset, training_configs_learning_rate, optimizers
     ):
-        trainer = Trainer(
+        trainer = BaseTrainer(
             model=model_sample,
             train_dataset=train_dataset,
             training_config=training_configs_learning_rate,
@@ -155,8 +154,8 @@ class Test_Build_Optimizer:
 class Test_Device_Checks:
     @pytest.fixture(
         params=[
-            TrainingConfig(num_epochs=3, no_cuda=True),
-            TrainingConfig(num_epochs=3, no_cuda=False),
+            BaseTrainingConfig(num_epochs=3, no_cuda=True),
+            BaseTrainingConfig(num_epochs=3, no_cuda=False),
         ]
     )
     def training_configs(self, tmpdir, request):
@@ -218,7 +217,7 @@ class Test_Device_Checks:
         return optimizer
 
     def test_set_on_device(self, ae, train_dataset, training_config):
-        trainer = Trainer(
+        trainer = BaseTrainer(
             model=ae,
             train_dataset=train_dataset,
             training_config=training_config,
@@ -316,7 +315,7 @@ class Test_Sanity_Checks:
     def test_raises_sanity_check_error(
         self, rhvae, train_dataset, training_config
     ):
-        trainer = Trainer(
+        trainer = BaseTrainer(
             model=rhvae,
             train_dataset=train_dataset,
             training_config=training_config,
@@ -327,7 +326,7 @@ class Test_Sanity_Checks:
 
 
 class Test_Main_Training:
-    @pytest.fixture(params=[TrainingConfig(num_epochs=3)])
+    @pytest.fixture(params=[BaseTrainingConfig(num_epochs=3)])
     def training_configs(self, tmpdir, request):
         tmpdir.mkdir("dummy_folder")
         dir_path = os.path.join(tmpdir, "dummy_folder")
@@ -398,7 +397,7 @@ class Test_Main_Training:
     def test_train_step(
         self, ae, train_dataset, training_configs, optimizers
     ):
-        trainer = Trainer(
+        trainer = BaseTrainer(
             model=ae,
             train_dataset=train_dataset,
             training_config=training_configs,
@@ -422,7 +421,7 @@ class Test_Main_Training:
     def test_eval_step(
         self, ae, train_dataset, training_configs, optimizers
     ):
-        trainer = Trainer(
+        trainer = BaseTrainer(
             model=ae,
             train_dataset=train_dataset,
             eval_dataset=train_dataset,
@@ -448,7 +447,7 @@ class Test_Main_Training:
         self, tmpdir, ae, train_dataset, training_configs, optimizers
     ):
 
-        trainer = Trainer(
+        trainer = BaseTrainer(
             model=ae,
             train_dataset=train_dataset,
             eval_dataset=train_dataset,
@@ -476,7 +475,7 @@ class Test_Logging:
     def training_config(self, tmpdir):
         tmpdir.mkdir("dummy_folder")
         dir_path = os.path.join(tmpdir, "dummy_folder")
-        return TrainingConfig(output_dir=dir_path, num_epochs=2)
+        return BaseTrainingConfig(output_dir=dir_path, num_epochs=2)
 
     @pytest.fixture
     def model_sample(self):
@@ -487,7 +486,7 @@ class Test_Logging:
     ):
         dir_log_path = os.path.join(tmpdir, "dummy_folder")
 
-        trainer = Trainer(
+        trainer = BaseTrainer(
             model=model_sample,
             train_dataset=train_dataset,
             training_config=training_config,

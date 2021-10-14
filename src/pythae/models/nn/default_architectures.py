@@ -63,7 +63,11 @@ class Decoder_AE_MLP(BaseDecoder):
         )
 
     def forward(self, z):
-        return self.layers(z).reshape((z.shape[0],) + self.input_dim)
+        reconstruction = self.layers(z).reshape((z.shape[0],) + self.input_dim)
+        output = ModelOuput(
+            reconstruction=reconstruction
+        )
+        return output
 
 
 class Metric_MLP(BaseMetric):
@@ -102,4 +106,8 @@ class Metric_MLP(BaseMetric):
         # add diagonal coefficients
         L = L + torch.diag_embed(h21.exp())
 
-        return L
+        output = ModelOuput(
+            L=L
+        )
+
+        return output

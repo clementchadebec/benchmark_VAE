@@ -9,7 +9,7 @@ from pythae.customexception import BadInheritanceError
 from pythae.models.base.base_utils import ModelOuput
 from pythae.models import WAE_MMD, WAE_MMD_Config
 
-from pythae.trainers.trainers import Trainer, TrainingConfig
+from pythae.trainers import BaseTrainer, BaseTrainingConfig
 from pythae.pipelines import TrainingPipeline
 from tests.data.custom_architectures import (
     Decoder_AE_Conv,
@@ -310,7 +310,7 @@ class Test_WAE_MMD_Training:
         return torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))
 
     @pytest.fixture(params=[
-            TrainingConfig(num_epochs=3, steps_saving=2, learning_rate=1e-5),
+            BaseTrainingConfig(num_epochs=3, steps_saving=2, learning_rate=1e-5),
         ])
     def training_configs(self, tmpdir, request):
         tmpdir.mkdir("dummy_folder")
@@ -368,7 +368,7 @@ class Test_WAE_MMD_Training:
     def test_wae_train_step(
         self, wae, train_dataset, training_configs, optimizers
     ):
-        trainer = Trainer(
+        trainer = BaseTrainer(
             model=wae,
             train_dataset=train_dataset,
             training_config=training_configs,
@@ -392,7 +392,7 @@ class Test_WAE_MMD_Training:
     def test_wae_eval_step(
         self, wae, train_dataset, training_configs, optimizers
     ):
-        trainer = Trainer(
+        trainer = BaseTrainer(
             model=wae,
             train_dataset=train_dataset,
             eval_dataset=train_dataset,
@@ -418,7 +418,7 @@ class Test_WAE_MMD_Training:
         self, tmpdir, wae, train_dataset, training_configs, optimizers
     ):
 
-        trainer = Trainer(
+        trainer = BaseTrainer(
             model=wae,
             train_dataset=train_dataset,
             eval_dataset=train_dataset,
@@ -447,7 +447,7 @@ class Test_WAE_MMD_Training:
 
         dir_path = training_configs.output_dir
 
-        trainer = Trainer(
+        trainer = BaseTrainer(
             model=wae,
             train_dataset=train_dataset,
             training_config=training_configs,
@@ -543,7 +543,7 @@ class Test_WAE_MMD_Training:
 
         dir_path = training_configs.output_dir
 
-        trainer = Trainer(
+        trainer = BaseTrainer(
             model=wae,
             train_dataset=train_dataset,
             training_config=training_configs,
@@ -601,7 +601,7 @@ class Test_WAE_MMD_Training:
 
         dir_path = training_configs.output_dir
 
-        trainer = Trainer(
+        trainer = BaseTrainer(
             model=wae,
             train_dataset=train_dataset,
             training_config=training_configs,

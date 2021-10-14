@@ -7,7 +7,7 @@ from pydantic import ValidationError
 from pythae.config import BaseConfig
 from pythae.models import BaseAEConfig
 from pythae.samplers import BaseSamplerConfig
-from pythae.trainers.training_config import TrainingConfig
+from pythae.trainers import BaseTrainingConfig
 
 PATH = os.path.dirname(os.path.abspath(__file__))
 
@@ -37,16 +37,15 @@ class Test_Load_Config_from_JSON:
             ],
             [
                 os.path.join(PATH, "data/baseAE/configs/training_config00.json"),
-                TrainingConfig(
+                BaseTrainingConfig(
                     batch_size=13,
-                    max_epochs=2,
+                    num_epochs=2,
                     learning_rate=1e-5
                 ),
             ],
             [
                 os.path.join(PATH, "data/baseAE/configs/generation_config00.json"),
                 BaseSamplerConfig(
-                    batch_size=3
                 ),
             ],
         ]
@@ -71,7 +70,7 @@ class Test_Load_Config_from_JSON:
         elif config_path == os.path.join(
             PATH, "data/baseAE/configs/training_config00.json"
         ):
-            parsed_config = TrainingConfig.from_json_file(config_path)
+            parsed_config = BaseTrainingConfig.from_json_file(config_path)
 
         else:
             parsed_config = BaseSamplerConfig.from_json_file(config_path)
@@ -94,7 +93,7 @@ class Test_Load_Config_from_JSON:
 
 class Test_Save_Model_JSON_from_Config:
     @pytest.fixture(
-        params=[BaseAEConfig(), BaseAEConfig(input_dim=100, latent_dim=5)]
+        params=[BaseAEConfig(), BaseAEConfig(input_dim=(2, 3, 100), latent_dim=5)]
     )
     def model_configs(self, request):
         return request.param
@@ -114,7 +113,7 @@ class Test_Save_Model_JSON_from_Config:
         assert rec_model_config.__dict__ == model_configs.__dict__
 
     @pytest.fixture(
-        params=[TrainingConfig(), TrainingConfig(learning_rate=100, batch_size=15)]
+        params=[BaseTrainingConfig(), BaseTrainingConfig(learning_rate=100, batch_size=15)]
     )
     def training_configs(self, request):
         return request.param
@@ -127,7 +126,7 @@ class Test_Save_Model_JSON_from_Config:
 
         assert "dummy_json.json" in os.listdir(dir_path)
 
-        rec_training_config = TrainingConfig.from_json_file(
+        rec_training_config = BaseTrainingConfig.from_json_file(
             os.path.join(dir_path, "dummy_json.json")
         )
 

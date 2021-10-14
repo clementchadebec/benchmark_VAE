@@ -1,6 +1,6 @@
-from .trainers import Trainer
-from .training_config import TrainingConfig
+from .base_trainer import BaseTrainer, BaseTrainingConfig
 
 __all__ = [
-    "Trainer",
-    "TrainingConfig"]
+    "BaseTrainer",
+    "BaseTrainingConfig"
+]

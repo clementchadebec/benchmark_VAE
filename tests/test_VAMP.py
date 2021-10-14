@@ -9,7 +9,7 @@ from pythae.customexception import BadInheritanceError
 from pythae.models.base.base_utils import ModelOuput
 from pythae.models import VAMP, VAMPConfig
 
-from pythae.trainers.trainers import Trainer, TrainingConfig
+from pythae.trainers import BaseTrainer, BaseTrainingConfig
 from pythae.pipelines import TrainingPipeline
 from tests.data.custom_architectures import (
     Decoder_AE_Conv,
@@ -311,7 +311,7 @@ class Test_VAMP_Training:
         return torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))
 
     @pytest.fixture(params=[
-            TrainingConfig(num_epochs=3, steps_saving=2, learning_rate=1e-5),
+            BaseTrainingConfig(num_epochs=3, steps_saving=2, learning_rate=1e-5),
         ])
     def training_configs(self, tmpdir, request):
         tmpdir.mkdir("dummy_folder")
@@ -369,7 +369,7 @@ class Test_VAMP_Training:
     def test_vamp_train_step(
         self, vamp, train_dataset, training_configs, optimizers
     ):
-        trainer = Trainer(
+        trainer = BaseTrainer(
             model=vamp,
             train_dataset=train_dataset,
             training_config=training_configs,
@@ -393,7 +393,7 @@ class Test_VAMP_Training:
     def test_vamp_eval_step(
         self, vamp, train_dataset, training_configs, optimizers
     ):
-        trainer = Trainer(
+        trainer = BaseTrainer(
             model=vamp,
             train_dataset=train_dataset,
             eval_dataset=train_dataset,
@@ -419,7 +419,7 @@ class Test_VAMP_Training:
         self, tmpdir, vamp, train_dataset, training_configs, optimizers
     ):
 
-        trainer = Trainer(
+        trainer = BaseTrainer(
             model=vamp,
             train_dataset=train_dataset,
             eval_dataset=train_dataset,
@@ -448,7 +448,7 @@ class Test_VAMP_Training:
 
         dir_path = training_configs.output_dir
 
-        trainer = Trainer(
+        trainer = BaseTrainer(
             model=vamp,
             train_dataset=train_dataset,
             training_config=training_configs,
@@ -544,7 +544,7 @@ class Test_VAMP_Training:
 
         dir_path = training_configs.output_dir
 
-        trainer = Trainer(
+        trainer = BaseTrainer(
             model=vamp,
             train_dataset=train_dataset,
             training_config=training_configs,
@@ -602,7 +602,7 @@ class Test_VAMP_Training:
 
         dir_path = training_configs.output_dir
 
-        trainer = Trainer(
+        trainer = BaseTrainer(
             model=vamp,
             train_dataset=train_dataset,
             training_config=training_configs,

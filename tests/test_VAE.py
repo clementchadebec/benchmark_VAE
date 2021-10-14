@@ -9,7 +9,7 @@ from pythae.customexception import BadInheritanceError
 from pythae.models.base.base_utils import ModelOuput
 from pythae.models import VAE, VAEConfig
 
-from pythae.trainers.trainers import Trainer, TrainingConfig
+from pythae.trainers import BaseTrainer, BaseTrainingConfig
 from pythae.pipelines import TrainingPipeline
 from tests.data.custom_architectures import (
     Decoder_AE_Conv,
@@ -309,7 +309,7 @@ class Test_VAE_Training:
         return torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))
 
     @pytest.fixture(params=[
-            TrainingConfig(num_epochs=3, steps_saving=2, learning_rate=1e-5),
+            BaseTrainingConfig(num_epochs=3, steps_saving=2, learning_rate=1e-5),
         ])
     def training_configs(self, tmpdir, request):
         tmpdir.mkdir("dummy_folder")
@@ -367,7 +367,7 @@ class Test_VAE_Training:
     def test_vae_train_step(
         self, vae, train_dataset, training_configs, optimizers
     ):
-        trainer = Trainer(
+        trainer = BaseTrainer(
             model=vae,
             train_dataset=train_dataset,
             training_config=training_configs,
@@ -391,7 +391,7 @@ class Test_VAE_Training:
     def test_vae_eval_step(
         self, vae, train_dataset, training_configs, optimizers
     ):
-        trainer = Trainer(
+        trainer = BaseTrainer(
             model=vae,
             train_dataset=train_dataset,
             eval_dataset=train_dataset,
@@ -417,7 +417,7 @@ class Test_VAE_Training:
         self, tmpdir, vae, train_dataset, training_configs, optimizers
     ):
 
-        trainer = Trainer(
+        trainer = BaseTrainer(
             model=vae,
             train_dataset=train_dataset,
             eval_dataset=train_dataset,
@@ -446,7 +446,7 @@ class Test_VAE_Training:
 
         dir_path = training_configs.output_dir
 
-        trainer = Trainer(
+        trainer = BaseTrainer(
             model=vae,
             train_dataset=train_dataset,
             training_config=training_configs,
@@ -542,7 +542,7 @@ class Test_VAE_Training:
 
         dir_path = training_configs.output_dir
 
-        trainer = Trainer(
+        trainer = BaseTrainer(
             model=vae,
             train_dataset=train_dataset,
             training_config=training_configs,
@@ -600,7 +600,7 @@ class Test_VAE_Training:
 
         dir_path = training_configs.output_dir
 
-        trainer = Trainer(
+        trainer = BaseTrainer(
             model=vae,
             train_dataset=train_dataset,
             training_config=training_configs,

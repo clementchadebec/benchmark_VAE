@@ -8,10 +8,10 @@ import torch
 import torch.optim as optim
 from torch.utils.data import DataLoader
 
-from ..customexception import ModelError
-from ..data.datasets import BaseDataset
-from ..models import BaseAE
-from .trainer_utils import set_seed
+from ...customexception import ModelError
+from ...data.datasets import BaseDataset
+from ...models import BaseAE
+from ..trainer_utils import set_seed
 from .training_config import TrainingConfig
 
 logger = logging.getLogger(__name__)
@@ -22,8 +22,8 @@ logger.addHandler(console)
 logger.setLevel(logging.INFO)
 
 
-class Trainer:
-    """Trainer is the main class to perform model training.
+class BaseTrainer:
+    """BaseTrainer is the main class to perform model training.
 
     Args:
         model (BaseAE): The model to train

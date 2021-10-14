@@ -85,7 +85,7 @@ class VAE(BaseAE):
 
         std = torch.exp(0.5 * log_var)
         z, eps = self._sample_gauss(mu, std)
-        recon_x = self.decoder(z)
+        recon_x = self.decoder(z)['reconstruction']
 
         loss, recon_loss, kld = self.loss_function(recon_x, x, mu, log_var, z)
 

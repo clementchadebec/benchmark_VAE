@@ -75,7 +75,7 @@ class AE(BaseAE):
         x = inputs["data"]
 
         z = self.encoder(x).embedding
-        recon_x = self.decoder(z)
+        recon_x = self.decoder(z)['reconstruction']
 
         loss = self.loss_function(recon_x, x)
 

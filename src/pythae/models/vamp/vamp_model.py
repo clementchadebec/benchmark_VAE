@@ -15,7 +15,8 @@ from typing import Optional
 import torch.nn.functional as F
 
 class VAMP(VAE):
-    """Vanilla Autoencoder model.
+    """This is the implementation of the Variational Autoencoder with Variational Mixture of 
+    Posterior as prior as proposed in ().
     
     Args:
         model_config(VAEConfig): The Variational Autoencoder configuration seting the main 
@@ -82,7 +83,7 @@ class VAMP(VAE):
         std = torch.exp(0.5 * log_var)
         z, eps = self._sample_gauss(mu, std)
 
-        recon_x = self.decoder(z)
+        recon_x = self.decoder(z)['reconstruction']
 
         loss, recon_loss, kld = self.loss_function(recon_x, x, mu, log_var, z)
 
