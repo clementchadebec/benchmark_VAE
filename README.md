@@ -71,7 +71,7 @@ To launch a model training, you only need to call a `TrainingPipeline` instance.
 
 >>> # Set up the training configuration
 >>> my_training_config = TrainingConfig(
-...    	output_dir='my_model',
+...		output_dir='my_model',
 ...		num_epochs=50,
 ...		learning_rate=1e-3,
 ...		batch_size=200,
@@ -93,8 +93,8 @@ To launch a model training, you only need to call a `TrainingPipeline` instance.
 ...	)
 >>> # Launch the Pipeline
 >>> pipeline(
-...	    train_data=your_train_data, # must be torch.Tensor or np.array 
-...	    eval_data=your_eval_data # must be torch.Tensor or np.array
+...		train_data=your_train_data, # must be torch.Tensor or np.array 
+...		eval_data=your_eval_data # must be torch.Tensor or np.array
 ...	)
 ```
 
@@ -120,9 +120,9 @@ Several samplers are available for each models please check here to see which on
 >>> # Generate samples
 >>> gen_data = normal_samper.sample(
 ...		num_samples=50,
-...     batch_size=10,
-...     output_dir=None,
-...     return_gen=True
+...		batch_size=10,
+...		output_dir=None,
+...		return_gen=True
 ...	)
 ```
 If you set `output_dir` to a specific path the generated images will be saved as `.png` files named `00000000.png`, `00000001.png` ...
@@ -143,7 +143,7 @@ Say you want to train a Wassertstein AE with a specific encoder and decoder. Pyt
 ...		def forward(self, x:torch.Tensor) -> ModelOuput:
 ...			out = self.layers(x)
 ...			output = ModelOuput(
-...	            embedding=out # Set the output from the encoder in a ModelOuput instance 
+...				embedding=out # Set the output from the encoder in a ModelOuput instance 
 ...			)
 ...			return output
 ...
@@ -155,7 +155,7 @@ Say you want to train a Wassertstein AE with a specific encoder and decoder. Pyt
 ...		def forward(self, x:torch.Tensor) -> ModelOuput:
 ...			out = self.layers(x)
 ...			output = ModelOuput(
-...	            reconstruction=out # Set the output from the decoder in a ModelOuput instance
+...				reconstruction=out # Set the output from the decoder in a ModelOuput instance
 ...			)
 ...			return output
 ...
