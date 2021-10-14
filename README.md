@@ -175,8 +175,8 @@ And now build the model
 ...
 >>> # Build the model
 >>> my_wae_model = WAE_MMD(
-...		model_config=my_vae_config,
-... 	encoder=my_encoder,# pass your encoder as argument when building the model
+...		model_config=my_wae_config,
+...		encoder=my_encoder, # pass your encoder as argument when building the model
 ...		decoder=my_decoder # pass your decoder as argument when building the model
 ... )
 ```
