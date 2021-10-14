@@ -89,7 +89,7 @@ class BaseAE(nn.Module):
         raise NotImplementedError()
 
     def update(self):
-        """Method that allows model update during the training.
+        """Method that allows model update during the training (at the end of a training epoch)
 
         If needed, this method must be implemented in a child class.
 

@@ -6,7 +6,6 @@ import torch
 from torch.optim import Optimizer
 
 from ..customexception import LoadError
-from ..data.loaders import BaseDataGetter, ImageGetterFromFolder
 from ..data.preprocessors import DataProcessor
 from ..models import RHVAE, BaseAE
 from ..models.rhvae import RHVAEConfig
@@ -63,7 +62,6 @@ class TrainingPipeline(Pipeline):
 
     def __init__(
         self,
-        data_loader: Optional[BaseDataGetter] = None,
         data_processor: Optional[DataProcessor] = None,
         model: Optional[BaseAE] = None,
         optimizer: Optional[Optimizer] = None,
@@ -72,12 +70,8 @@ class TrainingPipeline(Pipeline):
 
         # model_name = model_name.upper()
 
-        self.data_loader = data_loader
-
         if data_processor is None:
-            data_processor = DataProcessor(
-                data_normalization_type="individual_min_max_scaling"
-            )
+            data_processor = DataProcessor()
 
         self.data_processor = data_processor
         self.model = model
@@ -91,49 +85,24 @@ class TrainingPipeline(Pipeline):
 
     def __call__(
         self,
-        train_data: Union[str, np.ndarray, torch.Tensor],
-        eval_data: Union[str, np.ndarray, torch.Tensor] = None,
+        train_data: Union[np.ndarray, torch.Tensor],
+        eval_data: Union[np.ndarray, torch.Tensor] = None,
         log_output_dir: str = None,
     ):
         """
         Launch the model training on the provided data.
 
         Args:
-            training_data (Union[str, ~numpy.ndarray, ~torch.Tensor]): The training data coming from
-                a folder in which each file is a data or a :class:`numpy.ndarray` or
-                :class:`torch.Tensor` of shape (mini_batch x n_channels x data_shape)
+            training_data (Union[~numpy.ndarray, ~torch.Tensor]): The training data as a 
+                :class:`numpy.ndarray` or :class:`torch.Tensor` of shape (mini_batch x 
+                n_channels x ...)
 
-            eval_data (Optional[Union[str, ~numpy.ndarray, ~torch.Tensor]]): The evaluation data coming from
-                a folder in which each file is a data or a np.ndarray or torch.Tensor. If None, no
-                evaluation data is used.
-
+            eval_data (Optional[Union[~numpy.ndarray, ~torch.Tensor]]): The evaluation data as a 
+                :class:`numpy.ndarray` or :class:`torch.Tensor` of shape (mini_batch x 
+                n_channels x ...). If None, only uses train_fata for training. Default: None.
         """
 
-        if self.data_loader is None:
-            logger.info('Preprocessing train data...')
-            if isinstance(train_data, str):
-
-                self.data_loader = ImageGetterFromFolder()
-
-                try:
-                    train_data = self.data_loader.load(train_data)
-
-                except Exception as e:
-                    raise LoadError(
-                        f"Unable to load training data. Exception catch: {type(e)} with message: "
-                        + str(e)
-                    )
-
-        else:
-            try:
-                train_data = self.data_loader.load(train_data)
-
-            except Exception as e:
-                raise LoadError(
-                    f"Unable to load training data. Exception catch: {type(e)} with message: "
-                    + str(e)
-                )
-
+        logger.info('Preprocessing train data...')
         train_data = self.data_processor.process_data(train_data)
         train_dataset = self.data_processor.to_dataset(train_data)
 
@@ -144,29 +113,6 @@ class TrainingPipeline(Pipeline):
 
         if eval_data is not None:
             logger.info('Preprocessing eval data...')
-            if self.data_loader is None:
-                if isinstance(eval_data, str):
-
-                    self.data_loader = ImageGetterFromFolder()
-
-                    try:
-                        train_data = self.data_loader.load(eval_data)
-
-                    except Exception as e:
-                        raise LoadError(
-                            f"Unable to load training data. Exception catch: {type(e)} with message: "
-                            + str(e)
-                        )
-
-            else:
-                try:
-                    eval_data = self.data_loader.load(eval_data)
-
-                except Exception as e:
-                    raise LoadError(
-                        f"Enable to load eval data. Exception catch: {type(e)} with message: "
-                        + str(e)
-                    )
             eval_data = self.data_processor.process_data(eval_data)
             eval_dataset = self.data_processor.to_dataset(eval_data)
 

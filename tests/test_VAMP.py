@@ -378,7 +378,7 @@ class Test_VAMP_Training:
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
-        step_1_loss = trainer.train_step()
+        step_1_loss = trainer.train_step(epoch=1)
 
         step_1_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -403,7 +403,7 @@ class Test_VAMP_Training:
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
-        step_1_loss = trainer.eval_step()
+        step_1_loss = trainer.eval_step(epoch=1)
 
         step_1_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -456,7 +456,7 @@ class Test_VAMP_Training:
         )
 
         # Make a training step
-        step_1_loss = trainer.train_step()
+        step_1_loss = trainer.train_step(epoch=1)
 
         model = deepcopy(trainer.model)
         optimizer = deepcopy(trainer.optimizer)

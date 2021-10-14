@@ -25,7 +25,6 @@ class BaseTrainingConfig(BaseConfig):
         keep_best_on_train (bool): Whether to keep the best model on the train set. Default: False.
         seed (int): The random seed for reprodicibility
         no_cuda (bool): Disable `cuda` training. Default: False
-        verbose (bool): Allow verbosity
     """
 
     output_dir: str = None
@@ -36,4 +35,3 @@ class BaseTrainingConfig(BaseConfig):
     keep_best_on_train: bool = False
     seed: int = 8
     no_cuda: bool = False
-    verbose: bool = True

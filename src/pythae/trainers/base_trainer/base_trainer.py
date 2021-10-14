@@ -1,8 +1,10 @@
 import datetime
 import logging
 import os
+import numpy as np
 from copy import deepcopy
 from typing import Any, Dict, Optional
+from tqdm import tqdm
 
 import torch
 import torch.optim as optim
@@ -253,10 +255,10 @@ class BaseTrainer:
 
         for epoch in range(1, self.training_config.num_epochs):
 
-            epoch_train_loss = self.train_step()
+            epoch_train_loss = self.train_step(epoch)
 
             if self.eval_dataset is not None:
-                epoch_eval_loss = self.eval_step()
+                epoch_eval_loss = self.eval_step(epoch)
 
             else:
                 epoch_eval_loss = best_eval_loss
@@ -284,25 +286,23 @@ class BaseTrainer:
                 if log_verbose:
                     file_logger.info(f"Saved checkpoint at epoch {epoch}\n")
 
-            if log_verbose and epoch % 10 == 0:
-                if self.eval_dataset is not None:
-                    logger.info(
-                        '----------------------------------------------------------------')
-                    logger.info(
-                        f'Epoch {epoch}: Train loss: {np.round(train_loss, 10)}')
-                    logger.info(
-                        f'Epoch {epoch}: Eval loss: {np.round(val_loss, 10)}')
-                    logger.info(
-                        '----------------------------------------------------------------')
-
+            if self.eval_dataset is not None:
+                logger.info(
+                    '----------------------------------------------------------------')
+                logger.info(
+                    f'Epoch {epoch}: Train loss: {np.round(epoch_train_loss, 10)}')
+                logger.info(
+                    f'Epoch {epoch}: Eval loss: {np.round(epoch_eval_loss, 10)}')
+                logger.info(
+                    '----------------------------------------------------------------')
                    
-                else:
-                    logger.info(
-                        '----------------------------------------------------------------')
-                    logger.info(
-                        f'Epoch {epoch}: Train loss: {np.round(train_loss, 10)}')
-                    logger.info(
-                        '----------------------------------------------------------------')
+            else:
+                logger.info(
+                    '----------------------------------------------------------------')
+                logger.info(
+                    f'Epoch {epoch}: Train loss: {np.round(epoch_train_loss, 10)}')
+                logger.info(
+                    '----------------------------------------------------------------')
 
 
         final_dir = os.path.join(training_dir, "final_model")
@@ -312,8 +312,11 @@ class BaseTrainer:
         logger.info("Training ended!")
         logger.info(f"Saved final model in {final_dir}")
 
-    def eval_step(self):
+    def eval_step(self, epoch: int):
         """Perform an evaluation step
+
+        Parameters:
+            epoch (int): The current epoch number
 
         Returns:
             (torch.Tensor): The evaluation loss
@@ -323,22 +326,29 @@ class BaseTrainer:
 
         epoch_loss = 0
 
-        for (batch_idx, inputs) in enumerate(self.eval_loader):
 
-            inputs = self._set_inputs_to_device(inputs)
+        with tqdm(self.train_loader, unit="batch") as tepoch:
+            for inputs in tepoch:
 
-            model_output = self.model(inputs)
+                tepoch.set_description(f"Eval of epoch {epoch}")
 
-            loss = model_output.loss
+                inputs = self._set_inputs_to_device(inputs)
 
-            epoch_loss += loss.item()
+                model_output = self.model(inputs)
 
-        epoch_loss /= len(self.eval_loader)
+                loss = model_output.loss
+
+                epoch_loss += loss.item()
+
+            epoch_loss /= len(self.eval_loader)
 
         return epoch_loss
 
-    def train_step(self):
+    def train_step(self, epoch: int):
         """The trainer performs training loop over the train_loader.
+
+        Parameters:
+            epoch (int): The current epoch number
 
         Returns:
             (torch.Tensor): The step training loss
@@ -348,25 +358,28 @@ class BaseTrainer:
 
         epoch_loss = 0
 
-        for (batch_idx, inputs) in enumerate(self.train_loader):
+        with tqdm(self.train_loader, unit="batch") as tepoch:
+            for inputs in tepoch:
 
-            inputs = self._set_inputs_to_device(inputs)
+                tepoch.set_description(f"Training of epoch {epoch}")
 
-            self.optimizer.zero_grad()
+                inputs = self._set_inputs_to_device(inputs)
 
-            model_output = self.model(inputs)
+                self.optimizer.zero_grad()
 
-            loss = model_output.loss
+                model_output = self.model(inputs)
 
-            loss.backward()
-            self.optimizer.step()
+                loss = model_output.loss
 
-            epoch_loss += loss.item()
+                loss.backward()
+                self.optimizer.step()
 
-        # Allows model updates if needed
-        self.model.update()
+                epoch_loss += loss.item()
 
-        epoch_loss /= len(self.train_loader)
+            # Allows model updates if needed
+            self.model.update()
+
+            epoch_loss /= len(self.train_loader)
 
         return epoch_loss
 
