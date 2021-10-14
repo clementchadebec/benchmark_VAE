@@ -120,10 +120,9 @@ Several samplers are available for each models please check here to see which on
 >>> # Generate samples
 >>> gen_data = normal_samper.sample(
 ...		num_samples=50,
-        batch_size=10,
-        output_dir=None,
-        return_gen=True,
-		return
+...     batch_size=10,
+...     output_dir=None,
+...     return_gen=True
 ...	)
 ```
 If you set `output_dir` to a specific path the generated images will be saved as `.png` files named `00000000.png`, `00000001.png` ...
@@ -148,7 +147,7 @@ Say you want to train a Wassertstein AE with a specific encoder and decoder. Pyt
 ...			)
 ...			return output
 ...
-class My_Decoder(BaseEncoder):
+... class My_Decoder(BaseEncoder):
 ...		def __init__(self, args=None):
 ...			BaseEncoder.__init__(self)
 ...			self.layers = my_nn_layers()
@@ -161,7 +160,7 @@ class My_Decoder(BaseEncoder):
 ...			return output
 ...
 >>> my_encoder = My_Encoder()
->>>, my_decoder = My_Decoder()
+>>> my_decoder = My_Decoder()
 ```
 
 And now build the model
@@ -182,7 +181,17 @@ And now build the model
 ... )
 ```
 
+## Using benchmark neural nets
+You may also find predefined neural network architecture for the most common data sets (*i.e.* MNIST, CIFAR, CELEBA ...) that can be loaded as follows
 
+```python
+>>> for pythae.models.nn.benchmark.mnist import (
+...		Encoder_AE_MNIST, # For AE based model (only return embeddings)
+... 	Encoder_VAE_MNIST, # For VAE based model (return embeddings and log_covariances)
+... 	Decoder_AE_MNIST
+)
+```
+Replace *mnist* by cifar or celeba to access to other neural nets.
 
 ## Getting your hands on the code
 
