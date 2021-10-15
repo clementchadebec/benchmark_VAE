@@ -85,7 +85,7 @@ At the end of training, the best model weights, model configuration and training
 We also provide a training script example [here](https://github.com/clementchadebec/pythae/tree/main/examples/scripts/training.py) that can be used to train the models on benchmarks datasets (mnist, cifar10, celeba ...). The script can be launched with the following commandline
 
 ```bash
-	python training.py --dataset mnist --model_name ae --model_config 'configs/ae_config.json' --training_config 'configs/base_training_config.json'
+python training.py --dataset mnist --model_name ae --model_config 'configs/ae_config.json' --training_config 'configs/base_training_config.json'
 ```
 
 See [README.md](https://github.com/clementchadebec/pythae/tree/main/examples/scripts/README.md) for further details on this script
