@@ -100,6 +100,15 @@ To launch a model training, you only need to call a `TrainingPipeline` instance.
 
 At the end of training, the best model weights, model configuration and training configuration are stored in a `final_model` folder available in  `my_model/MODEL_NAME_training_YYYY-MM-DD_hh-mm-ss` (with `my_model` being the `output_dir` argument of the `TrainingConfig`). If you further set the `steps_saving` argument to a a certain value, folders named `checkpoint_epoch_k` containing the best model weights, configuration and training configuration at epoch *k* will also appear in `my_model/MODEL_NAME_training_YYYY-MM-DD_hh-mm-ss`.
 
+## Lauching a training on benchmark datasets
+We also provide a training script example [here](https://github.com/clementchadebec/pythae/tree/main/examples/scripts/training.py) that can be used to train the models on benchmarks datasets (mnist, cifar10, celeba ...). The script can be launched with the following commandline
+
+```bash
+	python training.py --dataset mnist --model_name ae --model_config 'configs/ae_config.json' --training_config 'configs/base_training_config.json'
+```
+
+See [README.md](https://github.com/clementchadebec/pythae/tree/main/examples/scripts/README.md) for further details on this script
+
 ## Launching data generation
 
 To launch the data generation process from a trained model, you only need to build you sampler and retrieve your 

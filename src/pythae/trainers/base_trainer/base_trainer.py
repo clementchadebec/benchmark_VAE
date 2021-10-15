@@ -330,7 +330,8 @@ class BaseTrainer:
         with tqdm(self.train_loader, unit="batch") as tepoch:
             for inputs in tepoch:
 
-                tepoch.set_description(f"Eval of epoch {epoch}")
+                tepoch.set_description(
+                    f"Eval of epoch {epoch}/{self.training_config.num_epochs}")
 
                 inputs = self._set_inputs_to_device(inputs)
 
@@ -361,7 +362,8 @@ class BaseTrainer:
         with tqdm(self.train_loader, unit="batch") as tepoch:
             for inputs in tepoch:
 
-                tepoch.set_description(f"Training of epoch {epoch}")
+                tepoch.set_description(
+                    f"Training of epoch {epoch}/{self.training_config.num_epochs}")
 
                 inputs = self._set_inputs_to_device(inputs)
 
