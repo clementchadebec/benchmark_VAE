@@ -41,6 +41,18 @@ Below is the list of the models currently implemented in the library.
 | Riemannian Hamiltonian VAE (RHVAE) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/notebooks/models_training/rhvae_training.ipynb) | [link](https://arxiv.org/pdf/2010.11518.pdf) | [link](https://github.com/clementchadebec/Data_Augmentation_with_VAE-DALI) |
 
 
+## Available Samplers
+
+Below is the list of the models currently implemented in the library.
+
+|                Samplers               |   Models   |
+|:-------------------------------------:|:----------:|
+| Normal prior                          | all models |
+| Gaussian mixture (Density estimation) | all models |
+| VAMP prior sampler                    |    VAMP    |
+| Manifold sampler                      |    RHVAE   |
+
+
 ## Launching a model training
 
 To launch a model training, you only need to call a `TrainingPipeline` instance. 
@@ -188,7 +200,11 @@ Replace *mnist* by cifar or celeba to access to other neural nets.
 To help you to understand the way pythae works and how you can augment your data with this library we also
 provide tutorials that can be found in [examples folder](https://github.com/clementchadebec/benchmark_VAE/tree/main/examples):
 
-- [making_your_own_autoencoder.ipynb](https://github.com/clementchadebec/benchmark_VAE/tree/main/examples) shows you how to pass your own networks to the models implemented in pythae [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/making_your_own_autoencoder.ipynb)
+- [making_your_own_autoencoder.ipynb](https://github.com/clementchadebec/benchmark_VAE/tree/main/examples/notebooks) shows you how to pass your own networks to the models implemented in pythae [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/making_your_own_autoencoder.ipynb)
+
+- [models_training](https://github.com/clementchadebec/benchmark_VAE/tree/main/examples/notebooks/models_training) folder provides notebooks showing how to train each implemented models and how to sample from them using `pyhtae.samplers`.
+
+- [scripts](https://github.com/clementchadebec/benchmark_VAE/tree/main/examples/scripts) folder provides in particular an example of a training script to train the models on benchmark data sets (mnist, cifar10, celeba ...)
 
 ## Dealing with issues
 

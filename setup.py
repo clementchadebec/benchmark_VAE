@@ -40,7 +40,8 @@ setup(
         "nibabel>=3.2.1",
         "pydantic>=1.8.2",
         "dataclasses>=0.6",
-        "tqdm>=4.62.3"
+        "tqdm>=4.62.3",
+        "sklearn"
     ],
     python_requires=">=3.6",
 )

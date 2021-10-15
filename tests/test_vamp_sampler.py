@@ -1,0 +1,131 @@
+import os
+
+import numpy as np
+import pytest
+import torch
+
+from pythae.models import VAMP, VAMPConfig
+from pythae.samplers import VAMPSampler, VAMPSamplerConfig
+
+PATH = os.path.dirname(os.path.abspath(__file__))
+
+
+@pytest.fixture
+def dummy_data():
+    ### 3 imgs from mnist that are used to simulated generated ones
+    return torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample")).data
+
+
+@pytest.fixture(
+    params=[
+        VAMP(VAMPConfig(input_dim=(1, 28, 28), number_components=100)),
+        VAMP(VAMPConfig(input_dim=(1, 28, 28), number_components=1))
+    ]
+)
+def model(request):
+    return request.param
+
+
+@pytest.fixture()
+def sampler(model):
+    return VAMPSampler(
+        model=model,
+        sampler_config=VAMPSamplerConfig(
+        ),
+    )
+
+@pytest.fixture(
+    params=[
+        (4, 2),
+        (5, 5),
+        (2, 3)
+    ]
+)
+def num_sample_and_batch_size(request):
+    return request.param
+
+
+class Test_VAMPSampler_saving:
+    def test_save_config(self, tmpdir, sampler):
+
+        tmpdir.mkdir("dummy_folder")
+        dir_path = os.path.join(tmpdir, "dummy_folder")
+
+        sampler.save(dir_path)
+
+        sampler_config_file = os.path.join(dir_path, "sampler_config.json")
+
+        assert os.path.isfile(sampler_config_file)
+
+        generation_config_rec = VAMPSamplerConfig.from_json_file(sampler_config_file)
+
+        assert generation_config_rec.__dict__ == sampler.sampler_config.__dict__
+
+
+class Test_VAMPSampler_Sampling:
+
+    def test_return_sampling(self, model, dummy_data, sampler, num_sample_and_batch_size):
+
+        num_samples, batch_size = num_sample_and_batch_size[0], num_sample_and_batch_size[1]
+
+        sampler.fit(train_data=dummy_data)
+
+        gen_samples = sampler.sample(
+            num_samples=num_samples,
+            batch_size=batch_size,
+            return_gen=True
+        )
+
+        assert gen_samples.shape[0] == num_samples
+
+
+    def test_save_sampling(self, tmpdir, dummy_data, model, sampler, num_sample_and_batch_size):
+
+        dir_path = os.path.join(tmpdir, "dummy_folder")
+        num_samples, batch_size = num_sample_and_batch_size[0], num_sample_and_batch_size[1]
+
+        sampler.fit(train_data=dummy_data)
+
+        gen_samples = sampler.sample(
+            num_samples=num_samples,
+            batch_size=batch_size,
+            output_dir=dir_path,
+            return_gen=True
+        )
+
+        assert gen_samples.shape[0] == num_samples
+        assert len(os.listdir(dir_path)) == num_samples
+
+    def test_save_sampling_and_sampler_config(self, tmpdir, dummy_data, model, sampler, num_sample_and_batch_size):
+
+        dir_path = os.path.join(tmpdir, "dummy_folder")
+        num_samples, batch_size = num_sample_and_batch_size[0], num_sample_and_batch_size[1]
+
+        sampler.fit(train_data=dummy_data)
+
+        gen_samples = sampler.sample(
+            num_samples=num_samples,
+            batch_size=batch_size,
+            output_dir=dir_path,
+            return_gen=True,
+            save_sampler_config=True
+        )
+
+        assert gen_samples.shape[0] == num_samples
+        assert len(os.listdir(dir_path)) == num_samples + 1
+        assert 'sampler_config.json' in os.listdir(dir_path)
+
+#class Test_Sampler_Set_up:
+#    @pytest.fixture(
+#        params=[# (target full batch number, target last full batch size, target_batch_number)
+#            NormalSamplerConfig(),
+#        ]
+#    )
+#    def sampler_config(self, tmpdir, request):
+#        return request.param
+#
+#    def test_sampler_set_up(self, model, sampler_config):
+#        sampler = NormalSampler(model=model, sampler_config=sampler_config)
+#
+#        assert sampler.batch_size == sampler_config.batch_size
+#        assert sampler.samples_per_save == sampler_config.samples_per_save
