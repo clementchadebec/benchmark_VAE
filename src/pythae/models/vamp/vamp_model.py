@@ -127,7 +127,7 @@ class VAMP(VAE):
 
         C = self.number_components
 
-        x = self.pseudo_inputs(self.idle_input).reshape((C,) + self.model_config.input_dim)
+        x = self.pseudo_inputs(self.idle_input.to(self.device)).reshape((C,) + self.model_config.input_dim)
 
         encoder_output = self.encoder(x)
         prior_mu, prior_log_var = encoder_output.embedding, encoder_output.log_covariance
