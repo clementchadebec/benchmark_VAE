@@ -4,7 +4,6 @@ examples/data/MNIST/
 examples/data/*
 
 __pycache__
-notebooks
 #docs
 src/pythae.egg-info
 .vscode
