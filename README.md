@@ -32,13 +32,13 @@ Below is the list of the models currently implemented in the library.
 
 |               Models               |                                                                                    Training example                                                                                    |                     Paper                    |                           Official Implementation                          |
 |:----------------------------------:|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|:--------------------------------------------:|:--------------------------------------------------------------------------:|
-| Autoencoder (AE)                   | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/pythae/blob/main/examples/models_training/ae_training.ipynb) |                                              |                                                                            |
-| Variational Autoencoder (VAE)      | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/pythae/blob/main/examples/models_training/vae_training.ipynb) | [link](https://arxiv.org/pdf/1312.6114.pdf)  |
-| Beta Variational Autoencoder (VAE) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/pythae/blob/main/examples/models_training/beta_vae_training.ipynb) | [link](https://openreview.net/pdf?id=Sy2fzU9gl)  |                                                                            |
-| Wasserstein Autoencoder (WAE)      | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/pythae/blob/main/examples/models_training/wae_training.ipynb) | [link](https://arxiv.org/pdf/1711.01558.pdf) | [link](https://github.com/tolstikhin/wae)                                  |
-| VAMP Autoencoder (VAMP)            | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/pythae/blob/main/examples/models_training/vamp_training.ipynb) | [link](https://arxiv.org/pdf/1705.07120.pdf) | [link](https://github.com/jmtomczak/vae_vampprior)                         |
-| Hamiltonian VAE (HVAE)             | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/pythae/blob/main/examples/models_training/hvae_training.ipynb) | [link](https://arxiv.org/pdf/1805.11328.pdf) | [link](https://github.com/anthonycaterini/hvae-nips)                       |
-| Riemannian Hamiltonian VAE (RHVAE) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/pythae/blob/main/examples/models_training/rhvae_training.ipynb) | [link](https://arxiv.org/pdf/2010.11518.pdf) | [link](https://github.com/clementchadebec/Data_Augmentation_with_VAE-DALI) |
+| Autoencoder (AE)                   | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/notebooks/models_training/ae_training.ipynb) |                                              |                                                                            |
+| Variational Autoencoder (VAE)      | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/notebooks/models_training/vae_training.ipynb) | [link](https://arxiv.org/pdf/1312.6114.pdf)  |
+| Beta Variational Autoencoder (VAE) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/notebooks/models_training/beta_vae_training.ipynb) | [link](https://openreview.net/pdf?id=Sy2fzU9gl)  |                                                                            |
+| Wasserstein Autoencoder (WAE)      | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/notebooks/models_training/wae_training.ipynb) | [link](https://arxiv.org/pdf/1711.01558.pdf) | [link](https://github.com/tolstikhin/wae)                                  |
+| VAMP Autoencoder (VAMP)            | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/notebooks/models_training/vamp_training.ipynb) | [link](https://arxiv.org/pdf/1705.07120.pdf) | [link](https://github.com/jmtomczak/vae_vampprior)                         |
+| Hamiltonian VAE (HVAE)             | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/notebooks/models_training/hvae_training.ipynb) | [link](https://arxiv.org/pdf/1805.11328.pdf) | [link](https://github.com/anthonycaterini/hvae-nips)                       |
+| Riemannian Hamiltonian VAE (RHVAE) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/notebooks/models_training/rhvae_training.ipynb) | [link](https://arxiv.org/pdf/2010.11518.pdf) | [link](https://github.com/clementchadebec/Data_Augmentation_with_VAE-DALI) |
 
 
 ## Launching a model training
@@ -82,13 +82,13 @@ To launch a model training, you only need to call a `TrainingPipeline` instance.
 At the end of training, the best model weights, model configuration and training configuration are stored in a `final_model` folder available in  `my_model/MODEL_NAME_training_YYYY-MM-DD_hh-mm-ss` (with `my_model` being the `output_dir` argument of the `TrainingConfig`). If you further set the `steps_saving` argument to a a certain value, folders named `checkpoint_epoch_k` containing the best model weights, configuration and training configuration at epoch *k* will also appear in `my_model/MODEL_NAME_training_YYYY-MM-DD_hh-mm-ss`.
 
 ## Lauching a training on benchmark datasets
-We also provide a training script example [here](https://github.com/clementchadebec/pythae/tree/main/examples/scripts/training.py) that can be used to train the models on benchmarks datasets (mnist, cifar10, celeba ...). The script can be launched with the following commandline
+We also provide a training script example [here](https://github.com/clementchadebec/benchmark_VAE/tree/main/examples/scripts/training.py) that can be used to train the models on benchmarks datasets (mnist, cifar10, celeba ...). The script can be launched with the following commandline
 
 ```bash
 python training.py --dataset mnist --model_name ae --model_config 'configs/ae_config.json' --training_config 'configs/base_training_config.json'
 ```
 
-See [README.md](https://github.com/clementchadebec/pythae/tree/main/examples/scripts/README.md) for further details on this script
+See [README.md](https://github.com/clementchadebec/benchmark_VAE/tree/main/examples/scripts/README.md) for further details on this script
 
 ## Launching data generation
 
@@ -186,13 +186,11 @@ Replace *mnist* by cifar or celeba to access to other neural nets.
 ## Getting your hands on the code
 
 To help you to understand the way pythae works and how you can augment your data with this library we also
-provide tutorials that can be found in [examples folder](https://github.com/clementchadebec/pythae/tree/main/examples):
+provide tutorials that can be found in [examples folder](https://github.com/clementchadebec/benchmark_VAE/tree/main/examples):
 
-- [getting_started.ipynb](https://github.com/clementchadebec/pythae/tree/main/examples) explains you how to train a model and generate new data using pythae's Pipelines [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/pythae/blob/main/examples/getting_started.ipynb)
-- [playing_with_configs.ipynb](https://github.com/clementchadebec/pythae/tree/main/examples) shows you how to amend the predefined configuration to adapt them to you data [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/pythae/blob/main/examples/playing_with_configs.ipynb)
-- [making_your_own_autoencoder.ipynb](https://github.com/clementchadebec/pythae/tree/main/examples) shows you how to pass your own networks to the models implemented in pythae [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/pythae/blob/main/examples/making_your_own_autoencoder.ipynb)
+- [making_your_own_autoencoder.ipynb](https://github.com/clementchadebec/benchmark_VAE/tree/main/examples) shows you how to pass your own networks to the models implemented in pythae [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/making_your_own_autoencoder.ipynb)
 
 ## Dealing with issues
 
-If you are experiencing any issues while running the code or request new features/models to be implemented please [open an issue on github](https://github.com/clementchadebec/pythae/issues).
+If you are experiencing any issues while running the code or request new features/models to be implemented please [open an issue on github](https://github.com/clementchadebec/benchmark_VAE/issues).
 
