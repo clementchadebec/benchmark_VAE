@@ -47,6 +47,7 @@ class BaseTrainer:
         eval_dataset: Optional[BaseDataset] = None,
         training_config: Optional[BaseTrainingConfig] = None,
         optimizer: Optional[torch.optim.Optimizer] = None,
+        scheduler: Optional=None
     ):
 
         if training_config is None:
@@ -83,11 +84,16 @@ class BaseTrainer:
         else:
             optimizer = self._set_optimizer_on_device(optimizer, device)
 
+        # set scheduler
+        if scheduler is None:
+            scheduler = self.set_default_scheduler(model, optimizer)
+
         self.train_dataset = train_dataset
         self.eval_dataset = eval_dataset
 
         self.model = model
         self.optimizer = optimizer
+        self.scheduler = scheduler
 
         self.device = device
 
@@ -131,6 +137,14 @@ class BaseTrainer:
         )
 
         return optimizer
+
+    def set_default_scheduler(
+        self, model: BaseAE, optimizer: torch.optim.Optimizer) -> torch.optim.lr_scheduler:
+
+        scheduler = optim.lr_scheduler.ReduceLROnPlateau(
+                 optimizer, factor=0.5, patience=10, verbose=True)
+
+        return scheduler
 
     def _run_model_sanity_check(self, model, train_dataset):
         try:
@@ -262,6 +276,8 @@ class BaseTrainer:
 
             else:
                 epoch_eval_loss = best_eval_loss
+
+            self.scheduler.step(epoch_eval_loss)
 
             if epoch_eval_loss < best_eval_loss and not self.training_config.keep_best_on_train:
                 best_model_epoch = epoch
