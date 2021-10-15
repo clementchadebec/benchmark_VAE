@@ -11,7 +11,7 @@ with your own data and Encoder and Decoder neural networks.
 To install the latest version of this library run the following using ``pip``
 
 ```bash
-$ pip install pythae
+$ pip install git+https://github.com/clementchadebec/benchmark_VAE.git
 ``` 
 
 
