@@ -125,29 +125,29 @@ Say you want to train a Wassertstein AE with a specific encoder and decoder. Pyt
 ```python
 >>>	from pythae.models.nn import BaseEncoder, BaseDecoder
 >>> from pythae.models.base.base_utils import ModelOuput
->>>	class My_Encoder(BaseEncoder):
-...		def __init__(self, args=None): # Args is a ModelConfig instance
-...			BaseEncoder.__init__(self)
-...			self.layers = my_nn_layers()
+>>>class My_Encoder(BaseEncoder):
+...	def __init__(self, args=None): # Args is a ModelConfig instance
+...		BaseEncoder.__init__(self)
+...		self.layers = my_nn_layers()
 ...		
-...		def forward(self, x:torch.Tensor) -> ModelOuput:
-...			out = self.layers(x)
-...			output = ModelOuput(
-...				embedding=out # Set the output from the encoder in a ModelOuput instance 
-...			)
-...			return output
+...	def forward(self, x:torch.Tensor) -> ModelOuput:
+...		out = self.layers(x)
+...		output = ModelOuput(
+...			embedding=out # Set the output from the encoder in a ModelOuput instance 
+...		)
+...		return output
 ...
 ... class My_Decoder(BaseEncoder):
-...		def __init__(self, args=None):
-...			BaseEncoder.__init__(self)
-...			self.layers = my_nn_layers()
+...	def __init__(self, args=None):
+...		BaseEncoder.__init__(self)
+...		self.layers = my_nn_layers()
 ...		
-...		def forward(self, x:torch.Tensor) -> ModelOuput:
-...			out = self.layers(x)
-...			output = ModelOuput(
-...				reconstruction=out # Set the output from the decoder in a ModelOuput instance
-...			)
-...			return output
+...	def forward(self, x:torch.Tensor) -> ModelOuput:
+...		out = self.layers(x)
+...		output = ModelOuput(
+...			reconstruction=out # Set the output from the decoder in a ModelOuput instance
+...		)
+...		return output
 ...
 >>> my_encoder = My_Encoder()
 >>> my_decoder = My_Decoder()
