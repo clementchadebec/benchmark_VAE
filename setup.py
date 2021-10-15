@@ -24,8 +24,6 @@ setup(
     project_urls={"Bug Tracker": "https://github.com/clementchadebec/pythae/issues"},
     classifiers=[
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.6",
-        "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "License :: OSI Approved :: Apache Software License",
         "Operating System :: OS Independent",
@@ -41,5 +39,5 @@ setup(
         "pydantic>=1.8.2",
         "dataclasses>=0.6",
     ],
-    python_requires=">=3.6",
+    python_requires=">=3.8",
 )
