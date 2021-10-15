@@ -1,23 +1,3 @@
-<p align="center">
-<a href='https://pypi.org/project/pythae/'>
-	    <img src='https://badge.fury.io/py/pythae.svg' />
-	</a>
-	<a href='https://opensource.org/licenses/Apache-2.0'>
-	    <img src='https://img.shields.io/github/license/clementchadebec/pythae?color=blue' />
-	</a>
-	<a href='https://pythae.readthedocs.io/en/latest/?badge=latest'>
-	    <img src='https://readthedocs.org/projects/pythae/badge/?version=latest' alt='Documentation 	Status' />
-	</a>
-	<a href='https://pepy.tech/project/pythae'>
-	    <img src='https://static.pepy.tech/personalized-badge/pythae?period=month&units=international_system&left_color=grey&right_color=orange&left_text=downloads' alt='Downloads 	Status' />
-	</a>
-</p>
-<p align="center">
-  <a href="https://pythae.readthedocs.io/en/latest/">Documentation</a>
-</p>
-	
-
-
 # pythae 
 
 This library implements some of the most common (Variational) Autoencoder models. In particular it 
@@ -28,7 +8,7 @@ with your own data and Encoder and Decoder neural networks.
 
 # Installation
 
-To install the library from [pypi.org](https://pypi.org/) run the following using ``pip``
+To install the latest version of this library run the following using ``pip``
 
 ```bash
 $ pip install pythae
