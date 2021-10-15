@@ -1,5 +1,7 @@
 from pydantic.dataclasses import dataclass
 
+from typing import Literal
+
 from ..base.base_config import BaseAEConfig
 
 @dataclass
@@ -15,4 +17,4 @@ class VAEConfig(BaseAEConfig):
         reconstruction_loss (str): The reconstruction loss to use ['bce', 'mse']. Default: 'mse'
         """
 
-    reconstruction_loss: str = 'mse'
+    reconstruction_loss: Literal['bce', 'mse'] = 'mse'

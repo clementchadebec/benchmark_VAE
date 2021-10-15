@@ -6,7 +6,6 @@ import os
 import numpy as np
 import torch
 
-from pythae.data.loaders import ImageGetterFromFolder
 from pythae.data.preprocessors import DataProcessor
 from pythae.models import RHVAE
 from pythae.models.rhvae import RHVAEConfig
@@ -22,39 +21,41 @@ ap = argparse.ArgumentParser()
 
 # Training setting
 ap.add_argument(
-    "--path_to_train_data",
+    "--dataset",
     type=str,
-    default=None,
-    help="path to the data set to augment",
+    default='mnist',
+    choices=['mnist', 'cifar10', 'celeba'],
+    help="The data set to use to perform training. It must be located in the folder 'data' at the "
+    "path 'data/datset_name/' and contrain a 'train_data.npz' file with the data being "
+    "under the key 'data'. The data must be in the range [0-255] and shaped with the channel in "
+    "first position (im_channel x height x width).",
     required=True,
 )
 ap.add_argument(
-    "--path_to_eval_data",
-    type=str,
-    default=None,
-    help="path to the data set to augment",
+    "--model_name",
+    help="The name of the model to train",
+    choices=['ae', 'vae', 'beta_vae', 'wae', 'vamp', 'hvae', 'rhvae'],
+    required=True
 )
 ap.add_argument(
     "--path_to_model_config",
     help="path to model config file (expected json file)",
-    default=os.path.join(PATH, "configs/rhvae_config.json"),
 )
 ap.add_argument(
     "--path_to_training_config",
     help="path_to_model_config_file (expected json file)",
     default=os.path.join(PATH, "configs/training_config.json"),
 )
-ap.add_argument(
-    "--path_to_logs",
-    help="specific folder save to log files",
-    default=os.path.join("outputs/my_logs_from_script/"),
-)
-
 
 args = ap.parse_args()
 
-
 def main(args):
+
+    if args.model_name == 'ae':
+        from pythae.model import AE, AEConfig
+
+        model_config = AEConfig.from_json_file(args.path_to_model_config)
+        model = AE()
 
     model_config = RHVAEConfig.from_json_file(args.path_to_model_config)
     training_config = TrainingConfig.from_json_file(args.path_to_training_config)
