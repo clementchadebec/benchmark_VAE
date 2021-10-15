@@ -30,7 +30,7 @@ class Encoder_AE_CIFAR(BaseEncoder):
                         nn.ReLU(),
                     )
 
-        self.embedding = nn.Linear(1024*4*4, args.latent_dim)
+        self.embedding = nn.Linear(1024*2*2, args.latent_dim)
 
     def forward(self, x: torch.Tensor):
         h1 = self.conv_layers(x).reshape(x.shape[0], -1)
@@ -63,8 +63,8 @@ class Encoder_VAE_CIFAR(BaseEncoder):
                         nn.ReLU(),
                     )
 
-        self.embedding = nn.Linear(1024*4*4, args.latent_dim)
-        self.log_var =  nn.Linear(1024*4*4, args.latent_dim)
+        self.embedding = nn.Linear(1024*2*2, args.latent_dim)
+        self.log_var =  nn.Linear(1024*2*2, args.latent_dim)
 
     def forward(self, x: torch.Tensor):
         h1 = self.conv_layers(x).reshape(x.shape[0], -1)
@@ -82,24 +82,17 @@ class Decoder_AE_CIFAR(BaseDecoder):
         self.latent_dim = args.latent_dim
         self.n_channels = 3
 
-        self.fc = nn.Linear(latent_dim, 1024*8*8)
+        self.fc = nn.Linear(args.latent_dim, 1024*8*8)
         self.deconv_layers = nn.Sequential(
-                              nn.ConvTranspose2d(1024, 512, 5, 2, padding=2),
-                              nn.BatchNorm2d(512),
-                              nn.ReLU(),
-                              nn.ConvTranspose2d(512, 256, 5, 2, padding=1, output_padding=0),
-                              nn.BatchNorm2d(256),
-                              nn.ReLU(),
-                              nn.ConvTranspose2d(256, 128, 5, 2, padding=2, output_padding=1),
-                              nn.BatchNorm2d(128),
-                              nn.ReLU(),
-                              nn.ConvTranspose2d(128, self.n_channels, 5, 1, padding=1),
-                              #nn.BatchNorm2d(self.n_channels),
-                              #nn.ReLU(),
-                              #nn.ConvTranspose2d(self.n_channels, self.n_channels, 3, 1, padding=1),
-                              #nn.BatchNorm2d(self.n_channels),
-                              nn.Sigmoid()
-            )
+                        nn.ConvTranspose2d(1024, 512, 4, 2, padding=1),
+                        nn.BatchNorm2d(512),
+                        nn.ReLU(),
+                        nn.ConvTranspose2d(512, 256, 4, 2, padding=1, output_padding=1),
+                        nn.BatchNorm2d(256),
+                        nn.ReLU(),
+                        nn.ConvTranspose2d(256, self.n_channels, 4, 1, padding=2),
+                        nn.Sigmoid()
+                )
     
     def forward(self, z: torch.Tensor):
         h1 = self.fc(z).reshape(z.shape[0], 1024, 8, 8)

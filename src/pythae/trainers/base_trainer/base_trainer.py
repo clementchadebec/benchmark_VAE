@@ -247,7 +247,7 @@ class BaseTrainer:
             file_logger.info(f"Model Architecture: {self.model}\n")
             file_logger.info(f"Optimizer: {self.optimizer}\n")
 
-        logger.info("Successfully launched training !")
+        logger.info("Successfully launched training !\n")
 
         # set best losses for early stopping
         best_train_loss = 1e10

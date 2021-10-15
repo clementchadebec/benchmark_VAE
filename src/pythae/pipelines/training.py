@@ -7,8 +7,7 @@ from torch.optim import Optimizer
 
 from ..customexception import LoadError
 from ..data.preprocessors import DataProcessor
-from ..models import RHVAE, BaseAE
-from ..models.rhvae import RHVAEConfig
+from ..models import BaseAE, VAE, VAEConfig
 from ..trainers import BaseTrainer, BaseTrainingConfig
 
 from .base_pipeline import Pipeline
@@ -45,7 +44,7 @@ class TrainingPipeline(Pipeline):
             is normalized such that the max value of each data is 1 and the min 0). Default: None.
 
         model (Optional[BaseAE]): An instance of :class:`~pythae.models.BaseAE` you want to train.
-            If None, a default :class:`~pythae.models.RHVAE` model is used. Default: None.
+            If None, a default :class:`~pythae.models.VAE` model is used. Default: None.
 
         optimizer (Optional[~torch.optim.Optimizer]): An instance of :class:`~torch.optim.Optimizer`
             used to train the model. If None we provide an instance of
@@ -79,8 +78,8 @@ class TrainingPipeline(Pipeline):
         self.training_config = training_config
 
     def _set_default_model(self, data):
-        model_config = RHVAEConfig(input_dim=int(np.prod(data.shape[1:])))
-        model = RHVAE(model_config)
+        model_config = VAEConfig(input_dim=int(np.prod(data.shape[1:])))
+        model = VAE(model_config)
         self.model = model
 
     def __call__(
