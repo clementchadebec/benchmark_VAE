@@ -45,6 +45,13 @@ Below is the list of the models currently implemented in the library.
 
 Below is the list of the models currently implemented in the library.
 
+|                Samplers               |   Models   |
+|:-------------------------------------:|:----------:|
+| Normal prior                          | all models |
+| Gaussian mixture (Density estimation) | all models |
+| VAMP prior sampler                    |    VAMP    |
+| Manifold sampler                      |    RHVAE   |
+
 
 ## Launching a model training
 
