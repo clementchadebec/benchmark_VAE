@@ -1,7 +1,8 @@
 examples/data/cifar-10-python.tar.gz
 examples/data/cifar-10-batches-py/
-examples/data/MNIST/
 examples/data/*
+examples/scripts/data/
+
 
 __pycache__
 #docs
@@ -149,4 +150,3 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
-examples/models_training/my_model/VAE_training_2021-10-05_16-02-02/final_model/model_config.json
