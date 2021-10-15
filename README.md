@@ -48,9 +48,10 @@ To launch a model training, you only need to call a `TrainingPipeline` instance.
 ```python
 >>> from pythae.pipelines import TrainingPipeline
 >>> from pythae.models import VAE, VAEConfig
+>>> from pythae.trainers import BaseTrainingConfig
 
 >>> # Set up the training configuration
->>> my_training_config = TrainingConfig(
+>>> my_training_config = BaseTrainingConfig(
 ...	output_dir='my_model',
 ...	num_epochs=50,
 ...	learning_rate=1e-3,
