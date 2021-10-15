@@ -188,11 +188,11 @@ Replace *mnist* by cifar or celeba to access to other neural nets.
 To help you to understand the way pythae works and how you can augment your data with this library we also
 provide tutorials that can be found in [examples folder](https://github.com/clementchadebec/pythae/tree/main/examples):
 
-- [getting_started.ipynb](https://github.com/clementchadebec/pythae/tree/main/examples) explains you how to train a model and generate new data using pythae's Pipelines [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/pythae/blob/main/examples/getting_started.ipynb)
-- [playing_with_configs.ipynb](https://github.com/clementchadebec/pythae/tree/main/examples) shows you how to amend the predefined configuration to adapt them to you data [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/pythae/blob/main/examples/playing_with_configs.ipynb)
-- [making_your_own_autoencoder.ipynb](https://github.com/clementchadebec/pythae/tree/main/examples) shows you how to pass your own networks to the models implemented in pythae [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/pythae/blob/main/examples/making_your_own_autoencoder.ipynb)
+- [getting_started.ipynb](https://github.com/clementchadebec/benchmark_VAE/tree/main/examples) explains you how to train a model and generate new data using pythae's Pipelines [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/getting_started.ipynb)
+- [playing_with_configs.ipynb](https://github.com/clementchadebec/benchmark_VAE/tree/main/examples) shows you how to amend the predefined configuration to adapt them to you data [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/playing_with_configs.ipynb)
+- [making_your_own_autoencoder.ipynb](https://github.com/clementchadebec/benchmark_VAE/tree/main/examples) shows you how to pass your own networks to the models implemented in pythae [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/making_your_own_autoencoder.ipynb)
 
 ## Dealing with issues
 
-If you are experiencing any issues while running the code or request new features/models to be implemented please [open an issue on github](https://github.com/clementchadebec/pythae/issues).
+If you are experiencing any issues while running the code or request new features/models to be implemented please [open an issue on github](https://github.com/clementchadebec/benchmark_VAE/issues).
 
