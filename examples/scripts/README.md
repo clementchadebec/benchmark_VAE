@@ -4,7 +4,7 @@ We also provided a training script as example allowing you to train VAE models o
 The script can be launched with the following commandline
 
 ```bash
-	python training.py --dataset mnist --model_name ae --model_config 'configs/ae_config.json' --training_config 'configs/base_training_config.json'
+python training.py --dataset mnist --model_name ae --model_config 'configs/ae_config.json' --training_config 'configs/base_training_config.json'
 ```
 
 The folder structure should be as follows:
