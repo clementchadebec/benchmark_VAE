@@ -4,7 +4,7 @@ from ...samplers import BaseSamplerConfig
 
 @dataclass
 class NormalSamplerConfig(BaseSamplerConfig):
-    """This is the Normal smapler configuration instance deriving from
+    """This is the Normal sampler configuration instance deriving from
     :class:`BaseSamplerConfig`.
     """
     pass

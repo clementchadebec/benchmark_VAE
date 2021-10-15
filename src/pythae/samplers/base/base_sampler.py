@@ -33,6 +33,7 @@ class BaseSampler:
 
         self.model = model
         self.sampler_config = sampler_config
+        self.is_fitted = False
 
         self.device = (
             "cuda"

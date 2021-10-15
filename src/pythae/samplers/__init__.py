@@ -12,6 +12,8 @@ in which are located 4 modules:
 
 from .base import BaseSampler, BaseSamplerConfig
 from .normal_sampling import NormalSampler, NormalSamplerConfig
+from .gaussian_mixure import GaussianMixtureSampler, GaussianMixtureSamplerConfig
+from .vamp_sampler import VAMPSampler, VAMPSamplerConfig
 from .manifold_sampler import RHVAESampler, RHVAESamplerConfig
 
 __all__ = [
@@ -19,6 +21,10 @@ __all__ = [
     "BaseSamplerConfig",
     "NormalSampler",
     "NormalSamplerConfig",
+    "GaussianMixtureSampler",
+    "GaussianMixtureSamplerConfig",
+    "VAMPSampler",
+    "VAMPSamplerConfig",
     "RHVAESampler",
     "RHVAESamplerConfig"
 ]
