@@ -148,9 +148,9 @@ If you set `output_dir` to a specific path the generated images will be saved as
 Say you want to train a Wassertstein AE with a specific encoder and decoder. Pythae provides you the possibility to define your own neural networks as follows
 
 ```python
->>>	from pythae.models.nn import BaseEncoder, BaseDecoder
+>>> from pythae.models.nn import BaseEncoder, BaseDecoder
 >>> from pythae.models.base.base_utils import ModelOuput
->>>class My_Encoder(BaseEncoder):
+>>> class My_Encoder(BaseEncoder):
 ...	def __init__(self, args=None): # Args is a ModelConfig instance
 ...		BaseEncoder.__init__(self)
 ...		self.layers = my_nn_layers()
