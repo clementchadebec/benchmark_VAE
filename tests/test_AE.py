@@ -25,9 +25,12 @@ def model_configs_no_input_dim(request):
     return request.param
 
 
-@pytest.fixture(params=[
-    AEConfig(input_dim=(1, 28, 28), latent_dim=10),
-    AEConfig(input_dim=(1, 2, 18), latent_dim=5)])
+@pytest.fixture(
+    params=[
+        AEConfig(input_dim=(1, 28, 28), latent_dim=10),
+        AEConfig(input_dim=(1, 2, 18), latent_dim=5),
+    ]
+)
 def model_configs(request):
     return request.param
 
@@ -40,7 +43,6 @@ def custom_encoder(model_configs):
 @pytest.fixture
 def custom_decoder(model_configs):
     return Decoder_AE_Conv(model_configs)
-
 
 
 class Test_Model_Building:
@@ -80,13 +82,9 @@ class Test_Model_Building:
             model_configs_no_input_dim, encoder=custom_encoder, decoder=custom_decoder
         )
 
-    def test_build_custom_arch(
-        self, model_configs, custom_encoder, custom_decoder
-    ):
+    def test_build_custom_arch(self, model_configs, custom_encoder, custom_decoder):
 
-        model = AE(
-            model_configs, encoder=custom_encoder, decoder=custom_decoder
-        )
+        model = AE(model_configs, encoder=custom_encoder, decoder=custom_decoder)
 
         assert model.encoder == custom_encoder
         assert not model.model_config.uses_default_encoder
@@ -133,9 +131,7 @@ class Test_Model_Saving:
             ]
         )
 
-    def test_custom_encoder_model_saving(
-        self, tmpdir, model_configs, custom_encoder
-    ):
+    def test_custom_encoder_model_saving(self, tmpdir, model_configs, custom_encoder):
 
         tmpdir.mkdir("dummy_folder")
         dir_path = dir_path = os.path.join(tmpdir, "dummy_folder")
@@ -163,9 +159,7 @@ class Test_Model_Saving:
             ]
         )
 
-    def test_custom_decoder_model_saving(
-        self, tmpdir, model_configs, custom_decoder
-    ):
+    def test_custom_decoder_model_saving(self, tmpdir, model_configs, custom_decoder):
 
         tmpdir.mkdir("dummy_folder")
         dir_path = dir_path = os.path.join(tmpdir, "dummy_folder")
@@ -200,9 +194,7 @@ class Test_Model_Saving:
         tmpdir.mkdir("dummy_folder")
         dir_path = dir_path = os.path.join(tmpdir, "dummy_folder")
 
-        model = AE(
-            model_configs, encoder=custom_encoder, decoder=custom_decoder
-        )
+        model = AE(model_configs, encoder=custom_encoder, decoder=custom_decoder)
 
         model.state_dict()["encoder.layers.0.weight"][0] = 0
 
@@ -232,9 +224,7 @@ class Test_Model_Saving:
         tmpdir.mkdir("dummy_folder")
         dir_path = dir_path = os.path.join(tmpdir, "dummy_folder")
 
-        model = AE(
-            model_configs, encoder=custom_encoder, decoder=custom_decoder
-        )
+        model = AE(model_configs, encoder=custom_encoder, decoder=custom_decoder)
 
         model.state_dict()["encoder.layers.0.weight"][0] = 0
 
@@ -264,22 +254,22 @@ class Test_Model_Saving:
         with pytest.raises(FileNotFoundError):
             model_rec = AE.load_from_folder(dir_path)
 
-class Test_Model_forward:
 
+class Test_Model_forward:
     @pytest.fixture
     def demo_data(self):
-        data = torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))[:]
+        data = torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))[
+            :
+        ]
         return (
             data
         )  # This is an extract of 3 data from MNIST (unnormalized) used to test custom architecture
 
-
     @pytest.fixture
     def ae(self, model_configs, demo_data):
         model_configs.input_dim = tuple(demo_data["data"][0].shape)
-        return AE(model_configs)   
+        return AE(model_configs)
 
-     
     def test_model_train_output(self, ae, demo_data):
 
         ae.train()
@@ -288,34 +278,25 @@ class Test_Model_forward:
 
         assert isinstance(out, ModelOuput)
 
-        assert set(
-            [
-                "loss",
-                "recon_x",
-                "z",
-            ]
-        ) == set(out.keys())
+        assert set(["loss", "recon_x", "z"]) == set(out.keys())
 
-
-        assert out.z.shape[0] == demo_data['data'].shape[0]
-        assert out.recon_x.shape == demo_data['data'].shape
+        assert out.z.shape[0] == demo_data["data"].shape[0]
+        assert out.recon_x.shape == demo_data["data"].shape
 
 
 class Test_AE_Training:
-
     @pytest.fixture
     def train_dataset(self):
         return torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))
 
-    @pytest.fixture(params=[
-            BaseTrainingConfig(num_epochs=3, steps_saving=2, learning_rate=1e-5),
-        ])
+    @pytest.fixture(
+        params=[BaseTrainingConfig(num_epochs=3, steps_saving=2, learning_rate=1e-5)]
+    )
     def training_configs(self, tmpdir, request):
         tmpdir.mkdir("dummy_folder")
         dir_path = os.path.join(tmpdir, "dummy_folder")
         request.param.output_dir = dir_path
         return request.param
-
 
     @pytest.fixture(
         params=[
@@ -326,9 +307,7 @@ class Test_AE_Training:
             torch.rand(1),
         ]
     )
-    def ae(
-        self, model_configs, custom_encoder, custom_decoder, request
-    ):
+    def ae(self, model_configs, custom_encoder, custom_decoder, request):
         # randomized
 
         alpha = request.param
@@ -343,11 +322,7 @@ class Test_AE_Training:
             model = AE(model_configs, decoder=custom_decoder)
 
         else:
-            model = AE(
-                model_configs,
-                encoder=custom_encoder,
-                decoder=custom_decoder
-            )
+            model = AE(model_configs, encoder=custom_encoder, decoder=custom_decoder)
 
         return model
 
@@ -363,9 +338,7 @@ class Test_AE_Training:
 
         return optimizer
 
-    def test_ae_train_step(
-        self, ae, train_dataset, training_configs, optimizers
-    ):
+    def test_ae_train_step(self, ae, train_dataset, training_configs, optimizers):
         trainer = BaseTrainer(
             model=ae,
             train_dataset=train_dataset,
@@ -387,9 +360,7 @@ class Test_AE_Training:
             ]
         )
 
-    def test_ae_eval_step(
-        self, ae, train_dataset, training_configs, optimizers
-    ):
+    def test_ae_eval_step(self, ae, train_dataset, training_configs, optimizers):
         trainer = BaseTrainer(
             model=ae,
             train_dataset=train_dataset,
@@ -437,7 +408,6 @@ class Test_AE_Training:
                 for key in start_model_state_dict.keys()
             ]
         )
-
 
     def test_checkpoint_saving(
         self, tmpdir, ae, train_dataset, training_configs, optimizers
@@ -552,7 +522,9 @@ class Test_AE_Training:
 
         trainer.train()
 
-        training_dir = os.path.join(dir_path, f"AE_training_{trainer._training_signature}")
+        training_dir = os.path.join(
+            dir_path, f"AE_training_{trainer._training_signature}"
+        )
         assert os.path.isdir(training_dir)
 
         checkpoint_dir = os.path.join(
@@ -610,7 +582,9 @@ class Test_AE_Training:
 
         model = deepcopy(trainer._best_model)
 
-        training_dir = os.path.join(dir_path, f"AE_training_{trainer._training_signature}")
+        training_dir = os.path.join(
+            dir_path, f"AE_training_{trainer._training_signature}"
+        )
         assert os.path.isdir(training_dir)
 
         final_dir = os.path.join(training_dir, f"final_model")
@@ -636,7 +610,6 @@ class Test_AE_Training:
         else:
             assert not "encoder.pkl" in files_list
 
-
         # check reload full model
         model_rec = AE.load_from_folder(os.path.join(final_dir))
 
@@ -660,20 +633,20 @@ class Test_AE_Training:
 
         # build pipeline
         pipeline = TrainingPipeline(
-            model=ae,
-            optimizer=optimizers,
-            training_config=training_configs
+            model=ae, optimizer=optimizers, training_config=training_configs
         )
 
         # Launch Pipeline
         pipeline(
-            train_data=train_dataset.data, # gives tensor to pipeline
-            eval_data=train_dataset.data # gives tensor to pipeline
+            train_data=train_dataset.data,  # gives tensor to pipeline
+            eval_data=train_dataset.data,  # gives tensor to pipeline
         )
 
         model = deepcopy(pipeline.trainer._best_model)
 
-        training_dir = os.path.join(dir_path, f"AE_training_{pipeline.trainer._training_signature}")
+        training_dir = os.path.join(
+            dir_path, f"AE_training_{pipeline.trainer._training_signature}"
+        )
         assert os.path.isdir(training_dir)
 
         final_dir = os.path.join(training_dir, f"final_model")

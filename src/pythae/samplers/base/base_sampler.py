@@ -30,16 +30,11 @@ class BaseSampler:
         if sampler_config is None:
             sampler_config = BaseSamplerConfig()
 
-
         self.model = model
         self.sampler_config = sampler_config
         self.is_fitted = False
 
-        self.device = (
-            "cuda"
-            if torch.cuda.is_available()
-            else "cpu"
-        )
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
 
         self.model.to(self.device)
 
@@ -50,10 +45,11 @@ class BaseSampler:
 
     def sample(
         self,
-        num_samples: int=1,
+        num_samples: int = 1,
         batch_size: int = 500,
-        output_dir:str=None,
-        return_gen: bool=True):
+        output_dir: str = None,
+        return_gen: bool = True,
+    ):
         """Main sampling function of the sampler.
 
         Args:
@@ -86,51 +82,47 @@ class BaseSampler:
 
         if not os.path.exists(dir_path):
             os.makedirs(dir_path)
-            print(f"--> Created folder {dir_path}. Image will be saved here")        
+            print(f"--> Created folder {dir_path}. Image will be saved here")
 
-        img = 255. * torch.movedim(img_tensor, 0, 2).cpu().detach().numpy()
-        if img.shape[-1]==1:
+        img = 255.0 * torch.movedim(img_tensor, 0, 2).cpu().detach().numpy()
+        if img.shape[-1] == 1:
             img = np.repeat(img, repeats=3, axis=-1)
-        
-        img = img.astype('uint8')
+
+        img = img.astype("uint8")
         imwrite(os.path.join(dir_path, f"{img_name}.png"), img)
 
-
-
-
-
-
-
-    #def save_data_batch(self, data, dir_path, number_of_samples, batch_idx):
+    # def save_data_batch(self, data, dir_path, number_of_samples, batch_idx):
     #    """
     #    Method to save a batch of generated data. The data will be saved in the
     #    ``dir_path`` folder. The batch of data
     #    is saved in a file named ``generated_data_{number_of_samples}_{batch_idx}.pt``
+
+
 #
-    #    Args:
-    #        data (torch.Tensor): The data to save
-    #        dir_path (str): The folder where the data and config file must be saved
-    #        batch_idx (int): The batch idx
+#    Args:
+#        data (torch.Tensor): The data to save
+#        dir_path (str): The folder where the data and config file must be saved
+#        batch_idx (int): The batch idx
 #
-    #    .. note::
-    #        You can then easily reload the generated data using
+#    .. note::
+#        You can then easily reload the generated data using
 #
-    #        .. code-block:
+#        .. code-block:
 #
-    #            >>> import torch
-    #            >>> import os
-    #            >>> data = torch.load(
-    #            ...    os.path.join(
-    #            ...        'dir_path', 'generated_data_{number_of_samples}_{batch_idx}.pt'))
-    #    """
+#            >>> import torch
+#            >>> import os
+#            >>> data = torch.load(
+#            ...    os.path.join(
+#            ...        'dir_path', 'generated_data_{number_of_samples}_{batch_idx}.pt'))
+#    """
 #
-    #    if not os.path.exists(dir_path):
-    #        os.makedirs(dir_path)
+#    if not os.path.exists(dir_path):
+#        os.makedirs(dir_path)
 #
-    #    torch.save(
-    #        data,
-    #        os.path.join(
-    #            dir_path, f"generated_data_{number_of_samples}_{batch_idx}.pt"
-    #        ),
-    #    )
+#    torch.save(
+#        data,
+#        os.path.join(
+#            dir_path, f"generated_data_{number_of_samples}_{batch_idx}.pt"
+#        ),
+#    )
 #

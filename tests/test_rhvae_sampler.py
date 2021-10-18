@@ -19,7 +19,7 @@ def dummy_data():
 @pytest.fixture(
     params=[
         RHVAE(RHVAEConfig(input_dim=(1, 28, 28), latent_dim=3)),
-        RHVAE(RHVAEConfig(input_dim=(1, 28, 28), latent_dim=2))
+        RHVAE(RHVAEConfig(input_dim=(1, 28, 28), latent_dim=2)),
     ]
 )
 def model(request):
@@ -28,25 +28,14 @@ def model(request):
 
 @pytest.fixture(
     params=[
-        RHVAESamplerConfig(
-            n_lf=1,
-            mcmc_steps_nbr=2,
-            eps_lf=0.00001
-        ),
-        RHVAESamplerConfig(
-            n_lf=3,
-            mcmc_steps_nbr=2,
-            eps_lf=0.001
-        ),
-        RHVAESamplerConfig(
-            n_lf=3,
-            mcmc_steps_nbr=2,
-            beta_zero=0.1
-        ),
+        RHVAESamplerConfig(n_lf=1, mcmc_steps_nbr=2, eps_lf=0.00001),
+        RHVAESamplerConfig(n_lf=3, mcmc_steps_nbr=2, eps_lf=0.001),
+        RHVAESamplerConfig(n_lf=3, mcmc_steps_nbr=2, beta_zero=0.1),
     ]
 )
 def sampler_config(request):
     return request.param
+
 
 @pytest.fixture()
 def sampler(model, sampler_config):
@@ -54,25 +43,17 @@ def sampler(model, sampler_config):
     # simulates learned metric
     model.centroids_tens = torch.randn(20, model.latent_dim)
     model.M_tens = torch.randn(20, model.latent_dim, model.latent_dim)
-    return RHVAESampler(
-        model=model,
-        sampler_config=sampler_config
-    )
+    return RHVAESampler(model=model, sampler_config=sampler_config)
 
-@pytest.fixture(
-    params=[
-        (4, 2),
-        (5, 5),
-        (2, 3)
-    ]
-)
+
+@pytest.fixture(params=[(4, 2), (5, 5), (2, 3)])
 def num_sample_and_batch_size(request):
     return request.param
 
 
 class Test_RHVAESampler_saving:
     def test_save_config(self, tmpdir, sampler):
-    
+
         tmpdir.mkdir("dummy_folder")
         dir_path = os.path.join(tmpdir, "dummy_folder")
 
@@ -88,53 +69,61 @@ class Test_RHVAESampler_saving:
 
 
 class Test_RHVAESampler_Sampling:
-
     def test_return_sampling(self, model, sampler, num_sample_and_batch_size):
 
-        num_samples, batch_size = num_sample_and_batch_size[0], num_sample_and_batch_size[1]
+        num_samples, batch_size = (
+            num_sample_and_batch_size[0],
+            num_sample_and_batch_size[1],
+        )
 
         gen_samples = sampler.sample(
-            num_samples=num_samples,
-            batch_size=batch_size,
-            return_gen=True
+            num_samples=num_samples, batch_size=batch_size, return_gen=True
         )
 
         assert gen_samples.shape[0] == num_samples
-
 
     def test_save_sampling(self, tmpdir, model, sampler, num_sample_and_batch_size):
 
         dir_path = os.path.join(tmpdir, "dummy_folder")
-        num_samples, batch_size = num_sample_and_batch_size[0], num_sample_and_batch_size[1]
-
-        gen_samples = sampler.sample(
-            num_samples=num_samples,
-            batch_size=batch_size,
-            output_dir=dir_path,
-            return_gen=True
+        num_samples, batch_size = (
+            num_sample_and_batch_size[0],
+            num_sample_and_batch_size[1],
         )
-
-        assert gen_samples.shape[0] == num_samples
-        assert len(os.listdir(dir_path)) == num_samples
-
-    def test_save_sampling_and_sampler_config(self, tmpdir, model, sampler, num_sample_and_batch_size):
-
-        dir_path = os.path.join(tmpdir, "dummy_folder")
-        num_samples, batch_size = num_sample_and_batch_size[0], num_sample_and_batch_size[1]
 
         gen_samples = sampler.sample(
             num_samples=num_samples,
             batch_size=batch_size,
             output_dir=dir_path,
             return_gen=True,
-            save_sampler_config=True
+        )
+
+        assert gen_samples.shape[0] == num_samples
+        assert len(os.listdir(dir_path)) == num_samples
+
+    def test_save_sampling_and_sampler_config(
+        self, tmpdir, model, sampler, num_sample_and_batch_size
+    ):
+
+        dir_path = os.path.join(tmpdir, "dummy_folder")
+        num_samples, batch_size = (
+            num_sample_and_batch_size[0],
+            num_sample_and_batch_size[1],
+        )
+
+        gen_samples = sampler.sample(
+            num_samples=num_samples,
+            batch_size=batch_size,
+            output_dir=dir_path,
+            return_gen=True,
+            save_sampler_config=True,
         )
 
         assert gen_samples.shape[0] == num_samples
         assert len(os.listdir(dir_path)) == num_samples + 1
-        assert 'sampler_config.json' in os.listdir(dir_path)
+        assert "sampler_config.json" in os.listdir(dir_path)
 
-#class Test_Sampler_Set_up:
+
+# class Test_Sampler_Set_up:
 #    @pytest.fixture(
 #        params=[# (target full batch number, target last full batch size, target_batch_number)
 #            NormalSamplerConfig(),

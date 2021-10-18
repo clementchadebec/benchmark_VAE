@@ -12,6 +12,7 @@ from typing import Optional
 
 import torch.nn.functional as F
 
+
 class VAE(BaseAE):
     """Vanilla Autoencoder model.
     
@@ -38,12 +39,10 @@ class VAE(BaseAE):
         self,
         model_config: VAEConfig,
         encoder: Optional[BaseEncoder] = None,
-        decoder: Optional[BaseDecoder] = None
+        decoder: Optional[BaseDecoder] = None,
     ):
 
-        BaseAE.__init__(
-            self, model_config=model_config, decoder=decoder
-            )
+        BaseAE.__init__(self, model_config=model_config, decoder=decoder)
 
         self.model_name = "VAE"
 
@@ -61,9 +60,8 @@ class VAE(BaseAE):
 
         else:
             self.model_config.uses_default_encoder = False
-        
-        self.set_encoder(encoder)
 
+        self.set_encoder(encoder)
 
     def forward(self, inputs: BaseDataset):
         """
@@ -85,7 +83,7 @@ class VAE(BaseAE):
 
         std = torch.exp(0.5 * log_var)
         z, eps = self._sample_gauss(mu, std)
-        recon_x = self.decoder(z)['reconstruction']
+        recon_x = self.decoder(z)["reconstruction"]
 
         loss, recon_loss, kld = self.loss_function(recon_x, x, mu, log_var, z)
 
@@ -94,37 +92,38 @@ class VAE(BaseAE):
             reg_loss=kld,
             loss=loss,
             recon_x=recon_x,
-            z=z
+            z=z,
         )
 
         return output
 
-
     def loss_function(self, recon_x, x, mu, log_var, z):
 
-        if self.model_config.reconstruction_loss == 'mse':
+        if self.model_config.reconstruction_loss == "mse":
 
-            recon_loss =  F.mse_loss(
-                recon_x.reshape(x.shape[0], -1), x.reshape(x.shape[0], -1), reduction='none'
+            recon_loss = F.mse_loss(
+                recon_x.reshape(x.shape[0], -1),
+                x.reshape(x.shape[0], -1),
+                reduction="none",
             ).sum()
 
-        elif self.model_config.reconstruction_loss == 'bce':
+        elif self.model_config.reconstruction_loss == "bce":
 
             recon_loss = F.binary_cross_entropy(
-            recon_x.reshape(x.shape[0], -1), x.reshape(x.shape[0], -1), reduction="none"
+                recon_x.reshape(x.shape[0], -1),
+                x.reshape(x.shape[0], -1),
+                reduction="none",
             ).sum()
 
         KLD = -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp())
 
         return recon_loss + KLD, recon_loss, KLD
 
-
     def _sample_gauss(self, mu, std):
         # Reparametrization trick
         # Sample N(0, I)
         eps = torch.randn_like(std)
         return mu + eps * std, eps
-
 
     @classmethod
     def _load_model_config_from_folder(cls, dir_path):
@@ -140,7 +139,6 @@ class VAE(BaseAE):
         model_config = VAEConfig.from_json_file(path_to_model_config)
 
         return model_config
-
 
     @classmethod
     def load_from_folder(cls, dir_path):

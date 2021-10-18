@@ -1,3 +1,16 @@
+<p align="center">
+    <a>
+	    <img src='https://img.shields.io/badge/python-3.6%7C3.7%7C3.8-blueviolet' alt='Python' />
+	</a>
+	<a href='https://opensource.org/licenses/Apache-2.0'>
+	    <img src='https://img.shields.io/github/license/clementchadebec/benchmark_VAE?color=blue' />
+	</a>
+    <a>
+	    <img src='https://img.shields.io/badge/code%20style-black-black' />
+	</a>
+	</a>
+</p>
+
 # pythae 
 
 This library implements some of the most common (Variational) Autoencoder models. In particular it 

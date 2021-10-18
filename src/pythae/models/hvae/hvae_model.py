@@ -12,6 +12,7 @@ from .hvae_config import HVAEConfig
 
 from typing import Optional
 
+
 class HVAE(VAE):
     r"""
     This is an implementation of the Hamiltonian VAE models proposed in 
@@ -44,20 +45,19 @@ class HVAE(VAE):
         decoder: Optional[BaseDecoder] = None,
     ):
 
-        VAE.__init__(
-                self, model_config=model_config, encoder=encoder, decoder=decoder
-            )
+        VAE.__init__(self, model_config=model_config, encoder=encoder, decoder=decoder)
 
         self.model_name = "HVAE"
 
         self.n_lf = model_config.n_lf
-        self.eps_lf =  nn.Parameter(
+        self.eps_lf = nn.Parameter(
             torch.tensor([model_config.eps_lf]),
-            requires_grad=True if model_config.learn_eps_lf else False)
-        self.beta_zero_sqrt =  nn.Parameter(
-            torch.tensor([model_config.beta_zero])**0.5,
-            requires_grad=True if model_config.learn_beta_zero else False)
-
+            requires_grad=True if model_config.learn_eps_lf else False,
+        )
+        self.beta_zero_sqrt = nn.Parameter(
+            torch.tensor([model_config.beta_zero]) ** 0.5,
+            requires_grad=True if model_config.learn_beta_zero else False,
+        )
 
     def forward(self, inputs: BaseDataset) -> ModelOuput:
         r"""
@@ -83,7 +83,7 @@ class HVAE(VAE):
         z = z0
         beta_sqrt_old = self.beta_zero_sqrt
 
-        recon_x = self.decoder(z)['reconstruction']
+        recon_x = self.decoder(z)["reconstruction"]
 
         for k in range(self.n_lf):
 
@@ -101,7 +101,7 @@ class HVAE(VAE):
             # 2nd leapfrog step
             z = z + self.eps_lf * rho_
 
-            recon_x = self.decoder(z)['reconstruction']
+            recon_x = self.decoder(z)["reconstruction"]
 
             U = -self._log_p_xz(recon_x, x, z).sum()
             g = grad(U, z, create_graph=True)[0]
@@ -114,7 +114,6 @@ class HVAE(VAE):
             rho = (beta_sqrt_old / beta_sqrt) * rho__
             beta_sqrt_old = beta_sqrt
 
-
         loss = self.loss_function(recon_x, x, z0, z, rho, eps0, gamma, mu, log_var)
 
         output = ModelOuput(
@@ -126,7 +125,7 @@ class HVAE(VAE):
             eps0=eps0,
             gamma=gamma,
             mu=mu,
-            log_var=log_var
+            log_var=log_var,
         )
 
         return output
@@ -146,7 +145,6 @@ class HVAE(VAE):
 
         return -(logp - logq).sum()
 
-
     def _tempering(self, k, K):
         """Perform tempering step"""
 
@@ -158,18 +156,22 @@ class HVAE(VAE):
 
     def _log_p_x_given_z(self, recon_x, x):
 
-        if self.model_config.reconstruction_loss == 'mse':
+        if self.model_config.reconstruction_loss == "mse":
 
-            recon_loss =  -F.mse_loss(
-                recon_x.reshape(x.shape[0], -1), x.reshape(x.shape[0], -1), reduction='none'
+            recon_loss = -F.mse_loss(
+                recon_x.reshape(x.shape[0], -1),
+                x.reshape(x.shape[0], -1),
+                reduction="none",
             ).sum()
 
-        elif self.model_config.reconstruction_loss == 'bce':
+        elif self.model_config.reconstruction_loss == "bce":
 
             recon_loss = F.binary_cross_entropy(
-            recon_x.reshape(x.shape[0], -1), x.reshape(x.shape[0], -1), reduction="none"
+                recon_x.reshape(x.shape[0], -1),
+                x.reshape(x.shape[0], -1),
+                reduction="none",
             ).sum()
-        
+
         return recon_loss
 
     def _log_z(self, z):
@@ -192,15 +194,12 @@ class HVAE(VAE):
         logpz = self._log_z(z)
         return logpxz + logpz
 
-
     def _hamiltonian(self, recon_x, x, z, rho, G_inv=None, G_log_det=None):
         """
         Computes the Hamiltonian function.
         used for HVAE
         """
         return -self.log_p_xz(recon_x.reshape(x.shape[0], -1), x, z).sum()
-
-
 
     @classmethod
     def _load_model_config_from_folder(cls, dir_path):
@@ -216,7 +215,6 @@ class HVAE(VAE):
         model_config = HVAEConfig.from_json_file(path_to_model_config)
 
         return model_config
-
 
     @classmethod
     def load_from_folder(cls, dir_path):
@@ -254,4 +252,3 @@ class HVAE(VAE):
         model.load_state_dict(model_weights)
 
         return model
-

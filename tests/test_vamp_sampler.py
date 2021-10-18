@@ -19,7 +19,7 @@ def dummy_data():
 @pytest.fixture(
     params=[
         VAMP(VAMPConfig(input_dim=(1, 28, 28), number_components=100)),
-        VAMP(VAMPConfig(input_dim=(1, 28, 28), number_components=1))
+        VAMP(VAMPConfig(input_dim=(1, 28, 28), number_components=1)),
     ]
 )
 def model(request):
@@ -28,19 +28,10 @@ def model(request):
 
 @pytest.fixture()
 def sampler(model):
-    return VAMPSampler(
-        model=model,
-        sampler_config=VAMPSamplerConfig(
-        ),
-    )
+    return VAMPSampler(model=model, sampler_config=VAMPSamplerConfig())
 
-@pytest.fixture(
-    params=[
-        (4, 2),
-        (5, 5),
-        (2, 3)
-    ]
-)
+
+@pytest.fixture(params=[(4, 2), (5, 5), (2, 3)])
 def num_sample_and_batch_size(request):
     return request.param
 
@@ -63,43 +54,32 @@ class Test_VAMPSampler_saving:
 
 
 class Test_VAMPSampler_Sampling:
+    def test_return_sampling(
+        self, model, dummy_data, sampler, num_sample_and_batch_size
+    ):
 
-    def test_return_sampling(self, model, dummy_data, sampler, num_sample_and_batch_size):
-
-        num_samples, batch_size = num_sample_and_batch_size[0], num_sample_and_batch_size[1]
+        num_samples, batch_size = (
+            num_sample_and_batch_size[0],
+            num_sample_and_batch_size[1],
+        )
 
         sampler.fit(train_data=dummy_data)
 
         gen_samples = sampler.sample(
-            num_samples=num_samples,
-            batch_size=batch_size,
-            return_gen=True
+            num_samples=num_samples, batch_size=batch_size, return_gen=True
         )
 
         assert gen_samples.shape[0] == num_samples
 
-
-    def test_save_sampling(self, tmpdir, dummy_data, model, sampler, num_sample_and_batch_size):
+    def test_save_sampling(
+        self, tmpdir, dummy_data, model, sampler, num_sample_and_batch_size
+    ):
 
         dir_path = os.path.join(tmpdir, "dummy_folder")
-        num_samples, batch_size = num_sample_and_batch_size[0], num_sample_and_batch_size[1]
-
-        sampler.fit(train_data=dummy_data)
-
-        gen_samples = sampler.sample(
-            num_samples=num_samples,
-            batch_size=batch_size,
-            output_dir=dir_path,
-            return_gen=True
+        num_samples, batch_size = (
+            num_sample_and_batch_size[0],
+            num_sample_and_batch_size[1],
         )
-
-        assert gen_samples.shape[0] == num_samples
-        assert len(os.listdir(dir_path)) == num_samples
-
-    def test_save_sampling_and_sampler_config(self, tmpdir, dummy_data, model, sampler, num_sample_and_batch_size):
-
-        dir_path = os.path.join(tmpdir, "dummy_folder")
-        num_samples, batch_size = num_sample_and_batch_size[0], num_sample_and_batch_size[1]
 
         sampler.fit(train_data=dummy_data)
 
@@ -108,14 +88,37 @@ class Test_VAMPSampler_Sampling:
             batch_size=batch_size,
             output_dir=dir_path,
             return_gen=True,
-            save_sampler_config=True
+        )
+
+        assert gen_samples.shape[0] == num_samples
+        assert len(os.listdir(dir_path)) == num_samples
+
+    def test_save_sampling_and_sampler_config(
+        self, tmpdir, dummy_data, model, sampler, num_sample_and_batch_size
+    ):
+
+        dir_path = os.path.join(tmpdir, "dummy_folder")
+        num_samples, batch_size = (
+            num_sample_and_batch_size[0],
+            num_sample_and_batch_size[1],
+        )
+
+        sampler.fit(train_data=dummy_data)
+
+        gen_samples = sampler.sample(
+            num_samples=num_samples,
+            batch_size=batch_size,
+            output_dir=dir_path,
+            return_gen=True,
+            save_sampler_config=True,
         )
 
         assert gen_samples.shape[0] == num_samples
         assert len(os.listdir(dir_path)) == num_samples + 1
-        assert 'sampler_config.json' in os.listdir(dir_path)
+        assert "sampler_config.json" in os.listdir(dir_path)
 
-#class Test_Sampler_Set_up:
+
+# class Test_Sampler_Set_up:
 #    @pytest.fixture(
 #        params=[# (target full batch number, target last full batch size, target_batch_number)
 #            NormalSamplerConfig(),

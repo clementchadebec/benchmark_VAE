@@ -43,23 +43,15 @@ class Test_Model_Building:
             ]
         )
 
-    def test_raises_no_input_dim(
-        self, model_configs_no_input_dim, custom_decoder
-    ):
+    def test_raises_no_input_dim(self, model_configs_no_input_dim, custom_decoder):
         with pytest.raises(AttributeError):
             model = BaseAE(model_configs_no_input_dim)
 
-        model = BaseAE(
-            model_configs_no_input_dim, decoder=custom_decoder
-        )
+        model = BaseAE(model_configs_no_input_dim, decoder=custom_decoder)
 
-    def test_build_custom_arch(
-        self, model_config_with_input_dim, custom_decoder
-    ):
+    def test_build_custom_arch(self, model_config_with_input_dim, custom_decoder):
 
-        model = BaseAE(
-            model_config_with_input_dim, decoder=custom_decoder
-        )
+        model = BaseAE(model_config_with_input_dim, decoder=custom_decoder)
 
         assert model.decoder == custom_decoder
         assert not model.model_config.uses_default_decoder
@@ -99,7 +91,6 @@ class Test_Model_Saving:
             ]
         )
 
-
     def test_custom_decoder_model_saving(
         self, tmpdir, model_config_with_input_dim, custom_decoder
     ):
@@ -128,7 +119,6 @@ class Test_Model_Saving:
             ]
         )
 
-
     def test_raises_missing_files(
         self, tmpdir, model_config_with_input_dim, custom_decoder
     ):
@@ -136,9 +126,7 @@ class Test_Model_Saving:
         tmpdir.mkdir("dummy_folder")
         dir_path = dir_path = os.path.join(tmpdir, "dummy_folder")
 
-        model = BaseAE(
-            model_config_with_input_dim, decoder=custom_decoder
-        )
+        model = BaseAE(model_config_with_input_dim, decoder=custom_decoder)
 
         model.save(dir_path=dir_path)
 

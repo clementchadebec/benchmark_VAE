@@ -3,6 +3,7 @@ import torch.nn as nn
 
 from ..base.base_utils import ModelOuput
 
+
 class BaseEncoder(nn.Module):
     """This is a base class for Encoders neural networks.
     """

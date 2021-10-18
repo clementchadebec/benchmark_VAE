@@ -9,6 +9,4 @@ This module contains:
 from .hvae_config import HVAEConfig
 from .hvae_model import HVAE
 
-__all__ = [
-  "HVAE",
-  "HVAEConfig"]
+__all__ = ["HVAE", "HVAEConfig"]

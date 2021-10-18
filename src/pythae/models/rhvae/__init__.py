@@ -12,6 +12,4 @@ This module contains:
 from .rhvae_config import RHVAEConfig
 from .rhvae_model import RHVAE
 
-__all__ = [
-  "RHVAE",
-  "RHVAEConfig"]
+__all__ = ["RHVAE", "RHVAEConfig"]

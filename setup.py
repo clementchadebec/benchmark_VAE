@@ -41,7 +41,7 @@ setup(
         "tqdm>=4.62.3",
         "imageio",
         "sklearn",
-        "typing-extensions"
+        "typing-extensions",
     ],
     python_requires=">=3.6",
 )

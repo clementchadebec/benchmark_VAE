@@ -14,6 +14,4 @@ Available models:
 from .normal_sampler import NormalSampler
 from .normal_config import NormalSamplerConfig
 
-__all__ = [
-   "NormalSampler",
-   "NormalSamplerConfig"]
+__all__ = ["NormalSampler", "NormalSamplerConfig"]

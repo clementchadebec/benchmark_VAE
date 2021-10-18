@@ -3,6 +3,7 @@ import torch
 from ...models import BaseAE
 from ...samplers import BaseSampler, BaseSamplerConfig
 
+
 class NormalSampler(BaseSampler):
     """Basic sampler sampling from a N(0, 1) in the Autoencoder's latent space
 
@@ -13,20 +14,18 @@ class NormalSampler(BaseSampler):
 
     """
 
-
-    def __init__(self, model: BaseAE, sampler_config: BaseSamplerConfig=None):
+    def __init__(self, model: BaseAE, sampler_config: BaseSamplerConfig = None):
 
         BaseSampler.__init__(self, model=model, sampler_config=sampler_config)
 
-        
     def sample(
         self,
-        num_samples: int=1,
+        num_samples: int = 1,
         batch_size: int = 500,
-        output_dir:str=None,
-        return_gen: bool=True,
-        save_sampler_config: bool=False
-     ) -> torch.Tensor:
+        output_dir: str = None,
+        return_gen: bool = True,
+        save_sampler_config: bool = False,
+    ) -> torch.Tensor:
         """Main sampling function of the sampler.
 
         Args:
@@ -49,24 +48,29 @@ class NormalSampler(BaseSampler):
 
         for i in range(full_batch_nbr):
             z = torch.randn(batch_size, self.model.latent_dim).to(self.device)
-            x_gen = self.model.decoder(z)['reconstruction'].detach()
+            x_gen = self.model.decoder(z)["reconstruction"].detach()
 
             if output_dir is not None:
                 for j in range(batch_size):
-                    self.save_img(x_gen[j], output_dir, '%08d.png' % int(batch_size*i + j))
-
+                    self.save_img(
+                        x_gen[j], output_dir, "%08d.png" % int(batch_size * i + j)
+                    )
 
             x_gen_list.append(x_gen)
 
         if last_batch_samples_nbr > 0:
-            z = torch.randn(last_batch_samples_nbr, self.model.latent_dim).to(self.device)
-            x_gen = self.model.decoder(z)['reconstruction'].detach()
+            z = torch.randn(last_batch_samples_nbr, self.model.latent_dim).to(
+                self.device
+            )
+            x_gen = self.model.decoder(z)["reconstruction"].detach()
 
             if output_dir is not None:
                 for j in range(last_batch_samples_nbr):
                     self.save_img(
-                        x_gen[j], output_dir, '%08d.png' % int(batch_size*full_batch_nbr + j))
-
+                        x_gen[j],
+                        output_dir,
+                        "%08d.png" % int(batch_size * full_batch_nbr + j),
+                    )
 
             x_gen_list.append(x_gen)
 

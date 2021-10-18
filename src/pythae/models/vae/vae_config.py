@@ -4,6 +4,7 @@ from typing_extensions import Literal
 
 from ..base.base_config import BaseAEConfig
 
+
 @dataclass
 class VAEConfig(BaseAEConfig):
     """This is the variational autoencoder model configuration instance deriving from
@@ -17,4 +18,4 @@ class VAEConfig(BaseAEConfig):
         reconstruction_loss (str): The reconstruction loss to use ['bce', 'mse']. Default: 'mse'
         """
 
-    reconstruction_loss: Literal['bce', 'mse'] = 'mse'
+    reconstruction_loss: Literal["bce", "mse"] = "mse"

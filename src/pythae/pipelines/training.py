@@ -19,6 +19,7 @@ console = logging.StreamHandler()
 logger.addHandler(console)
 logger.setLevel(logging.INFO)
 
+
 class TrainingPipeline(Pipeline):
     """
     This Pipeline provides an end to end way to train your VAE model.
@@ -101,7 +102,7 @@ class TrainingPipeline(Pipeline):
                 n_channels x ...). If None, only uses train_fata for training. Default: None.
         """
 
-        logger.info('Preprocessing train data...')
+        logger.info("Preprocessing train data...")
         train_data = self.data_processor.process_data(train_data)
         train_dataset = self.data_processor.to_dataset(train_data)
 
@@ -111,7 +112,7 @@ class TrainingPipeline(Pipeline):
             self._set_default_model(train_data)
 
         if eval_data is not None:
-            logger.info('Preprocessing eval data...')
+            logger.info("Preprocessing eval data...")
             eval_data = self.data_processor.process_data(eval_data)
             eval_dataset = self.data_processor.to_dataset(eval_data)
 

@@ -3,6 +3,7 @@ import torch
 from ...models import VAMP
 from ...samplers import BaseSampler, BaseSamplerConfig
 
+
 class VAMPSampler(BaseSampler):
     """Sampling from the VAMP prior
 
@@ -13,22 +14,20 @@ class VAMPSampler(BaseSampler):
 
     """
 
+    def __init__(self, model: VAMP, sampler_config: BaseSamplerConfig = None):
 
-    def __init__(self, model: VAMP, sampler_config: BaseSamplerConfig=None):
-
-        assert isinstance(model, VAMP),  'This sampler is only suitable for VAMP model'
+        assert isinstance(model, VAMP), "This sampler is only suitable for VAMP model"
 
         BaseSampler.__init__(self, model=model, sampler_config=sampler_config)
 
-        
     def sample(
         self,
-        num_samples: int=1,
+        num_samples: int = 1,
         batch_size: int = 500,
-        output_dir:str=None,
-        return_gen: bool=True,
-        save_sampler_config: bool=False
-     ) -> torch.Tensor:
+        output_dir: str = None,
+        return_gen: bool = True,
+        save_sampler_config: bool = False,
+    ) -> torch.Tensor:
         """Main sampling function of the sampler.
 
         Args:
@@ -53,40 +52,46 @@ class VAMPSampler(BaseSampler):
         x_gen_list = []
 
         for i in range(full_batch_nbr):
-            means = self.model.pseudo_inputs(self.model.idle_input.to(self.device))[:batch_size]
-            
+            means = self.model.pseudo_inputs(self.model.idle_input.to(self.device))[
+                :batch_size
+            ]
+
             encoder_output = self.model.encoder(means)
             mu, log_var = encoder_output.embedding, encoder_output.log_covariance
             std = torch.exp(0.5 * log_var)
             eps = torch.randn_like(std)
             z = mu + eps * std
 
-            x_gen = self.model.decoder(z)['reconstruction'].detach()
+            x_gen = self.model.decoder(z)["reconstruction"].detach()
 
             if output_dir is not None:
                 for j in range(batch_size):
-                    self.save_img(x_gen[j], output_dir, '%08d.png' % int(batch_size*i + j))
-
+                    self.save_img(
+                        x_gen[j], output_dir, "%08d.png" % int(batch_size * i + j)
+                    )
 
             x_gen_list.append(x_gen)
 
         if last_batch_samples_nbr > 0:
-            means = self.model.pseudo_inputs(self.model.idle_input.to(
-                self.device))[:last_batch_samples_nbr].to(self.device)
-            
+            means = self.model.pseudo_inputs(self.model.idle_input.to(self.device))[
+                :last_batch_samples_nbr
+            ].to(self.device)
+
             encoder_output = self.model.encoder(means)
             mu, log_var = encoder_output.embedding, encoder_output.log_covariance
             std = torch.exp(0.5 * log_var)
             eps = torch.randn_like(std)
             z = mu + eps * std
 
-            x_gen = self.model.decoder(z)['reconstruction'].detach()
+            x_gen = self.model.decoder(z)["reconstruction"].detach()
 
             if output_dir is not None:
                 for j in range(last_batch_samples_nbr):
                     self.save_img(
-                        x_gen[j], output_dir, '%08d.png' % int(batch_size*full_batch_nbr + j))
-
+                        x_gen[j],
+                        output_dir,
+                        "%08d.png" % int(batch_size * full_batch_nbr + j),
+                    )
 
             x_gen_list.append(x_gen)
 

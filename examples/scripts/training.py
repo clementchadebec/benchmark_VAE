@@ -25,8 +25,8 @@ ap = argparse.ArgumentParser()
 ap.add_argument(
     "--dataset",
     type=str,
-    default='mnist',
-    choices=['mnist', 'cifar10', 'celeba'],
+    default="mnist",
+    choices=["mnist", "cifar10", "celeba"],
     help="The data set to use to perform training. It must be located in the folder 'data' at the "
     "path 'data/datset_name/' and contain a 'train_data.npz' and a 'eval_data.npz' file with the "
     "data being under the key 'data'. The data must be in the range [0-255] and shaped with the "
@@ -36,13 +36,13 @@ ap.add_argument(
 ap.add_argument(
     "--model_name",
     help="The name of the model to train",
-    choices=['ae', 'vae', 'beta_vae', 'wae', 'vamp', 'hvae', 'rhvae'],
-    required=True
+    choices=["ae", "vae", "beta_vae", "wae", "vamp", "hvae", "rhvae"],
+    required=True,
 )
 ap.add_argument(
     "--model_config",
     help="path to model config file (expected json file)",
-    default=None
+    default=None,
 )
 ap.add_argument(
     "--training_config",
@@ -52,32 +52,39 @@ ap.add_argument(
 
 args = ap.parse_args()
 
+
 def main(args):
 
-    if args.dataset == 'mnist':
+    if args.dataset == "mnist":
 
         from pythae.models.nn.benchmarks.mnist import Encoder_AE_MNIST as Encoder_AE
         from pythae.models.nn.benchmarks.mnist import Encoder_VAE_MNIST as Encoder_VAE
         from pythae.models.nn.benchmarks.mnist import Decoder_AE_MNIST as Decoder_AE
 
-    elif args.dataset == 'cifar10':
+    elif args.dataset == "cifar10":
 
         from pythae.models.nn.benchmarks.cifar import Encoder_AE_CIFAR as Encoder_AE
         from pythae.models.nn.benchmarks.cifar import Encoder_VAE_CIFAR as Encoder_VAE
         from pythae.models.nn.benchmarks.cifar import Decoder_AE_CIFAR as Decoder_AE
 
-    elif args.dataset == 'celeba':
+    elif args.dataset == "celeba":
 
         from pythae.models.nn.benchmarks.celeba import Encoder_AE_CELEBA as Encoder_AE
         from pythae.models.nn.benchmarks.celeba import Encoder_VAE_CELEBA as Encoder_VAE
         from pythae.models.nn.benchmarks.celeba import Decoder_AE_CELEBA as Decoder_AE
 
     try:
-        logger.info(f'\nLoading {args.dataset} data...\n')
-        train_data = np.load(
-            os.path.join(PATH, f'data/{args.dataset}', 'train_data.npz'))['data'] / 255.
-        eval_data = np.load(
-            os.path.join(PATH, f'data/{args.dataset}', 'eval_data.npz'))['data'] / 255.
+        logger.info(f"\nLoading {args.dataset} data...\n")
+        train_data = (
+            np.load(os.path.join(PATH, f"data/{args.dataset}", "train_data.npz"))[
+                "data"
+            ]
+            / 255.0
+        )
+        eval_data = (
+            np.load(os.path.join(PATH, f"data/{args.dataset}", "eval_data.npz"))["data"]
+            / 255.0
+        )
     except Exception as e:
         raise FileNotFoundError(
             f"Unable to load the data from 'data/{args.dataset}' folder. Please check that both a "
@@ -87,16 +94,20 @@ def main(args):
             f"Exception raised: {type(e)} with message: " + str(e)
         ) from e
 
-    logger.info('Successfully loaded data !\n')
-    logger.info('------------------------------------------------------------')
-    logger.info('Dataset \t \t Shape \t \t \t Range')
-    logger.info(f'{args.dataset.upper()} train data: \t {train_data.shape} \t [{train_data.min()}-{train_data.max()}] ')
-    logger.info(f'{args.dataset.upper()} eval data: \t {eval_data.shape} \t [{eval_data.min()}-{eval_data.max()}]')
-    logger.info('------------------------------------------------------------\n')
+    logger.info("Successfully loaded data !\n")
+    logger.info("------------------------------------------------------------")
+    logger.info("Dataset \t \t Shape \t \t \t Range")
+    logger.info(
+        f"{args.dataset.upper()} train data: \t {train_data.shape} \t [{train_data.min()}-{train_data.max()}] "
+    )
+    logger.info(
+        f"{args.dataset.upper()} eval data: \t {eval_data.shape} \t [{eval_data.min()}-{eval_data.max()}]"
+    )
+    logger.info("------------------------------------------------------------\n")
 
     data_input_dim = tuple(train_data.shape[1:])
 
-    if args.model_name == 'ae':
+    if args.model_name == "ae":
         from pythae.models import AE, AEConfig
 
         if args.model_config is not None:
@@ -106,14 +117,14 @@ def main(args):
             model_config = AEConfig()
 
         model_config.input_dim = data_input_dim
-        
+
         model = AE(
             model_config=model_config,
             encoder=Encoder_AE(model_config),
-            decoder=Decoder_AE(model_config)
+            decoder=Decoder_AE(model_config),
         )
 
-    elif args.model_name == 'vae':
+    elif args.model_name == "vae":
         from pythae.models import VAE, VAEConfig
 
         if args.model_config is not None:
@@ -127,10 +138,10 @@ def main(args):
         model = VAE(
             model_config=model_config,
             encoder=Encoder_VAE(model_config),
-            decoder=Decoder_AE(model_config)
+            decoder=Decoder_AE(model_config),
         )
 
-    elif args.model_name == 'wae':
+    elif args.model_name == "wae":
         from pythae.models import WAE_MMD, WAE_MMD_Config
 
         if args.model_config is not None:
@@ -144,10 +155,10 @@ def main(args):
         model = WAE_MMD(
             model_config=model_config,
             encoder=Encoder_AE(model_config),
-            decoder=Decoder_AE(model_config)
+            decoder=Decoder_AE(model_config),
         )
 
-    elif args.model_name == 'vamp':
+    elif args.model_name == "vamp":
         from pythae.models import VAMP, VAMPConfig
 
         if args.model_config is not None:
@@ -161,10 +172,10 @@ def main(args):
         model = VAMP(
             model_config=model_config,
             encoder=Encoder_VAE(model_config),
-            decoder=Decoder_AE(model_config)
+            decoder=Decoder_AE(model_config),
         )
 
-    elif args.model_name == 'beta_vae':
+    elif args.model_name == "beta_vae":
         from pythae.models import BetaVAE, BetaVAEConfig
 
         if args.model_config is not None:
@@ -178,10 +189,10 @@ def main(args):
         model = BetaVAE(
             model_config=model_config,
             encoder=Encoder_VAE(model_config),
-            decoder=Decoder_AE(model_config)
+            decoder=Decoder_AE(model_config),
         )
 
-    elif args.model_name == 'hvae':
+    elif args.model_name == "hvae":
         from pythae.models import HVAE, HVAEConfig
 
         if args.model_config is not None:
@@ -195,10 +206,10 @@ def main(args):
         model = HVAE(
             model_config=model_config,
             encoder=Encoder_VAE(model_config),
-            decoder=Decoder_AE(model_config)
+            decoder=Decoder_AE(model_config),
         )
 
-    elif args.model_name == 'rhvae':
+    elif args.model_name == "rhvae":
         from pythae.models import RHVAE, RHVAEConfig
 
         if args.model_config is not None:
@@ -212,32 +223,35 @@ def main(args):
         model = RHVAE(
             model_config=model_config,
             encoder=Encoder_VAE(model_config),
-            decoder=Decoder_AE(model_config)
+            decoder=Decoder_AE(model_config),
         )
 
-    logger.info(f'Successfully build {args.model_name.upper()} model !\n')
+    logger.info(f"Successfully build {args.model_name.upper()} model !\n")
 
-    encoder_num_param = sum(p.numel() for p in model.encoder.parameters() if p.requires_grad)
-    decoder_num_param = sum(p.numel() for p in model.decoder.parameters() if p.requires_grad)
+    encoder_num_param = sum(
+        p.numel() for p in model.encoder.parameters() if p.requires_grad
+    )
+    decoder_num_param = sum(
+        p.numel() for p in model.decoder.parameters() if p.requires_grad
+    )
     total_num_param = sum(p.numel() for p in model.parameters() if p.requires_grad)
-    logger.info('----------------------------------------------------------------------')
-    logger.info('Model \t Encoder params \t Decoder params \t Total params')
-    logger.info(f"{args.model_name.upper()} \t {encoder_num_param} \t \t {decoder_num_param}"
-    f" \t \t {total_num_param}")
-    logger.info('----------------------------------------------------------------------\n')
-    
+    logger.info(
+        "----------------------------------------------------------------------"
+    )
+    logger.info("Model \t Encoder params \t Decoder params \t Total params")
+    logger.info(
+        f"{args.model_name.upper()} \t {encoder_num_param} \t \t {decoder_num_param}"
+        f" \t \t {total_num_param}"
+    )
+    logger.info(
+        "----------------------------------------------------------------------\n"
+    )
 
     training_config = BaseTrainingConfig.from_json_file(args.training_config)
 
-    pipeline = TrainingPipeline(
-        training_config=training_config,
-        model=model
-    )
+    pipeline = TrainingPipeline(training_config=training_config, model=model)
 
-    pipeline(
-        train_data=train_data,
-        eval_data=eval_data
-    )
+    pipeline(train_data=train_data, eval_data=eval_data)
 
 
 if __name__ == "__main__":

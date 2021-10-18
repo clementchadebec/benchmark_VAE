@@ -47,7 +47,7 @@ class BaseTrainer:
         eval_dataset: Optional[BaseDataset] = None,
         training_config: Optional[BaseTrainingConfig] = None,
         optimizer: Optional[torch.optim.Optimizer] = None,
-        scheduler: Optional=None
+        scheduler: Optional = None,
     ):
 
         if training_config is None:
@@ -104,7 +104,9 @@ class BaseTrainer:
             eval_loader = self.get_eval_dataloader(eval_dataset)
 
         else:
-            logger.info('! No eval dataset provided ! -> keeping best model on train.\n')
+            logger.info(
+                "! No eval dataset provided ! -> keeping best model on train.\n"
+            )
             self.training_config.keep_best_on_train = True
             eval_loader = None
 
@@ -139,10 +141,12 @@ class BaseTrainer:
         return optimizer
 
     def set_default_scheduler(
-        self, model: BaseAE, optimizer: torch.optim.Optimizer) -> torch.optim.lr_scheduler:
+        self, model: BaseAE, optimizer: torch.optim.Optimizer
+    ) -> torch.optim.lr_scheduler:
 
         scheduler = optim.lr_scheduler.ReduceLROnPlateau(
-                 optimizer, factor=0.5, patience=10, verbose=True)
+            optimizer, factor=0.5, patience=10, verbose=True
+        )
 
         return scheduler
 
@@ -213,7 +217,7 @@ class BaseTrainer:
 
         training_dir = os.path.join(
             self.training_config.output_dir,
-            f"{self.model.model_name}_training_{self._training_signature}"
+            f"{self.model.model_name}_training_{self._training_signature}",
         )
 
         if not os.path.exists(training_dir):
@@ -279,14 +283,19 @@ class BaseTrainer:
                 epoch_eval_loss = best_eval_loss
                 self.scheduler.step(epoch_train_loss)
 
-
-            if epoch_eval_loss < best_eval_loss and not self.training_config.keep_best_on_train:
+            if (
+                epoch_eval_loss < best_eval_loss
+                and not self.training_config.keep_best_on_train
+            ):
                 best_model_epoch = epoch
                 best_eval_loss = epoch_eval_loss
                 best_model = deepcopy(self.model)
                 self._best_model = best_model
-            
-            elif epoch_train_loss < best_train_loss and self.training_config.keep_best_on_train:
+
+            elif (
+                epoch_train_loss < best_train_loss
+                and self.training_config.keep_best_on_train
+            ):
                 best_model_epoch = epoch
                 best_train_loss = epoch_train_loss
                 best_model = deepcopy(self.model)
@@ -305,22 +314,28 @@ class BaseTrainer:
 
             if self.eval_dataset is not None:
                 logger.info(
-                    '----------------------------------------------------------------')
+                    "----------------------------------------------------------------"
+                )
                 logger.info(
-                    f'Epoch {epoch}: Train loss: {np.round(epoch_train_loss, 10)}')
+                    f"Epoch {epoch}: Train loss: {np.round(epoch_train_loss, 10)}"
+                )
                 logger.info(
-                    f'Epoch {epoch}: Eval loss: {np.round(epoch_eval_loss, 10)}')
+                    f"Epoch {epoch}: Eval loss: {np.round(epoch_eval_loss, 10)}"
+                )
                 logger.info(
-                    '----------------------------------------------------------------')
-                   
+                    "----------------------------------------------------------------"
+                )
+
             else:
                 logger.info(
-                    '----------------------------------------------------------------')
+                    "----------------------------------------------------------------"
+                )
                 logger.info(
-                    f'Epoch {epoch}: Train loss: {np.round(epoch_train_loss, 10)}')
+                    f"Epoch {epoch}: Train loss: {np.round(epoch_train_loss, 10)}"
+                )
                 logger.info(
-                    '----------------------------------------------------------------')
-
+                    "----------------------------------------------------------------"
+                )
 
         final_dir = os.path.join(training_dir, "final_model")
 
@@ -343,12 +358,12 @@ class BaseTrainer:
 
         epoch_loss = 0
 
-
         with tqdm(self.train_loader, unit="batch") as tepoch:
             for inputs in tepoch:
 
                 tepoch.set_description(
-                    f"Eval of epoch {epoch}/{self.training_config.num_epochs}")
+                    f"Eval of epoch {epoch}/{self.training_config.num_epochs}"
+                )
 
                 inputs = self._set_inputs_to_device(inputs)
 
@@ -380,7 +395,8 @@ class BaseTrainer:
             for inputs in tepoch:
 
                 tepoch.set_description(
-                    f"Training of epoch {epoch}/{self.training_config.num_epochs}")
+                    f"Training of epoch {epoch}/{self.training_config.num_epochs}"
+                )
 
                 inputs = self._set_inputs_to_device(inputs)
 

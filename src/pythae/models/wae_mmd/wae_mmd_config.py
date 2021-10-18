@@ -4,6 +4,7 @@ from typing_extensions import Literal
 
 from ...models import AEConfig
 
+
 @dataclass
 class WAE_MMD_Config(AEConfig):
     """This is the Wassertstein autoencoder model configuration instance deriving from
@@ -20,6 +21,7 @@ class WAE_MMD_Config(AEConfig):
             Discrepancy. Default: 3e-2
         kernel_bandwidth (float): The kernel bandwidth. Default: 1
         """
-    kernel_choice: Literal['rbf', 'imq'] = 'imq'
+
+    kernel_choice: Literal["rbf", "imq"] = "imq"
     reg_weight: float = 3e-2
-    kernel_bandwidth: float = 1.
+    kernel_bandwidth: float = 1.0

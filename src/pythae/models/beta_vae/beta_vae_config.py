@@ -2,6 +2,7 @@ from pydantic.dataclasses import dataclass
 
 from ...models import VAEConfig
 
+
 @dataclass
 class BetaVAEConfig(VAEConfig):
     """
@@ -15,4 +16,5 @@ class BetaVAEConfig(VAEConfig):
         reconstruction_loss (str): The reconstruction loss to use ['bce', 'mse']. Default: 'mse'
         beta (float): The balancing factor. Default: 1
     """
-    beta: float = 1.
+
+    beta: float = 1.0

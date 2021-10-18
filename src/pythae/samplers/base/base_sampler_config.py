@@ -2,6 +2,7 @@ from pydantic.dataclasses import dataclass
 
 from pythae.config import BaseConfig
 
+
 @dataclass
 class BaseSamplerConfig(BaseConfig):
     """
@@ -17,4 +18,5 @@ class BaseSamplerConfig(BaseConfig):
 
         no_cuda (bool): Disable `cuda`. Default: False
     """
+
     pass

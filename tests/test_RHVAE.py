@@ -11,7 +11,11 @@ from pythae.models.base.base_utils import ModelOuput
 from pythae.models import RHVAE, RHVAEConfig
 from pythae.trainers import BaseTrainer, BaseTrainingConfig
 from pythae.pipelines import TrainingPipeline
-from pythae.models.nn.default_architectures import Decoder_AE_MLP, Encoder_VAE_MLP, Metric_MLP
+from pythae.models.nn.default_architectures import (
+    Decoder_AE_MLP,
+    Encoder_VAE_MLP,
+    Metric_MLP,
+)
 from pythae.models.rhvae.rhvae_config import RHVAEConfig
 from tests.data.custom_architectures import (
     Decoder_AE_Conv,
@@ -28,9 +32,12 @@ def model_configs_no_input_dim(request):
     return request.param
 
 
-@pytest.fixture(params=[
-    RHVAEConfig(input_dim=(1, 28, 28), latent_dim=10, reconstruction_loss='bce'),
-    RHVAEConfig(input_dim=(1, 2, 18), latent_dim=5)])
+@pytest.fixture(
+    params=[
+        RHVAEConfig(input_dim=(1, 28, 28), latent_dim=10, reconstruction_loss="bce"),
+        RHVAEConfig(input_dim=(1, 2, 18), latent_dim=5),
+    ]
+)
 def model_configs(request):
     return request.param
 
@@ -101,9 +108,7 @@ class Test_Model_Building:
         self, model_configs, custom_encoder, custom_decoder, custom_metric
     ):
 
-        rhvae = RHVAE(
-            model_configs, encoder=custom_encoder, decoder=custom_decoder
-        )
+        rhvae = RHVAE(model_configs, encoder=custom_encoder, decoder=custom_decoder)
 
         assert rhvae.encoder == custom_encoder
         assert not rhvae.model_config.uses_default_encoder
@@ -159,9 +164,7 @@ class Test_Model_Saving:
         assert callable(model_rec.G)
         assert callable(model_rec.G_inv)
 
-    def test_custom_encoder_model_saving(
-        self, tmpdir, model_configs, custom_encoder
-    ):
+    def test_custom_encoder_model_saving(self, tmpdir, model_configs, custom_encoder):
 
         tmpdir.mkdir("dummy_folder")
         dir_path = dir_path = os.path.join(tmpdir, "dummy_folder")
@@ -195,9 +198,7 @@ class Test_Model_Saving:
         assert callable(model_rec.G)
         assert callable(model_rec.G_inv)
 
-    def test_custom_decoder_model_saving(
-        self, tmpdir, model_configs, custom_decoder
-    ):
+    def test_custom_decoder_model_saving(self, tmpdir, model_configs, custom_decoder):
 
         tmpdir.mkdir("dummy_folder")
         dir_path = dir_path = os.path.join(tmpdir, "dummy_folder")
@@ -231,9 +232,7 @@ class Test_Model_Saving:
         assert callable(model_rec.G)
         assert callable(model_rec.G_inv)
 
-    def test_custom_metric_model_saving(
-        self, tmpdir, model_configs, custom_metric
-    ):
+    def test_custom_metric_model_saving(self, tmpdir, model_configs, custom_metric):
 
         tmpdir.mkdir("dummy_folder")
         dir_path = dir_path = os.path.join(tmpdir, "dummy_folder")
@@ -268,12 +267,7 @@ class Test_Model_Saving:
         assert callable(model_rec.G_inv)
 
     def test_full_custom_model_saving(
-        self,
-        tmpdir,
-        model_configs,
-        custom_encoder,
-        custom_decoder,
-        custom_metric,
+        self, tmpdir, model_configs, custom_encoder, custom_decoder, custom_metric
     ):
 
         tmpdir.mkdir("dummy_folder")
@@ -320,12 +314,7 @@ class Test_Model_Saving:
         assert callable(model_rec.G_inv)
 
     def test_raises_missing_files(
-        self,
-        tmpdir,
-        model_configs,
-        custom_encoder,
-        custom_decoder,
-        custom_metric,
+        self, tmpdir, model_configs, custom_encoder, custom_decoder, custom_metric
     ):
 
         tmpdir.mkdir("dummy_folder")
@@ -374,14 +363,14 @@ class Test_Model_Saving:
 
 
 class Test_Model_forward:
-
     @pytest.fixture
     def demo_data(self):
-        data = torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))[:]
+        data = torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))[
+            :
+        ]
         return (
             data
         )  # This is an extract of 3 data from MNIST (unnormalized) used to test custom architecture
-
 
     @pytest.fixture
     def rhvae(self, model_configs, demo_data):
@@ -438,24 +427,23 @@ class Test_Model_forward:
             ]
         ) == set(out.keys())
 
-        assert out.z.shape[0] == demo_data['data'].shape[0]
-        assert out.recon_x.shape == demo_data['data'].shape
+        assert out.z.shape[0] == demo_data["data"].shape[0]
+        assert out.recon_x.shape == demo_data["data"].shape
+
 
 class Test_RHVAE_Training:
-
     @pytest.fixture
     def train_dataset(self):
         return torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))
 
-    @pytest.fixture(params=[
-            BaseTrainingConfig(num_epochs=3, steps_saving=2, learning_rate=1e-5),
-        ])
+    @pytest.fixture(
+        params=[BaseTrainingConfig(num_epochs=3, steps_saving=2, learning_rate=1e-5)]
+    )
     def training_configs(self, tmpdir, request):
         tmpdir.mkdir("dummy_folder")
         dir_path = os.path.join(tmpdir, "dummy_folder")
         request.param.output_dir = dir_path
         return request.param
-
 
     @pytest.fixture(
         params=[
@@ -516,9 +504,7 @@ class Test_RHVAE_Training:
 
         return optimizer
 
-    def test_rhvae_train_step(
-        self, rhvae, train_dataset, training_configs, optimizers
-    ):
+    def test_rhvae_train_step(self, rhvae, train_dataset, training_configs, optimizers):
         trainer = BaseTrainer(
             model=rhvae,
             train_dataset=train_dataset,
@@ -540,9 +526,7 @@ class Test_RHVAE_Training:
             ]
         )
 
-    def test_rhvae_eval_step(
-        self, rhvae, train_dataset, training_configs, optimizers
-    ):
+    def test_rhvae_eval_step(self, rhvae, train_dataset, training_configs, optimizers):
         trainer = BaseTrainer(
             model=rhvae,
             train_dataset=train_dataset,
@@ -590,7 +574,6 @@ class Test_RHVAE_Training:
                 for key in start_model_state_dict.keys()
             ]
         )
-
 
     def test_checkpoint_saving(
         self, tmpdir, rhvae, train_dataset, training_configs, optimizers
@@ -647,7 +630,6 @@ class Test_RHVAE_Training:
         model_rec_state_dict = torch.load(os.path.join(checkpoint_dir, "model.pt"))[
             "model_state_dict"
         ]
-
 
         model_rec_state_dict = torch.load(os.path.join(checkpoint_dir, "model.pt"))[
             "model_state_dict"
@@ -720,7 +702,9 @@ class Test_RHVAE_Training:
 
         trainer.train()
 
-        training_dir = os.path.join(dir_path, f"RHVAE_training_{trainer._training_signature}")
+        training_dir = os.path.join(
+            dir_path, f"RHVAE_training_{trainer._training_signature}"
+        )
         assert os.path.isdir(training_dir)
 
         checkpoint_dir = os.path.join(
@@ -757,7 +741,6 @@ class Test_RHVAE_Training:
         else:
             assert not "metric.pkl" in files_list
 
-
         model_rec_state_dict = torch.load(os.path.join(checkpoint_dir, "model.pt"))[
             "model_state_dict"
         ]
@@ -786,7 +769,9 @@ class Test_RHVAE_Training:
 
         model = deepcopy(trainer._best_model)
 
-        training_dir = os.path.join(dir_path, f"RHVAE_training_{trainer._training_signature}")
+        training_dir = os.path.join(
+            dir_path, f"RHVAE_training_{trainer._training_signature}"
+        )
         assert os.path.isdir(training_dir)
 
         final_dir = os.path.join(training_dir, f"final_model")
@@ -819,7 +804,6 @@ class Test_RHVAE_Training:
         else:
             assert not "metric.pkl" in files_list
 
-
         # check reload full model
         model_rec = RHVAE.load_from_folder(os.path.join(final_dir))
 
@@ -839,79 +823,79 @@ class Test_RHVAE_Training:
         assert type(model_rec.metric.cpu()) == type(model.metric.cpu())
 
     def test_rhvae_training_pipeline(
-            self, tmpdir, rhvae, train_dataset, training_configs, optimizers
-        ):
+        self, tmpdir, rhvae, train_dataset, training_configs, optimizers
+    ):
 
-            dir_path = training_configs.output_dir
+        dir_path = training_configs.output_dir
 
-            # build pipeline
-            pipeline = TrainingPipeline(
-                model=rhvae,
-                optimizer=optimizers,
-                training_config=training_configs
-            )
+        # build pipeline
+        pipeline = TrainingPipeline(
+            model=rhvae, optimizer=optimizers, training_config=training_configs
+        )
 
-            # Launch Pipeline
-            pipeline(
-                train_data=train_dataset.data, # gives tensor to pipeline
-                eval_data=train_dataset.data # gives tensor to pipeline
-            )
+        # Launch Pipeline
+        pipeline(
+            train_data=train_dataset.data,  # gives tensor to pipeline
+            eval_data=train_dataset.data,  # gives tensor to pipeline
+        )
 
-            model = deepcopy(pipeline.trainer._best_model)
+        model = deepcopy(pipeline.trainer._best_model)
 
-            training_dir = os.path.join(dir_path, f"RHVAE_training_{pipeline.trainer._training_signature}")
-            assert os.path.isdir(training_dir)
+        training_dir = os.path.join(
+            dir_path, f"RHVAE_training_{pipeline.trainer._training_signature}"
+        )
+        assert os.path.isdir(training_dir)
 
-            final_dir = os.path.join(training_dir, f"final_model")
-            assert os.path.isdir(final_dir)
+        final_dir = os.path.join(training_dir, f"final_model")
+        assert os.path.isdir(final_dir)
 
-            files_list = os.listdir(final_dir)
+        files_list = os.listdir(final_dir)
 
-            assert set(["model.pt", "model_config.json", "training_config.json"]).issubset(
-                set(files_list)
-            )
+        assert set(["model.pt", "model_config.json", "training_config.json"]).issubset(
+            set(files_list)
+        )
 
-            # check pickled custom decoder
-            if not rhvae.model_config.uses_default_decoder:
-                assert "decoder.pkl" in files_list
+        # check pickled custom decoder
+        if not rhvae.model_config.uses_default_decoder:
+            assert "decoder.pkl" in files_list
 
-            else:
-                assert not "decoder.pkl" in files_list
+        else:
+            assert not "decoder.pkl" in files_list
 
-            # check pickled custom encoder
-            if not rhvae.model_config.uses_default_encoder:
-                assert "encoder.pkl" in files_list
+        # check pickled custom encoder
+        if not rhvae.model_config.uses_default_encoder:
+            assert "encoder.pkl" in files_list
 
-            else:
-                assert not "encoder.pkl" in files_list
+        else:
+            assert not "encoder.pkl" in files_list
 
-            # check pickled custom metric
-            if not rhvae.model_config.uses_default_metric:
-                assert "metric.pkl" in files_list
+        # check pickled custom metric
+        if not rhvae.model_config.uses_default_metric:
+            assert "metric.pkl" in files_list
 
-            else:
-                assert not "metric.pkl" in files_list
+        else:
+            assert not "metric.pkl" in files_list
 
-            # check reload full model
-            model_rec = RHVAE.load_from_folder(os.path.join(final_dir))
+        # check reload full model
+        model_rec = RHVAE.load_from_folder(os.path.join(final_dir))
 
-            assert all(
-                [
-                    torch.equal(
-                        model_rec.state_dict()[key].cpu(), model.state_dict()[key].cpu()
-                    )
-                    for key in model.state_dict().keys()
-                ]
-            )
+        assert all(
+            [
+                torch.equal(
+                    model_rec.state_dict()[key].cpu(), model.state_dict()[key].cpu()
+                )
+                for key in model.state_dict().keys()
+            ]
+        )
 
-            assert torch.equal(model_rec.M_tens.cpu(), model.M_tens.cpu())
-            assert torch.equal(model_rec.centroids_tens.cpu(), model.centroids_tens.cpu())
-            assert type(model_rec.encoder.cpu()) == type(model.encoder.cpu())
-            assert type(model_rec.decoder.cpu()) == type(model.decoder.cpu())
-            assert type(model_rec.metric.cpu()) == type(model.metric.cpu())
+        assert torch.equal(model_rec.M_tens.cpu(), model.M_tens.cpu())
+        assert torch.equal(model_rec.centroids_tens.cpu(), model.centroids_tens.cpu())
+        assert type(model_rec.encoder.cpu()) == type(model.encoder.cpu())
+        assert type(model_rec.decoder.cpu()) == type(model.decoder.cpu())
+        assert type(model_rec.metric.cpu()) == type(model.metric.cpu())
 
 
-#class Test_Load_RHVAE_Config_From_JSON:
+# class Test_Load_RHVAE_Config_From_JSON:
 #    @pytest.fixture(
 #        params=[
 #            os.path.join(PATH, "data/rhvae/configs/model_config00.json"),
@@ -994,7 +978,7 @@ class Test_RHVAE_Training:
 #            _ = BaseConfig._dict_from_json(not_json_config_path)
 #
 #
-#class Test_Load_Config_From_Dict:
+# class Test_Load_Config_From_Dict:
 #    @pytest.fixture(params=[{"latant_dim": 10}, {"batsh_size": 1}, {"mcmc_steps": 12}])
 #    def corrupted_keys_dict_config(self, request):
 #        return request.param

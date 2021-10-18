@@ -6,6 +6,4 @@ A :class:`__call__` function is defined and used to launch the Pipeline. """
 
 from .training import TrainingPipeline
 
-__all__ = [
-    "TrainingPipeline"
-]
+__all__ = ["TrainingPipeline"]

@@ -26,5 +26,5 @@ __all__ = [
     "VAMPSampler",
     "VAMPSamplerConfig",
     "RHVAESampler",
-    "RHVAESamplerConfig"
+    "RHVAESamplerConfig",
 ]

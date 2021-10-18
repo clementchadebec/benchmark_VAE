@@ -79,7 +79,10 @@ class Test_DataLoader:
 
 class Test_Set_Training_config:
     @pytest.fixture(
-        params=[BaseTrainingConfig(), BaseTrainingConfig(batch_size=10, learning_rate=1e-5)]
+        params=[
+            BaseTrainingConfig(),
+            BaseTrainingConfig(batch_size=10, learning_rate=1e-5),
+        ]
     )
     def training_configs(self, request, tmpdir):
         tmpdir.mkdir("dummy_folder")
@@ -105,7 +108,9 @@ class Test_Set_Training_config:
 
 
 class Test_Build_Optimizer:
-    @pytest.fixture(params=[BaseTrainingConfig(), BaseTrainingConfig(learning_rate=1e-5)])
+    @pytest.fixture(
+        params=[BaseTrainingConfig(), BaseTrainingConfig(learning_rate=1e-5)]
+    )
     def training_configs_learning_rate(self, tmpdir, request):
         request.param.output_dir = tmpdir.mkdir("dummy_folder")
         return request.param
@@ -159,6 +164,7 @@ class Test_Build_Optimizer:
             == training_configs_learning_rate.learning_rate
         )
 
+
 class Test_Device_Checks:
     @pytest.fixture(
         params=[
@@ -173,7 +179,10 @@ class Test_Device_Checks:
         return request.param
 
     @pytest.fixture(
-        params=[AEConfig(input_dim=(1, 28, 28)), AEConfig(input_dim=(1, 28, 28), latent_dim=5)]
+        params=[
+            AEConfig(input_dim=(1, 28, 28)),
+            AEConfig(input_dim=(1, 28, 28), latent_dim=5),
+        ]
     )
     def ae_config(self, request):
         return request.param
@@ -187,9 +196,7 @@ class Test_Device_Checks:
         return Decoder_MLP_Custom(ae_config)
 
     @pytest.fixture(params=[torch.rand(1), torch.rand(1), torch.rand(1)])
-    def ae(
-        self, ae_config, custom_encoder, custom_decoder, request
-    ):
+    def ae(self, ae_config, custom_encoder, custom_decoder, request):
         # randomized
 
         alpha = request.param
@@ -204,11 +211,7 @@ class Test_Device_Checks:
             model = AE(ae_config, decoder=custom_decoder)
 
         else:
-            model = AE(
-                ae_config,
-                encoder=custom_encoder,
-                decoder=custom_decoder
-            )
+            model = AE(ae_config, encoder=custom_encoder, decoder=custom_decoder)
 
         return model
 
@@ -226,9 +229,7 @@ class Test_Device_Checks:
 
     def test_set_on_device(self, ae, train_dataset, training_config):
         trainer = BaseTrainer(
-            model=ae,
-            train_dataset=train_dataset,
-            training_config=training_config,
+            model=ae, train_dataset=train_dataset, training_config=training_config
         )
 
         device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -282,7 +283,9 @@ class Test_Sanity_Checks:
         alpha = request.param
 
         if alpha < 0.125:
-            rhvae_config.input_dim = rhvae_config.input_dim[:-1] + (rhvae_config.input_dim[-1] - 1,)
+            rhvae_config.input_dim = rhvae_config.input_dim[:-1] + (
+                rhvae_config.input_dim[-1] - 1,
+            )
             # create error on input dim
             model = RHVAE(rhvae_config)
 
@@ -320,13 +323,9 @@ class Test_Sanity_Checks:
 
         return model
 
-    def test_raises_sanity_check_error(
-        self, rhvae, train_dataset, training_config
-    ):
+    def test_raises_sanity_check_error(self, rhvae, train_dataset, training_config):
         trainer = BaseTrainer(
-            model=rhvae,
-            train_dataset=train_dataset,
-            training_config=training_config,
+            model=rhvae, train_dataset=train_dataset, training_config=training_config
         )
 
         with pytest.raises(ModelError):
@@ -342,7 +341,10 @@ class Test_Main_Training:
         return request.param
 
     @pytest.fixture(
-        params=[AEConfig(input_dim=(1, 28, 28)), RHVAEConfig(input_dim=(1, 28, 28), latent_dim=5)]
+        params=[
+            AEConfig(input_dim=(1, 28, 28)),
+            RHVAEConfig(input_dim=(1, 28, 28), latent_dim=5),
+        ]
     )
     def ae_config(self, request):
         return request.param
@@ -355,7 +357,6 @@ class Test_Main_Training:
     def custom_decoder(self, ae_config):
         return Decoder_MLP_Custom(ae_config)
 
-
     @pytest.fixture(
         params=[
             torch.rand(1),
@@ -365,9 +366,7 @@ class Test_Main_Training:
             torch.rand(1),
         ]
     )
-    def ae(
-        self, ae_config, custom_encoder, custom_decoder, request
-    ):
+    def ae(self, ae_config, custom_encoder, custom_decoder, request):
         # randomized
 
         alpha = request.param
@@ -382,11 +381,7 @@ class Test_Main_Training:
             model = AE(ae_config, decoder=custom_decoder)
 
         else:
-            model = AE(
-                ae_config,
-                encoder=custom_encoder,
-                decoder=custom_decoder
-            )
+            model = AE(ae_config, encoder=custom_encoder, decoder=custom_decoder)
 
         return model
 
@@ -402,9 +397,7 @@ class Test_Main_Training:
 
         return optimizer
 
-    def test_train_step(
-        self, ae, train_dataset, training_configs, optimizers
-    ):
+    def test_train_step(self, ae, train_dataset, training_configs, optimizers):
         trainer = BaseTrainer(
             model=ae,
             train_dataset=train_dataset,
@@ -426,9 +419,7 @@ class Test_Main_Training:
             ]
         )
 
-    def test_eval_step(
-        self, ae, train_dataset, training_configs, optimizers
-    ):
+    def test_eval_step(self, ae, train_dataset, training_configs, optimizers):
         trainer = BaseTrainer(
             model=ae,
             train_dataset=train_dataset,

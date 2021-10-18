@@ -2,6 +2,7 @@ from pydantic.dataclasses import dataclass
 
 from ..base.base_config import BaseAEConfig
 
+
 @dataclass
 class AEConfig(BaseAEConfig):
     """This is the autoencoder model configuration instance deriving from
@@ -13,4 +14,5 @@ class AEConfig(BaseAEConfig):
         default_encoder (bool): Whether the encoder default. Default: True.
         default_decoder (bool): Whether the encoder default. Default: True.
         """
+
     pass

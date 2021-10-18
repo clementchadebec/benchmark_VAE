@@ -2,6 +2,7 @@ from pydantic.dataclasses import dataclass
 
 from ...models import AEConfig
 
+
 @dataclass
 class REA_L2_Config(AEConfig):
     """This is the Regularized autoencoder with L2 normalization on the decoder parameters model 
@@ -18,6 +19,7 @@ class REA_L2_Config(AEConfig):
             Discrepancy. Default: 3e-2
         kernel_bandwidth (float): The kernel bandwidth. Default: 1
         """
-    kernel_choice: Literal['rbf', 'imq'] = 'imq'
+
+    kernel_choice: Literal["rbf", "imq"] = "imq"
     reg_weight: float = 3e-2
-    kernel_bandwidth: float = 1.
+    kernel_bandwidth: float = 1.0

@@ -2,6 +2,7 @@ from pydantic.dataclasses import dataclass
 
 from ...models import VAEConfig
 
+
 @dataclass
 class VAMPConfig(VAEConfig):
     """This is the variational autoencoder with Variational Mixture of Posterior (VAMP) model 
@@ -15,4 +16,5 @@ class VAMPConfig(VAEConfig):
         reconstruction_loss (str): The reconstruction loss to use ['bce', 'mse']. Default: 'mse'
         number_components (int): The number of components to use in the VAMP prior. Default: 50
         """
+
     number_components: int = 50

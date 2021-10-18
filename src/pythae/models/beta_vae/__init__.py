@@ -9,6 +9,4 @@ This module contains:
 from .beta_vae_config import BetaVAEConfig
 from .beta_vae_model import BetaVAE
 
-__all__ = [
-  "BetaVAE",
-  "BetaVAEConfig"]
+__all__ = ["BetaVAE", "BetaVAEConfig"]

@@ -17,6 +17,4 @@ It contains:
 from .base_model import BaseAE
 from .base_config import BaseAEConfig
 
-__all__ = [
-   "BaseAE",
-   "BaseAEConfig"]
+__all__ = ["BaseAE", "BaseAEConfig"]

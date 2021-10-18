@@ -11,6 +11,4 @@ Available models:
 from .rhvae_sampler import RHVAESampler
 from .rhvae_sampler_config import RHVAESamplerConfig
 
-__all__ = [
-   "NormalSampler",
-   "NormalSamplerConfig"]
+__all__ = ["NormalSampler", "NormalSamplerConfig"]

@@ -23,7 +23,6 @@ from .beta_vae import BetaVAE, BetaVAEConfig
 from .vamp import VAMP, VAMPConfig
 from .hvae import HVAE, HVAEConfig
 from .rhvae import RHVAE, RHVAEConfig
-#from .rhvae.rhvae_model import RHVAE
 
 
 __all__ = [
@@ -42,5 +41,5 @@ __all__ = [
     "HVAE",
     "HVAEConfig",
     "RHVAE",
-    "RHVAEConfig"
+    "RHVAEConfig",
 ]

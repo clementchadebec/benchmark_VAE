@@ -16,15 +16,10 @@ def dummy_data():
     ### 3 imgs from mnist that are used to simulated generated ones
     return torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample")).data
 
-@pytest.fixture(
-    params=[
-        torch.rand(3, 10, 20),
-        torch.rand(1, 2, 2)
-    ]
-)
+
+@pytest.fixture(params=[torch.rand(3, 10, 20), torch.rand(1, 2, 2)])
 def img_tensors(request):
     return request.param
-
 
 
 @pytest.fixture
@@ -35,11 +30,7 @@ def model_sample():
 @pytest.fixture()
 def sampler_sample(tmpdir, model_sample):
     tmpdir.mkdir("dummy_folder")
-    return BaseSampler(
-        model=model_sample,
-        sampler_config=BaseSamplerConfig(
-        ),
-    )
+    return BaseSampler(model=model_sample, sampler_config=BaseSamplerConfig())
 
 
 class Test_BaseSampler_saving:
@@ -63,20 +54,19 @@ class Test_BaseSampler_saving:
         sampler = sampler_sample
 
         dir_path = os.path.join(tmpdir, "dummy_folder")
-        img_path = os.path.join(dir_path, 'test_img.png')
+        img_path = os.path.join(dir_path, "test_img.png")
 
-        sampler.save_img(img_tensors, dir_path, 'test_img')
+        sampler.save_img(img_tensors, dir_path, "test_img")
 
         assert os.path.isdir(dir_path)
         assert os.path.isfile(img_path)
 
-        rec_img = torch.tensor(imread(img_path)) / 255.
+        rec_img = torch.tensor(imread(img_path)) / 255.0
 
         assert 1 >= rec_img.max() >= 0
 
 
-
-#class Test_Sampler_Set_up:
+# class Test_Sampler_Set_up:
 #    @pytest.fixture(
 #        params=[
 #            BaseSamplerConfig(
@@ -95,7 +85,7 @@ class Test_BaseSampler_saving:
 #        assert sampler.samples_per_save == sampler_config.samples_per_save
 
 
-#class Test_RHVAE_Sampler:
+# class Test_RHVAE_Sampler:
 #    @pytest.fixture(
 #        params=[
 #            RHVAESamplerConfig(batch_size=1, mcmc_steps_nbr=15, samples_per_save=5),

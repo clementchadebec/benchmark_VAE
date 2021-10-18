@@ -14,6 +14,7 @@ from typing import Optional
 
 import torch.nn.functional as F
 
+
 class VAMP(VAE):
     """This is the implementation of the Variational Autoencoder with Variational Mixture of 
     Posterior as prior as proposed in ().
@@ -41,12 +42,10 @@ class VAMP(VAE):
         self,
         model_config: VAMPConfig,
         encoder: Optional[BaseEncoder] = None,
-        decoder: Optional[BaseDecoder] = None
+        decoder: Optional[BaseDecoder] = None,
     ):
 
-        VAE.__init__(
-            self, model_config=model_config, encoder=encoder, decoder=decoder
-            )
+        VAE.__init__(self, model_config=model_config, encoder=encoder, decoder=decoder)
 
         self.model_name = "VAMP"
 
@@ -56,11 +55,12 @@ class VAMP(VAE):
             raise AttributeError("Provide input dim to build pseudo input network")
 
         self.pseudo_inputs = nn.Sequential(
-            nn.Linear(model_config.number_components, int(np.prod(model_config.input_dim))),
-            nn.Hardtanh(0.0, 1.0)
+            nn.Linear(
+                model_config.number_components, int(np.prod(model_config.input_dim))
+            ),
+            nn.Hardtanh(0.0, 1.0),
         )
         self.idle_input = torch.eye(model_config.number_components, requires_grad=False)
-
 
     def forward(self, inputs: BaseDataset):
         """
@@ -83,7 +83,7 @@ class VAMP(VAE):
         std = torch.exp(0.5 * log_var)
         z, eps = self._sample_gauss(mu, std)
 
-        recon_x = self.decoder(z)['reconstruction']
+        recon_x = self.decoder(z)["reconstruction"]
 
         loss, recon_loss, kld = self.loss_function(recon_x, x, mu, log_var, z)
 
@@ -92,57 +92,64 @@ class VAMP(VAE):
             reg_loss=kld,
             loss=loss,
             recon_x=recon_x,
-            z=z
+            z=z,
         )
 
         return output
 
-
     def loss_function(self, recon_x, x, mu, log_var, z):
 
-        if self.model_config.reconstruction_loss == 'mse':
+        if self.model_config.reconstruction_loss == "mse":
 
-            recon_loss =  F.mse_loss(
-                recon_x.reshape(x.shape[0], -1), x.reshape(x.shape[0], -1), reduction='none'
+            recon_loss = F.mse_loss(
+                recon_x.reshape(x.shape[0], -1),
+                x.reshape(x.shape[0], -1),
+                reduction="none",
             ).sum()
 
-        elif self.model_config.reconstruction_loss == 'bce':
+        elif self.model_config.reconstruction_loss == "bce":
 
             recon_loss = F.binary_cross_entropy(
-            recon_x.reshape(x.shape[0], -1), x.reshape(x.shape[0], -1), reduction="none"
+                recon_x.reshape(x.shape[0], -1),
+                x.reshape(x.shape[0], -1),
+                reduction="none",
             ).sum()
-
 
         log_p_z = self._log_p_z(z)
 
-        log_q_z = (-0.5 * ( log_var + torch.pow( z - mu, 2 ) / torch.exp( log_var ) )).sum(dim=1)
+        log_q_z = (-0.5 * (log_var + torch.pow(z - mu, 2) / torch.exp(log_var))).sum(
+            dim=1
+        )
         KLD = -(log_p_z - log_q_z).sum()
 
         return recon_loss + KLD, recon_loss, KLD
 
-
     def _log_p_z(self, z):
         """Computation of the log prob of the VAMP"""
 
-
         C = self.number_components
 
-        x = self.pseudo_inputs(
-            self.idle_input.to(self.device)).reshape((C,) + self.model_config.input_dim)
+        x = self.pseudo_inputs(self.idle_input.to(self.device)).reshape(
+            (C,) + self.model_config.input_dim
+        )
 
         encoder_output = self.encoder(x)
-        prior_mu, prior_log_var = encoder_output.embedding, encoder_output.log_covariance
+        prior_mu, prior_log_var = (
+            encoder_output.embedding,
+            encoder_output.log_covariance,
+        )
 
         z_expand = z.unsqueeze(1)
         prior_mu = prior_mu.unsqueeze(0)
         prior_log_var = prior_log_var.unsqueeze(0)
 
-        log_p_z = torch.sum(-0.5 *
-            (prior_log_var + (z_expand - prior_mu) ** 2)/ prior_log_var.exp(),
-            dim = 2) - torch.log(torch.tensor(self.number_components).type(torch.float))
+        log_p_z = torch.sum(
+            -0.5 * (prior_log_var + (z_expand - prior_mu) ** 2) / prior_log_var.exp(),
+            dim=2,
+        ) - torch.log(torch.tensor(self.number_components).type(torch.float))
 
-        log_p_z = torch.logsumexp(log_p_z, dim = 1)
-        
+        log_p_z = torch.logsumexp(log_p_z, dim=1)
+
         return log_p_z
 
     def _sample_gauss(self, mu, std):
@@ -150,7 +157,6 @@ class VAMP(VAE):
         # Sample N(0, I)
         eps = torch.randn_like(std)
         return mu + eps * std, eps
-  
 
     @classmethod
     def _load_model_config_from_folder(cls, dir_path):
@@ -166,7 +172,6 @@ class VAMP(VAE):
         model_config = VAMPConfig.from_json_file(path_to_model_config)
 
         return model_config
-
 
     @classmethod
     def load_from_folder(cls, dir_path):

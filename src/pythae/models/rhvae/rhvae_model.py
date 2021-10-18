@@ -61,9 +61,7 @@ class RHVAE(VAE):
         metric: Optional[BaseMetric] = None,
     ):
 
-        VAE.__init__(
-            self, model_config=model_config, encoder=encoder, decoder=decoder
-        )
+        VAE.__init__(self, model_config=model_config, encoder=encoder, decoder=decoder)
 
         self.model_name = "RHVAE"
 
@@ -163,7 +161,6 @@ class RHVAE(VAE):
 
         x = inputs["data"]
 
-
         encoder_output = self.encoder(x)
         mu, log_var = encoder_output.embedding, encoder_output.log_covariance
 
@@ -173,7 +170,7 @@ class RHVAE(VAE):
 
         if self.training:
             # update the metric using batch data points
-            L = self.metric(x)['L']
+            L = self.metric(x)["L"]
 
             M = L @ torch.transpose(L, 1, 2)
 
@@ -205,7 +202,7 @@ class RHVAE(VAE):
         # sample \rho from N(0, G)
         rho = (L @ rho.unsqueeze(-1)).squeeze(-1)
 
-        recon_x = self.decoder(z)['reconstruction']
+        recon_x = self.decoder(z)["reconstruction"]
 
         for k in range(self.n_lf):
 
@@ -217,7 +214,7 @@ class RHVAE(VAE):
             # step 2
             z = self._leap_step_2(recon_x, x, z, rho_, G_inv, G_log_det)
 
-            recon_x = self.decoder(z)['reconstruction']
+            recon_x = self.decoder(z)["reconstruction"]
 
             if self.training:
 
@@ -547,18 +544,22 @@ class RHVAE(VAE):
 
     def _log_p_x_given_z(self, recon_x, x):
 
-        if self.model_config.reconstruction_loss == 'mse':
+        if self.model_config.reconstruction_loss == "mse":
 
-            recon_loss =  -F.mse_loss(
-                recon_x.reshape(x.shape[0], -1), x.reshape(x.shape[0], -1), reduction='none'
+            recon_loss = -F.mse_loss(
+                recon_x.reshape(x.shape[0], -1),
+                x.reshape(x.shape[0], -1),
+                reduction="none",
             ).sum()
 
-        elif self.model_config.reconstruction_loss == 'bce':
+        elif self.model_config.reconstruction_loss == "bce":
 
             recon_loss = F.binary_cross_entropy(
-            recon_x.reshape(x.shape[0], -1), x.reshape(x.shape[0], -1), reduction="none"
+                recon_x.reshape(x.shape[0], -1),
+                x.reshape(x.shape[0], -1),
+                reduction="none",
             ).sum()
-        
+
         return recon_loss
 
     def _log_z(self, z):

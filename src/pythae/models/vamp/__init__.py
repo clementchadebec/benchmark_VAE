@@ -15,6 +15,4 @@ Available samplers:
 from .vamp_model import VAMP
 from .vamp_config import VAMPConfig
 
-__all__ = [
-   "VAMP",
-   "VAMPConfig"]
+__all__ = ["VAMP", "VAMPConfig"]

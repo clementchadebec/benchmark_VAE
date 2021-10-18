@@ -96,7 +96,9 @@ class BaseTrainer:
             eval_loader = self.get_eval_dataloader(eval_dataset)
 
         else:
-            logger.info('! No eval dataset provided ! -> keeping best model on train.\n')
+            logger.info(
+                "! No eval dataset provided ! -> keeping best model on train.\n"
+            )
             self.training_config.keep_best_on_train = True
             eval_loader = None
 
@@ -197,7 +199,7 @@ class BaseTrainer:
 
         training_dir = os.path.join(
             self.training_config.output_dir,
-            f"{self.model.model_name}_training_{self._training_signature}"
+            f"{self.model.model_name}_training_{self._training_signature}",
         )
 
         if not os.path.exists(training_dir):
@@ -261,13 +263,19 @@ class BaseTrainer:
             else:
                 epoch_eval_loss = best_eval_loss
 
-            if epoch_eval_loss < best_eval_loss and not self.training_config.keep_best_on_train:
+            if (
+                epoch_eval_loss < best_eval_loss
+                and not self.training_config.keep_best_on_train
+            ):
                 best_model_epoch = epoch
                 best_eval_loss = epoch_eval_loss
                 best_model = deepcopy(self.model)
                 self._best_model = best_model
-            
-            elif epoch_train_loss < best_train_loss and self.training_config.keep_best_on_train:
+
+            elif (
+                epoch_train_loss < best_train_loss
+                and self.training_config.keep_best_on_train
+            ):
                 best_model_epoch = epoch
                 best_train_loss = epoch_train_loss
                 best_model = deepcopy(self.model)
@@ -287,23 +295,26 @@ class BaseTrainer:
             if log_verbose and epoch % 10 == 0:
                 if self.eval_dataset is not None:
                     logger.info(
-                        '----------------------------------------------------------------')
+                        "----------------------------------------------------------------"
+                    )
                     logger.info(
-                        f'Epoch {epoch}: Train loss: {np.round(train_loss, 10)}')
+                        f"Epoch {epoch}: Train loss: {np.round(train_loss, 10)}"
+                    )
+                    logger.info(f"Epoch {epoch}: Eval loss: {np.round(val_loss, 10)}")
                     logger.info(
-                        f'Epoch {epoch}: Eval loss: {np.round(val_loss, 10)}')
-                    logger.info(
-                        '----------------------------------------------------------------')
+                        "----------------------------------------------------------------"
+                    )
 
-                   
                 else:
                     logger.info(
-                        '----------------------------------------------------------------')
+                        "----------------------------------------------------------------"
+                    )
                     logger.info(
-                        f'Epoch {epoch}: Train loss: {np.round(train_loss, 10)}')
+                        f"Epoch {epoch}: Train loss: {np.round(train_loss, 10)}"
+                    )
                     logger.info(
-                        '----------------------------------------------------------------')
-
+                        "----------------------------------------------------------------"
+                    )
 
         final_dir = os.path.join(training_dir, "final_model")
 

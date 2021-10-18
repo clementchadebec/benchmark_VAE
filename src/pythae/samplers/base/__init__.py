@@ -6,7 +6,4 @@ It contains:
 from .base_sampler import BaseSampler
 from .base_sampler_config import BaseSamplerConfig
 
-__all__ = [
-    "BaseSampler",
-    "BaseSamplerConfig"
-]
+__all__ = ["BaseSampler", "BaseSamplerConfig"]

@@ -12,6 +12,7 @@ from typing import Optional
 
 import torch.nn.functional as F
 
+
 class BetaVAE(VAE):
     """
     This is an implementation of the beta-VAE models proposed in 
@@ -42,16 +43,13 @@ class BetaVAE(VAE):
         self,
         model_config: BetaVAEConfig,
         encoder: Optional[BaseEncoder] = None,
-        decoder: Optional[BaseDecoder] = None
+        decoder: Optional[BaseDecoder] = None,
     ):
 
-        VAE.__init__(
-            self, model_config=model_config, encoder=encoder, decoder=decoder
-            )
+        VAE.__init__(self, model_config=model_config, encoder=encoder, decoder=decoder)
 
         self.model_name = "BetaVAE"
         self.beta = model_config.beta
-
 
     def forward(self, inputs: BaseDataset):
         """
@@ -73,7 +71,7 @@ class BetaVAE(VAE):
 
         std = torch.exp(0.5 * log_var)
         z, eps = self._sample_gauss(mu, std)
-        recon_x = self.decoder(z)['reconstruction']
+        recon_x = self.decoder(z)["reconstruction"]
 
         loss, recon_loss, kld = self.loss_function(recon_x, x, mu, log_var, z)
 
@@ -82,37 +80,38 @@ class BetaVAE(VAE):
             reg_loss=kld,
             loss=loss,
             recon_x=recon_x,
-            z=z
+            z=z,
         )
 
         return output
 
-
     def loss_function(self, recon_x, x, mu, log_var, z):
 
-        if self.model_config.reconstruction_loss == 'mse':
+        if self.model_config.reconstruction_loss == "mse":
 
-            recon_loss =  F.mse_loss(
-                recon_x.reshape(x.shape[0], -1), x.reshape(x.shape[0], -1), reduction='none'
+            recon_loss = F.mse_loss(
+                recon_x.reshape(x.shape[0], -1),
+                x.reshape(x.shape[0], -1),
+                reduction="none",
             ).sum()
 
-        elif self.model_config.reconstruction_loss == 'bce':
+        elif self.model_config.reconstruction_loss == "bce":
 
             recon_loss = F.binary_cross_entropy(
-            recon_x.reshape(x.shape[0], -1), x.reshape(x.shape[0], -1), reduction="none"
+                recon_x.reshape(x.shape[0], -1),
+                x.reshape(x.shape[0], -1),
+                reduction="none",
             ).sum()
 
         KLD = -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp())
 
         return recon_loss + self.beta * KLD, recon_loss, KLD
 
-
     def _sample_gauss(self, mu, std):
         # Reparametrization trick
         # Sample N(0, I)
         eps = torch.randn_like(std)
         return mu + eps * std, eps
-
 
     @classmethod
     def _load_model_config_from_folder(cls, dir_path):
@@ -128,7 +127,6 @@ class BetaVAE(VAE):
         model_config = BetaVAEConfig.from_json_file(path_to_model_config)
 
         return model_config
-
 
     @classmethod
     def load_from_folder(cls, dir_path):

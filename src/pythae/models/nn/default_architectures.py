@@ -19,11 +19,10 @@ class Encoder_AE_MLP(BaseEncoder):
     def forward(self, x):
         out = self.layers(x.reshape(-1, np.prod(self.input_dim)))
 
-        output = ModelOuput(
-            embedding=self.mu(out)
-        )
+        output = ModelOuput(embedding=self.mu(out))
 
         return output
+
 
 class Encoder_VAE_MLP(BaseEncoder):
     def __init__(self, args: dict):
@@ -39,10 +38,7 @@ class Encoder_VAE_MLP(BaseEncoder):
     def forward(self, x):
         out = self.layers(x.reshape(-1, np.prod(self.input_dim)))
 
-        output = ModelOuput(
-            embedding=self.mu(out),
-            log_covariance=self.std(out)
-        )
+        output = ModelOuput(embedding=self.mu(out), log_covariance=self.std(out))
 
         return output
 
@@ -53,7 +49,7 @@ class Decoder_AE_MLP(BaseDecoder):
 
         self.input_dim = args.input_dim
 
-        #assert 0, np.prod(args.input_dim)
+        # assert 0, np.prod(args.input_dim)
 
         self.layers = nn.Sequential(
             nn.Linear(args.latent_dim, 500),
@@ -64,9 +60,7 @@ class Decoder_AE_MLP(BaseDecoder):
 
     def forward(self, z):
         reconstruction = self.layers(z).reshape((z.shape[0],) + self.input_dim)
-        output = ModelOuput(
-            reconstruction=reconstruction
-        )
+        output = ModelOuput(reconstruction=reconstruction)
         return output
 
 
@@ -106,8 +100,6 @@ class Metric_MLP(BaseMetric):
         # add diagonal coefficients
         L = L + torch.diag_embed(h21.exp())
 
-        output = ModelOuput(
-            L=L
-        )
+        output = ModelOuput(L=L)
 
         return output

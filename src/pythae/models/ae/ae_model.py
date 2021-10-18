@@ -10,6 +10,7 @@ from typing import Optional
 
 import torch.nn.functional as F
 
+
 class AE(BaseAE):
     """Vanilla Autoencoder model.
     
@@ -36,12 +37,10 @@ class AE(BaseAE):
         self,
         model_config: AEConfig,
         encoder: Optional[BaseEncoder] = None,
-        decoder: Optional[BaseDecoder] = None
+        decoder: Optional[BaseDecoder] = None,
     ):
 
-        BaseAE.__init__(
-            self, model_config=model_config, decoder=decoder
-            )
+        BaseAE.__init__(self, model_config=model_config, decoder=decoder)
 
         self.model_name = "AE"
 
@@ -59,9 +58,9 @@ class AE(BaseAE):
 
         else:
             self.model_config.uses_default_encoder = False
-        
+
         self.set_encoder(encoder)
-    
+
     def forward(self, inputs: BaseDataset) -> ModelOuput:
         """The input data is encoded and decoded
         
@@ -75,20 +74,17 @@ class AE(BaseAE):
         x = inputs["data"]
 
         z = self.encoder(x).embedding
-        recon_x = self.decoder(z)['reconstruction']
+        recon_x = self.decoder(z)["reconstruction"]
 
         loss = self.loss_function(recon_x, x)
 
-        output = ModelOuput(
-            loss=loss,
-            recon_x=recon_x,
-            z=z
-        )
+        output = ModelOuput(loss=loss, recon_x=recon_x, z=z)
 
         return output
 
-
     def loss_function(self, recon_x, x):
 
-        MSE = F.mse_loss(recon_x.reshape(x.shape[0], -1), x.reshape(x.shape[0], -1), reduction='sum')
+        MSE = F.mse_loss(
+            recon_x.reshape(x.shape[0], -1), x.reshape(x.shape[0], -1), reduction="sum"
+        )
         return MSE

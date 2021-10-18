@@ -18,17 +18,15 @@ class GaussianMixtureSampler(BaseSampler):
 
     """
 
-
-    def __init__(self, model: BaseAE, sampler_config: GaussianMixtureSamplerConfig=None):
+    def __init__(
+        self, model: BaseAE, sampler_config: GaussianMixtureSamplerConfig = None
+    ):
 
         BaseSampler.__init__(self, model=model, sampler_config=sampler_config)
 
         self.n_components = sampler_config.n_components
 
-    def fit(
-        self,
-        train_data
-    ):
+    def fit(self, train_data):
         """Method to fit the sampler from the training data
 
         Args:
@@ -38,48 +36,45 @@ class GaussianMixtureSampler(BaseSampler):
         """
         self.is_fitted = True
 
-        assert train_data.max() >=1 and train_data.min() >=0, 'Train data must in the range [0-1]'
+        assert (
+            train_data.max() >= 1 and train_data.min() >= 0
+        ), "Train data must in the range [0-1]"
 
         data_processor = DataProcessor()
         train_data = data_processor.process_data(train_data)
         train_dataset = data_processor.to_dataset(train_data)
-        train_loader = DataLoader(
-            dataset=train_dataset,
-            batch_size=100,
-            shuffle=False,
-        )
+        train_loader = DataLoader(dataset=train_dataset, batch_size=100, shuffle=False)
 
         mu = []
 
         with torch.no_grad():
-            for _ , inputs in enumerate(train_loader):
-                mu_data = self.model.encoder(inputs['data'].to(self.device))['embedding']
+            for _, inputs in enumerate(train_loader):
+                mu_data = self.model.encoder(inputs["data"].to(self.device))[
+                    "embedding"
+                ]
                 mu.append(mu_data)
 
         mu = torch.cat(mu)
 
         gmm = mixture.GaussianMixture(
             n_components=self.n_components,
-            covariance_type='full',
+            covariance_type="full",
             max_iter=2000,
-            verbose=0, tol=1e-3
+            verbose=0,
+            tol=1e-3,
         )
         gmm.fit(mu.cpu().detach())
 
         self.gmm = gmm
 
-
-
-
-
     def sample(
         self,
-        num_samples: int=1,
+        num_samples: int = 1,
         batch_size: int = 500,
-        output_dir:str=None,
-        return_gen: bool=True,
-        save_sampler_config: bool=False
-     ) -> torch.Tensor:
+        output_dir: str = None,
+        return_gen: bool = True,
+        save_sampler_config: bool = False,
+    ) -> torch.Tensor:
         """Main sampling function of the sampler.
 
         Args:
@@ -97,8 +92,10 @@ class GaussianMixtureSampler(BaseSampler):
         """
 
         if not self.is_fitted:
-            raise ArithmeticError("The sampler needs to be fitted by calling smapler.fit() method" 
-            "before sampling.")
+            raise ArithmeticError(
+                "The sampler needs to be fitted by calling smapler.fit() method"
+                "before sampling."
+            )
 
         full_batch_nbr = int(num_samples / batch_size)
         last_batch_samples_nbr = num_samples % batch_size
@@ -106,26 +103,37 @@ class GaussianMixtureSampler(BaseSampler):
         x_gen_list = []
 
         for i in range(full_batch_nbr):
-           
-            z = torch.tensor(self.gmm.sample(batch_size)[0]).to(self.device).type(torch.float)
-            x_gen = self.model.decoder(z)['reconstruction'].detach()
+
+            z = (
+                torch.tensor(self.gmm.sample(batch_size)[0])
+                .to(self.device)
+                .type(torch.float)
+            )
+            x_gen = self.model.decoder(z)["reconstruction"].detach()
 
             if output_dir is not None:
                 for j in range(batch_size):
-                    self.save_img(x_gen[j], output_dir, '%08d.png' % int(batch_size*i + j))
+                    self.save_img(
+                        x_gen[j], output_dir, "%08d.png" % int(batch_size * i + j)
+                    )
 
             x_gen_list.append(x_gen)
 
         if last_batch_samples_nbr > 0:
-            z = torch.tensor(
-                self.gmm.sample(last_batch_samples_nbr)[0]).to(self.device).type(torch.float)
-            x_gen = self.model.decoder(z)['reconstruction'].detach()
+            z = (
+                torch.tensor(self.gmm.sample(last_batch_samples_nbr)[0])
+                .to(self.device)
+                .type(torch.float)
+            )
+            x_gen = self.model.decoder(z)["reconstruction"].detach()
 
             if output_dir is not None:
                 for j in range(last_batch_samples_nbr):
                     self.save_img(
-                        x_gen[j], output_dir, '%08d.png' % int(batch_size*full_batch_nbr + j))
-
+                        x_gen[j],
+                        output_dir,
+                        "%08d.png" % int(batch_size * full_batch_nbr + j),
+                    )
 
             x_gen_list.append(x_gen)
 

@@ -22,7 +22,7 @@ class Test_Load_Config_from_JSON:
     )
     def custom_config_path(self, request):
         return request.param
-    
+
     @pytest.fixture
     def corrupted_config_path(self):
         return "corrupted_path"
@@ -31,33 +31,24 @@ class Test_Load_Config_from_JSON:
         params=[
             [
                 os.path.join(PATH, "data/baseAE/configs/model_config00.json"),
-                BaseAEConfig(
-                    latent_dim=11
-                ),
+                BaseAEConfig(latent_dim=11),
             ],
             [
                 os.path.join(PATH, "data/baseAE/configs/training_config00.json"),
-                BaseTrainingConfig(
-                    batch_size=13,
-                    num_epochs=2,
-                    learning_rate=1e-5
-                ),
+                BaseTrainingConfig(batch_size=13, num_epochs=2, learning_rate=1e-5),
             ],
             [
                 os.path.join(PATH, "data/baseAE/configs/generation_config00.json"),
-                BaseSamplerConfig(
-                ),
+                BaseSamplerConfig(),
             ],
         ]
     )
     def custom_config_path_with_true_config(self, request):
         return request.param
-    
 
     @pytest.fixture
     def not_json_config_path(self):
         return os.path.join(PATH, "data/baseAE/configs/not_json_file.md")
-
 
     def test_load_custom_config(self, custom_config_path_with_true_config):
 
@@ -76,7 +67,6 @@ class Test_Load_Config_from_JSON:
             parsed_config = BaseSamplerConfig.from_json_file(config_path)
 
         assert parsed_config == true_config
-
 
     def test_load_dict_from_json_config(self, custom_config_path):
         config_dict = BaseConfig._dict_from_json(custom_config_path)
@@ -113,7 +103,10 @@ class Test_Save_Model_JSON_from_Config:
         assert rec_model_config.__dict__ == model_configs.__dict__
 
     @pytest.fixture(
-        params=[BaseTrainingConfig(), BaseTrainingConfig(learning_rate=100, batch_size=15)]
+        params=[
+            BaseTrainingConfig(),
+            BaseTrainingConfig(learning_rate=100, batch_size=15),
+        ]
     )
     def training_configs(self, request):
         return request.param
@@ -131,5 +124,3 @@ class Test_Save_Model_JSON_from_Config:
         )
 
         assert rec_training_config.__dict__ == training_configs.__dict__
-
-
