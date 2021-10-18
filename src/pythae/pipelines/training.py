@@ -8,7 +8,7 @@ from torch.optim import Optimizer
 from ..customexception import LoadError
 from ..data.preprocessors import DataProcessor
 from ..models import BaseAE, VAE, VAEConfig
-from ..trainers import BaseTrainer, BaseTrainingConfig
+from ..trainers import *
 
 from .base_pipeline import Pipeline
 
@@ -62,20 +62,23 @@ class TrainingPipeline(Pipeline):
 
     def __init__(
         self,
-        data_processor: Optional[DataProcessor] = None,
         model: Optional[BaseAE] = None,
-        optimizer: Optional[Optimizer] = None,
         training_config: Optional[BaseTrainingConfig] = None,
     ):
 
-        # model_name = model_name.upper()
+        if model.model_name == 'RAE_L2':
+            if not isinstance(
+                training_config, CoupledOptimizerTrainerConfig):
 
-        if data_processor is None:
-            data_processor = DataProcessor()
+                raise AssertionError("A 'CoupledOptimizerTrainerConfig' "
+                    "is expected for training a RAE_L2")
 
-        self.data_processor = data_processor
+
+            training_config.encoder_optim_decay = 0.
+            training_config.decoder_optim_decay = model.model_config.reg_weight
+
+        self.data_processor = DataProcessor()
         self.model = model
-        self.optimizer = optimizer
         self.training_config = training_config
 
     def _set_default_model(self, data):
@@ -119,13 +122,23 @@ class TrainingPipeline(Pipeline):
         else:
             eval_dataset = None
 
-        trainer = BaseTrainer(
-            model=self.model,
-            train_dataset=train_dataset,
-            eval_dataset=eval_dataset,
-            training_config=self.training_config,
-            optimizer=self.optimizer,
-        )
+
+        if isinstance(self.training_config, CoupledOptimizerTrainerConfig):
+            trainer = CoupledOptimizerTrainer(
+                model=self.model,
+                train_dataset=train_dataset,
+                eval_dataset=eval_dataset,
+                training_config=self.training_config
+            )
+
+        elif isinstance(self.training_config, BaseTrainingConfig):
+
+            trainer = BaseTrainer(
+                model=self.model,
+                train_dataset=train_dataset,
+                eval_dataset=eval_dataset,
+                training_config=self.training_config
+            )
 
         self.trainer = trainer
 
