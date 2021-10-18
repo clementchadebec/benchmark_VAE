@@ -60,7 +60,9 @@ class VAMP(VAE):
             ),
             nn.Hardtanh(0.0, 1.0),
         )
-        self.idle_input = torch.eye(model_config.number_components, requires_grad=False)
+        self.idle_input = torch.eye(
+            model_config.number_components, requires_grad=False
+        ).to(self.device)
 
     def forward(self, inputs: BaseDataset):
         """
@@ -129,7 +131,7 @@ class VAMP(VAE):
 
         C = self.number_components
 
-        x = self.pseudo_inputs(self.idle_input.to(self.device)).reshape(
+        x = self.pseudo_inputs(self.idle_input).reshape(
             (C,) + self.model_config.input_dim
         )
 
