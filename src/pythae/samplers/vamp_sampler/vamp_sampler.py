@@ -71,7 +71,8 @@ class VAMPSampler(BaseSampler):
             x_gen_list.append(x_gen)
 
         if last_batch_samples_nbr > 0:
-            means = self.model.pseudo_inputs(self.model.idle_input)[:last_batch_samples_nbr].to(self.device)
+            means = self.model.pseudo_inputs(self.model.idle_input.to(
+                self.device))[:last_batch_samples_nbr].to(self.device)
             
             encoder_output = self.model.encoder(means)
             mu, log_var = encoder_output.embedding, encoder_output.log_covariance
