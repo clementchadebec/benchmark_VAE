@@ -39,7 +39,7 @@ setup(
         "pydantic>=1.8.2",
         "dataclasses>=0.6",
         "tqdm>=4.62.3",
-        "imageio>=2.9.0",
+        "imageio",
         "sklearn",
         "typing-extensions"
     ],
