@@ -1,6 +1,6 @@
 from pydantic.dataclasses import dataclass
 
-from typing import Literal
+from typing_extensions import Literal
 
 from ..base.base_config import BaseAEConfig
 

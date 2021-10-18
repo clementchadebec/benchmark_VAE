@@ -42,7 +42,8 @@ setup(
         "dataclasses>=0.6",
         "tqdm>=4.62.3",
         "imageio>=2.9.0",
-        "sklearn"
+        "sklearn",
+        "typing-extensions"
     ],
     python_requires=">=3.6",
 )
