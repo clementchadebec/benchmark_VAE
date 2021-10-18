@@ -30,7 +30,8 @@ class BaseTrainer:
     Args:
         model (BaseAE): The model to train
 
-        train_dataset (BaseDataset): The training dataset of type :class:`~pythae.`
+        train_dataset (BaseDataset): The training dataset of type
+            :class:`~pythae.data.dataset.BaseDataset`
 
         training_args (BaseTrainingConfig): The training arguments summarizing the main parameters used
             for training. If None, a basic training instance of :class:`TrainingConfig` is used.
