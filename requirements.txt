@@ -3,7 +3,7 @@ torch==1.8.1
 dill==0.3.3
 pydantic==1.8.2
 dataclasses==0.6
-imageio>=2.9.0
+imageio
 tqdm
 sklearn
 typing-extensions
