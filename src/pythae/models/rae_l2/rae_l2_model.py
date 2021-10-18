@@ -62,21 +62,28 @@ class RAE_L2(AE):
         z = self.encoder(x).embedding
         recon_x = self.decoder(z)["reconstruction"]
 
-        loss = self.loss_function(recon_x, x)
+        loss, recon_loss, embedding_loss = self.loss_function(recon_x, x, z)
 
         output = ModelOuput(
-            loss=loss, recon_x=recon_x, z=z
+            loss=loss, recon_loss=recon_loss, embedding_loss=embedding_loss, recon_x=recon_x, z=z
         )
 
         return output
 
-    def loss_function(self, recon_x, x):
+    def loss_function(self, recon_x, x, z):
 
         recon_loss = F.mse_loss(
             recon_x.reshape(x.shape[0], -1), x.reshape(x.shape[0], -1), reduction="sum"
         )
 
-        return recon_loss
+        embedding_loss = (0.5 * torch.linalg.norm(z, dim=-1) ** 2).sum()
+
+
+        return (
+            recon_loss + self.model_config.embedding_weight * embedding_loss,
+            recon_loss,
+            embedding_loss
+        )
 
 
     @classmethod

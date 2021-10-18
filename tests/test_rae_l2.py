@@ -27,7 +27,7 @@ def model_configs_no_input_dim(request):
 
 @pytest.fixture(
     params=[
-        RAE_L2_Config(input_dim=(1, 28, 28), latent_dim=10, reg_weight=1e-3),
+        RAE_L2_Config(input_dim=(1, 28, 28), latent_dim=10, embedding_weight=1., reg_weight=1e-3),
         RAE_L2_Config(
             input_dim=(1, 2, 18), latent_dim=5, reg_weight=1.0
         ),
@@ -280,7 +280,7 @@ class Test_Model_forward:
 
         assert isinstance(out, ModelOuput)
 
-        assert set(["loss", "recon_x", "z"]) == set(
+        assert set(["loss", "recon_loss", "embedding_loss", "recon_x", "z"]) == set(
             out.keys()
         )
 
