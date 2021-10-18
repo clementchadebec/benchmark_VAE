@@ -626,14 +626,14 @@ class Test_AE_Training:
         assert type(model_rec.decoder.cpu()) == type(model.decoder.cpu())
 
     def test_ae_training_pipeline(
-        self, tmpdir, ae, train_dataset, training_configs, optimizers
+        self, tmpdir, ae, train_dataset, training_configs
     ):
 
         dir_path = training_configs.output_dir
 
         # build pipeline
         pipeline = TrainingPipeline(
-            model=ae, optimizer=optimizers, training_config=training_configs
+            model=ae, training_config=training_configs
         )
 
         # Launch Pipeline

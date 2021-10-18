@@ -653,14 +653,14 @@ class Test_HVAE_Training:
         assert type(model_rec.decoder.cpu()) == type(model.decoder.cpu())
 
     def test_hvae_training_pipeline(
-        self, tmpdir, hvae, train_dataset, training_configs, optimizers
+        self, tmpdir, hvae, train_dataset, training_configs
     ):
 
         dir_path = training_configs.output_dir
 
         # build pipeline
         pipeline = TrainingPipeline(
-            model=hvae, optimizer=optimizers, training_config=training_configs
+            model=hvae, training_config=training_configs
         )
 
         # Launch Pipeline

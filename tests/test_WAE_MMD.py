@@ -632,14 +632,14 @@ class Test_WAE_MMD_Training:
         assert type(model_rec.decoder.cpu()) == type(model.decoder.cpu())
 
     def test_wae_training_pipeline(
-        self, tmpdir, wae, train_dataset, training_configs, optimizers
+        self, tmpdir, wae, train_dataset, training_configs
     ):
 
         dir_path = training_configs.output_dir
 
         # build pipeline
         pipeline = TrainingPipeline(
-            model=wae, optimizer=optimizers, training_config=training_configs
+            model=wae, training_config=training_configs
         )
 
         # Launch Pipeline

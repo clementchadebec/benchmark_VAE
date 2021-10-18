@@ -634,14 +634,14 @@ class Test_BetaVAE_Training:
         assert type(model_rec.decoder.cpu()) == type(model.decoder.cpu())
 
     def test_betavae_training_pipeline(
-        self, tmpdir, betavae, train_dataset, training_configs, optimizers
+        self, tmpdir, betavae, train_dataset, training_configs
     ):
 
         dir_path = training_configs.output_dir
 
         # build pipeline
         pipeline = TrainingPipeline(
-            model=betavae, optimizer=optimizers, training_config=training_configs
+            model=betavae, training_config=training_configs
         )
 
         # Launch Pipeline
