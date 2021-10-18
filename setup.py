@@ -34,10 +34,8 @@ setup(
     packages=find_packages(where="src"),
     install_requires=[
         "numpy>=1.19.0",
-        "Pillow>=8.3.2",
         "torch>=1.8.1",
         "dill>=0.3.3",
-        "nibabel>=3.2.1",
         "pydantic>=1.8.2",
         "dataclasses>=0.6",
         "tqdm>=4.62.3",
