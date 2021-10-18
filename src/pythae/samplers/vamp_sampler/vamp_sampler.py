@@ -53,7 +53,7 @@ class VAMPSampler(BaseSampler):
         x_gen_list = []
 
         for i in range(full_batch_nbr):
-            means = self.model.pseudo_inputs(self.model.idle_input)[:batch_size].to(self.device)
+            means = self.model.pseudo_inputs(self.model.idle_input.to(self.device))[:batch_size]
             
             encoder_output = self.model.encoder(means)
             mu, log_var = encoder_output.embedding, encoder_output.log_covariance
