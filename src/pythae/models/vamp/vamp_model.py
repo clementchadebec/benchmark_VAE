@@ -131,7 +131,7 @@ class VAMP(VAE):
 
         C = self.number_components
 
-        x = self.pseudo_inputs(self.idle_input).reshape(
+        x = self.pseudo_inputs(self.idle_input.to(self.device)).reshape(
             (C,) + self.model_config.input_dim
         )
 
