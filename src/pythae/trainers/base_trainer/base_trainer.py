@@ -273,11 +273,12 @@ class BaseTrainer:
 
             if self.eval_dataset is not None:
                 epoch_eval_loss = self.eval_step(epoch)
+                self.scheduler.step(epoch_eval_loss)
 
             else:
                 epoch_eval_loss = best_eval_loss
+                self.scheduler.step(epoch_train_loss)
 
-            self.scheduler.step(epoch_eval_loss)
 
             if epoch_eval_loss < best_eval_loss and not self.training_config.keep_best_on_train:
                 best_model_epoch = epoch
