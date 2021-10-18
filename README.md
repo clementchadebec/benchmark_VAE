@@ -188,9 +188,9 @@ You may also find predefined neural network architecture for the most common dat
 
 ```python
 >>> for pythae.models.nn.benchmark.mnist import (
-...    Encoder_AE_MNIST, # For AE based model (only return embeddings)
-... 	  Encoder_VAE_MNIST, # For VAE based model (return embeddings and log_covariances)
-... 	  Decoder_AE_MNIST
+...   Encoder_AE_MNIST, # For AE based model (only return embeddings)
+...   Encoder_VAE_MNIST, # For VAE based model (return embeddings and log_covariances)
+...   Decoder_AE_MNIST
 )
 ```
 Replace *mnist* by cifar or celeba to access to other neural nets.
