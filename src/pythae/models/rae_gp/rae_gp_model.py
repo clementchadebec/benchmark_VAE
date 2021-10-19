@@ -2,7 +2,7 @@ import torch
 import os
 
 from ...models import AE
-from .rae_l2_config import RAE_L2_Config
+from .rae_gp_config import RAE_GP_Config
 from ...data.datasets import BaseDataset
 from ..base.base_utils import ModelOuput
 
@@ -13,12 +13,12 @@ from typing import Optional
 import torch.nn.functional as F
 
 
-class RAE_L2(AE):
-    """Regularized Autoencoder model (https://arxiv.org/pdf/1903.12436.pdf) with L2 decoder params
+class RAE_GP(AE):
+    """Regularized Autoencoder model (https://arxiv.org/pdf/1903.12436.pdf) with gradient penalty
         regularization.
     
     Args:
-        model_config(RAE_L2_Config): The Autoencoder configuration seting the main parameters of the
+        model_config(RAE_GP_Config): The Autoencoder configuration seting the main parameters of the
             model
 
         encoder (BaseEncoder): An instance of BaseEncoder (inheriting from `torch.nn.Module` which
@@ -38,14 +38,14 @@ class RAE_L2(AE):
 
     def __init__(
         self,
-        model_config: RAE_L2_Config,
+        model_config: RAE_GP_Config,
         encoder: Optional[BaseEncoder] = None,
         decoder: Optional[BaseDecoder] = None,
     ):
 
         AE.__init__(self, model_config=model_config, encoder=encoder, decoder=decoder)
 
-        self.model_name = "RAE_L2"
+        self.model_name = "RAE_GP"
 
 
     def forward(self, inputs: BaseDataset) -> ModelOuput:
@@ -58,15 +58,20 @@ class RAE_L2(AE):
             ModelOuput: An instance of ModelOutput containing all the relevant parameters
         """
 
-        x = inputs["data"]
+        x = inputs["data"].requires_grad_(True)
 
         z = self.encoder(x).embedding
         recon_x = self.decoder(z)["reconstruction"]
 
-        loss, recon_loss, embedding_loss = self.loss_function(recon_x, x, z)
+        loss, recon_loss, gen_reg_loss, embedding_loss = self.loss_function(recon_x, x, z)
 
         output = ModelOuput(
-            loss=loss, recon_loss=recon_loss, embedding_loss=embedding_loss, recon_x=recon_x, z=z
+            loss=loss,
+            recon_loss=recon_loss,
+            gen_reg_loss=gen_reg_loss,
+            embedding_loss=embedding_loss,
+            recon_x=recon_x,
+            z=z
         )
 
         return output
@@ -77,14 +82,29 @@ class RAE_L2(AE):
             recon_x.reshape(x.shape[0], -1), x.reshape(x.shape[0], -1), reduction="sum"
         )
 
+        gen_reg_loss = self._compute_gp(recon_x, x) 
+
         embedding_loss = (0.5 * torch.linalg.norm(z, dim=-1) ** 2).sum()
 
 
         return (
-            recon_loss + self.model_config.embedding_weight * embedding_loss,
+            recon_loss + self.model_config.embedding_weight * embedding_loss \
+                + self.model_config.reg_weight * gen_reg_loss,
             recon_loss,
+            gen_reg_loss,
             embedding_loss
         )
+
+    def _compute_gp(self, recon_x, x):
+        grads = torch.autograd.grad(
+            outputs=recon_x,
+            inputs=x,
+            grad_outputs=torch.ones_like(recon_x).to(self.device),
+            create_graph=True,
+            retain_graph=True
+        )[0]
+
+        return (grads.norm(dim=1) ** 2).sum()
 
 
     @classmethod
@@ -98,7 +118,7 @@ class RAE_L2(AE):
             )
 
         path_to_model_config = os.path.join(dir_path, "model_config.json")
-        model_config = RAE_L2_Config.from_json_file(path_to_model_config)
+        model_config = RAE_GP_Config.from_json_file(path_to_model_config)
 
         return model_config
 
