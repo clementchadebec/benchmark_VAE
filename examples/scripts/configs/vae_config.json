@@ -1,4 +1,4 @@
 {
-    "latent_dim": 10,
+    "latent_dim": 16,
     "reconstruction_loss": "mse"
 }
