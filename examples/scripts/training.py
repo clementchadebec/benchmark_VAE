@@ -247,6 +247,9 @@ def main(args):
         "----------------------------------------------------------------------\n"
     )
 
+    logger.info(f"Model config of {args.model_name.upper()}: {model_config}\n")
+
+
     training_config = BaseTrainingConfig.from_json_file(args.training_config)
 
     pipeline = TrainingPipeline(training_config=training_config, model=model)
