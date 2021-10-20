@@ -54,12 +54,21 @@ class VAMP(VAE):
         if model_config.input_dim is None:
             raise AttributeError("Provide input dim to build pseudo input network")
 
-        self.pseudo_inputs = nn.Sequential(
-            nn.Linear(
+        linear_layer = nn.Linear(
                 model_config.number_components, int(np.prod(model_config.input_dim))
-            ),
+            )
+
+        linear_layer.weight.data = torch.zeros_like(
+            linear_layer.weight.data)
+
+        self.pseudo_inputs = nn.Sequential(
+            linear_layer,
             nn.Hardtanh(0.0, 1.0),
         )
+
+        # init weights to training
+        
+
         self.idle_input = torch.eye(
             model_config.number_components, requires_grad=False
         ).to(self.device)
