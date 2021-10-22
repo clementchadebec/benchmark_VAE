@@ -16,7 +16,7 @@ class RHVAESampler(BaseSampler):
 
     Args:
         model (RHVAE): The VAE model to sample from
-        sampler_config (RHVAESamplerConfig): A HMCSamplerConfig instance containing the main
+        sampler_config (RHVAESamplerConfig): A RHVAESamplerConfig instance containing the main
             parameters of the sampler. If None, a pre-defined configuration is used. Default: None
     """
 
