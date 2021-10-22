@@ -15,6 +15,7 @@ from .normal_sampling import NormalSampler, NormalSamplerConfig
 from .gaussian_mixure import GaussianMixtureSampler, GaussianMixtureSamplerConfig
 from .vamp_sampler import VAMPSampler, VAMPSamplerConfig
 from .manifold_sampler import RHVAESampler, RHVAESamplerConfig
+from .two_stage_vae_sampler import TwoStageVAESampler, TwoStageVAESamplerConfig
 
 __all__ = [
     "BaseSampler",
@@ -27,4 +28,6 @@ __all__ = [
     "VAMPSamplerConfig",
     "RHVAESampler",
     "RHVAESamplerConfig",
+    "TwoStageVAESampler",
+    "TwoStageVAESamplerConfig"
 ]
