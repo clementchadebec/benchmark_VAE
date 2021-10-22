@@ -143,7 +143,7 @@ class HVAE(VAE):
 
         logq = normal.log_prob(eps0) - 0.5 * log_var.sum(dim=1)  # q(z_0|x)
 
-        return -(logp - logq).sum()
+        return -(logp - logq).mean()
 
     def _tempering(self, k, K):
         """Perform tempering step"""

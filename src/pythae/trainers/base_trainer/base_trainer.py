@@ -374,6 +374,9 @@ class BaseTrainer:
 
                 epoch_loss += loss.item()
 
+                if epoch_loss != epoch_loss:
+                    raise ArithmeticError("NaN detected in eval loss")
+
             epoch_loss /= len(self.eval_loader)
 
         return epoch_loss
@@ -411,6 +414,9 @@ class BaseTrainer:
                 self.optimizer.step()
 
                 epoch_loss += loss.item()
+
+                if epoch_loss != epoch_loss:
+                    raise ArithmeticError("NaN detected in train loss")
 
             # Allows model updates if needed
             self.model.update()

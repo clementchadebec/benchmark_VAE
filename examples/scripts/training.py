@@ -10,7 +10,7 @@ from pythae.data.preprocessors import DataProcessor
 from pythae.models import RHVAE
 from pythae.models.rhvae import RHVAEConfig
 from pythae.pipelines import TrainingPipeline
-from pythae.trainers import BaseTrainingConfig
+from pythae.trainers import BaseTrainingConfig, CoupledOptimizerTrainerConfig
 
 logger = logging.getLogger(__name__)
 console = logging.StreamHandler()
@@ -36,7 +36,7 @@ ap.add_argument(
 ap.add_argument(
     "--model_name",
     help="The name of the model to train",
-    choices=["ae", "vae", "beta_vae", "wae", "vamp", "hvae", "rhvae"],
+    choices=["ae", "vae", "beta_vae", "wae","rae_gp","rae_l2", "vamp", "hvae", "rhvae"],
     required=True,
 )
 ap.add_argument(
@@ -157,6 +157,40 @@ def main(args):
             encoder=Encoder_AE(model_config),
             decoder=Decoder_AE(model_config),
         )
+    
+    elif args.model_name == "rae_l2":
+        from pythae.models import RAE_L2, RAE_L2_Config
+
+        if args.model_config is not None:
+            model_config = RAE_L2_Config.from_json_file(args.model_config)
+
+        else:
+            model_config = RAE_L2_Config()
+
+        model_config.input_dim = data_input_dim
+
+        model = RAE_L2(
+            model_config=model_config,
+            encoder=Encoder_AE(model_config),
+            decoder=Decoder_AE(model_config),
+        )
+
+    elif args.model_name == "rae_gp":
+        from pythae.models import RAE_GP, RAE_GP_Config
+
+        if args.model_config is not None:
+            model_config = RAE_GP_Config.from_json_file(args.model_config)
+
+        else:
+            model_config = RAE_GP_Config()
+
+        model_config.input_dim = data_input_dim
+
+        model = RAE_GP(
+            model_config=model_config,
+            encoder=Encoder_AE(model_config),
+            decoder=Decoder_AE(model_config),
+        )
 
     elif args.model_name == "vamp":
         from pythae.models import VAMP, VAMPConfig
@@ -249,8 +283,13 @@ def main(args):
 
     logger.info(f"Model config of {args.model_name.upper()}: {model_config}\n")
 
+    if model.model_name == 'RAE_L2':
+        training_config = CoupledOptimizerTrainerConfig.from_json_file(args.training_config)
 
-    training_config = BaseTrainingConfig.from_json_file(args.training_config)
+    else:
+        training_config = BaseTrainingConfig.from_json_file(args.training_config)
+
+    logger.info(f"Training config: {training_config}\n")
 
     pipeline = TrainingPipeline(training_config=training_config, model=model)
 
