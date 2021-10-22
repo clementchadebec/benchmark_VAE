@@ -22,6 +22,9 @@ class GaussianMixtureSampler(BaseSampler):
         self, model: BaseAE, sampler_config: GaussianMixtureSamplerConfig = None
     ):
 
+        if sampler_config is None:
+            sampler_config = GaussianMixtureSamplerConfig()
+
         BaseSampler.__init__(self, model=model, sampler_config=sampler_config)
 
         self.n_components = sampler_config.n_components
