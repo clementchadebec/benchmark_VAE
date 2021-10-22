@@ -34,30 +34,13 @@ class TrainingPipeline(Pipeline):
 
     Parameters:
 
-        data_loader (Optional[BaseDataGetter]): The data loader you want to use to load your
-            data. This is usefull to get the data from a particular format and in a specific folder
-            for instance. If None, the :class:`~pythae.data.loaders.ImageGetterFromFolder` is used.
-            Default: None.
-
-        data_processor (Optional[DataProcessor]): The data preprocessor you want to use to
-            preprocess your data (*e.g.* normalization, reshaping, type conversion). If None,
-            a basic :class:`~pythae.data.preprocessors.DataProcessor` is used (by default data
-            is normalized such that the max value of each data is 1 and the min 0). Default: None.
-
         model (Optional[BaseAE]): An instance of :class:`~pythae.models.BaseAE` you want to train.
             If None, a default :class:`~pythae.models.VAE` model is used. Default: None.
-
-        optimizer (Optional[~torch.optim.Optimizer]): An instance of :class:`~torch.optim.Optimizer`
-            used to train the model. If None we provide an instance of
-            :class:`~torch.optim.Adam` optimizer. Default: None.
 
         training_config (Optional[BaseTrainingConfig]=None): An instance of
             :class:`~pythae.trainers.BaseTrainingConfig` stating the training
             parameters. If None, a default configuration is used.
 
-    .. note::
-            If you did not provide any data_processor, a default one will be used. By default it
-            normalizes the data so that the max value of each data equals 1 and min value 0.
     """
 
     def __init__(
@@ -65,6 +48,9 @@ class TrainingPipeline(Pipeline):
         model: Optional[BaseAE] = None,
         training_config: Optional[BaseTrainingConfig] = None,
     ):
+
+        if training_config is None:
+            training_config = BaseTrainingConfig()
 
         if model.model_name == 'RAE_L2':
             if not isinstance(
