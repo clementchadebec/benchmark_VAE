@@ -221,6 +221,8 @@ class BaseTrainer:
             f"{self.model.model_name}_training_{self._training_signature}",
         )
 
+        self.training_dir = training_dir
+
         if not os.path.exists(training_dir):
             os.makedirs(training_dir)
             logger.info(
