@@ -55,6 +55,7 @@ Below is the list of the models currently implemented in the library.
 | Regularized AE with gradient penalty (RAE_GP) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/notebooks/models_training/rae_gp_training.ipynb) | [link](https://arxiv.org/pdf/1903.12436.pdf) | [link](https://github.com/ParthaEth/Regularized_autoencoders-RAE-/tree/master/models/rae) |
 | Riemannian Hamiltonian VAE (RHVAE) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/notebooks/models_training/rhvae_training.ipynb) | [link](https://arxiv.org/pdf/2010.11518.pdf) | [link](https://github.com/clementchadebec/Data_Augmentation_with_VAE-DALI) |
 
+**See [results](#results) for all aforementionned models**
 
 ## Available Samplers
 
@@ -225,3 +226,16 @@ provide tutorials that can be found in [examples folder](https://github.com/clem
 
 If you are experiencing any issues while running the code or request new features/models to be implemented please [open an issue on github](https://github.com/clementchadebec/benchmark_VAE/issues).
 
+## Results
+
+
+|               Models               |                                                                                    Normal smapling                                                                                    |                     GMM smapling                    |                           RHVAE Sampling                          |
+|:----------------------------------:|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|:--------------------------------------------:|:--------------------------------------------------------------------------:|
+| Autoencoder (AE)                   | ![AE normal](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/ae_gmm_sampling_mnist.png)  |                                              |                                                                            |
+| Variational Autoencoder (VAE)      | | |
+| Beta Variational Autoencoder (Beta_VAE) | | | | | |
+| VAMP Autoencoder (VAMP)            | | | |
+| Hamiltonian VAE (HVAE)             | | | |
+| Regularized AE with L2 decoder param (RAE_L2) | | |
+| Regularized AE with gradient penalty (RAE_GP) | | |
+| Riemannian Hamiltonian VAE (RHVAE) | | | |
