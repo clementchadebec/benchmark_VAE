@@ -30,7 +30,7 @@ def model(request):
     params=[
         RHVAESamplerConfig(n_lf=1, mcmc_steps_nbr=2, eps_lf=0.00001),
         RHVAESamplerConfig(n_lf=3, mcmc_steps_nbr=2, eps_lf=0.001),
-        RHVAESamplerConfig(n_lf=3, mcmc_steps_nbr=2, beta_zero=0.1),
+        None,
     ]
 )
 def sampler_config(request):

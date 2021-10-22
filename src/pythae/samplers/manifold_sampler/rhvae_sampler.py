@@ -22,6 +22,9 @@ class RHVAESampler(BaseSampler):
 
     def __init__(self, model: RHVAE, sampler_config: RHVAESamplerConfig = None):
 
+        if sampler_config is None:
+            sampler_config = RHVAESamplerConfig()
+
         BaseSampler.__init__(self, model=model, sampler_config=sampler_config)
 
         self.model.M_tens = self.model.M_tens.to(self.device)

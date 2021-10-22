@@ -7,6 +7,15 @@ from ...models import BaseAE
 from .gaussian_mixture_config import GaussianMixtureSamplerConfig
 from ...samplers import BaseSampler
 
+import logging
+
+logger = logging.getLogger(__name__)
+
+# make it print to the console.
+console = logging.StreamHandler()
+logger.addHandler(console)
+logger.setLevel(logging.INFO)
+
 
 class GaussianMixtureSampler(BaseSampler):
     """Basic sampler sampling from a N(0, 1) in the Autoencoder's latent space
@@ -58,6 +67,11 @@ class GaussianMixtureSampler(BaseSampler):
                 mu.append(mu_data)
 
         mu = torch.cat(mu)
+
+        if self.n_components > mu.shape[0]:
+            self.n_components = mu.shape[0]
+            logger.warning(f"Setting the number of component to {mu.shape[0]} since"
+                 "n_components > n_samples when fitting the gmm")
 
         gmm = mixture.GaussianMixture(
             n_components=self.n_components,

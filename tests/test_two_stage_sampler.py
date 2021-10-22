@@ -23,13 +23,24 @@ def dummy_data():
 def model(request):
     return request.param
 
+@pytest.fixture(
+    params=[
+        TwoStageVAESamplerConfig(
+            second_stage_depth=2,
+            second_layers_dim=100),
+        TwoStageVAESamplerConfig(
+            second_stage_depth=0,
+            second_layers_dim=1024),
+        None,
+    ]
+)
+def sampler_config(request):
+    return request.param
 
 @pytest.fixture()
-def sampler(model):
+def sampler(model, sampler_config):
     return TwoStageVAESampler(
-        model=model, sampler_config=TwoStageVAESamplerConfig(
-            second_stage_depth=2,
-            second_layers_dim=100)
+        model=model, sampler_config=sampler_config
     )
 
 

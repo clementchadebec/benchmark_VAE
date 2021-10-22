@@ -23,10 +23,19 @@ def model(request):
     return request.param
 
 
+@pytest.fixture(
+    params=[
+        GaussianMixtureSamplerConfig(n_components=2),
+        None,
+    ]
+)
+def sampler_config(request):
+    return request.param
+
 @pytest.fixture()
-def sampler(model):
+def sampler(model, sampler_config):
     return GaussianMixtureSampler(
-        model=model, sampler_config=GaussianMixtureSamplerConfig(n_components=2)
+        model=model, sampler_config=sampler_config
     )
 
 
