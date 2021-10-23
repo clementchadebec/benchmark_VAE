@@ -9,8 +9,13 @@
 	    <img src='https://img.shields.io/badge/code%20style-black-black' />
 	</a>
 	</a>
+	<a href="https://codecov.io/gh/clementchadebec/benchmark_VAE">
+        <img src="https://codecov.io/gh/clementchadebec/benchmark_VAE/branch/main/graph/badge.svg?token=KEM7KKISXJ"/>
+      </a>
 </p>
 
+      
+    
 # pythae 
 
 This library implements some of the most common (Variational) Autoencoder models. In particular it 
@@ -61,12 +66,13 @@ Below is the list of the models currently implemented in the library.
 
 Below is the list of the models currently implemented in the library.
 
-|                Samplers               |   Models   |
-|:-------------------------------------:|:----------:|
-| Normal prior                          | all models |
-| Gaussian mixture (Density estimation) | all models |
-| VAMP prior sampler                    |    VAMP    |
-| Manifold sampler                      |    RHVAE   |
+|                Samplers               |   Models  		  | Paper 											  | Official Implementation 				  |
+|:-------------------------------------:|:-------------------:|:-------------------------------------------------:|:-----------------------------------------:|
+| Normal prior                          | all models		  | [link](https://arxiv.org/pdf/1312.6114.pdf)		  |
+| Gaussian mixture (Density estimation) | all models		  | [link](https://arxiv.org/pdf/1903.12436.pdf) 	  | [link](https://github.com/ParthaEth/Regularized_autoencoders-RAE-/tree/master/models/rae) |
+| VAMP prior sampler                    |    VAMP   		  | [link](https://arxiv.org/pdf/1705.07120.pdf) 	  | [link](https://github.com/jmtomczak/vae_vampprior) |
+| Manifold sampler                      |    RHVAE  		  | [link](https://arxiv.org/pdf/2105.00026.pdf)      |													|
+| Two stage VAE sampler					| all VAE based models| [link](https://openreview.net/pdf?id=B1e0X3C9tQ)  | [link](https://github.com/daib13/TwoStageVAE/) |)
 
 
 ## Launching a model training
