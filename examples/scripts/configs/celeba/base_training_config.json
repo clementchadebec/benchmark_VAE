@@ -1,0 +1,8 @@
+{
+  "output_dir": "my_models",
+  "batch_size": 100,
+  "num_epochs": 50,
+  "learning_rate": 1e-3,
+  "steps_saving": null,
+  "no_cuda": false
+}
