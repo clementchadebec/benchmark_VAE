@@ -113,7 +113,7 @@ class VAE(BaseAE):
                 recon_x.reshape(x.shape[0], -1),
                 x.reshape(x.shape[0], -1),
                 reduction="none",
-            ).sium(dim=-1)
+            ).sum(dim=-1)
 
         KLD = -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp())
 
