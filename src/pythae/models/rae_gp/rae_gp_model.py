@@ -79,20 +79,19 @@ class RAE_GP(AE):
     def loss_function(self, recon_x, x, z):
 
         recon_loss = F.mse_loss(
-            recon_x.reshape(x.shape[0], -1), x.reshape(x.shape[0], -1), reduction="sum"
-        )
+            recon_x.reshape(x.shape[0], -1), x.reshape(x.shape[0], -1), reduction="none"
+        ).sum(dim=-1)
 
-        gen_reg_loss = self._compute_gp(recon_x, x) 
+        gen_reg_loss = self._compute_gp(recon_x, x)
 
-        embedding_loss = (0.5 * torch.linalg.norm(z, dim=-1) ** 2).sum()
-
+        embedding_loss = (0.5 * torch.linalg.norm(z, dim=-1) ** 2)
 
         return (
-            recon_loss + self.model_config.embedding_weight * embedding_loss \
-                + self.model_config.reg_weight * gen_reg_loss,
-            recon_loss,
-            gen_reg_loss,
-            embedding_loss
+            (recon_loss + self.model_config.embedding_weight * embedding_loss \
+                + self.model_config.reg_weight * gen_reg_loss).mean(dim=0),
+            (recon_loss).mean(dim=0),
+            (gen_reg_loss).mean(dim=0),
+            (embedding_loss).mean(dim=0)
         )
 
     def _compute_gp(self, recon_x, x):
@@ -102,9 +101,9 @@ class RAE_GP(AE):
             grad_outputs=torch.ones_like(recon_x).to(self.device),
             create_graph=True,
             retain_graph=True
-        )[0]
+        )[0].reshape(recon_x.shape[0], -1)
 
-        return (grads.norm(dim=1) ** 2).sum()
+        return (grads.norm(dim=-1) ** 2)
 
 
     @classmethod

@@ -79,8 +79,8 @@ class WAE_MMD(AE):
         N = z.shape[0]  # batch size
 
         recon_loss = F.mse_loss(
-            recon_x.reshape(x.shape[0], -1), x.reshape(x.shape[0], -1), reduction="sum"
-        )
+            recon_x.reshape(x.shape[0], -1), x.reshape(x.shape[0], -1),
+            reduction='none').sum(dim=-1)
 
         if self.kernel_choice == "rbf":
             k_z = self.rbf_kernel(z, z)
@@ -96,12 +96,12 @@ class WAE_MMD(AE):
         mmd_z_prior = (k_z_prior - k_z_prior.diag()).sum() / (N - 1)
         mmd_cross = k_cross.sum() / N
 
-        mmd_loss = mmd_z + mmd_z_prior - 2 * mmd_cross
+        mmd_loss = (mmd_z + mmd_z_prior - 2 * mmd_cross)
 
         return (
-            recon_loss + self.model_config.reg_weight * mmd_loss,
-            recon_loss,
-            mmd_loss,
+            (recon_loss + self.model_config.reg_weight * mmd_loss).mean(dim=0),
+            (recon_loss).mean(dim=0),
+            (mmd_loss).mean(dim=0),
         )
 
     def imq_kernel(self, z1, z2):

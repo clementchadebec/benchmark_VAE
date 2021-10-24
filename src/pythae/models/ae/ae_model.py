@@ -85,6 +85,6 @@ class AE(BaseAE):
     def loss_function(self, recon_x, x):
 
         MSE = F.mse_loss(
-            recon_x.reshape(x.shape[0], -1), x.reshape(x.shape[0], -1), reduction="sum"
-        )
-        return MSE
+            recon_x.reshape(x.shape[0], -1), x.reshape(x.shape[0], -1),reduction="none"
+        ).sum(dim=-1)
+        return MSE.mean(dim=0)

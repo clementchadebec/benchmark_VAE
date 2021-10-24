@@ -525,7 +525,7 @@ class RHVAE(VAE):
 
         logq = normal.log_prob(eps0) - 0.5 * log_var.sum(dim=1)  # log(q(z_0|x))
 
-        return -(logp - logq).mean()
+        return -(logp - logq).mean(dim=0)
 
     def _sample_gauss(self, mu, std):
         # Reparametrization trick
@@ -550,7 +550,7 @@ class RHVAE(VAE):
                 recon_x.reshape(x.shape[0], -1),
                 x.reshape(x.shape[0], -1),
                 reduction="none",
-            ).sum()
+            ).sum(dim=-1)
 
         elif self.model_config.reconstruction_loss == "bce":
 
@@ -558,7 +558,7 @@ class RHVAE(VAE):
                 recon_x.reshape(x.shape[0], -1),
                 x.reshape(x.shape[0], -1),
                 reduction="none",
-            ).sum()
+            ).sum(dim=-1)
 
         return recon_loss
 

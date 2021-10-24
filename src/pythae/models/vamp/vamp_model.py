@@ -116,7 +116,7 @@ class VAMP(VAE):
                 recon_x.reshape(x.shape[0], -1),
                 x.reshape(x.shape[0], -1),
                 reduction="none",
-            ).sum()
+            ).sum(dim=-1)
 
         elif self.model_config.reconstruction_loss == "bce":
 
@@ -124,16 +124,16 @@ class VAMP(VAE):
                 recon_x.reshape(x.shape[0], -1),
                 x.reshape(x.shape[0], -1),
                 reduction="none",
-            ).sum()
+            ).sum(dim=-1)
 
         log_p_z = self._log_p_z(z)
 
         log_q_z = (-0.5 * (log_var + torch.pow(z - mu, 2) / torch.exp(log_var))).sum(
             dim=1
         )
-        KLD = -(log_p_z - log_q_z).sum()
+        KLD = -(log_p_z - log_q_z)
 
-        return recon_loss + KLD, recon_loss, KLD
+        return (recon_loss + KLD).mean(dim=0), recon_loss.mean(dim=0), KLD.mean(dim=0)
 
     def _log_p_z(self, z):
         """Computation of the log prob of the VAMP"""
