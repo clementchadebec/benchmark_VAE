@@ -98,7 +98,7 @@ class IWAE(VAE):
                 x.reshape(x.shape[0], -1).unsqueeze(1).repeat(
                     1, self.n_samples, 1).reshape(recon_x.shape[0], -1),
                 reduction='none'
-            ).sum(dim=-1)
+            ).sum(dim=-1).reshape(x.shape[0], -1)
 
         elif self.model_config.reconstruction_loss == "bce":
 
@@ -107,18 +107,18 @@ class IWAE(VAE):
                 x.reshape(x.shape[0], -1).unsqueeze(1).repeat(
                     1, self.n_samples, 1).reshape(recon_x.shape[0], -1),
                 reduction='none'
-            ).sum(dim=-1)
+            ).sum(dim=-1).reshape(x.shape[0], -1)
 
-        KLD = -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp(), dim=-1).flatten()
+        KLD = -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp(), dim=-1)
 
         log_w = recon_loss + self.beta * KLD
 
         w_tilde = F.softmax(log_w, dim=-1)
 
         return (
-            (w_tilde * log_w).mean(dim=0),
-            recon_loss.mean(dim=0),
-            KLD.mean(dim=0)
+            (w_tilde * log_w).sum(dim=-1).mean(dim=0),
+            recon_loss.mean(),
+            KLD.mean()
         )
 
     def _sample_gauss(self, mu, std):
