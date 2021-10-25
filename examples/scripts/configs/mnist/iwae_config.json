@@ -1,5 +1,6 @@
 {
     "latent_dim": 16,
     "reconstruction_loss": "mse",
-    "beta": 2
+    "number_samples": 5,
+    "beta": 1
 }
