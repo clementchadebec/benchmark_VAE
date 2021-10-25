@@ -36,7 +36,7 @@ ap.add_argument(
 ap.add_argument(
     "--model_name",
     help="The name of the model to train",
-    choices=["ae", "vae", "beta_vae", "wae","rae_gp","rae_l2", "vamp", "hvae", "rhvae"],
+    choices=["ae", "vae", "beta_vae", "iwae", "wae","rae_gp","rae_l2", "vamp", "hvae", "rhvae"],
     required=True,
 )
 ap.add_argument(
@@ -136,6 +136,23 @@ def main(args):
         model_config.input_dim = data_input_dim
 
         model = VAE(
+            model_config=model_config,
+            encoder=Encoder_VAE(model_config),
+            decoder=Decoder_AE(model_config),
+        )
+
+    elif args.model_name == "iwae":
+        from pythae.models import IWAE, IWAEConfig
+
+        if args.model_config is not None:
+            model_config = IWAEConfig.from_json_file(args.model_config)
+
+        else:
+            model_config = IWAEConfig()
+
+        model_config.input_dim = data_input_dim
+
+        model = IWAE(
             model_config=model_config,
             encoder=Encoder_VAE(model_config),
             decoder=Decoder_AE(model_config),
