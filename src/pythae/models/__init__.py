@@ -25,6 +25,7 @@ from .hvae import HVAE, HVAEConfig
 from .rhvae import RHVAE, RHVAEConfig
 from .rae_l2 import RAE_L2, RAE_L2_Config
 from .rae_gp import RAE_GP, RAE_GP_Config
+from .iwae import IWAE, IWAEConfig
 
 
 __all__ = [
@@ -47,5 +48,7 @@ __all__ = [
     "RAE_L2",
     "RAE_L2_Config",
     "RAE_GP",
-    "RAE_GP_Config"
+    "RAE_GP_Config",
+    "IWAE",
+    "IWAEConfig"
 ]

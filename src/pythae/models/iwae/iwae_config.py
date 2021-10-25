@@ -1,11 +1,11 @@
 from pydantic.dataclasses import dataclass
 
-from ...models import VAMPConfig
+from ...models import VAEConfig
 
 
 @dataclass
 class IWAEConfig(VAEConfig):
-    """This is the variational autoencoder with Variational Mixture of Posterior (VAMP) model 
+    """This is the Iportance Weighted autoencoder model 
     configuration instance deriving from:class:`VAEConfig`.
 
     Parameters:
@@ -14,5 +14,8 @@ class IWAEConfig(VAEConfig):
         default_encoder (bool): Whether the encoder default. Default: True.
         default_decoder (bool): Whether the encoder default. Default: True.
         reconstruction_loss (str): The reconstruction loss to use ['bce', 'mse']. Default: 'mse'
-        number_components (int): The number of components to use in the VAMP prior. Default: 50
-        """
+         beta (float): The balancing factor between reconstruction and KL. Default: 1
+        number_samples (int): Number of samples to use on the Monte-Carlo estimation
+    """
+    beta: float = 1
+    number_samples: int = 10
