@@ -18,7 +18,7 @@ examples/my_model_with_custom_parameters/*
 examples/models_training/my_model/*
 examples/notebooks/models_training/model_generation.ipynb
 examples/scripts/my_models/*
-
+examples/notebooks/models_training/generated/*
 
 
 

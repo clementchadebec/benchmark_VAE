@@ -1,6 +1,6 @@
 {
     "latent_dim": 16,
     "kernel_choice": "imq",
-    "reg_weight": 3e-2,
+    "reg_weight": 1,
     "kernel_bandwidth": 2.0
 }

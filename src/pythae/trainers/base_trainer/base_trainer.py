@@ -274,7 +274,7 @@ class BaseTrainer:
         best_train_loss = 1e10
         best_eval_loss = 1e10
 
-        for epoch in range(1, self.training_config.num_epochs):
+        for epoch in range(1, self.training_config.num_epochs+1):
 
             epoch_train_loss = self.train_step(epoch)
 
