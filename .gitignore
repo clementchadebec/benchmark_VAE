@@ -19,7 +19,7 @@ examples/models_training/my_model/*
 examples/notebooks/models_training/model_generation.ipynb
 examples/scripts/my_models/*
 examples/notebooks/models_training/generated/*
-
+configs/celeba/base_training_config.json
 
 
 

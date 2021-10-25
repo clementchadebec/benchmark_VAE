@@ -1,0 +1,9 @@
+{
+    "latent_dim": 16,
+    "reconstruction_loss": "mse",
+    "n_lf": 3,
+    "eps_lf": 0.001,
+    "beta_zero": 0.3,
+    "learn_eps_lf": false,
+    "learn_beta_zero": false
+}
