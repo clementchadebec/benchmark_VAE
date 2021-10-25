@@ -361,7 +361,7 @@ class BaseTrainer:
 
         epoch_loss = 0
 
-        with tqdm(self.train_loader, unit="batch") as tepoch:
+        with tqdm(self.eval_loader, unit="batch") as tepoch:
             for inputs in tepoch:
 
                 tepoch.set_description(
