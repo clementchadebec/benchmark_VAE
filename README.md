@@ -232,6 +232,7 @@ If you are experiencing any issues while running the code or request new feature
 
 ## Results
 
+### MNIST
 
 |               Models               |                                                                                    Normal Sampling                                                                                    |                     GMM Sampling                    |                           RHVAE Sampling                          |
 |:----------------------------------:|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|:--------------------------------------------:|:--------------------------------------------------------------------------:|
@@ -244,3 +245,19 @@ If you are experiencing any issues while running the code or request new feature
 | Regularized AE with L2 decoder param (RAE_L2) | ![RAE L2 Normal](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/rae_l2_normal_sampling_mnist.png) | ![RAE L2 GMM](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/rae_l2_gmm_sampling_mnist.png)  | N/A |
 | Regularized AE with gradient penalty (RAE_GP) | ![RAE GP Normal](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/rae_gp_normal_sampling_mnist.png) | ![RAE GMM](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/rae_gp_gmm_sampling_mnist.png)  | N/A |
 | Riemannian Hamiltonian VAE (RHVAE) | ![RHVAE Normal](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/rhvae_normal_sampling_mnist.png) | ![RHVAE GMM](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/rhvae_gmm_sampling_mnist.png) | ![RHVAE RHVAE](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/rhvae_rhvae_sampling_mnist.png) |
+
+
+## CELEBA (WIP)
+
+
+|               Models               |                                                                                    Normal Sampling                                                                                    |                     GMM Sampling                    |                           RHVAE Sampling                          |
+|:----------------------------------:|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|:--------------------------------------------:|:--------------------------------------------------------------------------:|
+| Autoencoder (AE)                   | ![AE Normal](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/ae_normal_sampling_celeba.png) | ![AE GMM](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/ae_gmm_sampling_celeba.png) | N/A                                                                            |
+| Variational Autoencoder (VAE)      | ![VAE Normal](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/vae_normal_sampling_celeba.png) | ![VAE GMM](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/vae_gmm_sampling_celeba.png) | N/A
+| Beta Variational Autoencoder (Beta_VAE) | | | N/A
+| Importance Weighted Autoencoder (IWAE) | ![IWAE Normal](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/iwae_normal_sampling_celeba.png) |![IWAE GMM](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/iwae_gmm_sampling_celeba.png) | N/A
+| VAMP Autoencoder (VAMP)            | | | N/A
+| Hamiltonian VAE (HVAE)             | ![HVAE Normal](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/hvae_normal_sampling_celeba.png) | ![HVAE GMM](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/hvae_gmm_sampling_celeba.png) | N/A|
+| Regularized AE with L2 decoder param (RAE_L2) | ![RAE L2 Normal](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/rae_l2_normal_sampling_celeba.png) | ![RAE L2 GMM](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/rae_l2_gmm_sampling_celeba.png)  | N/A |
+| Regularized AE with gradient penalty (RAE_GP) | ![RAE GP Normal](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/rae_gp_normal_sampling_celeba.png) | ![RAE GMM](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/rae_gp_gmm_sampling_celeba.png)  | N/A |
+| Riemannian Hamiltonian VAE (RHVAE) | ![RHVAE Normal](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/rhvae_normal_sampling_celeba.png) | ![RHVAE GMM](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/rhvae_gmm_sampling_celeba.png) | ![RHVAE RHVAE](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/rhvae_rhvae_sampling_celeba.png) |
