@@ -101,7 +101,7 @@ class WAE_MMD(AE):
         return (
             (recon_loss + self.model_config.reg_weight * mmd_loss).mean(dim=0),
             (recon_loss).mean(dim=0),
-            (mmd_loss).mean(dim=0),
+            mmd_loss / N,
         )
 
     def imq_kernel(self, z1, z2):
