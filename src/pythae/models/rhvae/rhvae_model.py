@@ -554,7 +554,7 @@ class RHVAE(VAE):
 
         elif self.model_config.reconstruction_loss == "bce":
 
-            recon_loss = F.binary_cross_entropy(
+            recon_loss = -F.binary_cross_entropy(
                 recon_x.reshape(x.shape[0], -1),
                 x.reshape(x.shape[0], -1),
                 reduction="none",
