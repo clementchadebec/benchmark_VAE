@@ -11,14 +11,14 @@ src/pythae.egg-info
 OLD
 .ipynb_checkpoints
 licence
-examples/my_model/*
 examples/my_model_with_custom_archi/*
 examples/my_generated_data_with_custom_parameters/*
 examples/my_model_with_custom_parameters/*
 examples/models_training/my_model/*
 examples/notebooks/models_training/model_generation.ipynb
-examples/scripts/my_models/*
 examples/notebooks/models_training/generated/*
+examples/scripts/my_models*
+examples/showcases copy/*
 
 
 

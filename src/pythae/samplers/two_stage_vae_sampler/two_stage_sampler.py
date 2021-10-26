@@ -141,7 +141,7 @@ class TwoStageVAESampler(BaseSampler):
             train_data (torch.Tensor): The train data needed to retreive the training embeddings
                     and fit the mixture in the latent space. Must be of shape n_imgs x im_channels x 
                     ... and in range [0-1]
-            train_data (torch.Tensor): The train data needed to retreive the training embeddings
+            train_data (torch.Tensor): The train data needed to retreive the evaluation embeddings
                     and fit the mixture in the latent space. Must be of shape n_imgs x im_channels x 
                     ... and in range [0-1]
             path_to_training_config (BaseTrainingConfig): path to the training config to use to fit 
@@ -167,6 +167,27 @@ class TwoStageVAESampler(BaseSampler):
                 z.append(z_data)
 
         train_data = torch.cat(z)
+
+        if eval_data is not None:
+
+            assert (
+            eval_data.max() >= 1 and eval_data.min() >= 0
+        ), "Eval data must in the range [0-1]"
+
+            eval_data = data_processor.process_data(eval_data.to(self.device))
+            eval_dataset = data_processor.to_dataset(eval_data)
+            eval_loader = DataLoader(dataset=eval_dataset, batch_size=100, shuffle=False)
+
+            z = []
+
+            with torch.no_grad():
+                for _, inputs in enumerate(eval_loader):
+                    encoder_output = self.model.encoder(inputs["data"].to(self.device))
+                    mean_z, log_std_z = encoder_output.embedding, encoder_output.log_covariance
+                    z_data = mean_z + torch.randn_like(log_std_z) * log_std_z.exp()
+                    z.append(z_data)
+
+            eval_data = torch.cat(z)
 
         pipeline = TrainingPipeline(training_config=training_config, model=self.second_vae)
         pipeline(train_data=train_data, eval_data=eval_data)
