@@ -8,6 +8,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd import grad
+import numpy as np
 
 from ...customexception import BadInheritanceError
 from ...data.datasets import BaseDataset
@@ -545,12 +546,13 @@ class RHVAE(VAE):
     def _log_p_x_given_z(self, recon_x, x):
 
         if self.model_config.reconstruction_loss == "mse":
-
-            recon_loss = -F.mse_loss(
+            # sigma is taken as I_D
+            recon_loss = -0.5 * F.mse_loss(
                 recon_x.reshape(x.shape[0], -1),
                 x.reshape(x.shape[0], -1),
                 reduction="none",
-            ).sum(dim=-1)
+            ).sum(dim=-1) - torch.log(torch.tensor([2 * np.pi]).to(x.device)) \
+                * np.prod(self.input_dim) / 2
 
         elif self.model_config.reconstruction_loss == "bce":
 
