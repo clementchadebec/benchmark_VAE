@@ -456,8 +456,8 @@ class RHVAE(VAE):
 
     def _update_metric(self):
         # convert to 1 big tensor
-        self.M_tens = torch.cat(self.M)
-        self.centroids_tens = torch.cat(self.centroids)
+        self.M_tens = torch.cat(self.M)[:100]
+        self.centroids_tens = torch.cat(self.centroids)[:100]
 
         # define new metric
         def G(z):
