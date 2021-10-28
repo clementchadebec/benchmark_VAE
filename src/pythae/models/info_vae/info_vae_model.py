@@ -1,27 +1,25 @@
 import torch
-import torch.nn as nn
-import numpy as np
 import os
 
 from ...models import VAE
-from .vamp_config import VAMPConfig
+from .info_vae_config import INFOVAE_MMD_Config
 from ...data.datasets import BaseDataset
 from ..base.base_utils import ModelOuput
-from ..nn import BaseEncoder, BaseDecoder
-from ..nn.default_architectures import Encoder_VAE_MLP
+
+from ..nn import BaseDecoder, BaseEncoder
+from ..nn.default_architectures import Encoder_AE_MLP
 
 from typing import Optional
 
 import torch.nn.functional as F
 
 
-class VAMP(VAE):
-    """This is the implementation of the Variational Autoencoder with Variational Mixture of 
-    Posterior as prior as proposed in ().
+class INFOVAE_MMD(VAE):
+    """Info variation Autoencoder model (https://arxiv.org/pdf/1706.02262.pdf).
     
     Args:
-        model_config(VAEConfig): The Variational Autoencoder configuration seting the main 
-        parameters of the model
+        model_config(INFOVAE_MMD_Config): The Autoencoder configuration seting the main 
+            parameters of the model
 
         encoder (BaseEncoder): An instance of BaseEncoder (inheriting from `torch.nn.Module` which
             plays the role of encoder. This argument allows you to use your own neural networks
@@ -40,49 +38,27 @@ class VAMP(VAE):
 
     def __init__(
         self,
-        model_config: VAMPConfig,
+        model_config: INFOVAE_MMD_Config,
         encoder: Optional[BaseEncoder] = None,
         decoder: Optional[BaseDecoder] = None,
     ):
 
         VAE.__init__(self, model_config=model_config, encoder=encoder, decoder=decoder)
 
-        self.model_name = "VAMP"
-
-        self.number_components = model_config.number_components
-
-        if model_config.input_dim is None:
-            raise AttributeError("Provide input dim to build pseudo input network")
-
-        linear_layer = nn.Linear(
-                model_config.number_components, int(np.prod(model_config.input_dim))
-            )
-
-        linear_layer.weight.data = torch.zeros_like(
-            linear_layer.weight.data)
-
-        self.pseudo_inputs = nn.Sequential(
-            linear_layer,
-            nn.Hardtanh(0.0, 1.0),
-        )
-
-        # init weights to training
+        self.model_name = "INFOVAE_MMD"
         
+        self.alpha = self.model_config.alpha
+        self.lbd = self.model_config.lbd
+        self.kernel_choice = model_config.kernel_choice
 
-        self.idle_input = torch.eye(
-            model_config.number_components, requires_grad=False
-        ).to(self.device)
-
-    def forward(self, inputs: BaseDataset):
-        """
-        The VAE model
-
+    def forward(self, inputs: BaseDataset) -> ModelOuput:
+        """The input data is encoded and decoded
+        
         Args:
-            inputs (BaseDataset): The training datasat with labels
-
+            inputs (BaseDataset): An instance of pythae's datasets
+            
         Returns:
             ModelOuput: An instance of ModelOutput containing all the relevant parameters
-
         """
 
         x = inputs["data"]
@@ -93,34 +69,35 @@ class VAMP(VAE):
 
         std = torch.exp(0.5 * log_var)
         z, eps = self._sample_gauss(mu, std)
-
         recon_x = self.decoder(z)["reconstruction"]
 
-        loss, recon_loss, kld = self.loss_function(recon_x, x, eps, mu, log_var, z)
+        z_prior = torch.randn_like(z, device=x.device)
+
+        loss, recon_loss, kld_loss, mmd_loss = self.loss_function(
+            recon_x, x, z, z_prior, mu, log_var
+        )
 
         output = ModelOuput(
-            reconstruction_loss=recon_loss,
-            reg_loss=kld,
             loss=loss,
+            reconstruction_loss=recon_loss,
+            reg_loss=kld_loss,
+            mmd_loss=mmd_loss,
             recon_x=recon_x,
-            z=z,
+            z=z
         )
 
         return output
 
-    def loss_function(self, recon_x, x, eps0, mu, log_var, z):
+    def loss_function(self, recon_x, x, z, z_prior, mu, log_var):
 
-        normal = torch.distributions.MultivariateNormal(
-            loc=torch.zeros(self.model_config.latent_dim).to(x.device),
-            covariance_matrix=torch.eye(self.model_config.latent_dim).to(x.device),
-        )
+        N = z.shape[0]  # batch size
 
         if self.model_config.reconstruction_loss == "mse":
 
             recon_loss = F.mse_loss(
                 recon_x.reshape(x.shape[0], -1),
                 x.reshape(x.shape[0], -1),
-                reduction="none",
+                reduction='none'
             ).sum(dim=-1)
 
         elif self.model_config.reconstruction_loss == "bce":
@@ -128,49 +105,62 @@ class VAMP(VAE):
             recon_loss = F.binary_cross_entropy(
                 recon_x.reshape(x.shape[0], -1),
                 x.reshape(x.shape[0], -1),
-                reduction="none",
+                reduction='none'
             ).sum(dim=-1)
 
-        log_p_z = self._log_p_z(z)
 
-        log_q_z = normal.log_prob(eps0) - 0.5 * log_var.sum(dim=1)
-        KLD = -(log_p_z - log_q_z)
+        KLD = -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp(), dim=-1)
 
-        return (recon_loss + KLD).mean(dim=0), recon_loss.mean(dim=0), KLD.mean(dim=0)
+        if self.kernel_choice == "rbf":
+            k_z = self.rbf_kernel(z, z)
+            k_z_prior = self.rbf_kernel(z_prior, z_prior)
+            k_cross = self.rbf_kernel(z, z_prior)
 
-    def _log_p_z(self, z):
-        """Computation of the log prob of the VAMP"""
+        else:
+            k_z = self.imq_kernel(z, z)
+            k_z_prior = self.imq_kernel(z_prior, z_prior)
+            k_cross = self.imq_kernel(z, z_prior)
 
-        C = self.number_components
+        mmd_z = (k_z - k_z.diag()).sum() / (N - 1)
+        mmd_z_prior = (k_z_prior - k_z_prior.diag()).sum() / (N - 1)
+        mmd_cross = k_cross.sum() / N
 
-        x = self.pseudo_inputs(self.idle_input.to(self.device)).reshape(
-            (C,) + self.model_config.input_dim
+        mmd_loss = (mmd_z + mmd_z_prior - 2 * mmd_cross)
+
+        loss = recon_loss + (1 - self.alpha) * KLD + (self.alpha + self.lbd - 1) * mmd_loss
+
+
+        return (
+            (loss).mean(dim=0),
+            (recon_loss).mean(dim=0),
+            (KLD).mean(dim=0),
+            mmd_loss / N,
         )
-
-        encoder_output = self.encoder(x)
-        prior_mu, prior_log_var = (
-            encoder_output.embedding,
-            encoder_output.log_covariance,
-        )
-
-        z_expand = z.unsqueeze(1)
-        prior_mu = prior_mu.unsqueeze(0)
-        prior_log_var = prior_log_var.unsqueeze(0)
-
-        log_p_z = torch.sum(
-            -0.5 * (prior_log_var + (z_expand - prior_mu) ** 2) / prior_log_var.exp(),
-            dim=2,
-        ) - torch.log(torch.tensor(self.number_components).type(torch.float))
-
-        log_p_z = torch.logsumexp(log_p_z, dim=1)
-
-        return log_p_z
 
     def _sample_gauss(self, mu, std):
         # Reparametrization trick
         # Sample N(0, I)
         eps = torch.randn_like(std)
         return mu + eps * std, eps
+
+
+    def imq_kernel(self, z1, z2):
+        """Returns a matrix of shape batch X batch containing the pairwise kernel computation"""
+
+        C = 2.0 * self.model_config.latent_dim * self.model_config.kernel_bandwidth ** 2
+
+        k = C / (C + torch.norm(z1.unsqueeze(1) - z2.unsqueeze(0), dim=-1) ** 2)
+
+        return k
+
+    def rbf_kernel(self, z1, z2):
+        """Returns a matrix of shape batch X batch containing the pairwise kernel computation"""
+
+        C = 2.0 * self.model_config.latent_dim * self.model_config.kernel_bandwidth ** 2
+
+        k = torch.exp(-torch.norm(z1.unsqueeze(1) - z2.unsqueeze(0), dim=-1) ** 2 / C)
+
+        return k
 
     @classmethod
     def _load_model_config_from_folder(cls, dir_path):
@@ -183,7 +173,7 @@ class VAMP(VAE):
             )
 
         path_to_model_config = os.path.join(dir_path, "model_config.json")
-        model_config = VAMPConfig.from_json_file(path_to_model_config)
+        model_config = INFOVAE_MMD_Config.from_json_file(path_to_model_config)
 
         return model_config
 

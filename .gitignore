@@ -11,17 +11,14 @@ src/pythae.egg-info
 OLD
 .ipynb_checkpoints
 licence
-examples/my_model/*
 examples/my_model_with_custom_archi/*
 examples/my_generated_data_with_custom_parameters/*
 examples/my_model_with_custom_parameters/*
 examples/models_training/my_model/*
 examples/notebooks/models_training/model_generation.ipynb
-examples/scripts/my_models/*
 examples/notebooks/models_training/generated/*
-configs/celeba/base_training_config.json
-
-
+examples/scripts/my_models*
+examples/showcases copy/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

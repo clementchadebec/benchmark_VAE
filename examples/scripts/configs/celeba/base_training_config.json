@@ -1,8 +1,8 @@
 {
-  "output_dir": "my_models",
+  "output_dir": "my_models_on_celeba",
   "batch_size": 100,
   "num_epochs": 50,
-  "learning_rate": 5e-4,
+  "learning_rate": 1e-3,
   "steps_saving": null,
   "no_cuda": false
 }
