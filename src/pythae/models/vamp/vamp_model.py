@@ -96,7 +96,7 @@ class VAMP(VAE):
 
         recon_x = self.decoder(z)["reconstruction"]
 
-        loss, recon_loss, kld = self.loss_function(recon_x, x, mu, log_var, z)
+        loss, recon_loss, kld = self.loss_function(recon_x, x, eps, mu, log_var, z)
 
         output = ModelOuput(
             reconstruction_loss=recon_loss,
@@ -108,7 +108,12 @@ class VAMP(VAE):
 
         return output
 
-    def loss_function(self, recon_x, x, mu, log_var, z):
+    def loss_function(self, recon_x, x, eps0, mu, log_var, z):
+
+        normal = torch.distributions.MultivariateNormal(
+            loc=torch.zeros(self.model_config.latent_dim).to(x.device),
+            covariance_matrix=torch.eye(self.model_config.latent_dim).to(x.device),
+        )
 
         if self.model_config.reconstruction_loss == "mse":
 
@@ -128,9 +133,7 @@ class VAMP(VAE):
 
         log_p_z = self._log_p_z(z)
 
-        log_q_z = (-0.5 * (log_var + torch.pow(z - mu, 2) / torch.exp(log_var))).sum(
-            dim=1
-        )
+        log_q_z = normal.log_prob(eps0) - 0.5 * log_var.sum(dim=1)
         KLD = -(log_p_z - log_q_z)
 
         return (recon_loss + KLD).mean(dim=0), recon_loss.mean(dim=0), KLD.mean(dim=0)
