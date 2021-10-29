@@ -366,29 +366,6 @@ class Test_VAMP_Training:
             ]
         )
 
-    def test_vamp_eval_step(self, vamp, train_dataset, training_configs, optimizers):
-        trainer = BaseTrainer(
-            model=vamp,
-            train_dataset=train_dataset,
-            eval_dataset=train_dataset,
-            training_config=training_configs,
-            optimizer=optimizers,
-        )
-
-        start_model_state_dict = deepcopy(trainer.model.state_dict())
-
-        step_1_loss = trainer.eval_step(epoch=1)
-
-        step_1_model_state_dict = deepcopy(trainer.model.state_dict())
-
-        # check that weights were updated
-        assert all(
-            [
-                torch.equal(start_model_state_dict[key], step_1_model_state_dict[key])
-                for key in start_model_state_dict.keys()
-            ]
-        )
-
     def test_vamp_main_train_loop(
         self, tmpdir, vamp, train_dataset, training_configs, optimizers
     ):
