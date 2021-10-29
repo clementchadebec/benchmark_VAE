@@ -36,7 +36,7 @@ ap.add_argument(
 ap.add_argument(
     "--model_name",
     help="The name of the model to train",
-    choices=["ae", "vae", "beta_vae", "iwae", "wae","rae_gp","rae_l2", "vamp", "hvae", "rhvae"],
+    choices=["ae", "vae", "beta_vae", "iwae", "wae", "info_vae", "rae_gp","rae_l2", "vamp", "hvae", "rhvae"],
     required=True,
 )
 ap.add_argument(
@@ -82,7 +82,7 @@ def main(args):
             / 255.0
         )
         eval_data = (
-            np.load(os.path.join(PATH, f"data/{args.dataset}", "eval_data.npz"))["data"]
+                np.load(os.path.join(PATH, f"data/{args.dataset}", "eval_data.npz"))["data"]
             / 255.0
         )
     except Exception as e:
@@ -153,6 +153,23 @@ def main(args):
         model_config.input_dim = data_input_dim
 
         model = IWAE(
+            model_config=model_config,
+            encoder=Encoder_VAE(model_config),
+            decoder=Decoder_AE(model_config),
+        )
+
+    elif args.model_name == "info_vae":
+        from pythae.models import INFOVAE_MMD, INFOVAE_MMD_Config
+
+        if args.model_config is not None:
+            model_config = INFOVAE_MMD_Config.from_json_file(args.model_config)
+
+        else:
+            model_config = INFOVAE_MMD_Config()
+
+        model_config.input_dim = data_input_dim
+
+        model = INFOVAE_MMD(
             model_config=model_config,
             encoder=Encoder_VAE(model_config),
             decoder=Decoder_AE(model_config),

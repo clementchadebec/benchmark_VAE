@@ -20,7 +20,6 @@ examples/notebooks/models_training/generated/*
 examples/scripts/my_models*
 examples/showcases copy/*
 
-
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

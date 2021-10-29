@@ -58,16 +58,13 @@ class VAMP(VAE):
                 model_config.number_components, int(np.prod(model_config.input_dim))
             )
 
-        linear_layer.weight.data = torch.zeros_like(
-            linear_layer.weight.data)
-
         self.pseudo_inputs = nn.Sequential(
             linear_layer,
             nn.Hardtanh(0.0, 1.0),
         )
 
-        # init weights to training
-        
+        # init weights
+        #linear_layer.weight.data.normal_(0, 0.0)
 
         self.idle_input = torch.eye(
             model_config.number_components, requires_grad=False
@@ -85,11 +82,15 @@ class VAMP(VAE):
 
         """
 
+        # need to put model in train mode to make it work. If you have a solution to this issue 
+        # please open a pull request at (https://github.com/clementchadebec/benchmark_VAE/pulls)
+        self.train()
         x = inputs["data"]
 
         encoder_output = self.encoder(x)
 
-        mu, log_var = encoder_output.embedding, encoder_output.log_covariance
+        # we bound log_var to avoid unbounded optim
+        mu, log_var = encoder_output.embedding, torch.tanh(encoder_output.log_covariance)
 
         std = torch.exp(0.5 * log_var)
         z, eps = self._sample_gauss(mu, std)
@@ -144,10 +145,11 @@ class VAMP(VAE):
             (C,) + self.model_config.input_dim
         )
 
+        # we bound log_var to avoid unbounded optim
         encoder_output = self.encoder(x)
         prior_mu, prior_log_var = (
             encoder_output.embedding,
-            encoder_output.log_covariance,
+            torch.tanh(encoder_output.log_covariance),
         )
 
         z_expand = z.unsqueeze(1)
@@ -157,7 +159,7 @@ class VAMP(VAE):
         log_p_z = torch.sum(
             -0.5 * (prior_log_var + (z_expand - prior_mu) ** 2) / prior_log_var.exp(),
             dim=2,
-        ) - torch.log(torch.tensor(self.number_components).type(torch.float))
+        ) - torch.log(torch.tensor(C).type(torch.float))
 
         log_p_z = torch.logsumexp(log_p_z, dim=1)
 
