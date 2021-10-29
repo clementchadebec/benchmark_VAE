@@ -82,7 +82,7 @@ def main(args):
             / 255.0
         )
         eval_data = (
-            np.load(os.path.join(PATH, f"data/{args.dataset}", "eval_data.npz"))["data"]
+                np.load(os.path.join(PATH, f"data/{args.dataset}", "eval_data.npz"))["data"]
             / 255.0
         )
     except Exception as e:

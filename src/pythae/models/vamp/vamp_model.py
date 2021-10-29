@@ -83,7 +83,7 @@ class VAMP(VAE):
             ModelOuput: An instance of ModelOutput containing all the relevant parameters
 
         """
-
+        self.train()
         x = inputs["data"]
 
         encoder_output = self.encoder(x)
