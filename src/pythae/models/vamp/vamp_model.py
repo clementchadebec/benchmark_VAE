@@ -64,7 +64,7 @@ class VAMP(VAE):
         )
 
         # init weights
-        linear_layer.weight.data.normal_(0, 0.0)
+        #linear_layer.weight.data.normal_(0, 0.0)
 
         self.idle_input = torch.eye(
             model_config.number_components, requires_grad=False

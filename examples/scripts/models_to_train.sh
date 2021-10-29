@@ -1,6 +1,8 @@
 #!/bin/bash
 
-python training.py --dataset mnist --model_name vamp --model_config 'configs/mnist/vamp_config.json' --training_config 'configs/mnist/base_training_config.json'
+#python training.py --dataset mnist --model_name vamp --model_config 'configs/mnist/vamp_config.json' --training_config 'configs/mnist/base_training_config.json'
+python training.py --dataset mnist --model_name info_vae --model_config 'configs/mnist/info_vae_config.json' --training_config 'configs/mnist/base_training_config.json'
+
 #python training.py --dataset mnist --model_name ae --model_config 'configs/mnist/ae_config.json' --training_config 'configs/mnist/base_training_config.json'
 #python training.py --dataset mnist --model_name vae --model_config 'configs/mnist/vae_config.json' --training_config 'configs/mnist/base_training_config.json'
 #python training.py --dataset mnist --model_name wae --model_config 'configs/mnist/wae_config.json' --training_config 'configs/mnist/base_training_config.json'
