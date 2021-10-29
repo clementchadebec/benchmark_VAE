@@ -513,7 +513,7 @@ class RHVAE(VAE):
                 .squeeze()
                 - 0.5 * G_log_det
             )
-            - torch.log(torch.tensor([2 * np.pi]).to(x.device)) * self.latent_dim / 2
+            #- torch.log(torch.tensor([2 * np.pi]).to(x.device)) * self.latent_dim / 2
         )  # log p(\rho_K)
 
         logp = logpxz + logrhoK
@@ -551,8 +551,9 @@ class RHVAE(VAE):
                 recon_x.reshape(x.shape[0], -1),
                 x.reshape(x.shape[0], -1),
                 reduction="none",
-            ).sum(dim=-1) - torch.log(torch.tensor([2 * np.pi]).to(x.device)) \
-                * np.prod(self.input_dim) / 2
+            ).sum(dim=-1) 
+            #- torch.log(torch.tensor([2 * np.pi]).to(x.device)) \
+            #    * np.prod(self.input_dim) / 2
 
         elif self.model_config.reconstruction_loss == "bce":
 
@@ -574,7 +575,7 @@ class RHVAE(VAE):
             loc=torch.zeros(self.latent_dim).to(z.device),
             covariance_matrix=torch.eye(self.latent_dim).to(z.device),
         )
-        return normal.log_prob(z)
+        return -0.5 * torch.pow(z, 2).sum(dim=-1)
 
     def _log_p_xz(self, recon_x, x, z):
         """

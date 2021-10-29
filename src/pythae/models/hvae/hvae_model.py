@@ -139,7 +139,7 @@ class HVAE(VAE):
         )
 
         logpxz = self._log_p_xz(recon_x.reshape(x.shape[0], -1), x, zK)  # log p(x, z_K)
-        logrhoK = normal.log_prob(rhoK)  # log p(\rho_K)
+        logrhoK = -0.5 * torch.pow(rhoK, 2).sum(dim=-1)  # log p(\rho_K)
         logp = logpxz + logrhoK
 
         logq = normal.log_prob(eps0) - 0.5 * log_var.sum(dim=1)  # q(z_0|x)
@@ -163,8 +163,9 @@ class HVAE(VAE):
                 recon_x.reshape(x.shape[0], -1),
                 x.reshape(x.shape[0], -1),
                 reduction="none",
-            ).sum(dim=-1) - torch.log(torch.tensor([2 * np.pi]).to(x.device)) \
-                * np.prod(self.input_dim) / 2
+            ).sum(dim=-1) 
+            #- torch.log(torch.tensor([2 * np.pi]).to(x.device)) \
+            #    * np.prod(self.input_dim) / 2
 
         elif self.model_config.reconstruction_loss == "bce":
 
@@ -186,7 +187,7 @@ class HVAE(VAE):
             loc=torch.zeros(self.latent_dim).to(z.device),
             covariance_matrix=torch.eye(self.latent_dim).to(z.device),
         )
-        return normal.log_prob(z)
+        return -0.5 * torch.pow(z, 2).sum(dim=-1)
 
     def _log_p_xz(self, recon_x, x, z):
         """
