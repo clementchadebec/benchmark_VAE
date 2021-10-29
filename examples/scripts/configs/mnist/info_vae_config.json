@@ -2,7 +2,7 @@
     "latent_dim": 16,
     "reconstruction_loss": "mse",
     "kernel_choice": "imq",
-    "alpha": 0.5,
-    "lbd": 3e-2,
+    "alpha": -2,
+    "lbd": 1000,
     "kernel_bandwidth": 1.0
 }
