@@ -54,10 +54,11 @@ class VAMPSampler(BaseSampler):
         for i in range(full_batch_nbr):
             means = self.model.pseudo_inputs(self.model.idle_input.to(self.device))[
                 :batch_size
-            ]
+            ].reshape(
+                (batch_size,) + self.model.model_config.input_dim)
 
             encoder_output = self.model.encoder(means)
-            mu, log_var = encoder_output.embedding, encoder_output.log_covariance
+            mu, log_var = encoder_output.embedding, torch.tanh(encoder_output.log_covariance)
             std = torch.exp(0.5 * log_var)
             eps = torch.randn_like(std)
             z = mu + eps * std
@@ -75,10 +76,12 @@ class VAMPSampler(BaseSampler):
         if last_batch_samples_nbr > 0:
             means = self.model.pseudo_inputs(self.model.idle_input.to(self.device))[
                 :last_batch_samples_nbr
-            ].to(self.device)
+            ].reshape(
+                (last_batch_samples_nbr,) + self.model.model_config.input_dim)
+
 
             encoder_output = self.model.encoder(means)
-            mu, log_var = encoder_output.embedding, encoder_output.log_covariance
+            mu, log_var = encoder_output.embedding, torch.tanh(encoder_output.log_covariance)
             std = torch.exp(0.5 * log_var)
             eps = torch.randn_like(std)
             z = mu + eps * std
