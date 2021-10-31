@@ -171,7 +171,7 @@ Say you want to train a Wassertstein AE with a specific encoder and decoder. Pyt
 ...		)
 ...		return output
 ...
-... class My_Decoder(BaseEncoder):
+... class My_Decoder(BaseDecoder):
 ...	def __init__(self, args=None):
 ...		BaseEncoder.__init__(self)
 ...		self.layers = my_nn_layers()
