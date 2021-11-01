@@ -165,7 +165,8 @@ class RHVAE(VAE):
         encoder_output = self.encoder(x)
         mu, log_var = encoder_output.embedding, encoder_output.log_covariance
 
-        z0, eps0 = self._sample_gauss(mu, log_var)
+        std = torch.exp(0.5 * log_var)
+        z0, eps0 = self._sample_gauss(mu, std)
 
         z = z0
 
@@ -552,8 +553,8 @@ class RHVAE(VAE):
                 x.reshape(x.shape[0], -1),
                 reduction="none",
             ).sum(dim=-1) 
-            #- torch.log(torch.tensor([2 * np.pi]).to(x.device)) \
-            #    * np.prod(self.input_dim) / 2
+            - torch.log(torch.tensor([2 * np.pi]).to(x.device)) \
+                * np.prod(self.input_dim) / 2
 
         elif self.model_config.reconstruction_loss == "bce":
 
@@ -575,7 +576,7 @@ class RHVAE(VAE):
             loc=torch.zeros(self.latent_dim).to(z.device),
             covariance_matrix=torch.eye(self.latent_dim).to(z.device),
         )
-        return -0.5 * torch.pow(z, 2).sum(dim=-1)
+        return normal.log_prob(z)
 
     def _log_p_xz(self, recon_x, x, z):
         """

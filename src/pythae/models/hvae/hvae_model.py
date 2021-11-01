@@ -77,7 +77,8 @@ class HVAE(VAE):
         encoder_output = self.encoder(x)
         mu, log_var = encoder_output.embedding, encoder_output.log_covariance
 
-        z0, eps0 = self._sample_gauss(mu, log_var)
+        std = torch.exp(0.5 * log_var)
+        z0, eps0 = self._sample_gauss(mu, std)
         gamma = torch.randn_like(z0, device=x.device)
         rho = gamma / self.beta_zero_sqrt
 
