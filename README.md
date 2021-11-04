@@ -36,7 +36,7 @@ $ git clone https://github.com/clementchadebec/pythae.git
 ```
 and install the library
 ```bash
-$ cd pythae
+$ cd benchmark_VAE
 $ pip install .
 ``` 
 
@@ -59,7 +59,7 @@ Below is the list of the models currently implemented in the library.
 | Regularized AE with gradient penalty (RAE_GP) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/notebooks/models_training/rae_gp_training.ipynb) | [link](https://arxiv.org/pdf/1903.12436.pdf) | [link](https://github.com/ParthaEth/Regularized_autoencoders-RAE-/tree/master/models/rae) |
 | Riemannian Hamiltonian VAE (RHVAE) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/notebooks/models_training/rhvae_training.ipynb) | [link](https://arxiv.org/pdf/2105.00026.pdf) | |
 
-**See [results](#results) for all aforementionned models**
+**See [results](#Results) for all aforementionned models**
 
 ## Available Samplers
 
