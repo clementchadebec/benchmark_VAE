@@ -1,6 +1,7 @@
 import os
 from copy import deepcopy
 from typing import Optional
+from collections import deque
 
 import dill
 import numpy as np
@@ -89,8 +90,8 @@ class RHVAE(VAE):
 
         # this is used to store the matrices and centroids throughout training for
         # further use in metric update (L is the cholesky decomposition of M)
-        self.M = []
-        self.centroids = []
+        self.M = deque(maxlen=100)
+        self.centroids = deque(maxlen=100)
 
         self.M_tens = torch.randn(
             1, self.model_config.latent_dim, self.model_config.latent_dim
@@ -177,8 +178,8 @@ class RHVAE(VAE):
             M = L @ torch.transpose(L, 1, 2)
 
             # store LL^T and mu(x_i) to update final metric
-            self.M.append(M.clone().detach())
-            self.centroids.append(mu.clone().detach())
+            self.M.append(M.detach().clone())
+            self.centroids.append(mu.detach().clone())
 
             G_inv = (
                 M.unsqueeze(0)
@@ -457,8 +458,9 @@ class RHVAE(VAE):
 
     def _update_metric(self):
         # convert to 1 big tensor
-        self.M_tens = torch.cat(self.M)[:100]
-        self.centroids_tens = torch.cat(self.centroids)[:100]
+
+        self.M_tens = torch.cat(list(self.M))
+        self.centroids_tens = torch.cat(list(self.centroids))
 
         # define new metric
         def G(z):
@@ -494,8 +496,8 @@ class RHVAE(VAE):
 
         self.G = G
         self.G_inv = G_inv
-        self.M = []
-        self.centroids = []
+        self.M = deque(maxlen=100)
+        self.centroids = deque(maxlen=100)
 
     def loss_function(
         self, recon_x, x, z0, zK, rhoK, eps0, gamma, mu, log_var, G_inv, G_log_det
