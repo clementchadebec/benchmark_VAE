@@ -36,7 +36,7 @@ $ git clone https://github.com/clementchadebec/pythae.git
 ```
 and install the library
 ```bash
-$ cd pythae
+$ cd benchmark_VAE
 $ pip install .
 ``` 
 
