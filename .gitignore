@@ -3,6 +3,7 @@ examples/data/cifar-10-batches-py/
 examples/data/*
 examples/scripts/data/
 
+codecov*
 
 __pycache__
 #docs
@@ -149,3 +150,4 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
