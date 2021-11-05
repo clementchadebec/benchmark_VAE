@@ -8,6 +8,9 @@
     <a>
 	    <img src='https://img.shields.io/badge/code%20style-black-black' />
 	</a>
+	<a href="https://codecov.io/gh/clementchadebec/benchmark_VAE">
+  <img src="https://codecov.io/gh/clementchadebec/benchmark_VAE/branch/main/graph/badge.svg?token=KEM7KKISXJ"/>
+</a>
 	</a>
 </p>
 
