@@ -129,8 +129,8 @@ See [README.md](https://github.com/clementchadebec/benchmark_VAE/tree/main/examp
 ## Launching data generation
 
 To launch the data generation process from a trained model, you only need to build you sampler and retrieve your 
-Several samplers are available for each models please check here to see which ones apply to your vae.
-, run the following.
+Several samplers are available for each models please check [here](#available-samplers) to see which ones apply to your vae.
+To generate, run the following.
 
 ```python
 >>> from pythae.models import VAE
