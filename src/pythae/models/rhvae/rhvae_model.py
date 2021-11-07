@@ -13,7 +13,7 @@ import numpy as np
 
 from ...customexception import BadInheritanceError
 from ...data.datasets import BaseDataset
-from ..base.base_utils import ModelOuput
+from ..base.base_utils import ModelOuput, CPU_Unpickler
 from ...models import VAE
 from ..nn import BaseEncoder, BaseDecoder, BaseMetric
 from ..nn.default_architectures import Metric_MLP
@@ -320,7 +320,7 @@ class RHVAE(VAE):
 
         else:
             with open(os.path.join(dir_path, "metric.pkl"), "rb") as fp:
-                metric = dill.load(fp)
+                metric = CPU_Unpickler(fp).load()
 
         return metric
 

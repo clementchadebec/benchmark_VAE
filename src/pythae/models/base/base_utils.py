@@ -1,6 +1,8 @@
 from collections import OrderedDict
 from typing import Any, Tuple
-
+import dill
+import torch
+import io
 
 class ModelOuput(OrderedDict):
     """Base ModelOuput class fixing the output type from the models. This class is inspired from
@@ -26,3 +28,10 @@ class ModelOuput(OrderedDict):
         Convert self to a tuple containing all the attributes/keys that are not ``None``.
         """
         return tuple(self[k] for k in self.keys())
+
+
+class CPU_Unpickler(dill.Unpickler):
+        def find_class(self, module, name):
+            if module == 'torch.storage' and name == '_load_from_bytes':
+                return lambda b: torch.load(io.BytesIO(b), map_location='cpu')
+            else: return super().find_class(module, name)

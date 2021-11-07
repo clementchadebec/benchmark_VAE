@@ -13,7 +13,7 @@ from ..nn.default_architectures import Encoder_AE_MLP, Decoder_AE_MLP
 
 from .base_config import BaseAEConfig
 
-from .base_utils import ModelOuput
+from .base_utils import ModelOuput, CPU_Unpickler
 
 
 class BaseAE(nn.Module):
@@ -181,7 +181,6 @@ class BaseAE(nn.Module):
     def _load_custom_encoder_from_folder(cls, dir_path):
 
         file_list = os.listdir(dir_path)
-
         if "encoder.pkl" not in file_list:
             raise FileNotFoundError(
                 f"Missing encoder pkl file ('encoder.pkl') in"
@@ -191,7 +190,7 @@ class BaseAE(nn.Module):
 
         else:
             with open(os.path.join(dir_path, "encoder.pkl"), "rb") as fp:
-                encoder = dill.load(fp)
+                encoder = CPU_Unpickler(fp).load()
 
         return encoder
 
@@ -209,7 +208,7 @@ class BaseAE(nn.Module):
 
         else:
             with open(os.path.join(dir_path, "decoder.pkl"), "rb") as fp:
-                decoder = dill.load(fp)
+                decoder = CPU_Unpickler(fp).load()
 
         return decoder
 
