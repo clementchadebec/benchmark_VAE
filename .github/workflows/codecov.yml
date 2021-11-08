@@ -20,7 +20,7 @@ jobs:
         pip install .
         pip install pytest
         pip install pytest-cov
-        pytest --cov=./test_AE.py --cov-report=xml
+        pytest --cov=pythae ./test_AE.py --cov-report=xml
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v1.0.3
       with:
