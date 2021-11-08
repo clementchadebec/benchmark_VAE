@@ -239,6 +239,9 @@ provide tutorials:
 
 If you are experiencing any issues while running the code or request new features/models to be implemented please [open an issue on github](https://github.com/clementchadebec/benchmark_VAE/issues).
 
+## Contributing 🚀
+
+You want to contribute to this library by adding a model, a sampler or simply fix a bug ? That's awesome! Thank you! Please see [CONTRIBUTING.md](https://github.com/clementchadebec/benchmark_VAE/tree/main/CONTRIBUTING.md) to follow the main contributing guidelines.
 
 ## Results
 
