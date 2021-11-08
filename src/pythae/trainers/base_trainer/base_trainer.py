@@ -462,6 +462,12 @@ class BaseTrainer:
             os.path.join(checkpoint_dir, "optimizer.pt"),
         )
 
+        # save scheduler
+        torch.save(
+            deepcopy(self.scheduler.state_dict()),
+            os.path.join(checkpoint_dir, "scheduler.pt"),
+        )
+
         # save model
         self.model.save(checkpoint_dir)
 
