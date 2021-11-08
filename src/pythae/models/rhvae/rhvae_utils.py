@@ -5,10 +5,10 @@ def create_metric(model):
     def G(z):
         return torch.inverse(
             (
-                model.M_tens.unsqueeze(0)
+                model.M_tens.unsqueeze(0).to(z.device)
                 * torch.exp(
                     -torch.norm(
-                        model.centroids_tens.unsqueeze(0) - z.unsqueeze(1), dim=-1
+                        model.centroids_tens.unsqueeze(0).to(z.device) - z.unsqueeze(1), dim=-1
                     )
                     ** 2
                     / (model.temperature ** 2)
@@ -25,9 +25,9 @@ def create_metric(model):
 def create_inverse_metric(model):
     def G_inv(z):
         return (
-            model.M_tens.unsqueeze(0)
+            model.M_tens.unsqueeze(0).to(z.device)
             * torch.exp(
-                -torch.norm(model.centroids_tens.unsqueeze(0) - z.unsqueeze(1), dim=-1)
+                -torch.norm(model.centroids_tens.unsqueeze(0).to(z.device) - z.unsqueeze(1), dim=-1)
                 ** 2
                 / (model.temperature ** 2)
             )
