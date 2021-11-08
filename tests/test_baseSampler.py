@@ -56,7 +56,7 @@ class Test_BaseSampler_saving:
         dir_path = os.path.join(tmpdir, "dummy_folder")
         img_path = os.path.join(dir_path, "test_img.png")
 
-        sampler.save_img(img_tensors, dir_path, "test_img")
+        sampler.save_img(img_tensors, dir_path, "test_img.png")
 
         assert os.path.isdir(dir_path)
         assert os.path.isfile(img_path)

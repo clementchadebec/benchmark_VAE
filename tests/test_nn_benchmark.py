@@ -25,8 +25,8 @@ class Test_MNIST_Benchmark:
         return torch.rand(3, 1, 28, 28).to(device)
 
     def test_ae_encoding_decoding(self, ae_mnist_config, mnist_like_data):
-        encoder = Encoder_AE_MNIST(ae_mnist_config)
-        decoder = Decoder_AE_MNIST(ae_mnist_config)
+        encoder = Encoder_AE_MNIST(ae_mnist_config).to(device)
+        decoder = Decoder_AE_MNIST(ae_mnist_config).to(device)
 
         embedding = encoder(mnist_like_data).embedding
     
@@ -47,8 +47,8 @@ class Test_MNIST_Benchmark:
         return request.param
 
     def test_vae_encoding_decoding(self, vae_mnist_config, mnist_like_data):
-        encoder = Encoder_VAE_MNIST(vae_mnist_config)
-        decoder = Decoder_AE_MNIST(vae_mnist_config)
+        encoder = Encoder_VAE_MNIST(vae_mnist_config).to(device)
+        decoder = Decoder_AE_MNIST(vae_mnist_config).to(device)
 
         output = encoder(mnist_like_data)
         embedding, log_covariance = output.embedding, output.log_covariance
@@ -75,8 +75,8 @@ class Test_CIFAR_Benchmark:
         return torch.rand(3, 3, 32, 32).to(device)
 
     def test_ae_encoding_decoding(self, ae_cifar_config, cifar_like_data):
-        encoder = Encoder_AE_CIFAR(ae_cifar_config)
-        decoder = Decoder_AE_CIFAR(ae_cifar_config)
+        encoder = Encoder_AE_CIFAR(ae_cifar_config).to(device)
+        decoder = Decoder_AE_CIFAR(ae_cifar_config).to(device)
 
         embedding = encoder(cifar_like_data).embedding
     
@@ -96,8 +96,8 @@ class Test_CIFAR_Benchmark:
         return request.param
 
     def test_vae_encoding_decoding(self, vae_cifar_config, cifar_like_data):
-        encoder = Encoder_VAE_CIFAR(vae_cifar_config)
-        decoder = Decoder_AE_CIFAR(vae_cifar_config)
+        encoder = Encoder_VAE_CIFAR(vae_cifar_config).to(device)
+        decoder = Decoder_AE_CIFAR(vae_cifar_config).to(device)
 
         output = encoder(cifar_like_data)
         embedding, log_covariance = output.embedding, output.log_covariance
@@ -125,8 +125,8 @@ class Test_CELEBA_Benchmark:
         return torch.rand(3, 3, 64, 64).to(device)
 
     def test_ae_encoding_decoding(self, ae_celeba_config, celeba_like_data):
-        encoder = Encoder_AE_CELEBA(ae_celeba_config)
-        decoder = Decoder_AE_CELEBA(ae_celeba_config)
+        encoder = Encoder_AE_CELEBA(ae_celeba_config).to(device)
+        decoder = Decoder_AE_CELEBA(ae_celeba_config).to(device)
 
         embedding = encoder(celeba_like_data).embedding
     
@@ -147,8 +147,8 @@ class Test_CELEBA_Benchmark:
         return request.param
 
     def test_vae_encoding_decoding(self, vae_celeba_config, celeba_like_data):
-        encoder = Encoder_VAE_CELEBA(vae_celeba_config)
-        decoder = Decoder_AE_CELEBA(vae_celeba_config)
+        encoder = Encoder_VAE_CELEBA(vae_celeba_config).to(device)
+        decoder = Decoder_AE_CELEBA(vae_celeba_config).to(device)
 
         output = encoder(celeba_like_data)
         embedding, log_covariance = output.embedding, output.log_covariance

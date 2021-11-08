@@ -80,15 +80,19 @@ class Test_DataLoader:
 class Test_Set_Training_config:
     @pytest.fixture(
         params=[
+            None,
             BaseTrainingConfig(),
             BaseTrainingConfig(batch_size=10, learning_rate=1e-5),
         ]
     )
     def training_configs(self, request, tmpdir):
-        tmpdir.mkdir("dummy_folder")
-        dir_path = os.path.join(tmpdir, "dummy_folder")
-        request.param.output_dir = dir_path
-        return request.param
+        if request.param is not None:
+            tmpdir.mkdir("dummy_folder")
+            dir_path = os.path.join(tmpdir, "dummy_folder")
+            request.param.output_dir = dir_path
+            return request.param
+        else:
+            return None
 
     def test_set_training_config(self, model_sample, train_dataset, training_configs):
         trainer = BaseTrainer(
@@ -100,7 +104,8 @@ class Test_Set_Training_config:
         # check if default config is set
         if training_configs is None:
             assert trainer.training_config == BaseTrainingConfig(
-                output_dir="dummy_output_dir"
+                output_dir="dummy_output_dir",
+                keep_best_on_train=True
             )
 
         else:

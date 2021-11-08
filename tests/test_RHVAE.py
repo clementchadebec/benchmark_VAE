@@ -315,6 +315,8 @@ class Test_Model_Saving:
         assert callable(model_rec.G)
         assert callable(model_rec.G_inv)
 
+        model_rec.to(device)
+
         z = torch.randn(2, model_configs.latent_dim).to(device)
 
         assert model_rec.G(z).shape == (2, model_configs.latent_dim, model_configs.latent_dim)
