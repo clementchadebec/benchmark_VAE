@@ -82,14 +82,14 @@ class BaseSampler:
 
         if not os.path.exists(dir_path):
             os.makedirs(dir_path)
-            print(f"--> Created folder {dir_path}. Image will be saved here")
+            print(f"--> Created folder {dir_path}. Images will be saved here")
 
         img = 255.0 * torch.movedim(img_tensor, 0, 2).cpu().detach().numpy()
         if img.shape[-1] == 1:
             img = np.repeat(img, repeats=3, axis=-1)
 
         img = img.astype("uint8")
-        imwrite(os.path.join(dir_path, f"{img_name}.png"), img)
+        imwrite(os.path.join(dir_path, f"{img_name}"), img)
 
     # def save_data_batch(self, data, dir_path, number_of_samples, batch_idx):
     #    """
