@@ -26,6 +26,8 @@ from tests.data.custom_architectures import (
 
 PATH = os.path.dirname(os.path.abspath(__file__))
 
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
+
 
 @pytest.fixture(params=[RHVAEConfig(), RHVAEConfig(latent_dim=5)])
 def model_configs_no_input_dim(request):
@@ -312,6 +314,11 @@ class Test_Model_Saving:
 
         assert callable(model_rec.G)
         assert callable(model_rec.G_inv)
+
+        z = torch.randn(2, model_configs.latent_dim).to(device)
+
+        assert model_rec.G(z).shape == (2, model_configs.latent_dim, model_configs.latent_dim)
+        assert model_rec.G_inv(z).shape == (2, model_configs.latent_dim, model_configs.latent_dim)
 
     def test_raises_missing_files(
         self, tmpdir, model_configs, custom_encoder, custom_decoder, custom_metric
