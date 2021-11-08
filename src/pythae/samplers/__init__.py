@@ -12,7 +12,7 @@ in which are located 4 modules:
 
 from .base import BaseSampler, BaseSamplerConfig
 from .normal_sampling import NormalSampler, NormalSamplerConfig
-from .gaussian_mixure import GaussianMixtureSampler, GaussianMixtureSamplerConfig
+from .gaussian_mixture import GaussianMixtureSampler, GaussianMixtureSamplerConfig
 from .vamp_sampler import VAMPSampler, VAMPSamplerConfig
 from .manifold_sampler import RHVAESampler, RHVAESamplerConfig
 from .two_stage_vae_sampler import TwoStageVAESampler, TwoStageVAESamplerConfig
