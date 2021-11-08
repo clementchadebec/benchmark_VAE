@@ -3,7 +3,6 @@ import os
 import numpy as np
 import pytest
 import torch
-from nibabel.testing import data_path
 
 from pythae.customexception import LoadError
 from pythae.data.datasets import BaseDataset
