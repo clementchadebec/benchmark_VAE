@@ -52,7 +52,7 @@ class BaseTrainer:
     ):
 
         if training_config is None:
-            training_config = TrainingConfig()
+            training_config = BaseTrainingConfig()
 
         if training_config.output_dir is None:
             output_dir = "dummy_output_dir"
