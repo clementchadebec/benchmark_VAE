@@ -3,7 +3,7 @@ Want to contribute to pythae library ? That is cool! Thank you! :smile:
 
 ## Contributing guidelines
 
-Please if you want to contribute to this repo, consider following this checklist
+If you want to contribute to this repo, please consider following this checklist
 
 1) Fork this repo
 2) Clone it on your local drive and install the library in editable mode
