@@ -1,6 +1,6 @@
 <p align="center">
     <a>
-	    <img src='https://img.shields.io/badge/python-3.6%7C3.7%7C3.8-blueviolet' alt='Python' />
+	    <img src='https://img.shields.io/badge/python-3.6%7C3.7%7C3.8-orange' alt='Python' />
 	</a>
 	<a href='https://opensource.org/licenses/Apache-2.0'>
 	    <img src='https://img.shields.io/github/license/clementchadebec/benchmark_VAE?color=blue' />
