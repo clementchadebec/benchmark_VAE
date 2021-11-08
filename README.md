@@ -40,7 +40,7 @@ $ git clone https://github.com/clementchadebec/pythae.git
 and install the library
 ```bash
 $ cd benchmark_VAE
-$ pip install .
+$ pip install -e .
 ``` 
 
 ## Available Models
@@ -115,7 +115,7 @@ To launch a model training, you only need to call a `TrainingPipeline` instance.
 ...	)
 ```
 
-At the end of training, the best model weights, model configuration and training configuration are stored in a `final_model` folder available in  `my_model/MODEL_NAME_training_YYYY-MM-DD_hh-mm-ss` (with `my_model` being the `output_dir` argument of the `TrainingConfig`). If you further set the `steps_saving` argument to a a certain value, folders named `checkpoint_epoch_k` containing the best model weights, configuration and training configuration at epoch *k* will also appear in `my_model/MODEL_NAME_training_YYYY-MM-DD_hh-mm-ss`.
+At the end of training, the best model weights, model configuration and training configuration are stored in a `final_model` folder available in  `my_model/MODEL_NAME_training_YYYY-MM-DD_hh-mm-ss` (with `my_model` being the `output_dir` argument of the `BaseTrainingConfig`). If you further set the `steps_saving` argument to a a certain value, folders named `checkpoint_epoch_k` containing the best model weights, optimizer, scheduler, configuration and training configuration at epoch *k* will also appear in `my_model/MODEL_NAME_training_YYYY-MM-DD_hh-mm-ss`.
 
 ## Lauching a training on benchmark datasets
 We also provide a training script example [here](https://github.com/clementchadebec/benchmark_VAE/tree/main/examples/scripts/training.py) that can be used to train the models on benchmarks datasets (mnist, cifar10, celeba ...). The script can be launched with the following commandline
@@ -128,9 +128,7 @@ See [README.md](https://github.com/clementchadebec/benchmark_VAE/tree/main/examp
 
 ## Launching data generation
 
-To launch the data generation process from a trained model, you only need to build you sampler and retrieve your 
-Several samplers are available for each models please check [here](#available-samplers) to see which ones apply to your vae.
-To generate, run the following.
+To launch the data generation process from a trained model, you only need to build your sampler. For instance, to generate new data with your sampler, run the following.
 
 ```python
 >>> from pythae.models import VAE
@@ -151,13 +149,13 @@ To generate, run the following.
 ...	return_gen=True
 ...	)
 ```
-If you set `output_dir` to a specific path the generated images will be saved as `.png` files named `00000000.png`, `00000001.png` ...
-The samplers can be used with any model as long as it is suited. For instance, a `GMMSampler` instance can be used to generate from any model but a `VAMPSampler` will only be usable with a `VAMP` model
+If you set `output_dir` to a specific path, the generated images will be saved as `.png` files named `00000000.png`, `00000001.png` ...
+The samplers can be used with any model as long as it is suited. For instance, a `GMMSampler` instance can be used to generate from any model but a `VAMPSampler` will only be usable with a `VAMP` model. Check [here](#available-samplers) to see which ones apply to your model.
 
 
 ## Define you own Autoencoder architecture
  
-Say you want to train a Wassertstein AE with a specific encoder and decoder. Pythae provides you the possibility to define your own neural networks as follows
+Pythae provides you the possibility to define your own neural networks within the VAE models. For instance, say you want to train a Wassertstein AE with a specific encoder and decoder, you can do the following:
 
 ```python
 >>> from pythae.models.nn import BaseEncoder, BaseDecoder
@@ -208,8 +206,14 @@ And now build the model
 ... )
 ```
 
+**important note 1**: For all AE-based models (AE, WAE, RAE_L2, RAE_GP), both the encoder and decoder must return a `ModelOutput` instance. For the encoder, the `ModelOuput` instance must contain the embbeddings under the key `embedding`. For the decoder, the `ModelOuput` instance must contain the reconstructions under the key `reconstruction`.
+
+
+**important note 2**: For all VAE-based models (VAE, Beta_VAE, IWAE, HVAE, VAMP, RHVAE), both the encoder and decoder must return a `ModelOutput` instance. For the encoder, the `ModelOuput` instance must contain the embbeddings and **log**-covariance matrices (of shape batch_size x latent_space_dim) respectively under the key `embedding` and `log_covariance` key. For the decoder, the `ModelOuput` instance must contain the reconstructions under the key `reconstruction`.
+
+
 ## Using benchmark neural nets
-You may also find predefined neural network architecture for the most common data sets (*i.e.* MNIST, CIFAR, CELEBA ...) that can be loaded as follows
+You can also find predefined neural network architectures for the most common data sets (*i.e.* MNIST, CIFAR, CELEBA ...) that can be loaded as follows
 
 ```python
 >>> for pythae.models.nn.benchmark.mnist import (
@@ -222,12 +226,12 @@ Replace *mnist* by cifar or celeba to access to other neural nets.
 
 ## Getting your hands on the code
 
-To help you to understand the way pythae works and how you can augment your data with this library we also
-provide tutorials that can be found in [examples folder](https://github.com/clementchadebec/benchmark_VAE/tree/main/examples):
+To help you to understand the way pythae works and how you can train your models with this library we also
+provide tutorials:
 
 - [making_your_own_autoencoder.ipynb](https://github.com/clementchadebec/benchmark_VAE/tree/main/examples/notebooks) shows you how to pass your own networks to the models implemented in pythae [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/notebooks/making_your_own_autoencoder.ipynb)
 
-- [models_training](https://github.com/clementchadebec/benchmark_VAE/tree/main/examples/notebooks/models_training) folder provides notebooks showing how to train each implemented models and how to sample from them using `pyhtae.samplers`.
+- [models_training](https://github.com/clementchadebec/benchmark_VAE/tree/main/examples/notebooks/models_training) folder provides notebooks showing how to train each implemented model and how to sample from it using `pyhtae.samplers`.
 
 - [scripts](https://github.com/clementchadebec/benchmark_VAE/tree/main/examples/scripts) folder provides in particular an example of a training script to train the models on benchmark data sets (mnist, cifar10, celeba ...)
 
@@ -237,7 +241,6 @@ If you are experiencing any issues while running the code or request new feature
 
 
 ## Results
-(WIP)
 
 |               Models               |                                                                                    MNIST                                                                     |                     CELEBA             
 |:----------------------------------:|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|:--------------------------------------------:|
