@@ -19,8 +19,8 @@
 # pythae 
 
 This library implements some of the most common (Variational) Autoencoder models. In particular it 
-provides the possibility to perform benchmark experiments and comparison by training 
-the models with the same autoencoding neural architecture. The feature *make your own autoencoder* 
+provides the possibility to perform benchmark experiments and comparisons by training 
+the models with the same autoencoding neural network architecture. The feature *make your own autoencoder* 
 allows you to train any of these models with your own data and own Encoder and Decoder neural networks.
 
 
