@@ -1,9 +1,13 @@
-"""This modules is the implementation of the Regularized AE with L2 decoder parameter regularization
+"""This module is the implementation of the Regularized AE with L2 decoder parameter regularization
  proposed in (https://arxiv.org/pdf/1903.12436.pdf).
 
-This module contains:
-    - a :class:`~pythae.models.RAE_L2` instance which is the implementation of the model.
-    - a :class:`~pythae.models.RAE_L2_Config` instance containing the main parameters of the model
+Available samplers
+-------------------
+
+.. autosummary::
+    ~pythae.samplers.NormalSampler
+    ~pythae.samplers.GaussianMixtureSampler
+    :nosignatures:
 """
 
 from .rae_l2_model import RAE_L2

@@ -8,10 +8,7 @@ from ..base_trainer import BaseTrainingConfig
 @dataclass
 class CoupledOptimizerTrainerConfig(BaseTrainingConfig):
     """
-    :class:`~pythae.trainers.training_config.CoupledOptimizerTrainer` is the class in which all the training arguments
-    are stored.
-    This instance is then provided to a :class:`~pythae.trainers.Trainer` instance which performs
-    a model training and uses two different optimizers for the encoder and decoder.
+    CoupledOptimizerTrainer config class.
 
     Parameters:
 

@@ -14,11 +14,8 @@ import torch.nn.functional as F
 
 
 class BetaVAE(VAE):
-    """
-    This is an implementation of the beta-VAE models proposed in 
-    (). 
-    This models tweaks add a new parameter to the VAE loss function balancing the weight of the 
-    reconstruction term and KL term.
+    r"""
+    :math:`\beta`-VAE model.
     
     Args:
         model_config(BetaVAEConfig): The Variational Autoencoder configuration seting the main 
@@ -137,11 +134,12 @@ class BetaVAE(VAE):
 
         .. note::
             This function requires the folder to contain:
-                a ``model_config.json`` and a ``model.pt`` if no custom architectures were
-                provided
 
-                or
-                a ``model_config.json``, a ``model.pt`` and a ``encoder.pkl`` (resp.
+            - | a ``model_config.json`` and a ``model.pt`` if no custom architectures were provided
+
+            **or**
+                
+            - | a ``model_config.json``, a ``model.pt`` and a ``encoder.pkl`` (resp.
                 ``decoder.pkl``) if a custom encoder (resp. decoder) was provided
         """
 

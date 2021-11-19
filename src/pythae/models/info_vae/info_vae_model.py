@@ -15,7 +15,7 @@ import torch.nn.functional as F
 
 
 class INFOVAE_MMD(VAE):
-    """Info variation Autoencoder model (https://arxiv.org/pdf/1706.02262.pdf).
+    """Info Variational Autoencoder model.
     
     Args:
         model_config(INFOVAE_MMD_Config): The Autoencoder configuration seting the main 
@@ -186,12 +186,14 @@ class INFOVAE_MMD(VAE):
 
         .. note::
             This function requires the folder to contain:
-                a ``model_config.json`` and a ``model.pt`` if no custom architectures were
-                provided
 
-                or
-                a ``model_config.json``, a ``model.pt`` and a ``encoder.pkl`` (resp.
+            - | a ``model_config.json`` and a ``model.pt`` if no custom architectures were provided
+
+            **or**
+                
+            - | a ``model_config.json``, a ``model.pt`` and a ``encoder.pkl`` (resp.
                 ``decoder.pkl``) if a custom encoder (resp. decoder) was provided
+
         """
 
         model_config = cls._load_model_config_from_folder(dir_path)

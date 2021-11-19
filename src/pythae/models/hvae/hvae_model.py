@@ -16,10 +16,7 @@ from typing import Optional
 
 class HVAE(VAE):
     r"""
-    This is an implementation of the Hamiltonian VAE models proposed in 
-    (https://proceedings.neurips.cc/paper/2018/file/3202111cf90e7c816a472aaceb72b0df-Paper.pdf). 
-    This models combines Hamiltonian and normalizing flows together to improve the true posterior 
-    estimate within the VAE framework.
+    Hamiltonian VAE model.
 
     Args:
         model_config (HVAEConfig): A model configuration setting the main parameters of the model

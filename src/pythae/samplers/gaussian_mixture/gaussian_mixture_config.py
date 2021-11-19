@@ -5,8 +5,7 @@ from ...samplers import BaseSamplerConfig
 
 @dataclass
 class GaussianMixtureSamplerConfig(BaseSamplerConfig):
-    """This is the Gaussian mixture sampler configuration instance deriving from
-    :class:`BaseSamplerConfig`.
+    """Gaussian mixture sampler config class.
 
     Parameters:
         n_components (int): The number of Gaussians in the mixture

@@ -6,8 +6,8 @@ Riemannian Hamiltonian VAE
    pythae.models.rhvae
 
 
-.. autoclass:: pythae.models.RHVAE
+.. autoclass:: pythae.models.RHVAEConfig
    :members:
 
-.. autoclass:: pythae.models.RHVAEConfig
+.. autoclass:: pythae.models.RHVAE
    :members:

@@ -5,7 +5,7 @@ from ...samplers import BaseSampler, BaseSamplerConfig
 
 
 class NormalSampler(BaseSampler):
-    """Basic sampler sampling from a N(0, 1) in the Autoencoder's latent space
+    """NormalSampler sampler.
 
     Args:
         model (BaseAE): The vae model to sample from.
@@ -36,7 +36,7 @@ class NormalSampler(BaseSampler):
             return_gen (bool): Whether the sampler should directly return a tensor of generated 
                 data. Default: True.
             save_sampler_config (bool): Whether to save the sampler config. It is saved in 
-                output_dir
+                output_dir.
         
         Returns:
             ~torch.Tensor: The generated images

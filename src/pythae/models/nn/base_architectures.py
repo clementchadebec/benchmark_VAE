@@ -14,7 +14,7 @@ class BaseEncoder(nn.Module):
     def forward(self, x):
         r"""This function must be implemented in a child class.
         It takes the input data and returns an instance of 
-         :class:`~pythae.models.base.base_utils.ModelOutput.
+        :class:`~pythae.models.base.base_utils.ModelOutput`.
         If you decide to provide your own encoder network, you must make sure your
         model inherit from this class by setting and then defining your forward function as
         such:
@@ -34,7 +34,7 @@ class BaseEncoder(nn.Module):
             ...         # your code
             ...         output = ModelOuput(
             ...             embedding=embedding,
-            ...             log_var=log_var # for VAE based models
+            ...             log_covariance=log_var # for VAE based models
             ...         )
             ...         return output
 
@@ -57,7 +57,7 @@ class BaseDecoder(nn.Module):
     def forward(self, z: torch.Tensor):
         r"""This function must be implemented in a child class.
         It takes the input data and returns an instance of 
-         :class:`~pythae.models.base.base_utils.ModelOutput.
+         :class:`~pythae.models.base.base_utils.ModelOutput`.
         If you decide to provide your own decoder network, you must make sure your
         model inherit from this class by setting and then defining your forward function as
         such:
@@ -106,7 +106,7 @@ class BaseMetric(nn.Module):
     def forward(self, x):
         r"""This function must be implemented in a child class.
         It takes the input data and returns an instance of 
-         :class:`~pythae.models.base.base_utils.ModelOutput.
+         :class:`~pythae.models.base.base_utils.ModelOutput`.
         If you decide to provide your own metric network, you must make sure your
         model inherit from this class by setting and then defining your forward function as
         such:

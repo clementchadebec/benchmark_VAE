@@ -1,9 +1,15 @@
-"""This modules is the implementation of the Importance Weighted AE 
- proposed in (https://arxiv.org/pdf/1509.00519v4.pdf).
+"""This module is the implementation of the Importance Weighted Autoencoder
+proposed in (https://arxiv.org/pdf/1509.00519v4.pdf).
 
-This module contains:
-    - a :class:`~pythae.models.IWAE` instance which is the implementation of the model.
-    - a :class:`~pythae.models.IWAEConfig` instance containing the main parameters of the model
+Available samplers
+-------------------
+
+.. autosummary::
+    ~pythae.samplers.NormalSampler
+    ~pythae.samplers.GaussianMixtureSampler
+    ~pythae.samplers.TwoStageVAESampler
+    :nosignatures:
+
 """
 
 from .iwae_model import IWAE

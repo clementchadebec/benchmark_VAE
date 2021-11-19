@@ -1,9 +1,16 @@
-"""This modules is the implementation of the Hamiltonian VAE proposed in
+"""This module is the implementation of the Hamiltonian VAE proposed in
 (https://proceedings.neurips.cc/paper/2018/file/3202111cf90e7c816a472aaceb72b0df-Paper.pdf).
+This model combines Hamiltonian and normalizing flows together to improve the true posterior 
+estimate within the VAE framework.
 
-This module contains:
-    - a :class:`~pythae.models.HVAE` instance which is the implementation of the model.
-    - a :class:`~pythae.models.HVAEConfig` instance containing the main parameters of the model
+Available samplers
+-------------------
+
+.. autosummary::
+    ~pythae.samplers.NormalSampler
+    ~pythae.samplers.GaussianMixtureSampler
+    ~pythae.samplers.TwoStageVAESampler
+    :nosignatures:
 """
 
 from .hvae_config import HVAEConfig

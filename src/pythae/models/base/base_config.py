@@ -13,9 +13,7 @@ class BaseAEConfig(BaseConfig):
     Parameters:
         input_dim (tuple): The input_data dimension (channels X x_dim X y_dim)
         latent_dim (int): The latent space dimension. Default: None.
-        default_encoder (bool): Whether the encoder default. Default: True.
-        default_decoder (bool): Whether the encoder default. Default: True.
-        """
+    """
 
     input_dim: Union[Tuple[int, ...], None] = None
     latent_dim: int = 10

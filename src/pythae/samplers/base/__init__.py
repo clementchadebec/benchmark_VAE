@@ -1,6 +1,7 @@
 """
+**Abstract class**
+
 This is the base Sampler architecture module from which all future samplers should inherit.
-It contains:
 """
 
 from .base_sampler import BaseSampler

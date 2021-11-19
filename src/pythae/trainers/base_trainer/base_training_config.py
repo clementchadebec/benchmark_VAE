@@ -8,10 +8,7 @@ from ...config import BaseConfig
 @dataclass
 class BaseTrainingConfig(BaseConfig):
     """
-    :class:`~pythae.trainers.training_config.TrainingConfig` is the class in which all the training arguments
-    are stored.
-    This instance is then provided to a :class:`~pythae.trainers.Trainer` instance which performs
-    a model training.
+    BaseTrainer config class stating the main training arguments.
 
     Parameters:
 

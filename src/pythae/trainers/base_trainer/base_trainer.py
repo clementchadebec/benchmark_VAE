@@ -25,7 +25,7 @@ logger.setLevel(logging.INFO)
 
 
 class BaseTrainer:
-    """BaseTrainer is the main class to perform model training.
+    """Base class to perform model training.
 
     Args:
         model (BaseAE): The model to train

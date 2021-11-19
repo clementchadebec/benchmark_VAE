@@ -18,12 +18,17 @@ logger.setLevel(logging.INFO)
 
 
 class GaussianMixtureSampler(BaseSampler):
-    """Basic sampler sampling from a N(0, 1) in the Autoencoder's latent space
+    """Gaussian Mixture sampling in the Autoencoder's latent space.
 
     Args:
         model (BaseAE): The vae model to sample from.
         sampler_config (BaseSamplerConfig): An instance of BaseSamplerConfig in which any sampler's
-            parameters is made available. If None a default configuration is used. Default: None
+            parameters is made available. If None a default configuration is used. Default: None.
+
+    .. note::
+
+        The method :class:`~pythae.samplers.GaussianMixtureSampler.fit` must be called to fit the sampler
+        before sampling.
 
     """
 

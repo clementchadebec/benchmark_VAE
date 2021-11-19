@@ -1,14 +1,13 @@
-"""Implementation of a Vanilla Variational Auto Encoder
+"""This module is the implementation of a Vanilla Variational Autoencoder
 
-Available samplers:
+Available samplers
+-------------------
 
 .. autosummary::
-    ~pythae.samplers
-    ~pythae.models.AE
+    ~pythae.samplers.NormalSampler
+    ~pythae.samplers.GaussianMixtureSampler
+    ~pythae.samplers.TwoStageVAESampler
     :nosignatures:
-
-- |
-
 """
 
 from .vae_model import VAE

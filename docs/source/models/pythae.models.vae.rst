@@ -1,13 +1,13 @@
 **********************************
-Variational Autoencoder
+VAE
 **********************************
 
 
 .. automodule::
    pythae.models.vae
 
-.. autoclass:: pythae.models.VAE
+.. autoclass:: pythae.models.VAEConfig
    :members:
 
-.. autoclass:: pythae.models.VAEConfig
+.. autoclass:: pythae.models.VAE
    :members:

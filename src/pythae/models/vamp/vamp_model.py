@@ -16,8 +16,7 @@ import torch.nn.functional as F
 
 
 class VAMP(VAE):
-    """This is the implementation of the Variational Autoencoder with Variational Mixture of 
-    Posterior as prior as proposed in ().
+    """VAMP VAE model
     
     Args:
         model_config(VAEConfig): The Variational Autoencoder configuration seting the main 
@@ -195,12 +194,14 @@ class VAMP(VAE):
 
         .. note::
             This function requires the folder to contain:
-                a ``model_config.json`` and a ``model.pt`` if no custom architectures were
-                provided
 
-                or
-                a ``model_config.json``, a ``model.pt`` and a ``encoder.pkl`` (resp.
+            - | a ``model_config.json`` and a ``model.pt`` if no custom architectures were provided
+
+            **or**
+                
+            - | a ``model_config.json``, a ``model.pt`` and a ``encoder.pkl`` (resp.
                 ``decoder.pkl``) if a custom encoder (resp. decoder) was provided
+
         """
 
         model_config = cls._load_model_config_from_folder(dir_path)

@@ -7,7 +7,8 @@
 Welcome to pythae's documentation!
 **********************************
 
-This a new library to perform Data Augmentation in a reliable manner with Variational Autoencoders!
+This library aims at gathering some of the common (Variational) Autoencoders implementations so that
+we can conduct benchmark analysis and reproducible research!
 
 .. toctree::
    :maxdepth: 2
@@ -15,14 +16,11 @@ This a new library to perform Data Augmentation in a reliable manner with Variat
 
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Module Description
+   :maxdepth: 1
+   :caption: Pythae
    :titlesonly:
 
-   data/pythae.data
    models/pythae.models
    samplers/pythae.samplers
    models/nn/pythae.models.nn
-   pythae.trainer
-   pipelines/pythae.pipelines
-   pythae.config
+   trainers/pythae.trainer

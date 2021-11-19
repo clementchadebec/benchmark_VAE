@@ -5,7 +5,7 @@ from ...samplers import BaseSampler, BaseSamplerConfig
 
 
 class VAMPSampler(BaseSampler):
-    """Sampling from the VAMP prior
+    """Sampling from the VAMP prior.
 
     Args:
         model (VAMP): The vae model to sample from.

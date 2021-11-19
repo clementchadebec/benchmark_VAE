@@ -6,8 +6,8 @@ Hamiltonian VAE
    pythae.models.hvae
 
 
-.. autoclass:: pythae.models.HVAE
+.. autoclass:: pythae.models.HVAEConfig
    :members:
 
-.. autoclass:: pythae.models.HVAEConfig
+.. autoclass:: pythae.models.HVAE
    :members:

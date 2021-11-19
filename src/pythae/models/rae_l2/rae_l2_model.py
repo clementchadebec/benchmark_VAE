@@ -14,8 +14,7 @@ import torch.nn.functional as F
 
 
 class RAE_L2(AE):
-    """Regularized Autoencoder model (https://arxiv.org/pdf/1903.12436.pdf) with L2 decoder params
-        regularization.
+    """Regularized Autoencoder with L2 decoder params regularization model.
     
     Args:
         model_config(RAE_L2_Config): The Autoencoder configuration seting the main parameters of the
@@ -111,12 +110,14 @@ class RAE_L2(AE):
 
         .. note::
             This function requires the folder to contain:
-                a ``model_config.json`` and a ``model.pt`` if no custom architectures were
-                provided
 
-                or
-                a ``model_config.json``, a ``model.pt`` and a ``encoder.pkl`` (resp.
+            - | a ``model_config.json`` and a ``model.pt`` if no custom architectures were provided
+
+            **or**
+                
+            - | a ``model_config.json``, a ``model.pt`` and a ``encoder.pkl`` (resp.
                 ``decoder.pkl``) if a custom encoder (resp. decoder) was provided
+
         """
 
         model_config = cls._load_model_config_from_folder(dir_path)

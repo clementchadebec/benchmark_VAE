@@ -17,7 +17,7 @@ from .base_utils import ModelOuput, CPU_Unpickler
 
 
 class BaseAE(nn.Module):
-    """Base class for AutoEncoder based models.
+    """Base class for Autoencoder based models.
 
     Args:
         model_config (BaseAEConfig): An instance of BaseAEConfig in which any model's parameters is
@@ -35,7 +35,7 @@ class BaseAE(nn.Module):
 
     .. note::
         For high dimensional data we advice you to provide you own network architectures. With the
-        provided MLP you may end up with a ``MemoryError``.
+        provided MLP you may end up with a ``MemoryError``. See :ref:`making-your-own-vae`.
     """
 
     def __init__(
@@ -75,7 +75,8 @@ class BaseAE(nn.Module):
 
     def forward(self, inputs: BaseDataset) -> ModelOuput:
         """Main forward pass outputing the VAE outputs
-        This function should output an model_output instance gathering all the model outputs
+        This function should output a :class:`~pythae.models.base.base_utils.ModelOuput` instance 
+        gathering all the model outputs
 
         Args:
             inputs (BaseDataset): The training data with labels, masks etc...
@@ -221,11 +222,12 @@ class BaseAE(nn.Module):
 
         .. note::
             This function requires the folder to contain:
-                a ``model_config.json`` and a ``model.pt`` if no custom architectures were
-                provided
 
-                or
-                a ``model_config.json``, a ``model.pt`` and a ``encoder.pkl`` (resp.
+            - | a ``model_config.json`` and a ``model.pt`` if no custom architectures were provided
+
+            **or**
+                
+            - | a ``model_config.json``, a ``model.pt`` and a ``encoder.pkl`` (resp.
                 ``decoder.pkl``) if a custom encoder (resp. decoder) was provided
         """
 

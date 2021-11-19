@@ -1,13 +1,12 @@
-"""Implementation of a Vanilla Auto Encoder
+"""Implementation of a Vanilla Autoencoder model
 
-Available samplers:
+Available samplers
+-------------------
 
 .. autosummary::
-    ~pythae.samplers
-    ~pythae.models.AE
+    ~pythae.samplers.NormalSampler
+    ~pythae.samplers.GaussianMixtureSampler
     :nosignatures:
-
-- |
 
 """
 

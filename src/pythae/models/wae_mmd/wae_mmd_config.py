@@ -7,8 +7,7 @@ from ...models import AEConfig
 
 @dataclass
 class WAE_MMD_Config(AEConfig):
-    """This is the Wassertstein autoencoder model configuration instance deriving from
-    :class:`~AEConfig`.
+    """Wasserstein autoencoder model config class.
 
     Parameters:
         input_dim (int): The input_data dimension
