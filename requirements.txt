@@ -7,3 +7,4 @@ imageio
 tqdm
 sklearn
 typing-extensions
+-e .
