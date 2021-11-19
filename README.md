@@ -2,6 +2,9 @@
     <a>
 	    <img src='https://img.shields.io/badge/python-3.6%7C3.7%7C3.8-blueviolet' alt='Python' />
 	</a>
+	<a href='https://pythae.readthedocs.io/en/latest/?badge=latest'>
+    <img src='https://readthedocs.org/projects/pythae/badge/?version=latest' alt='Documentation Status' />
+</a>
 	<a href='https://opensource.org/licenses/Apache-2.0'>
 	    <img src='https://img.shields.io/github/license/clementchadebec/benchmark_VAE?color=blue' />
 	</a>
@@ -10,11 +13,15 @@
 	</a>
 	<a href="https://codecov.io/gh/clementchadebec/benchmark_VAE">
   <img src="https://codecov.io/gh/clementchadebec/benchmark_VAE/branch/main/graph/badge.svg?token=KEM7KKISXJ"/>
-</a>
+</a
 	</a>
 </p>
 
-      
+</p>
+<p align="center">
+  <a href="https://pythae.readthedocs.io/en/latest/">Documentation</a>
+</p>
+	
     
 # pythae 
 
