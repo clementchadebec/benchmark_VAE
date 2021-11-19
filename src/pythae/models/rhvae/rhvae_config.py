@@ -5,7 +5,7 @@ from ...models import VAEConfig
 
 @dataclass
 class RHVAEConfig(VAEConfig):
-    r"""Riemannian Hamiltonian Variatoinal Auto Encoder config class
+    r"""RHVAE config class.
 
     Parameters:
         latent_dim (int): The latent dimension used for the latent space. Default: 10
@@ -15,8 +15,6 @@ class RHVAEConfig(VAEConfig):
             Default: 0.3
         temperature (float): The metric temperature :math:`T`. Default: 1.5
         regularization (float): The metric regularization factor :math:`\lambda`
-        uses_default_metric (bool): Whether it uses a `custom` or `default` metric architecture.
-            This is updated automatically.
         """
     n_lf: int = 3
     eps_lf: float = 0.001

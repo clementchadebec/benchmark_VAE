@@ -25,7 +25,7 @@ logger.setLevel(logging.INFO)
 
 
 class CoupledOptimizerTrainer(BaseTrainer):
-    """BaseTrainer is the main class to perform model training.
+    """Trainer using disctinct optimizers for encoder and decoder nn.
 
     Args:
         model (BaseAE): The model to train

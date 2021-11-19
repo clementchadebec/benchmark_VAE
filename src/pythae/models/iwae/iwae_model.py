@@ -15,10 +15,7 @@ import torch.nn.functional as F
 
 class IWAE(VAE):
     """
-    This is an implementation of the beta-VAE models proposed in 
-    (). 
-    This models tweaks add a new parameter to the VAE loss function balancing the weight of the 
-    reconstruction term and KL term.
+    IWAE model.
     
     Args:
         model_config(IWAEConfig): The IWAE configuration seting the main 
@@ -36,7 +33,7 @@ class IWAE(VAE):
 
     .. note::
         For high dimensional data we advice you to provide you own network architectures. With the
-        provided MLP you may end up with a ``MemoryError``.
+        provided MLP you may end up with a ``MemoryError``. See :ref:`making-your-own-vae`.
     """
 
     def __init__(
@@ -151,12 +148,14 @@ class IWAE(VAE):
 
         .. note::
             This function requires the folder to contain:
-                a ``model_config.json`` and a ``model.pt`` if no custom architectures were
-                provided
 
-                or
-                a ``model_config.json``, a ``model.pt`` and a ``encoder.pkl`` (resp.
+            - | a ``model_config.json`` and a ``model.pt`` if no custom architectures were provided
+
+            **or**
+                
+            - | a ``model_config.json``, a ``model.pt`` and a ``encoder.pkl`` (resp.
                 ``decoder.pkl``) if a custom encoder (resp. decoder) was provided
+
         """
 
         model_config = cls._load_model_config_from_folder(dir_path)

@@ -24,8 +24,6 @@ console = logging.StreamHandler()
 logger.addHandler(console)
 logger.setLevel(logging.INFO)
 
-HANDLED_NORMALIZATION = ["min_max_scaling", "individual_min_max_scaling", None]
-
 
 class DataProcessor:
     """

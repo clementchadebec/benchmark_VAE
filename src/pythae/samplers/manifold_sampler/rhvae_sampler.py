@@ -10,9 +10,8 @@ from .rhvae_sampler_config import RHVAESamplerConfig
 
 
 class RHVAESampler(BaseSampler):
-    """Hamiltonian Monte Carlo Sampler class.
-    This is an implementation of the Hamiltonian/Hybrid Monte Carlo sampler
-    (https://en.wikipedia.org/wiki/Hamiltonian_Monte_Carlo)
+    """Sampling form the inverse of the metric volume element of a :class:`~pythae.models.RHVAE` 
+    model.
 
     Args:
         model (RHVAE): The VAE model to sample from

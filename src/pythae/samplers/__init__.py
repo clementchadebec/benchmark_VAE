@@ -1,13 +1,15 @@
-""" Here will be implemented the main samplers used in the :ref:`pythae.models`. 
+""" Here are implemented the main samplers used in the :class:`pythae.models`. 
 
-By convention, each implemented model is contained within a folder located in :ref:`pythae.models`
-in which are located 4 modules:
+By convention, each implemented model is contained within a folder located in 
+:class:`pythae.samplers` and named likewise the sampler. The following modules can be found in 
+this folder:
 
-- | *sampler_name_config.py*: Contains a :class:`SamplerNameConfig` instance inheriting
+- | *samplername_config.py*: Contains a :class:`SamplerNameConfig` instance inheriting
     from :class:`~pythae.samplers.base.base_config.BaseSamplerConfig` where the sampler 
     configuration is stored and 
-- | *sampler_name_sampler.py*: An implementation of the sampler_name inheriting from
+- | *samplername_sampler.py*: An implementation of the sampler_name inheriting from
     :class:`~pythae.samplers.BaseSampler`.
+- *samplername_utils.py* (optional): A module where utils methods are stored.
 """
 
 from .base import BaseSampler, BaseSamplerConfig

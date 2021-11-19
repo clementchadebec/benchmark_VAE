@@ -1,18 +1,17 @@
-""" Here will be implemented the main Autoencoders architecture
+""" 
+This is the heart if of pythae! 
+Here are implemented some of the most common (Variational) Autoencoders models.
 
-By convention, each implemented model is contained within a folder located in :ref:`pythae.models`
-in which are located 4 modules:
+By convention, each implemented model is stored in a folder located in :class:`pythae.models`
+and named likewise the model. The following modules can be found in this folder:
 
-- | *model_config.py*: Contains a :class:`OtherModelConfig` instance inheriting
-    from :class:`~pythae.models.base.BaseAEConfig` where the model configuration is stored and
-    a :class:`OtherModelSamplerConfig` instance inheriting from
-    :class:`~pythae.models.base.BaseSamplerConfig` where the configuration of the sampler used
-    to generate new samples is defined.
-- | *other_model_model.py*: An implementation of the other_model inheriting from
-    :class:`~pythae.models.BaseAE`.
-- | *other_model_sampler.py*: An implementation of the sampler(s) to use to generate new data
-    inheriting from :class:`~pythae.models.base.base_sampler.BaseSampler`.
-- *other_model_utils.py*: A module where utils methods are stored.
+- | *modelname_config.py*: Contains a :class:`ModelNameConfig` instance inheriting
+    from either :class:`~pythae.models.base.AEConfig` for Autoencoder models or 
+    :class:`~pythae.models.base.VAEConfig` for Variational Autoencoder models. 
+- | *modelname_model.py*: An implementation of the model inheriting either from
+    :class:`~pythae.models.AE` for Autoencoder models or 
+    :class:`~pythae.models.base.VAE` for Variational Autoencoder models. 
+- *modelname_utils.py* (optional): A module where utils methods are stored.
 """
 
 from .base import BaseAE, BaseAEConfig

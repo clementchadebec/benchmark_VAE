@@ -1,14 +1,11 @@
-"""Implementation of a Normal prior sampler
+"""Implementation of a VAMP prior sampler as proposed in (https://arxiv.org/pdf/1705.07120.pdf).
 
 Available models:
+------------------
 
 .. autosummary::
-    ~pythae.samplers
-    ~pythae.models.AE
+    ~pythae.models.VAMP
     :nosignatures:
-
-- |
-
 """
 
 from .vamp_sampler import VAMPSampler

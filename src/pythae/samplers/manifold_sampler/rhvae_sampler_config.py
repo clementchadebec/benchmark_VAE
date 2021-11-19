@@ -5,7 +5,7 @@ from ...samplers import BaseSamplerConfig
 
 @dataclass
 class RHVAESamplerConfig(BaseSamplerConfig):
-    """HMCSampler config class containing the main parameters of the sampler.
+    """RHVAESampler config class.
 
     Parameters:
         num_samples (int): The number of samples to generate. Default: 1

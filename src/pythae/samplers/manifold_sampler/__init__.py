@@ -1,10 +1,11 @@
-"""Implementation of a Manifold sampler proposed in https://arxiv.org/pdf/2105.00026.pdf
+"""Implementation of a Manifold sampler proposed in (https://arxiv.org/pdf/2105.00026.pdf).
 
 Available models:
+------------------
 
 .. autosummary::
-    ~pythae.samplers
     ~pythae.models.RHVAE
+    :nosignatures:
 
 """
 

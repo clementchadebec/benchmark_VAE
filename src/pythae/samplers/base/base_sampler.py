@@ -17,7 +17,7 @@ logger.setLevel(logging.INFO)
 
 
 class BaseSampler:
-    """Base class for sampler used to generate from the VAEs models
+    """Base class for samplers used to generate from the VAEs models.
 
     Args:
         model (BaseAE): The vae model to sample from.

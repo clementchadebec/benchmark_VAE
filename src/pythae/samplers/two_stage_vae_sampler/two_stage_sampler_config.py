@@ -7,7 +7,7 @@ from ...samplers import BaseSamplerConfig
 
 @dataclass
 class TwoStageVAESamplerConfig(BaseSamplerConfig):
-    """Two Stage VAE sampler config class containing the main parameters of the sampler. 
+    """Two Stage VAE sampler config class. 
 
     Parameters:
         latent_dim (int): The latent space dimension. Default: None.

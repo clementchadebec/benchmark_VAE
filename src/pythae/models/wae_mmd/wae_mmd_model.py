@@ -15,7 +15,7 @@ import torch.nn.functional as F
 
 
 class WAE_MMD(AE):
-    """Wasserstein Autoencoder model (https://arxiv.org/pdf/1711.01558.pdf).
+    """Wasserstein Autoencoder model.
     
     Args:
         model_config(WAE_MMD_Config): The Autoencoder configuration seting the main parameters of the
@@ -146,12 +146,14 @@ class WAE_MMD(AE):
 
         .. note::
             This function requires the folder to contain:
-                a ``model_config.json`` and a ``model.pt`` if no custom architectures were
-                provided
 
-                or
-                a ``model_config.json``, a ``model.pt`` and a ``encoder.pkl`` (resp.
+            - | a ``model_config.json`` and a ``model.pt`` if no custom architectures were provided
+
+            **or**
+                
+            - | a ``model_config.json``, a ``model.pt`` and a ``encoder.pkl`` (resp.
                 ``decoder.pkl``) if a custom encoder (resp. decoder) was provided
+
         """
 
         model_config = cls._load_model_config_from_folder(dir_path)

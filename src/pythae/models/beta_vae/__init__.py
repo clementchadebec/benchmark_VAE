@@ -1,9 +1,17 @@
-"""This modules is the implementation of the Beta_VAE proposed in
-().
+"""This module is the implementation of the Beta_VAE proposed in
+(https://openreview.net/pdf?id=Sy2fzU9gl).
+This models tweaks add a new parameter to the VAE loss function balancing the weight of the 
+reconstruction term and KL term.
 
-This module contains:
-    - a :class:`~pythae.models.BetaVAE` instance which is the implementation of the model.
-    - a :class:`~pythae.models.BetaVAEConfig` instance containing the main parameters of the model
+
+Available samplers
+-------------------
+
+.. autosummary::
+    ~pythae.samplers.NormalSampler
+    ~pythae.samplers.GaussianMixtureSampler
+    ~pythae.samplers.TwoStageVAESampler
+    :nosignatures:
 """
 
 from .beta_vae_config import BetaVAEConfig

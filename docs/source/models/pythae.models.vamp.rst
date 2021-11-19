@@ -1,13 +1,13 @@
 **********************************
-VAMP VAE
+VAMP
 **********************************
 
 
 .. automodule::
-   pythae.models.vae
+   pythae.models.vamp
 
-.. autoclass:: pythae.models.VAE
+.. autoclass:: pythae.models.VAMPConfig
    :members:
 
-.. autoclass:: pythae.models.VAEConfig
+.. autoclass:: pythae.models.VAMP
    :members:

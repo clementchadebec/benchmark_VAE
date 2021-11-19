@@ -96,15 +96,18 @@ class SecondDecoder(BaseDecoder):
 
 
 class TwoStageVAESampler(BaseSampler):
-    """Two Stage VAE sampler class.
-    This is an implementation of the two stage VAE sampler
-    (https://openreview.net/pdf?id=B1e0X3C9tQ)
+    """Two Stage VAE sampler.
 
     Args:
         model (VAE): The VAE model to sample from
         sampler_config (TwoStageVAESamplerConfig): A TwoStageVAESamplerConfig instance containing 
             the main parameters of the sampler. If None, a pre-defined configuration is used. 
             Default: None
+
+    .. note::
+
+        The method :class:`~pythae.samplers.TwoStageVAESampler.fit` must be called to fit the 
+        sampler before sampling.
     """
 
     def __init__(self, model: VAE, sampler_config: TwoStageVAESamplerConfig = None):

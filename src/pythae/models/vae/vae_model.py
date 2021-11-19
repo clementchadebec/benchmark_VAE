@@ -147,14 +147,16 @@ class VAE(BaseAE):
         Args:
             dir_path (str): The path where the model should have been be saved.
 
-        .. note::
+       .. note::
             This function requires the folder to contain:
-                a ``model_config.json`` and a ``model.pt`` if no custom architectures were
-                provided
 
-                or
-                a ``model_config.json``, a ``model.pt`` and a ``encoder.pkl`` (resp.
+            - | a ``model_config.json`` and a ``model.pt`` if no custom architectures were provided
+
+            **or**
+                
+            - | a ``model_config.json``, a ``model.pt`` and a ``encoder.pkl`` (resp.
                 ``decoder.pkl``) if a custom encoder (resp. decoder) was provided
+
         """
 
         model_config = cls._load_model_config_from_folder(dir_path)
