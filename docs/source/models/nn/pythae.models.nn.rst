@@ -64,4 +64,5 @@ CELEBA-64
 
 .. note::
 
-   In case you want to provide your own neural architecture, make sure you make them inherit from these classes. See :ref:`making-your-own-vae`.
+   In case you want to provide your own neural architecture, make sure you make them inherit from these classes.
+   See tutorials.

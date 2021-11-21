@@ -31,7 +31,7 @@ class AE(BaseAE):
 
     .. note::
         For high dimensional data we advice you to provide you own network architectures. With the
-        provided MLP you may end up with a ``MemoryError``. See :ref:`making-your-own-vae`.
+        provided MLP you may end up with a ``MemoryError``.
     """
 
     def __init__(

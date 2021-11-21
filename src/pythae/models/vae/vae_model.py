@@ -147,7 +147,7 @@ class VAE(BaseAE):
         Args:
             dir_path (str): The path where the model should have been be saved.
 
-       .. note::
+        .. note::
             This function requires the folder to contain:
 
             - | a ``model_config.json`` and a ``model.pt`` if no custom architectures were provided
