@@ -42,7 +42,7 @@ $ pip install git+https://github.com/clementchadebec/benchmark_VAE.git
 
 or alternatively you can clone the github repo to access to tests, tutorials and scripts.
 ```bash
-$ git clone https://github.com/clementchadebec/pythae.git
+$ git clone https://github.com/clementchadebec/benchmark_VAE.git
 ```
 and install the library
 ```bash
