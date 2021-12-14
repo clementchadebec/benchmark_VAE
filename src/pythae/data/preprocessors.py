@@ -37,7 +37,7 @@ class DataProcessor:
     def __init__(self):
         pass
 
-    def process_data(self, data: Union[np.ndarray, torch.Tensor]) -> torch.tensor:
+    def process_data(self, data: Union[np.ndarray, torch.Tensor], batch_size: int=100) -> torch.tensor:
         """ This function detects potential check the data type, detects nan in input data and
         preprocessed the data so it can be handled by the models.
 
@@ -50,12 +50,14 @@ class DataProcessor:
                     - | torch.Tensor of shape `num_data x n_channels x [optional depth] x
                       | [optional height] x width x ...`
 
+            batch_size (int): The batch size used for data preprocessing
+
         Returns:
             clean_data (torch.tensor): The data that has been cleaned
         """
 
         if isinstance(data, np.ndarray) or torch.is_tensor(data):
-            data = self._process_data_array(data)
+            data = self._process_data_array(data, batch_size=batch_size)
 
         else:
             raise TypeError(
@@ -87,15 +89,38 @@ class DataProcessor:
 
         return dataset
 
-    def _process_data_array(self, data: np.ndarray):
+    def _process_data_array(self, data: np.ndarray, batch_size: int=100):
 
-        # Detect potential nan
-        if DataProcessor.has_nan(data):
-            raise ValueError("Nan detected in input data!")
+        num_samples = data.shape[0]
+        samples_shape = data.shape
 
-        data = DataProcessor.to_tensor(data)
+        num_complete_batch = num_samples // batch_size
+        num_in_last = num_samples % batch_size
 
-        return data
+        full_data = []
+
+        for i in range(num_complete_batch):
+
+            # Detect potential nan
+            if DataProcessor.has_nan(data[i*batch_size:(i+1)*batch_size]):
+                raise ValueError("Nan detected in input data!")
+
+            processed_data = DataProcessor.to_tensor(data[i*batch_size:(i+1)*batch_size])
+            full_data.append(processed_data)
+
+        if num_in_last > 0:
+             # Detect potential nan
+            if DataProcessor.has_nan(data[-num_in_last:]):
+                raise ValueError("Nan detected in input data!")
+
+            processed_data = DataProcessor.to_tensor(data[-num_in_last:])
+            full_data.append(processed_data)
+
+        processed_data = torch.cat(full_data)
+
+        assert processed_data.shape == samples_shape, (data.shape, num_samples)
+
+        return processed_data
 
     @staticmethod
     def to_tensor(data: np.ndarray) -> torch.Tensor:

@@ -27,3 +27,27 @@ class Test_Format_Data:
 
     def test_raise_nan_data_error(self, nan_data):
         assert DataProcessor.has_nan(nan_data)
+
+class Test_Data_Convert:
+    @pytest.fixture(
+        params=[
+            torch.randn(50, 2, 3),
+            np.random.randn(50, 12, 3, 6),
+            torch.randn(60, 2, 3),
+            np.random.randn(53, 20, 3, 0)]
+    )
+    def data_to_process(self, request):
+        return request.param
+
+    def test_process_data(self, data_to_process):
+        data_processor = DataProcessor()
+        train_data = data_processor.process_data(data_to_process, batch_size=50)
+
+        if torch.is_tensor(data_to_process):
+            assert torch.equal(train_data, data_to_process)
+            
+        else:
+            assert torch.equal(train_data, torch.tensor(data_to_process).type(torch.float)), (train_data.shape)
+
+        train_dataset = train_dataset = data_processor.to_dataset(train_data)
+        assert torch.equal(train_dataset.data, train_data)

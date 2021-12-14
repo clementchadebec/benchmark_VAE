@@ -156,7 +156,7 @@ class TwoStageVAESampler(BaseSampler):
         ), "Train data must in the range [0-1]"
 
         data_processor = DataProcessor()
-        train_data = data_processor.process_data(train_data.to(self.device))
+        train_data = data_processor.process_data(train_data)
         train_dataset = data_processor.to_dataset(train_data)
         train_loader = DataLoader(dataset=train_dataset, batch_size=100, shuffle=False)
 
