@@ -136,3 +136,45 @@ class BaseMetric(nn.Module):
             output (~pythae.models.base.base_utils.ModelOutput): The output of the metric
         """
         raise NotImplementedError()
+
+
+class BaseDiscriminator(nn.Module):
+    """This is a base class for Discriminator neural networks.
+    """
+
+    def __init__(self):
+        nn.Module.__init__(self)
+
+    def forward(self, x):
+        r"""This function must be implemented in a child class.
+        It takes the input data and returns an instance of 
+        :class:`~pythae.models.base.base_utils.ModelOutput`.
+        If you decide to provide your own disctriminator network, you must make sure your
+        model inherit from this class by setting and then defining your forward function as
+        such:
+
+        .. code-block::
+
+            >>> from pythae.models.nn import BaseDiscriminator
+            >>> from pythae.models.base.base_utils import ModelOuput
+            ...
+            >>> class My_Discriminator(BaseDiscriminator):
+            ...
+            ...     def __init__(self):
+            ...         BaseDiscriminator.__init__(self)
+            ...         # your code
+            ...
+            ...     def forward(self, x: torch.Tensor):
+            ...         # your code
+            ...         output = ModelOuput(
+            ...             adversarial_cost=adversarial_cost
+            ...         )
+            ...         return output
+
+        Parameters:
+            x (torch.Tensor): The input data that must be encoded
+
+        Returns:
+            output (~pythae.models.base.base_utils.ModelOutput): The output of the encoder
+        """
+        raise NotImplementedError()

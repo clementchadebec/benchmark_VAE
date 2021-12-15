@@ -2,7 +2,7 @@ import torch
 import numpy as np
 import torch.nn as nn
 
-from pythae.models.nn import BaseEncoder, BaseDecoder, BaseMetric
+from pythae.models.nn import BaseEncoder, BaseDecoder, BaseMetric, BaseDiscriminator
 from ..base.base_utils import ModelOuput
 
 
@@ -101,5 +101,28 @@ class Metric_MLP(BaseMetric):
         L = L + torch.diag_embed(h21.exp())
 
         output = ModelOuput(L=L)
+
+        return output
+
+class Discriminator_MLP(BaseDiscriminator):
+    def __init__(self, args: dict):
+        BaseDiscriminator.__init__(self)
+
+        self.discriminator_input_dim = args.discriminator_input_dim
+
+
+        self.layers = nn.Sequential(
+            nn.Linear(np.prod(args.discriminator_input_dim), 512),
+            nn.ReLU(),
+            nn.Linear(512, 256),
+            nn.ReLU(),
+            nn.Linear(256, 1),
+            nn.Sigmoid()
+        )
+
+    def forward(self, x):
+        out = self.layers(x.reshape(-1, np.prod(self.discriminator_input_dim)))
+
+        output = ModelOuput(adversarial_cost=out)
 
         return output
