@@ -218,6 +218,25 @@ class Metric_MLP_Custom(BaseMetric):
 
         return output
 
+class Discriminator_MLP_Custom(BaseDiscriminator):
+    def __init__(self, args: dict):
+        BaseDiscriminator.__init__(self)
+
+        self.discriminator_input_dim = args.discriminator_input_dim
+
+
+        self.layers = nn.Sequential(
+            nn.Linear(np.prod(args.discriminator_input_dim), 10),
+            nn.ReLU(),
+            nn.Linear(10, 1),
+            nn.Sigmoid())
+
+    def forward(self, x):
+        out = self.layers(x.reshape(-1, np.prod(self.discriminator_input_dim)))
+
+        output = ModelOuput(adversarial_cost=out)
+
+        return output
 
 class EncoderWrongInputDim(BaseEncoder):
     def __init__(self, args):
