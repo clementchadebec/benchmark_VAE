@@ -4,6 +4,7 @@ import os
 from copy import deepcopy
 from typing import Any, Dict, Optional
 from tqdm import tqdm
+import numpy as np
 
 import torch
 import torch.optim as optim
@@ -53,7 +54,9 @@ class CoupledOptimizerTrainer(BaseTrainer):
         eval_dataset: Optional[BaseDataset] = None,
         training_config: Optional[CoupledOptimizerTrainerConfig] = None,
         encoder_optimizer: Optional[torch.optim.Optimizer] = None,
-        decoder_optimizer: Optional[torch.optim.Optimizer] = None
+        decoder_optimizer: Optional[torch.optim.Optimizer] = None,
+        encoder_scheduler: Optional = None,
+        decoder_scheduler: Optional = None
     ):
 
         BaseTrainer.__init__(
@@ -71,6 +74,9 @@ class CoupledOptimizerTrainer(BaseTrainer):
         else:
             encoder_optimizer = self._set_optimizer_on_device(encoder_optimizer, self.device)
 
+        if encoder_scheduler is None:
+            encoder_scheduler = self.set_default_scheduler(model, encoder_optimizer)
+
         # set decoder optimizer
         if decoder_optimizer is None:
             decoder_optimizer = self.set_default_decoder_optimizer(model)
@@ -78,8 +84,13 @@ class CoupledOptimizerTrainer(BaseTrainer):
         else:
             decoder_optimizer = self._set_optimizer_on_device(decoder_optimizer, self.device)
 
+        if decoder_scheduler is None:
+            decoder_scheduler = self.set_default_scheduler(model, encoder_optimizer)
+
         self.encoder_optimizer = encoder_optimizer
         self.decoder_optimizer = decoder_optimizer
+        self.encoder_scheduler = encoder_scheduler
+        self.decoder_scheduler = decoder_scheduler
 
         self.optimizer = None
 
@@ -103,6 +114,155 @@ class CoupledOptimizerTrainer(BaseTrainer):
         )
 
         return optimizer
+
+    def train(self, log_output_dir: str = None):
+        """This function is the main training function
+
+        Args:
+            log_output_dir (str): The path in which the log will be stored
+        """
+
+        # run sanity check on the model
+        self._run_model_sanity_check(self.model, self.train_dataset)
+
+        logger.info("Model passed sanity check !\n")
+
+        self._training_signature = (
+            str(datetime.datetime.now())[0:19].replace(" ", "_").replace(":", "-")
+        )
+
+        training_dir = os.path.join(
+            self.training_config.output_dir,
+            f"{self.model.model_name}_training_{self._training_signature}",
+        )
+
+        self.training_dir = training_dir
+
+        if not os.path.exists(training_dir):
+            os.makedirs(training_dir)
+            logger.info(
+                f"Created {training_dir}. \n"
+                "Training config, checkpoints and final model will be saved here.\n"
+            )
+
+        log_verbose = False
+
+        # set up log file
+        if log_output_dir is not None:
+            log_dir = log_output_dir
+            log_verbose = True
+
+            # if dir does not exist create it
+            if not os.path.exists(log_dir):
+                os.makedirs(log_dir)
+                logger.info(f"Created {log_dir} folder since did not exists.")
+                logger.info("Training logs will be recodered here.\n")
+                logger.info(" -> Training can be monitored here.\n")
+
+            # create and set logger
+            log_name = f"training_logs_{self._training_signature}"
+
+            file_logger = logging.getLogger(log_name)
+            file_logger.setLevel(logging.INFO)
+            f_handler = logging.FileHandler(
+                os.path.join(log_dir, f"training_logs_{self._training_signature}.log")
+            )
+            f_handler.setLevel(logging.INFO)
+            file_logger.addHandler(f_handler)
+
+            # Do not output logs in the console
+            file_logger.propagate = False
+
+            file_logger.info("Training started !\n")
+            file_logger.info(
+                f"Training params:\n - max_epochs: {self.training_config.num_epochs}\n"
+                f" - batch_size: {self.training_config.batch_size}\n"
+                f" - checkpoint saving every {self.training_config.steps_saving}\n"
+            )
+
+            file_logger.info(f"Model Architecture: {self.model}\n")
+            file_logger.info(f"Optimizer: {self.optimizer}\n")
+
+        logger.info("Successfully launched training !\n")
+
+        # set best losses for early stopping
+        best_train_loss = 1e10
+        best_eval_loss = 1e10
+
+        for epoch in range(1, self.training_config.num_epochs+1):
+
+            epoch_train_loss = self.train_step(epoch)
+
+            if self.eval_dataset is not None:
+                epoch_eval_loss = self.eval_step(epoch)
+                self.encoder_scheduler.step(epoch_eval_loss)
+                self.decoder_scheduler.step(epoch_eval_loss)
+
+            else:
+                epoch_eval_loss = best_eval_loss
+                self.encoder_scheduler.step(epoch_train_loss)
+                self.decoder_scheduler.step(epoch_eval_loss)
+
+            if (
+                epoch_eval_loss < best_eval_loss
+                and not self.training_config.keep_best_on_train
+            ):
+                best_model_epoch = epoch
+                best_eval_loss = epoch_eval_loss
+                best_model = deepcopy(self.model)
+                self._best_model = best_model
+
+            elif (
+                epoch_train_loss < best_train_loss
+                and self.training_config.keep_best_on_train
+            ):
+                best_model_epoch = epoch
+                best_train_loss = epoch_train_loss
+                best_model = deepcopy(self.model)
+                self._best_model = best_model
+
+            # save checkpoints
+            if (
+                self.training_config.steps_saving is not None
+                and epoch % self.training_config.steps_saving == 0
+            ):
+                self.save_checkpoint(dir_path=training_dir, epoch=epoch)
+                logger.info(f"Saved checkpoint at epoch {epoch}\n")
+
+                if log_verbose:
+                    file_logger.info(f"Saved checkpoint at epoch {epoch}\n")
+
+            if self.eval_dataset is not None:
+                logger.info(
+                    "----------------------------------------------------------------"
+                )
+                logger.info(
+                    f"Epoch {epoch}: Train loss: {np.round(epoch_train_loss, 10)}"
+                )
+                logger.info(
+                    f"Epoch {epoch}: Eval loss: {np.round(epoch_eval_loss, 10)}"
+                )
+                logger.info(
+                    "----------------------------------------------------------------"
+                )
+
+            else:
+                logger.info(
+                    "----------------------------------------------------------------"
+                )
+                logger.info(
+                    f"Epoch {epoch}: Train loss: {np.round(epoch_train_loss, 10)}"
+                )
+                logger.info(
+                    "----------------------------------------------------------------"
+                )
+
+        final_dir = os.path.join(training_dir, "final_model")
+
+        self.save_model(best_model, dir_path=final_dir)
+        logger.info("----------------------------------")
+        logger.info("Training ended!")
+        logger.info(f"Saved final model in {final_dir}")
 
     def train_step(self, epoch: int):
         """The trainer performs training loop over the train_loader.
