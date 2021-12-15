@@ -255,10 +255,14 @@ class AdversarialTrainer(BaseTrainer):
                     "----------------------------------------------------------------"
                 )
                 logger.info(
-                    f"Epoch {epoch}: Train loss: {np.round(epoch_train_loss, 10)}"
+                    f"Epoch {epoch}: Train loss: {np.round(epoch_train_loss, 10)}\t "
+                    f"Generator loss: {np.round(epoch_train_generator_loss, 10)}\t "
+                    f"Discriminator loss: {np.round(epoch_train_discriminator_loss, 10)}"
                 )
                 logger.info(
-                    f"Epoch {epoch}: Eval loss: {np.round(epoch_eval_loss, 10)}"
+                    f"Epoch {epoch}: Eval loss: {np.round(epoch_eval_loss, 10)}\t "
+                    f"Generator loss: {np.round(epoch_eval_generator_loss, 10)}\t "
+                    f"Discriminator loss: {np.round(epoch_eval_discriminator_loss, 10)}"
                 )
                 logger.info(
                     "----------------------------------------------------------------"
