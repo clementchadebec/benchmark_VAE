@@ -112,13 +112,7 @@ class Discriminator_MLP(BaseDiscriminator):
 
 
         self.layers = nn.Sequential(
-            nn.Linear(np.prod(args.discriminator_input_dim), 512),
-            nn.ReLU(),
-            nn.Linear(512, 1024),
-            nn.ReLU(),
-            nn.Linear(1024, 512),
-            nn.ReLU(),
-            nn.Linear(512, 256),
+            nn.Linear(np.prod(args.discriminator_input_dim), 256),
             nn.ReLU(),
             nn.Linear(256, 1),
             nn.Sigmoid()
