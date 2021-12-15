@@ -2,7 +2,7 @@ name: Codecov coverage computation
 on: 
   push:
     branches:
-      - master
+      - main
 jobs:
   run:
     runs-on: ${{ matrix.os }}
