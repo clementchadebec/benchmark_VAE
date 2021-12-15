@@ -110,7 +110,7 @@ class Adversarial_AE(VAE):
         z, eps = self._sample_gauss(mu, std)
         recon_x = self.decoder(z)["reconstruction"]
 
-        z_prior = torch.randn_like(z, device=x.device)
+        z_prior = torch.randn_like(z, device=x.device).requires_grad_(True)
 
         recon_loss, generator_loss, discriminator_loss = self.loss_function(
             recon_x, x, z, z_prior

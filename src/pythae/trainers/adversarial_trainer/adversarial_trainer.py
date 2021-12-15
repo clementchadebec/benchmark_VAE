@@ -5,6 +5,7 @@ from copy import deepcopy
 from typing import Any, Dict, Optional
 from tqdm import tqdm
 import itertools
+import numpy as np
 
 import torch
 import torch.optim as optim
@@ -54,7 +55,9 @@ class AdversarialTrainer(BaseTrainer):
         eval_dataset: Optional[BaseDataset] = None,
         training_config: Optional[AdversarialTrainerConfig] = None,
         encoder_decoder_optimizer: Optional[torch.optim.Optimizer] = None,
-        discriminator_optimizer: Optional[torch.optim.Optimizer] = None
+        discriminator_optimizer: Optional[torch.optim.Optimizer] = None,
+        encoder_decoder_scheduler: Optional = None,
+        discriminator_scheduler: Optional = None
     ):
 
         BaseTrainer.__init__(
@@ -74,6 +77,9 @@ class AdversarialTrainer(BaseTrainer):
                 encoder_decoder_optimizer, self.device
             )
 
+        if encoder_decoder_scheduler is None:
+            encoder_decoder_scheduler = self.set_default_scheduler(model, encoder_decoder_optimizer)
+
         # set decoder optimizer
         if discriminator_optimizer is None:
             discriminator_optimizer = self.set_default_discriminator_optimizer(model)
@@ -83,8 +89,13 @@ class AdversarialTrainer(BaseTrainer):
                 discriminator_optimizer, self.device
             )
 
+        if discriminator_scheduler is None:
+            discriminator_scheduler = self.set_default_scheduler(model, discriminator_optimizer)
+
         self.encoder_decoder_optimizer = encoder_decoder_optimizer
         self.discriminator_optimizer = discriminator_optimizer
+        self.encoder_decoder_scheduler = encoder_decoder_scheduler
+        self.discriminator_scheduler = discriminator_scheduler
 
         self.optimizer = None
 
@@ -109,6 +120,213 @@ class AdversarialTrainer(BaseTrainer):
 
         return optimizer
 
+    def train(self, log_output_dir: str = None):
+        """This function is the main training function
+
+        Args:
+            log_output_dir (str): The path in which the log will be stored
+        """
+
+        # run sanity check on the model
+        self._run_model_sanity_check(self.model, self.train_dataset)
+
+        logger.info("Model passed sanity check !\n")
+
+        self._training_signature = (
+            str(datetime.datetime.now())[0:19].replace(" ", "_").replace(":", "-")
+        )
+
+        training_dir = os.path.join(
+            self.training_config.output_dir,
+            f"{self.model.model_name}_training_{self._training_signature}",
+        )
+
+        self.training_dir = training_dir
+
+        if not os.path.exists(training_dir):
+            os.makedirs(training_dir)
+            logger.info(
+                f"Created {training_dir}. \n"
+                "Training config, checkpoints and final model will be saved here.\n"
+            )
+
+        log_verbose = False
+
+        # set up log file
+        if log_output_dir is not None:
+            log_dir = log_output_dir
+            log_verbose = True
+
+            # if dir does not exist create it
+            if not os.path.exists(log_dir):
+                os.makedirs(log_dir)
+                logger.info(f"Created {log_dir} folder since did not exists.")
+                logger.info("Training logs will be recodered here.\n")
+                logger.info(" -> Training can be monitored here.\n")
+
+            # create and set logger
+            log_name = f"training_logs_{self._training_signature}"
+
+            file_logger = logging.getLogger(log_name)
+            file_logger.setLevel(logging.INFO)
+            f_handler = logging.FileHandler(
+                os.path.join(log_dir, f"training_logs_{self._training_signature}.log")
+            )
+            f_handler.setLevel(logging.INFO)
+            file_logger.addHandler(f_handler)
+
+            # Do not output logs in the console
+            file_logger.propagate = False
+
+            file_logger.info("Training started !\n")
+            file_logger.info(
+                f"Training params:\n - max_epochs: {self.training_config.num_epochs}\n"
+                f" - batch_size: {self.training_config.batch_size}\n"
+                f" - checkpoint saving every {self.training_config.steps_saving}\n"
+            )
+
+            file_logger.info(f"Model Architecture: {self.model}\n")
+            file_logger.info(f"Optimizer: {self.optimizer}\n")
+
+        logger.info("Successfully launched training !\n")
+
+        # set best losses for early stopping
+        best_train_loss = 1e10
+        best_eval_loss = 1e10
+
+        for epoch in range(1, self.training_config.num_epochs+1):
+
+            train_losses = self.train_step(epoch)
+
+            [
+                epoch_train_loss,
+                epoch_train_generator_loss,
+                epoch_train_discriminator_loss
+            ] = train_losses
+
+            if self.eval_dataset is not None:
+                eval_losses = self.eval_step(epoch)
+
+                [
+                    epoch_eval_loss,
+                    epoch_eval_generator_loss,
+                    epoch_eval_discriminator_loss
+                ] = eval_losses
+
+                self.encoder_decoder_scheduler.step(epoch_eval_generator_loss)
+                self.discriminator_scheduler.step(epoch_eval_discriminator_loss)
+
+            else:
+                epoch_eval_loss = best_eval_loss
+                self.encoder_decoder_scheduler.step(epoch_train_generator_loss)
+                self.discriminator_scheduler.step(epoch_train_discriminator_loss)
+
+            if (
+                epoch_eval_loss < best_eval_loss
+                and not self.training_config.keep_best_on_train
+            ):
+                best_model_epoch = epoch
+                best_eval_loss = epoch_eval_loss
+                best_model = deepcopy(self.model)
+                self._best_model = best_model
+
+            elif (
+                epoch_train_loss < best_train_loss
+                and self.training_config.keep_best_on_train
+            ):
+                best_model_epoch = epoch
+                best_train_loss = epoch_train_loss
+                best_model = deepcopy(self.model)
+                self._best_model = best_model
+
+            # save checkpoints
+            if (
+                self.training_config.steps_saving is not None
+                and epoch % self.training_config.steps_saving == 0
+            ):
+                self.save_checkpoint(dir_path=training_dir, epoch=epoch)
+                logger.info(f"Saved checkpoint at epoch {epoch}\n")
+
+                if log_verbose:
+                    file_logger.info(f"Saved checkpoint at epoch {epoch}\n")
+
+            if self.eval_dataset is not None:
+                logger.info(
+                    "----------------------------------------------------------------"
+                )
+                logger.info(
+                    f"Epoch {epoch}: Train loss: {np.round(epoch_train_loss, 10)}"
+                )
+                logger.info(
+                    f"Epoch {epoch}: Eval loss: {np.round(epoch_eval_loss, 10)}"
+                )
+                logger.info(
+                    "----------------------------------------------------------------"
+                )
+
+            else:
+                logger.info(
+                    "----------------------------------------------------------------"
+                )
+                logger.info(
+                    f"Epoch {epoch}: Train loss: {np.round(epoch_train_loss, 10)}"
+                )
+                logger.info(
+                    "----------------------------------------------------------------"
+                )
+
+        final_dir = os.path.join(training_dir, "final_model")
+
+        self.save_model(best_model, dir_path=final_dir)
+        logger.info("----------------------------------")
+        logger.info("Training ended!")
+        logger.info(f"Saved final model in {final_dir}")
+
+    def eval_step(self, epoch: int):
+        """Perform an evaluation step
+
+        Parameters:
+            epoch (int): The current epoch number
+
+        Returns:
+            (torch.Tensor): The evaluation loss
+        """
+
+        self.model.eval()
+
+        epoch_generator_loss = 0
+        epoch_discriminator_loss = 0
+        epoch_loss = 0
+
+        with tqdm(self.eval_loader, unit="batch") as tepoch:
+            for inputs in tepoch:
+
+                tepoch.set_description(
+                    f"Eval of epoch {epoch}/{self.training_config.num_epochs}"
+                )
+
+                inputs = self._set_inputs_to_device(inputs)
+
+                model_output = self.model(inputs)
+
+                generator_loss = model_output.generator_loss
+                discriminator_loss = model_output.discriminator_loss
+
+                loss = generator_loss + discriminator_loss
+
+                epoch_generator_loss += generator_loss.item()
+                epoch_discriminator_loss += discriminator_loss.item()
+                epoch_loss += loss.item()
+
+                if epoch_loss != epoch_loss:
+                    raise ArithmeticError("NaN detected in eval loss")
+
+            epoch_generator_loss /= len(self.eval_loader)
+            epoch_discriminator_loss /= len(self.eval_loader) 
+            epoch_loss /= len(self.eval_loader)
+
+        return epoch_loss, epoch_generator_loss, epoch_discriminator_loss
+
     def train_step(self, epoch: int):
         """The trainer performs training loop over the train_loader.
 
@@ -121,6 +339,8 @@ class AdversarialTrainer(BaseTrainer):
         # set model in train model
         self.model.train()
 
+        epoch_generator_loss = 0
+        epoch_discriminator_loss = 0
         epoch_loss = 0
 
         with tqdm(self.train_loader, unit="batch") as tepoch:
@@ -145,14 +365,18 @@ class AdversarialTrainer(BaseTrainer):
 
                 loss = generator_loss + discriminator_loss
 
+                epoch_generator_loss += generator_loss.item()
+                epoch_discriminator_loss += discriminator_loss.item()
                 epoch_loss += loss.item()
 
             # Allows model updates if needed
             self.model.update()
 
+            epoch_generator_loss /= len(self.train_loader)
+            epoch_discriminator_loss /= len(self.train_loader) 
             epoch_loss /= len(self.train_loader)
 
-        return epoch_loss
+        return epoch_loss, epoch_generator_loss, epoch_discriminator_loss
 
 
     def save_checkpoint(self, dir_path, epoch: int):

@@ -9,7 +9,7 @@ from torch.optim import SGD, Adadelta, Adagrad, Adam, RMSprop
 from pythae.customexception import BadInheritanceError
 from pythae.models.base.base_utils import ModelOuput
 from pythae.models import Adversarial_AE, Adversarial_AE_Config
-from pythae.trainers import AdversarialTrainer, AdversarialTrainerConfig
+from pythae.trainers import AdversarialTrainer, AdversarialTrainerConfig, BaseTrainingConfig
 from pythae.pipelines import TrainingPipeline
 from pythae.models.nn.default_architectures import (
     Decoder_AE_MLP,
@@ -794,6 +794,11 @@ class Test_Adversarial_AE_Training:
     def test_adversarial_ae_training_pipeline(
         self, tmpdir, adversarial_ae, train_dataset, training_configs
     ):
+
+        with pytest.raises(AssertionError):
+            pipeline = TrainingPipeline(
+            model=adversarial_ae, training_config=BaseTrainingConfig()
+        )
 
         dir_path = training_configs.output_dir
 

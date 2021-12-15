@@ -15,6 +15,6 @@ class Adversarial_AE_Config(VAEConfig):
         reconstruction_loss (str): The reconstruction loss to use ['bce', 'mse']. Default: 'mse'
         adversarial_loss_scale (float): Parameter scaling the adversarial loss
         """
-    adversarial_loss_scale: float = 1e-2
+    adversarial_loss_scale: float = 0.5
     uses_default_discriminator: bool = True
     discriminator_input_dim: int = None
