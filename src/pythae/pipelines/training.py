@@ -63,6 +63,14 @@ class TrainingPipeline(Pipeline):
             training_config.encoder_optim_decay = 0.
             training_config.decoder_optim_decay = model.model_config.reg_weight
 
+        if model.model_name == 'Adversarial_AE':
+            if not isinstance(
+                training_config, AdversarialTrainerConfig):
+
+                raise AssertionError("A 'AdversarialTrainer' "
+                    "is expected for training an Adversarial AE")
+
+
         self.data_processor = DataProcessor()
         self.model = model
         self.training_config = training_config
@@ -111,6 +119,14 @@ class TrainingPipeline(Pipeline):
 
         if isinstance(self.training_config, CoupledOptimizerTrainerConfig):
             trainer = CoupledOptimizerTrainer(
+                model=self.model,
+                train_dataset=train_dataset,
+                eval_dataset=eval_dataset,
+                training_config=self.training_config
+            )
+
+        elif isinstance(self.training_config, AdversarialTrainerConfig):
+            trainer = AdversarialTrainer(
                 model=self.model,
                 train_dataset=train_dataset,
                 eval_dataset=eval_dataset,
