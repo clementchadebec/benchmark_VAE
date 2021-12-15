@@ -1,8 +1,10 @@
 name: Codecov coverage computation
-on: [push]
+on: 
+  push:
+    branches:
+      - master
 jobs:
   run:
-    if: github.ref == 'refs/heads/main'
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
