@@ -26,6 +26,7 @@ from .rae_l2 import RAE_L2, RAE_L2_Config
 from .rae_gp import RAE_GP, RAE_GP_Config
 from .iwae import IWAE, IWAEConfig
 from .info_vae import INFOVAE_MMD, INFOVAE_MMD_Config
+from .adversarial_ae import Adversarial_AE, Adversarial_AE_Config
 
 
 __all__ = [
@@ -52,5 +53,7 @@ __all__ = [
     "IWAE",
     "IWAEConfig",
     "INFOVAE_MMD", 
-    "INFOVAE_MMD_Config"
+    "INFOVAE_MMD_Config",
+    "Adversarial_AE",
+    "Adversarial_AE_Config"
 ]
