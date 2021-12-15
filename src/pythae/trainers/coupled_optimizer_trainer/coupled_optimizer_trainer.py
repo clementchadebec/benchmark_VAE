@@ -37,8 +37,13 @@ class CoupledOptimizerTrainer(BaseTrainer):
             parameters used for training. If None, a basic training instance of 
             :class:`CoupledOptimizerTrainerConfig` is used. Default: None.
 
-        optimizer (~torch.optim.Optimizer): An instance of `torch.optim.Optimizer` used for
-            training. If None, a :class:`~torch.optim.Adam` optimizer is used. Default: None.
+        encoder_optimizer (~torch.optim.Optimizer): An instance of `torch.optim.Optimizer` used for
+            training the encoder. If None, a :class:`~torch.optim.Adam` optimizer is used. 
+            Default: None.
+
+        decoder_optimizer (~torch.optim.Optimizer): An instance of `torch.optim.Optimizer` used for
+            training the decoder. If None, a :class:`~torch.optim.Adam` optimizer is used. 
+            Default: None.
     """
 
     def __init__(
