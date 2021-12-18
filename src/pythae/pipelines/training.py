@@ -45,15 +45,29 @@ class TrainingPipeline(Pipeline):
 
     def __init__(
         self,
-        model: Optional[BaseAE] = None,
-        training_config: Optional[BaseTrainingConfig] = None,
+        model: Optional[BaseAE]=None,
+        training_config: Optional[BaseTrainingConfig]=None,
     ):
 
-        if training_config is None:
-            training_config = BaseTrainingConfig()
-
         if model is not None:
-            if model.model_name == 'RAE_L2':
+            if training_config is None:
+                if model.model_name == 'RAE_L2':
+                    training_config = CoupledOptimizerTrainerConfig(
+                        encoder_optim_decay=0,
+                        decoder_optim_decay=model.model_config.reg_weight
+                    )
+
+                elif model.model_name == 'Adversarial_AE':
+                    training_config = AdversarialTrainerConfig()
+
+                elif model.model_name == 'VAEGAN':
+                    training_config = CoupledOptimizerAdversarialTrainerConfig()
+
+                else:    
+                    training_config = BaseTrainingConfig()
+
+
+            elif model.model_name == 'RAE_L2':
                 if not isinstance(
                     training_config, CoupledOptimizerTrainerConfig):
 
@@ -64,12 +78,30 @@ class TrainingPipeline(Pipeline):
                 training_config.encoder_optim_decay = 0.
                 training_config.decoder_optim_decay = model.model_config.reg_weight
 
-            if model.model_name == 'Adversarial_AE':
+            elif model.model_name == 'Adversarial_AE':
                 if not isinstance(
                     training_config, AdversarialTrainerConfig):
 
                     raise AssertionError("A 'AdversarialTrainer' "
                         "is expected for training an Adversarial AE")
+
+
+            elif model.model_name == 'VAEGAN':
+                if not isinstance(
+                    training_config, CoupledOptimizerAdversarialTrainerConfig):
+
+                    raise AssertionError("A 'CoupledOptimizerAdversarialTrainer' "
+                        "is expected for training a VAEGAN")
+
+            
+            if not isinstance(
+                training_config, BaseTrainingConfig):
+                raise AssertionError("A 'BaseTrainingConfig' "
+                    "is expected for the pipeline")
+
+        else:
+            training_config = BaseTrainingConfig()
+            
 
 
         self.data_processor = DataProcessor()

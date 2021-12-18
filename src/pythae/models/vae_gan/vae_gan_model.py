@@ -81,7 +81,7 @@ class VAEGAN(VAE):
                 f"discriminator ({discriminator.depth})"
             )
 
-        self.model_name = "Adversarial_AE"
+        self.model_name = "VAEGAN"
 
         assert 0 <= self.model_config.adversarial_loss_scale <= 1, \
             'adversarial_loss_scale must be in [0, 1]'

@@ -3,7 +3,7 @@ import os
 import torch
 
 from pythae.pipelines import *
-from pythae.models import VAE
+from pythae.models import VAE, VAEConfig
 from pythae.trainers import BaseTrainingConfig
 
 PATH = os.path.dirname(os.path.abspath(__file__))
@@ -20,6 +20,14 @@ class Test_Pipeline_Standalone:
             pipe()
 
     def test_training_pipeline(self, tmpdir, train_dataset):
+
+        with pytest.raises(AssertionError):
+            pipeline = TrainingPipeline(
+            model=VAE(VAEConfig(input_dim=(1, 2, 3))),
+            training_config=Pipeline()
+        )
+
+
         pipe = TrainingPipeline()
         assert isinstance(pipe.training_config, BaseTrainingConfig)
         

@@ -644,6 +644,8 @@ class Test_INFOVAE_MMD_Training:
             model=info_vae_mmd, training_config=training_configs
         )
 
+        assert pipeline.training_config.__dict__ == training_configs.__dict__
+
         # Launch Pipeline
         pipeline(
             train_data=train_dataset.data,  # gives tensor to pipeline

@@ -370,7 +370,7 @@ class CoupledOptimizerAdversarialTrainer(BaseTrainer):
             epoch_discriminator_loss /= len(self.eval_loader) 
             epoch_loss /= len(self.eval_loader)
 
-        return epoch_loss, epoch_generator_loss, epoch_decoder_loss, epoch_discriminator_loss
+        return epoch_loss, epoch_encoder_loss, epoch_decoder_loss, epoch_discriminator_loss
 
     def train_step(self, epoch: int):
         """The trainer performs training loop over the train_loader.
@@ -455,7 +455,7 @@ class CoupledOptimizerAdversarialTrainer(BaseTrainer):
         )
         torch.save(
             deepcopy(self.decoder_optimizer.state_dict()),
-            os.path.join(checkpoint_dir, "decder_optimizer.pt"),
+            os.path.join(checkpoint_dir, "decoder_optimizer.pt"),
         )
         torch.save(
             deepcopy(self.discriminator_optimizer.state_dict()),

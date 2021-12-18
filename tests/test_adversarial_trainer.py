@@ -60,7 +60,7 @@ class Test_DataLoader:
 
         assert train_data_loader.batch_size == trainer.training_config.batch_size
 
-    d   f test_build_eval_data_loader(
+    def test_build_eval_data_loader(
         self, model_sample, train_dataset, training_config_batch_size
     ):
         trainer = AdversarialTrainer(

@@ -15,5 +15,7 @@ __all__ = [
     "CoupledOptimizerTrainer",
     "CoupledOptimizerTrainerConfig",
     "AdversarialTrainer",
-    "AdversarialTrainerConfig"
+    "AdversarialTrainerConfig",
+    "CoupledOptimizerAdversarialTrainer",
+    "CoupledOptimizerAdversarialTrainerConfig"
 ]

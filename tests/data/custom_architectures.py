@@ -257,18 +257,22 @@ class LayeredDiscriminator_MLP_Custom(BaseLayeredDiscriminator):
         )
 
         layers.append(
-            nn.Linear(5, 1),
+            nn.Sequential(
+                nn.Linear(5, 1),
+                nn.Sigmoid()
+            )
         )
-
         BaseLayeredDiscriminator.__init__(self, layers=layers)
 
     def forward(self, x:torch.Tensor, output_layer_level:int=None):
 
-        assert output_layer_level <= self.depth, (
-            f'Cannot output layer deeper ({output_layer_level}) than depth ({self.depth})'
-        )
+        if output_layer_level is not None:
 
-        #if output_layer_level is not None:
+            assert output_layer_level <= self.depth, (
+                f'Cannot output layer deeper ({output_layer_level}) than depth ({self.depth})'
+            )
+
+        x = x.reshape(x.shape[0], -1)
 
         for i in range(self.depth):
             x = self.layers[i](x)

@@ -636,6 +636,8 @@ class Test_AE_Training:
             model=ae, training_config=training_configs
         )
 
+        assert pipeline.training_config.__dict__ == training_configs.__dict__
+
         # Launch Pipeline
         pipeline(
             train_data=train_dataset.data,  # gives tensor to pipeline

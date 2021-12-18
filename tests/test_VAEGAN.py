@@ -572,6 +572,7 @@ class Test_VAEGAN_Training:
 
         model = deepcopy(trainer.model)
         encoder_optimizer = deepcopy(trainer.encoder_optimizer)
+        decoder_optimizer = deepcopy(trainer.decoder_optimizer)
         discriminator_optimizer = deepcopy(trainer.discriminator_optimizer)
 
         trainer.save_checkpoint(dir_path=dir_path, epoch=0)
@@ -582,7 +583,7 @@ class Test_VAEGAN_Training:
 
         files_list = os.listdir(checkpoint_dir)
 
-        assert set(["model.pt", "encoder_optimizer.pt", "discriminator_optimizer.pt", "training_config.json"]).issubset(
+        assert set(["model.pt", "encoder_optimizer.pt", "decoder_optimizer.pt", "discriminator_optimizer.pt", "training_config.json"]).issubset(
             set(files_list)
         )
 
@@ -640,14 +641,15 @@ class Test_VAEGAN_Training:
         assert type(model_rec.decoder.cpu()) == type(model.decoder.cpu())
         assert type(model_rec.discriminator.cpu()) == type(model.discriminator.cpu())
 
-        autoencoder_optim_rec_state_dict = torch.load(os.path.join(checkpoint_dir, "encoder_optimizer.pt"))
+        encoder_optim_rec_state_dict = torch.load(os.path.join(checkpoint_dir, "encoder_optimizer.pt"))
+        decoder_optim_rec_state_dict = torch.load(os.path.join(checkpoint_dir, "decoder_optimizer.pt"))
         discriminator_optim_rec_state_dict = torch.load(os.path.join(checkpoint_dir, "discriminator_optimizer.pt"))
 
         assert all(
             [
                 dict_rec == dict_optimizer
                 for (dict_rec, dict_optimizer) in zip(
-                    autoencoder_optim_rec_state_dict["param_groups"],
+                    encoder_optim_rec_state_dict["param_groups"],
                     encoder_optimizer.state_dict()["param_groups"],
                 )
             ]
@@ -657,7 +659,26 @@ class Test_VAEGAN_Training:
             [
                 dict_rec == dict_optimizer
                 for (dict_rec, dict_optimizer) in zip(
-                    autoencoder_optim_rec_state_dict["state"], encoder_optimizer.state_dict()["state"]
+                    encoder_optim_rec_state_dict["state"], encoder_optimizer.state_dict()["state"]
+                )
+            ]
+        )
+
+        assert all(
+            [
+                dict_rec == dict_optimizer
+                for (dict_rec, dict_optimizer) in zip(
+                    decoder_optim_rec_state_dict["param_groups"],
+                    decoder_optimizer.state_dict()["param_groups"],
+                )
+            ]
+        )
+
+        assert all(
+            [
+                dict_rec == dict_optimizer
+                for (dict_rec, dict_optimizer) in zip(
+                    decoder_optim_rec_state_dict["state"], decoder_optimizer.state_dict()["state"]
                 )
             ]
         )
@@ -715,7 +736,7 @@ class Test_VAEGAN_Training:
         files_list = os.listdir(checkpoint_dir)
 
         # check files
-        assert set(["model.pt", "encoder_optimizer.pt", "discriminator_optimizer.pt", "training_config.json"]).issubset(
+        assert set(["model.pt", "encoder_optimizer.pt", "decoder_optimizer.pt", "discriminator_optimizer.pt", "training_config.json"]).issubset(
             set(files_list)
         )
 
@@ -835,6 +856,8 @@ class Test_VAEGAN_Training:
         pipeline = TrainingPipeline(
             model=adversarial_ae, training_config=training_configs
         )
+
+        assert pipeline.training_config.__dict__ == training_configs.__dict__
 
         # Launch Pipeline
         pipeline(
