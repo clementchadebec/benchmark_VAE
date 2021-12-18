@@ -5,23 +5,23 @@ import dill
 from copy import deepcopy
 from ...customexception import BadInheritanceError
 from ...models import VAE
-from .adversarial_ae_config import Adversarial_AE_Config
+from .vae_gan_config import VAEGANConfig
 from ...data.datasets import BaseDataset
 from ..base.base_utils import ModelOuput, CPU_Unpickler
 
-from ..nn import BaseDecoder, BaseEncoder, BaseDiscriminator
-from ..nn.default_architectures import Discriminator_MLP
+from ..nn import BaseDecoder, BaseEncoder, BaseLayeredDiscriminator
+from ..nn.default_architectures import LayeredDiscriminator_MLP
 
 from typing import Optional
 
 import torch.nn.functional as F
 
 
-class Adversarial_AE(VAE):
-    """Adversarial Autoencoder model.
+class VAEGAN(VAE):
+    """Variational Autoencoder using Adversarial reconstruction loss model.
     
     Args:
-        model_config(Adversarial_AE_Config): The Autoencoder configuration seting the main 
+        model_config(VAEGANConfig): The Autoencoder configuration seting the main 
             parameters of the model
 
         encoder (BaseEncoder): An instance of BaseEncoder (inheriting from `torch.nn.Module` which
@@ -34,11 +34,11 @@ class Adversarial_AE(VAE):
             architectures if desired. If None is provided, a simple Multi Layer Preception
             (https://en.wikipedia.org/wiki/Multilayer_perceptron) is used. Default: None.
 
-        discriminator (BaseDiscriminator): An instance of BaseDecoder (inheriting from 
-            `torch.nn.Module` which plays the role of discriminator. This argument allows you to 
-            use your own neural networks architectures if desired. If None is provided, a simple 
-            Multi Layer Preception (https://en.wikipedia.org/wiki/Multilayer_perceptron) is used. 
-            Default: None.
+        discriminator (BaseLayeredDiscriminator): An instance of BaseDecoder (inheriting from 
+            `torch.nn.Module` which plays the role of discriminator. This argument allows you to use
+            your own neural networks architectures if desired. If None is provided, a simple Multi 
+            Layer Preception (https://en.wikipedia.org/wiki/Multilayer_perceptron) is used. Default:
+            None.
 
     .. note::
         For high dimensional data we advice you to provide you own network architectures. With the
@@ -47,10 +47,10 @@ class Adversarial_AE(VAE):
 
     def __init__(
         self,
-        model_config: Adversarial_AE_Config,
+        model_config: VAEGANConfig,
         encoder: Optional[BaseEncoder] = None,
         decoder: Optional[BaseDecoder] = None,
-        discriminator: Optional[BaseDiscriminator]=None
+        discriminator: Optional[BaseLayeredDiscriminator]=None
     ):
 
         VAE.__init__(self, model_config=model_config, encoder=encoder, decoder=decoder)
@@ -58,41 +58,51 @@ class Adversarial_AE(VAE):
         if discriminator is None:
             if model_config.latent_dim is None:
                 raise AttributeError(
-                    "No latent dimension provided !"
-                    "'latent_dim' parameter of Adversarial_AE_Config instance "
-                    "must be set to a value. Unable to build discriminator automatically."
+                    "No input dimension provided !"
+                    "'input_dim' parameter of Adversarial_AE_Config instance "
+                    "must be set to 'data_shape' where the shape of the data is "
+                    "[mini_batch x data_shape]. Unable to build discriminator automatically."
                 )
 
-            self.model_config.discriminator_input_dim = self.model_config.latent_dim
+            self.model_config.discriminator_input_dim = self.model_config.input_dim
 
-            discriminator = Discriminator_MLP(model_config)
+            discriminator = LayeredDiscriminator_MLP(model_config)
             self.model_config.uses_default_discriminator = True
 
         else:
+
             self.model_config.uses_default_discriminator = False
 
         self.set_discriminator(discriminator)
+
+        assert model_config.reconstruction_layer <= discriminator.depth, (
+                "Ensure that the targeted reconstruction layer ("
+                f"{model_config.reconstruction_layer}) is not deeper than the "
+                f"discriminator ({discriminator.depth})"
+            )
 
         self.model_name = "Adversarial_AE"
 
         assert 0 <= self.model_config.adversarial_loss_scale <= 1, \
             'adversarial_loss_scale must be in [0, 1]'
         
-        
         self.adversarial_loss_scale = self.model_config.adversarial_loss_scale
+        self.reconstruction_layer = self.model_config.reconstruction_layer
 
-    def set_discriminator(self, discriminator: BaseDiscriminator) -> None:
-        r"""This method is called to set the discriminator network
-        
+    def set_discriminator(self, discriminator: BaseLayeredDiscriminator) -> None:
+        r"""This method is called to set the metric network outputing the
+        :math:`L_{\psi_i}` of the metric matrices
+
         Args:
-            discriminator (BaseDiscriminator): The discriminator module that needs to be set to the model.
+            metric (BaseMetric): The metric module that need to be set to the model.
 
         """
-        if not issubclass(type(discriminator), BaseDiscriminator):
+        if not issubclass(type(discriminator), BaseLayeredDiscriminator):
             raise BadInheritanceError(
                 (
-                    "Discriminator must inherit from BaseDiscriminator class from "
-                    "pythae.models.base_architectures.BaseDiscriminator. Refer to documentation."
+                    "Discriminator must inherit from BaseLayeredDiscriminator class from "
+                    "pythae.models.base_architectures.BaseLayeredDiscriminator. "
+                    "Refer to documentation."
                 )
             )
 
@@ -116,20 +126,21 @@ class Adversarial_AE(VAE):
 
         std = torch.exp(0.5 * log_var)
         z, eps = self._sample_gauss(mu, std)
-        recon_x = self.decoder(z)["reconstruction"]
+        recon_x = self.decoder(z).reconstruction
 
         z_prior = torch.randn_like(z, device=x.device).requires_grad_(True)
 
-        recon_loss, autoencoder_loss, discriminator_loss = self.loss_function(
-            recon_x, x, z, z_prior
+        recon_loss, encoder_loss, decoder_loss, discriminator_loss = self.loss_function(
+            recon_x, x, z, z_prior, mu, log_var
         )
 
-        loss = autoencoder_loss + discriminator_loss
+        loss = encoder_loss + decoder_loss + discriminator_loss
 
         output = ModelOuput(
             loss=loss,
             recon_loss=recon_loss,
-            autoencoder_loss=autoencoder_loss,
+            encoder_loss=encoder_loss,
+            decoder_loss=decoder_loss,
             discriminator_loss=discriminator_loss,
             recon_x=recon_x,
             z=z
@@ -137,61 +148,77 @@ class Adversarial_AE(VAE):
 
         return output
 
-    def loss_function(self, recon_x, x, z, z_prior):
+    def loss_function(self, recon_x, x, z, z_prior, mu, log_var):
 
         N = z.shape[0]  # batch size
 
-        if self.model_config.reconstruction_loss == "mse":
 
-            recon_loss = F.mse_loss(
-                recon_x.reshape(x.shape[0], -1),
-                x.reshape(x.shape[0], -1),
-                reduction='none'
-            ).mean(dim=-1)
-
-        elif self.model_config.reconstruction_loss == "bce":
-
-            recon_loss = F.binary_cross_entropy(
-                recon_x.reshape(x.shape[0], -1),
-                x.reshape(x.shape[0], -1),
-                reduction='none'
-            ).mean(dim=-1)
+        # KL between prior and posterior
+        KLD = -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp(), dim=-1)
 
 
-        gen_adversarial_score = self.discriminator(z).adversarial_cost.flatten()
-        prior_adversarial_score = self.discriminator(z_prior).adversarial_cost.flatten()
+        # feature maps of true data
+        true_discr_layer = self.discriminator(
+            x, output_layer_level=self.reconstruction_layer).adversarial_cost
+
+        # feature maps of recon data
+        recon_discr_layer = self.discriminator(
+            recon_x, output_layer_level=self.reconstruction_layer).adversarial_cost
+
+        # MSE in feature space
+        recon_loss = F.mse_loss(
+            true_discr_layer.reshape(N, -1),
+            recon_discr_layer.reshape(N, -1),
+            reduction='none'
+        ).sum(dim=-1)
+
+        encoder_loss = KLD + recon_loss
+
+        gen_prior = self.decoder(z_prior).reconstruction
+
+        x_ = x.clone().detach().requires_grad_(True)
+        recon_x_ = recon_x.clone().detach().requires_grad_(True)
+        gen_prior_ = gen_prior.clone().detach().requires_grad_(True)
+
+        true_adversarial_score = self.discriminator(x_).adversarial_cost.flatten() 
+        gen_adversarial_score = self.discriminator(recon_x_).adversarial_cost.flatten()
+        prior_adversarial_score = self.discriminator(gen_prior_).adversarial_cost.flatten()
 
         true_labels = torch.ones(N, requires_grad=False).to(self.device)
         fake_labels = torch.zeros(N, requires_grad=False).to(self.device)
         
 
-        autoencoder_loss = (
-            self.adversarial_loss_scale * (
-                F.binary_cross_entropy(gen_adversarial_score, true_labels) # generated are true
-            )
-                +
-            (1 - self.adversarial_loss_scale) * (
-                recon_loss
-            )
-        )
-
-        z_ = z.clone().detach().requires_grad_(True)
-
-        gen_adversarial_score_ = self.discriminator(z_).adversarial_cost.flatten()
-        
         discriminator_loss = (
-            0.5 * (
-                F.binary_cross_entropy(prior_adversarial_score, true_labels) # prior is true
+            (
+                F.binary_cross_entropy(true_adversarial_score, true_labels) # original are true
             )
             +
-            0.5 * (
-                F.binary_cross_entropy(gen_adversarial_score_, fake_labels) # generated are false
+            (
+                F.binary_cross_entropy(prior_adversarial_score, fake_labels) # prior is false
+            )
+            +
+            (
+                F.binary_cross_entropy(gen_adversarial_score, fake_labels) # generated are false
             )
         )
+
+        decoder_loss = (1 - self.adversarial_loss_scale) * recon_loss \
+            - self.adversarial_loss_scale * discriminator_loss
+
+
+        if discriminator_loss.mean(dim=0) != discriminator_loss.mean(dim=0):
+            assert 0, 'discr nan'
+
+        if decoder_loss.mean(dim=0) != decoder_loss.mean(dim=0):
+            assert 0, 'decoder nan'
+
+        if encoder_loss.mean(dim=0) != encoder_loss.mean(dim=0):
+            assert 0, 'encoder nan'
 
         return (
             (recon_loss).mean(dim=0),
-            (autoencoder_loss).mean(dim=0),
+            (encoder_loss).mean(dim=0),
+            (decoder_loss).mean(dim=0),
             (discriminator_loss).mean(dim=0)
         )
 
@@ -237,7 +264,7 @@ class Adversarial_AE(VAE):
             )
 
         path_to_model_config = os.path.join(dir_path, "model_config.json")
-        model_config = Adversarial_AE_Config.from_json_file(path_to_model_config)
+        model_config = VAEGANConfig.from_json_file(path_to_model_config)
 
         return model_config
 

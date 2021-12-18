@@ -15,8 +15,8 @@ from ...customexception import ModelError
 from ...data.datasets import BaseDataset
 from ...models import BaseAE
 from ..trainer_utils import set_seed
-from ..base_trainer import BaseTrainer
-from .adversarial_trainer_config import AdversarialTrainerConfig
+from ...trainers import AdversarialTrainer, CoupledOptimizerTrainer, BaseTrainer
+from .coupled_optimizer_adversarial_trainer_config import CoupledOptimizerAdversarialTrainerConfig
 
 logger = logging.getLogger(__name__)
 
@@ -26,8 +26,8 @@ logger.addHandler(console)
 logger.setLevel(logging.INFO)
 
 
-class AdversarialTrainer(BaseTrainer):
-    """Trainer using disctinct optimizers for the autoencoder and the discriminator.
+class CoupledOptimizerAdversarialTrainer(BaseTrainer):
+    """Trainer using disctinct optimizers for the encoder, decoder and discriminator.
 
     Args:
         model (BaseAE): The model to train
@@ -35,12 +35,16 @@ class AdversarialTrainer(BaseTrainer):
         train_dataset (BaseDataset): The training dataset of type 
             :class:`~pythae.data.dataset.BaseDataset`
 
-        training_args (AdversarialTrainerConfig): The training arguments summarizing the main 
-            parameters used for training. If None, a basic training instance of 
+        training_args (CoupledOptimizerAdversarialTrainerConfig): The training arguments summarizing
+            the main parameters used for training. If None, a basic training instance of 
             :class:`AdversarialTrainerConfig` is used. Default: None.
 
-        autoencoder_optimizer (~torch.optim.Optimizer): An instance of `torch.optim.Optimizer` 
-            used for training the autoencoder. If None, a :class:`~torch.optim.Adam` optimizer is 
+        encoder_optimizer (~torch.optim.Optimizer): An instance of `torch.optim.Optimizer` 
+            used for training the encoder. If None, a :class:`~torch.optim.Adam` optimizer is 
+            used. Default: None.
+
+        decoder_optimizer (~torch.optim.Optimizer): An instance of `torch.optim.Optimizer` 
+            used for training the decoder. If None, a :class:`~torch.optim.Adam` optimizer is 
             used. Default: None.
 
         discriminator_optimizer (~torch.optim.Optimizer): An instance of `torch.optim.Optimizer` 
@@ -53,10 +57,12 @@ class AdversarialTrainer(BaseTrainer):
         model: BaseAE,
         train_dataset: BaseDataset,
         eval_dataset: Optional[BaseDataset] = None,
-        training_config: Optional[AdversarialTrainerConfig] = None,
-        autoencoder_optimizer: Optional[torch.optim.Optimizer] = None,
+        training_config: Optional[CoupledOptimizerAdversarialTrainerConfig] = None,
+        encoder_optimizer: Optional[torch.optim.Optimizer] = None,
+        decoder_optimizer: Optional[torch.optim.Optimizer] = None,
         discriminator_optimizer: Optional[torch.optim.Optimizer] = None,
-        autoencoder_scheduler: Optional = None,
+        encoder_scheduler: Optional = None,
+        decoder_scheduler: Optional = None,
         discriminator_scheduler: Optional = None
     ):
 
@@ -68,19 +74,32 @@ class AdversarialTrainer(BaseTrainer):
             training_config=training_config,
             optimizer=None)
 
-        # set autoencoder optimizer
-        if autoencoder_optimizer is None:
-            autoencoder_optimizer = self.set_default_autoencoder_optimizer(model)
+
+        # set encoder optimizer
+        if encoder_optimizer is None:
+            encoder_optimizer = self.set_default_encoder_optimizer(model)
 
         else:
-            autoencoder_optimizer = self._set_optimizer_on_device(
-                autoencoder_optimizer, self.device
+            encoder_optimizer = self._set_optimizer_on_device(
+                encoder_optimizer, self.device
             )
 
-        if autoencoder_scheduler is None:
-            autoencoder_scheduler = self.set_default_scheduler(model, autoencoder_optimizer)
+        if encoder_scheduler is None:
+            encoder_scheduler = self.set_default_scheduler(model, encoder_optimizer)
 
-        # set discriminator optimizer
+        # set decoder optimizer
+        if decoder_optimizer is None:
+            decoder_optimizer = self.set_default_decoder_optimizer(model)
+
+        else:
+            decoder_optimizer = self._set_optimizer_on_device(
+                decoder_optimizer, self.device
+            )
+
+        if decoder_scheduler is None:
+            decoder_scheduler = self.set_default_scheduler(model, decoder_optimizer)
+
+        # set decoder optimizer
         if discriminator_optimizer is None:
             discriminator_optimizer = self.set_default_discriminator_optimizer(model)
 
@@ -92,21 +111,32 @@ class AdversarialTrainer(BaseTrainer):
         if discriminator_scheduler is None:
             discriminator_scheduler = self.set_default_scheduler(model, discriminator_optimizer)
 
-        self.autoencoder_optimizer = autoencoder_optimizer
+        self.encoder_optimizer = encoder_optimizer
+        self.decoder_optimizer = decoder_optimizer
         self.discriminator_optimizer = discriminator_optimizer
-        self.autoencoder_scheduler = autoencoder_scheduler
+        self.encoder_scheduler = encoder_scheduler
+        self.decoder_scheduler = decoder_scheduler
         self.discriminator_scheduler = discriminator_scheduler
 
         self.optimizer = None
 
+    def set_default_encoder_optimizer(self, model: BaseAE) -> torch.optim.Optimizer:
 
-    def set_default_autoencoder_optimizer(self, model: BaseAE) -> torch.optim.Optimizer:
-
-        optimizer = torch.optim.Adam(
-            itertools.chain(model.encoder.parameters(), model.decoder.parameters()),
+        optimizer = optim.Adam(
+            model.encoder.parameters(),
             lr=self.training_config.learning_rate,
-            weight_decay=self.training_config.autoencoder_optim_decay
-            )
+            weight_decay=self.training_config.encoder_optim_decay
+        )
+
+        return optimizer
+
+    def set_default_decoder_optimizer(self, model: BaseAE) -> torch.optim.Optimizer:
+
+        optimizer = optim.Adam(
+            model.decoder.parameters(),
+            lr=self.training_config.learning_rate,
+            weight_decay=self.training_config.decoder_optim_decay
+        )
 
         return optimizer
 
@@ -119,6 +149,7 @@ class AdversarialTrainer(BaseTrainer):
         )
 
         return optimizer
+
 
     def train(self, log_output_dir: str = None):
         """This function is the main training function
@@ -200,7 +231,8 @@ class AdversarialTrainer(BaseTrainer):
 
             [
                 epoch_train_loss,
-                epoch_train_autoencoder_loss,
+                epoch_train_encoder_loss,
+                epoch_train_decoder_loss,
                 epoch_train_discriminator_loss
             ] = train_losses
 
@@ -209,16 +241,19 @@ class AdversarialTrainer(BaseTrainer):
 
                 [
                     epoch_eval_loss,
-                    epoch_eval_autoencoder_loss,
+                    epoch_eval_encoder_loss,
+                    epoch_eval_decoder_loss,
                     epoch_eval_discriminator_loss
                 ] = eval_losses
 
-                self.autoencoder_scheduler.step(epoch_eval_autoencoder_loss)
+                self.encoder_scheduler.step(epoch_eval_encoder_loss)
+                self.decoder_scheduler.step(epoch_eval_decoder_loss)
                 self.discriminator_scheduler.step(epoch_eval_discriminator_loss)
 
             else:
                 epoch_eval_loss = best_eval_loss
-                self.autoencoder_scheduler.step(epoch_train_autoencoder_loss)
+                self.encoder_scheduler.step(epoch_train_encoder_loss)
+                self.decoder_scheduler.step(epoch_train_decoder_loss)
                 self.discriminator_scheduler.step(epoch_train_discriminator_loss)
 
             if (
@@ -256,12 +291,14 @@ class AdversarialTrainer(BaseTrainer):
                 )
                 logger.info(
                     f"Epoch {epoch}: Train loss: {np.round(epoch_train_loss, 10)}\t "
-                    f"Generator loss: {np.round(epoch_train_autoencoder_loss, 10)}\t "
+                    f"Encoder loss: {np.round(epoch_train_encoder_loss, 10)}\t "
+                    f"Decoder loss: {np.round(epoch_train_decoder_loss, 10)}\t "
                     f"Discriminator loss: {np.round(epoch_train_discriminator_loss, 10)}"
                 )
                 logger.info(
                     f"Epoch {epoch}: Eval loss: {np.round(epoch_eval_loss, 10)}\t "
-                    f"Generator loss: {np.round(epoch_eval_autoencoder_loss, 10)}\t "
+                    f"Encoder loss: {np.round(epoch_eval_encoder_loss, 10)}\t "
+                    f"Decoder loss: {np.round(epoch_eval_decoder_loss, 10)}\t "
                     f"Discriminator loss: {np.round(epoch_eval_discriminator_loss, 10)}"
                 )
                 logger.info(
@@ -298,7 +335,8 @@ class AdversarialTrainer(BaseTrainer):
 
         self.model.eval()
 
-        epoch_autoencoder_loss = 0
+        epoch_encoder_loss = 0
+        epoch_decoder_loss = 0
         epoch_discriminator_loss = 0
         epoch_loss = 0
 
@@ -313,23 +351,26 @@ class AdversarialTrainer(BaseTrainer):
 
                 model_output = self.model(inputs)
 
-                autoencoder_loss = model_output.autoencoder_loss
+                encoder_loss = model_output.encoder_loss
+                decoder_loss = model_output.decoder_loss
                 discriminator_loss = model_output.discriminator_loss
 
-                loss = autoencoder_loss + discriminator_loss
+                loss = encoder_loss + decoder_loss + discriminator_loss
 
-                epoch_autoencoder_loss += autoencoder_loss.item()
+                epoch_encoder_loss += encoder_loss.item()
+                epoch_decoder_loss += encoder_loss.item()
                 epoch_discriminator_loss += discriminator_loss.item()
                 epoch_loss += loss.item()
 
                 if epoch_loss != epoch_loss:
                     raise ArithmeticError("NaN detected in eval loss")
 
-            epoch_autoencoder_loss /= len(self.eval_loader)
+            epoch_encoder_loss /= len(self.eval_loader)
+            epoch_decoder_loss /= len(self.eval_loader)
             epoch_discriminator_loss /= len(self.eval_loader) 
             epoch_loss /= len(self.eval_loader)
 
-        return epoch_loss, epoch_autoencoder_loss, epoch_discriminator_loss
+        return epoch_loss, epoch_generator_loss, epoch_decoder_loss, epoch_discriminator_loss
 
     def train_step(self, epoch: int):
         """The trainer performs training loop over the train_loader.
@@ -343,7 +384,8 @@ class AdversarialTrainer(BaseTrainer):
         # set model in train model
         self.model.train()
 
-        epoch_autoencoder_loss = 0
+        epoch_encoder_loss = 0
+        epoch_decoder_loss = 0
         epoch_discriminator_loss = 0
         epoch_loss = 0
 
@@ -356,36 +398,42 @@ class AdversarialTrainer(BaseTrainer):
 
                 inputs = self._set_inputs_to_device(inputs)
                 
-                self.autoencoder_optimizer.zero_grad()
+                # Reset optimizers
+                self.encoder_optimizer.zero_grad()
+                self.decoder_optimizer.zero_grad()
                 self.discriminator_optimizer.zero_grad()
 
                 model_output = self.model(inputs)
 
+                encoder_loss = model_output.encoder_loss
+                encoder_loss.backward(retain_graph=True)
 
-                autoencoder_loss = model_output.autoencoder_loss
-                autoencoder_loss.backward(retain_graph=True)
+                decoder_loss = model_output.decoder_loss
+                decoder_loss.backward(retain_graph=True)
                 
                 discriminator_loss = model_output.discriminator_loss
                 discriminator_loss.backward()
 
-
-                self.autoencoder_optimizer.step()
+                self.encoder_optimizer.step()
+                self.decoder_optimizer.step()
                 self.discriminator_optimizer.step()
 
-                loss = autoencoder_loss + discriminator_loss
+                loss = encoder_loss + decoder_loss + discriminator_loss
 
-                epoch_autoencoder_loss += autoencoder_loss.item()
+                epoch_encoder_loss += encoder_loss.item()
+                epoch_decoder_loss += decoder_loss.item()
                 epoch_discriminator_loss += discriminator_loss.item()
                 epoch_loss += loss.item()
 
             # Allows model updates if needed
             self.model.update()
 
-            epoch_autoencoder_loss /= len(self.train_loader)
+            epoch_encoder_loss /= len(self.train_loader)
+            epoch_decoder_loss /= len(self.train_loader)
             epoch_discriminator_loss /= len(self.train_loader) 
             epoch_loss /= len(self.train_loader)
 
-        return epoch_loss, epoch_autoencoder_loss, epoch_discriminator_loss
+        return epoch_loss, epoch_encoder_loss, epoch_decoder_loss, epoch_discriminator_loss
 
 
     def save_checkpoint(self, dir_path, epoch: int):
@@ -402,8 +450,12 @@ class AdversarialTrainer(BaseTrainer):
 
         # save optimizers
         torch.save(
-            deepcopy(self.autoencoder_optimizer.state_dict()),
-            os.path.join(checkpoint_dir, "autoencoder_optimizer.pt"),
+            deepcopy(self.encoder_optimizer.state_dict()),
+            os.path.join(checkpoint_dir, "encoder_optimizer.pt"),
+        )
+        torch.save(
+            deepcopy(self.decoder_optimizer.state_dict()),
+            os.path.join(checkpoint_dir, "decder_optimizer.pt"),
         )
         torch.save(
             deepcopy(self.discriminator_optimizer.state_dict()),

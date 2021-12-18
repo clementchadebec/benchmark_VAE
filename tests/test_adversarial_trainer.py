@@ -33,9 +33,9 @@ def training_config(tmpdir):
 class Test_DataLoader:
     @pytest.fixture(
         params=[
-            AdversarialTrainerConfig(encoder_decoder_optim_decay=0),
-            AdversarialTrainerConfig(batch_size=100, encoder_decoder_optim_decay=1e-7),
-            AdversarialTrainerConfig(batch_size=10, encoder_decoder_optim_decay=1e-7, discriminator_optim_decay=1e-7),
+            AdversarialTrainerConfig(autoencoder_optim_decay=0),
+            AdversarialTrainerConfig(batch_size=100, autoencoder_optim_decay=1e-7),
+            AdversarialTrainerConfig(batch_size=10, autoencoder_optim_decay=1e-7, discriminator_optim_decay=1e-7),
         ]
     )
     def training_config_batch_size(self, request, tmpdir):
@@ -60,7 +60,7 @@ class Test_DataLoader:
 
         assert train_data_loader.batch_size == trainer.training_config.batch_size
 
-    def test_build_eval_data_loader(
+    d   f test_build_eval_data_loader(
         self, model_sample, train_dataset, training_config_batch_size
     ):
         trainer = AdversarialTrainer(
@@ -80,8 +80,8 @@ class Test_DataLoader:
 class Test_Set_Training_config:
     @pytest.fixture(
         params=[
-            AdversarialTrainerConfig(encoder_decoder_optim_decay=0),
-            AdversarialTrainerConfig(batch_size=10, learning_rate=1e-5, encoder_decoder_optim_decay=0),
+            AdversarialTrainerConfig(autoencoder_optim_decay=0),
+            AdversarialTrainerConfig(batch_size=10, learning_rate=1e-5, autoencoder_optim_decay=0),
         ]
     )
     def training_configs(self, request, tmpdir):
@@ -120,13 +120,13 @@ class Test_Build_Optimizer:
     @pytest.fixture(params=[Adagrad, Adam, Adadelta, SGD, RMSprop])
     def optimizers(self, request, model_sample, training_configs_learning_rate):
 
-        encoder_decoder_optimizer = request.param(
+        autoencoder_optimizer = request.param(
             model_sample.encoder.parameters(), lr=training_configs_learning_rate.learning_rate
         )
         discriminator_optimizer = request.param(
             model_sample.decoder.parameters(), lr=training_configs_learning_rate.learning_rate
         )
-        return (encoder_decoder_optimizer, discriminator_optimizer)
+        return (autoencoder_optimizer, discriminator_optimizer)
 
     @pytest.fixture(params=[Adagrad, Adam, Adadelta, SGD, RMSprop])
     def schedulers(self, request, model_sample, training_configs_learning_rate):
@@ -144,13 +144,13 @@ class Test_Build_Optimizer:
             model=model_sample,
             train_dataset=train_dataset,
             training_config=training_configs_learning_rate,
-            encoder_decoder_optimizer=None,
+            autoencoder_optimizer=None,
             discriminator_optimizer=None
         )
 
-        assert issubclass(type(trainer.encoder_decoder_optimizer), torch.optim.Adam)
+        assert issubclass(type(trainer.autoencoder_optimizer), torch.optim.Adam)
         assert (
-            trainer.encoder_decoder_optimizer.defaults["lr"]
+            trainer.autoencoder_optimizer.defaults["lr"]
             == training_configs_learning_rate.learning_rate
         )
 
@@ -167,13 +167,13 @@ class Test_Build_Optimizer:
             model=model_sample,
             train_dataset=train_dataset,
             training_config=training_configs_learning_rate,
-            encoder_decoder_optimizer=optimizers[0],
+            autoencoder_optimizer=optimizers[0],
             discriminator_optimizer=optimizers[1],
         )
 
-        assert issubclass(type(trainer.encoder_decoder_optimizer), type(optimizers[0]))
+        assert issubclass(type(trainer.autoencoder_optimizer), type(optimizers[0]))
         assert (
-            trainer.encoder_decoder_optimizer.defaults["lr"]
+            trainer.autoencoder_optimizer.defaults["lr"]
             == training_configs_learning_rate.learning_rate
         )
 
@@ -273,7 +273,7 @@ class Test_Main_Training:
     @pytest.fixture(params=[None, Adagrad, Adam, Adadelta, SGD, RMSprop])
     def optimizers(self, request, ae, training_configs):
         if request.param is not None:
-            encoder_decoder_optimizer = request.param(
+            autoencoder_optimizer = request.param(
                 ae.encoder.parameters(), lr=training_configs.learning_rate
             )
 
@@ -282,17 +282,17 @@ class Test_Main_Training:
             )
 
         else:
-            encoder_decoder_optimizer = None
+            autoencoder_optimizer = None
             discriminator_optimizer = None
 
-        return (encoder_decoder_optimizer, discriminator_optimizer)
+        return (autoencoder_optimizer, discriminator_optimizer)
 
     def test_train_step(self, ae, train_dataset, training_configs, optimizers):
         trainer = AdversarialTrainer(
             model=ae,
             train_dataset=train_dataset,
             training_config=training_configs,
-            encoder_decoder_optimizer=optimizers[0],
+            autoencoder_optimizer=optimizers[0],
             discriminator_optimizer=optimizers[1],
         )
 
@@ -316,7 +316,7 @@ class Test_Main_Training:
             train_dataset=train_dataset,
             eval_dataset=train_dataset,
             training_config=training_configs,
-            encoder_decoder_optimizer=optimizers[0],
+            autoencoder_optimizer=optimizers[0],
             discriminator_optimizer=optimizers[1],
         )
 
@@ -343,7 +343,7 @@ class Test_Main_Training:
             train_dataset=train_dataset,
             eval_dataset=train_dataset,
             training_config=training_configs,
-            encoder_decoder_optimizer=optimizers[0],
+            autoencoder_optimizer=optimizers[0],
             discriminator_optimizer=optimizers[1],
         )
 

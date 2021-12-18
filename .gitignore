@@ -22,6 +22,8 @@ examples/scripts/my_models*
 examples/notebooks/models_training/my_model/
 examples/showcases copy/*
 examples/notebooks/models_training/generate.py
+dummy_output_dir/*
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

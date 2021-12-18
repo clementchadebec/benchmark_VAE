@@ -6,9 +6,9 @@ from ..base_trainer import BaseTrainingConfig
 
 
 @dataclass
-class AdversarialTrainerConfig(BaseTrainingConfig):
+class CoupledOptimizerAdversarialTrainerConfig(BaseTrainingConfig):
     """
-    AdversarialTrainer config class.
+    CoupledOptimizerAdversarialTrainer config class.
 
     Parameters:
 
@@ -23,8 +23,10 @@ class AdversarialTrainerConfig(BaseTrainingConfig):
         keep_best_on_train (bool): Whether to keep the best model on the train set. Default: False.
         seed (int): The random seed for reproducibility
         no_cuda (bool): Disable `cuda` training. Default: False
-        encoderdecoder_optim_decay (float): The decay to apply in the optimizer. Default: 0
+        encoder_optim_decay (float): The decay to apply in the optimizer. Default: 0
+        decoder_optim_decay (float): The decay to apply in the optimizer. Default: 0
         discriminator_optim_decay (float): The decay to apply in the optimizer. Default: 0
     """
-    autoencoder_optim_decay: float = 0
+    encoder_optim_decay: float = 0
+    decoder_optim_decay: float = 0
     discriminator_optim_decay: float = 0

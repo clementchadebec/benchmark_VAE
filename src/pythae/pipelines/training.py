@@ -52,23 +52,24 @@ class TrainingPipeline(Pipeline):
         if training_config is None:
             training_config = BaseTrainingConfig()
 
-        if model.model_name == 'RAE_L2':
-            if not isinstance(
-                training_config, CoupledOptimizerTrainerConfig):
+        if model is not None:
+            if model.model_name == 'RAE_L2':
+                if not isinstance(
+                    training_config, CoupledOptimizerTrainerConfig):
 
-                raise AssertionError("A 'CoupledOptimizerTrainerConfig' "
-                    "is expected for training a RAE_L2")
+                    raise AssertionError("A 'CoupledOptimizerTrainerConfig' "
+                        "is expected for training a RAE_L2")
 
 
-            training_config.encoder_optim_decay = 0.
-            training_config.decoder_optim_decay = model.model_config.reg_weight
+                training_config.encoder_optim_decay = 0.
+                training_config.decoder_optim_decay = model.model_config.reg_weight
 
-        if model.model_name == 'Adversarial_AE':
-            if not isinstance(
-                training_config, AdversarialTrainerConfig):
+            if model.model_name == 'Adversarial_AE':
+                if not isinstance(
+                    training_config, AdversarialTrainerConfig):
 
-                raise AssertionError("A 'AdversarialTrainer' "
-                    "is expected for training an Adversarial AE")
+                    raise AssertionError("A 'AdversarialTrainer' "
+                        "is expected for training an Adversarial AE")
 
 
         self.data_processor = DataProcessor()
@@ -76,7 +77,7 @@ class TrainingPipeline(Pipeline):
         self.training_config = training_config
 
     def _set_default_model(self, data):
-        model_config = VAEConfig(input_dim=int(np.prod(data.shape[1:])))
+        model_config = VAEConfig(input_dim=data.shape[1:])
         model = VAE(model_config)
         self.model = model
 
