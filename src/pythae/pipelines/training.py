@@ -142,7 +142,7 @@ class TrainingPipeline(Pipeline):
             self._set_default_model(train_data)
 
         if eval_data is not None:
-            logger.info("Preprocessing eval data...")
+            logger.info("Preprocessing eval data...\n")
             eval_data = self.data_processor.process_data(eval_data)
             eval_dataset = self.data_processor.to_dataset(eval_data)
 
@@ -151,6 +151,7 @@ class TrainingPipeline(Pipeline):
 
 
         if isinstance(self.training_config, CoupledOptimizerTrainerConfig):
+            logger.info("Using Coupled Optimizer Trainer\n")
             trainer = CoupledOptimizerTrainer(
                 model=self.model,
                 train_dataset=train_dataset,
@@ -159,6 +160,7 @@ class TrainingPipeline(Pipeline):
             )
 
         elif isinstance(self.training_config, AdversarialTrainerConfig):
+            logger.info("Using Adversarial Trainer\n")
             trainer = AdversarialTrainer(
                 model=self.model,
                 train_dataset=train_dataset,
@@ -166,8 +168,17 @@ class TrainingPipeline(Pipeline):
                 training_config=self.training_config
             )
 
-        elif isinstance(self.training_config, BaseTrainingConfig):
+        elif isinstance(self.training_config, CoupledOptimizerAdversarialTrainerConfig):
+            logger.info("Using Coupled Optimizer Adversarial Trainer\n")
+            trainer = CoupledOptimizerAdversarialTrainer(
+                model=self.model,
+                train_dataset=train_dataset,
+                eval_dataset=eval_dataset,
+                training_config=self.training_config
+            )
 
+        elif isinstance(self.training_config, BaseTrainingConfig):
+            logger.info("Using Base Trainer\n")
             trainer = BaseTrainer(
                 model=self.model,
                 train_dataset=train_dataset,

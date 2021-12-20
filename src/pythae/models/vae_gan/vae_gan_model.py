@@ -185,8 +185,7 @@ class VAEGAN(VAE):
         prior_adversarial_score = self.discriminator(gen_prior_).adversarial_cost.flatten()
 
         true_labels = torch.ones(N, requires_grad=False).to(self.device)
-        fake_labels = torch.zeros(N, requires_grad=False).to(self.device)
-        
+        fake_labels = torch.zeros(N, requires_grad=False).to(self.device)        
 
         discriminator_loss = (
             (
@@ -204,16 +203,6 @@ class VAEGAN(VAE):
 
         decoder_loss = (1 - self.adversarial_loss_scale) * recon_loss \
             - self.adversarial_loss_scale * discriminator_loss
-
-
-        if discriminator_loss.mean(dim=0) != discriminator_loss.mean(dim=0):
-            assert 0, 'discr nan'
-
-        if decoder_loss.mean(dim=0) != decoder_loss.mean(dim=0):
-            assert 0, 'decoder nan'
-
-        if encoder_loss.mean(dim=0) != encoder_loss.mean(dim=0):
-            assert 0, 'encoder nan'
 
         return (
             (recon_loss).mean(dim=0),

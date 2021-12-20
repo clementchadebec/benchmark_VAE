@@ -36,7 +36,7 @@ ap.add_argument(
 ap.add_argument(
     "--model_name",
     help="The name of the model to train",
-    choices=["ae", "vae", "beta_vae", "iwae", "wae", "info_vae", "rae_gp","rae_l2", "vamp", "hvae", "rhvae", 'aae'],
+    choices=["ae", "vae", "beta_vae", "iwae", "wae", "info_vae", "rae_gp","rae_l2", "vamp", "hvae", "rhvae", 'aae', "vaegan"],
     required=True,
 )
 ap.add_argument(
@@ -311,26 +311,25 @@ def main(args):
             decoder=Decoder_AE(model_config),
         )
 
-    elif args.model_name == "vae_gan":
-        from pythae.trainers import (
-            CoupledOptimizerAdversarialTrainer,
-            CoupledOptimizerAdversarialTrainerConfig
-        )
+    elif args.model_name == "vaegan":
+        from pythae.models import VAEGAN, VAEGANConfig
+        from pythae.models.nn.benchmarks.mnist import LayeredDiscriminator_MNIST
 
         if args.model_config is not None:
-            model_config = CoupledOptimizerAdversarialTrainerConfig.from_json_file(
+            model_config = VAEGANConfig.from_json_file(
                 args.model_config
             )
 
         else:
-            model_config = CoupledOptimizerAdversarialTrainer()
+            model_config = VAEGANConfig()
 
         model_config.input_dim = data_input_dim
 
-        model = CoupledOptimizerAdversarialTrainer(
+        model = VAEGAN(
             model_config=model_config,
             encoder=Encoder_VAE(model_config),
             decoder=Decoder_AE(model_config),
+            discriminator=LayeredDiscriminator_MNIST(model_config)
         )
 
     logger.info(f"Successfully build {args.model_name.upper()} model !\n")
@@ -363,7 +362,13 @@ def main(args):
         training_config = AdversarialTrainerConfig.from_json_file(args.training_config)
 
     elif model.model_name == 'VAEGAN':
-        training_config = AdversarialTrainerConfig.from_json_file(args.training_config)
+        from pythae.trainers import (
+            CoupledOptimizerAdversarialTrainer,
+            CoupledOptimizerAdversarialTrainerConfig
+        )
+        training_config = CoupledOptimizerAdversarialTrainerConfig.from_json_file(
+            args.training_config
+        )
 
     else:
         training_config = BaseTrainingConfig.from_json_file(args.training_config)
