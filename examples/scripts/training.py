@@ -311,6 +311,28 @@ def main(args):
             decoder=Decoder_AE(model_config),
         )
 
+    elif args.model_name == "vae_gan":
+        from pythae.trainers import (
+            CoupledOptimizerAdversarialTrainer,
+            CoupledOptimizerAdversarialTrainerConfig
+        )
+
+        if args.model_config is not None:
+            model_config = CoupledOptimizerAdversarialTrainerConfig.from_json_file(
+                args.model_config
+            )
+
+        else:
+            model_config = CoupledOptimizerAdversarialTrainer()
+
+        model_config.input_dim = data_input_dim
+
+        model = CoupledOptimizerAdversarialTrainer(
+            model_config=model_config,
+            encoder=Encoder_VAE(model_config),
+            decoder=Decoder_AE(model_config),
+        )
+
     logger.info(f"Successfully build {args.model_name.upper()} model !\n")
 
     encoder_num_param = sum(
@@ -337,7 +359,10 @@ def main(args):
     if model.model_name == 'RAE_L2':
         training_config = CoupledOptimizerTrainerConfig.from_json_file(args.training_config)
 
-    if model.model_name == 'Adversarial_AE':
+    elif model.model_name == 'Adversarial_AE':
+        training_config = AdversarialTrainerConfig.from_json_file(args.training_config)
+
+    elif model.model_name == 'VAEGAN':
         training_config = AdversarialTrainerConfig.from_json_file(args.training_config)
 
     else:

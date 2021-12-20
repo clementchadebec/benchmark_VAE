@@ -3,6 +3,6 @@
   "batch_size": 100,
   "num_epochs": 100,
   "learning_rate": 1e-4,
-  "steps_saving": null,
+  "steps_saving": 20,
   "no_cuda": false
 }

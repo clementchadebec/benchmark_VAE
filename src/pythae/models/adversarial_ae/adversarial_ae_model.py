@@ -147,7 +147,7 @@ class Adversarial_AE(VAE):
                 recon_x.reshape(x.shape[0], -1),
                 x.reshape(x.shape[0], -1),
                 reduction='none'
-            ).mean(dim=-1)
+            ).sum(dim=-1)
 
         elif self.model_config.reconstruction_loss == "bce":
 
@@ -155,7 +155,7 @@ class Adversarial_AE(VAE):
                 recon_x.reshape(x.shape[0], -1),
                 x.reshape(x.shape[0], -1),
                 reduction='none'
-            ).mean(dim=-1)
+            ).sum(dim=-1)
 
 
         gen_adversarial_score = self.discriminator(z).adversarial_cost.flatten()
