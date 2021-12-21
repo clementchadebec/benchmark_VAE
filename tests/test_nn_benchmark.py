@@ -1,5 +1,6 @@
 import pytest
 import torch
+import numpy as np
 
 from pythae.models import AEConfig, VAEConfig
 from pythae.models.nn.benchmarks.mnist import *
@@ -36,7 +37,43 @@ class Test_MNIST_Benchmark:
 
         assert reconstruction.shape == mnist_like_data.shape
 
+    @pytest.fixture(
+        params=[
+            np.random.randint(1, 5),
+            np.random.randint(1, 5),
+            np.random.randint(1, 5),
+            np.random.randint(1, 5),
+            np.random.randint(1, 5),
+            None
+        ]
+    )
+    def recon_layer(self, request):
+        return request.param
+
+    def test_discriminator(self, ae_mnist_config, mnist_like_data, recon_layer):
+        discriminator = LayeredDiscriminator_MNIST(ae_mnist_config)
+
+        score = discriminator(mnist_like_data, output_layer_level=recon_layer).adversarial_cost
+
+        if recon_layer == 1:
+            assert score.shape[1] == 128
+
+        elif recon_layer == 2:
+            assert score.shape[1] == 256
+
     
+        elif recon_layer == 3:
+            assert score.shape[1] == 512
+
+        elif recon_layer == 4:
+            assert score.shape[1] == 1024
+
+        elif recon_layer == 5:
+            assert score.shape[1] == 1
+
+        else:
+            assert score.shape[1] == 1
+
     @pytest.fixture(
     params=[
         VAEConfig(input_dim=(1, 28, 28), latent_dim=10),

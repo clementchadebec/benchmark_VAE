@@ -386,8 +386,6 @@ class LayeredDiscriminator_MNIST(BaseLayeredDiscriminator):
         self.latent_dim = args.latent_dim
         self.n_channels = 1
         
-        self.discriminator_input_dim = args.discriminator_input_dim
-
         layers = nn.ModuleList()
 
         layers.append(
@@ -442,7 +440,7 @@ class LayeredDiscriminator_MNIST(BaseLayeredDiscriminator):
 
             x = self.layers[i](x)
 
-            if i == output_layer_level:
+            if i + 1 == output_layer_level:
                 break
         
         output = ModelOuput(

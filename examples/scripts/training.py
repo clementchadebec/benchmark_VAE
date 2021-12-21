@@ -60,6 +60,7 @@ def main(args):
         from pythae.models.nn.benchmarks.mnist import Encoder_AE_MNIST as Encoder_AE
         from pythae.models.nn.benchmarks.mnist import Encoder_VAE_MNIST as Encoder_VAE
         from pythae.models.nn.benchmarks.mnist import Decoder_AE_MNIST as Decoder_AE
+        from pythae.models.nn.benchmarks.mnist import LayeredDiscriminator_MNIST as LayerDiscriminator
 
     elif args.dataset == "cifar10":
 
@@ -72,6 +73,7 @@ def main(args):
         from pythae.models.nn.benchmarks.celeba import Encoder_AE_CELEBA as Encoder_AE
         from pythae.models.nn.benchmarks.celeba import Encoder_VAE_CELEBA as Encoder_VAE
         from pythae.models.nn.benchmarks.celeba import Decoder_AE_CELEBA as Decoder_AE
+        from pythae.models.nn.benchmarks.celeba import LayeredDiscriminator_CELEBA as LayerDiscriminator
 
     try:
         logger.info(f"\nLoading {args.dataset} data...\n")
@@ -313,7 +315,6 @@ def main(args):
 
     elif args.model_name == "vaegan":
         from pythae.models import VAEGAN, VAEGANConfig
-        from pythae.models.nn.benchmarks.mnist import LayeredDiscriminator_MNIST
 
         if args.model_config is not None:
             model_config = VAEGANConfig.from_json_file(
@@ -329,7 +330,7 @@ def main(args):
             model_config=model_config,
             encoder=Encoder_VAE(model_config),
             decoder=Decoder_AE(model_config),
-            discriminator=LayeredDiscriminator_MNIST(model_config)
+            discriminator=LayerDiscriminator(model_config)
         )
 
     logger.info(f"Successfully build {args.model_name.upper()} model !\n")

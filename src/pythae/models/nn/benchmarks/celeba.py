@@ -3,10 +3,14 @@
 import torch
 import torch.nn as nn
 
-from ..base_architectures import BaseEncoder, BaseDecoder
 from ....models.base.base_utils import ModelOuput
 from ....models import BaseAEConfig
 
+from pythae.models.nn import (
+    BaseEncoder,
+    BaseDecoder,
+    BaseLayeredDiscriminator
+)
 
 class Encoder_AE_CELEBA(BaseEncoder):
     """
@@ -328,3 +332,137 @@ class Decoder_AE_CELEBA(BaseDecoder):
         output = ModelOuput(reconstruction=self.deconv_layers(h1))
 
         return output
+
+
+
+class LayeredDiscriminator_CELEBA(BaseLayeredDiscriminator):
+    """
+    A Convolutional encoder Neural net suited for MNIST and Variational Autoencoder-based 
+    models.
+
+
+    It can be built as follows:
+
+    .. code-block::
+
+            >>> from pythae.models.nn.benchmarks.mnist import Encoder_VAE_MNIST
+            >>> from pythae.models import VAEConfig
+            >>> model_config = VAEConfig(input_dim=(1, 28, 28), latent_dim=16)
+            >>> encoder = Encoder_VAE_MNIST(model_config)
+            >>> encoder
+            ... Encoder_VAE_MNIST(
+            ...   (conv_layers): Sequential(
+            ...     (0): Conv2d(1, 128, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
+            ...     (1): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            ...     (2): ReLU()
+            ...     (3): Conv2d(128, 256, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
+            ...     (4): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            ...     (5): ReLU()
+            ...     (6): Conv2d(256, 512, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
+            ...     (7): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            ...     (8): ReLU()
+            ...     (9): Conv2d(512, 1024, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
+            ...     (10): BatchNorm2d(1024, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            ...     (11): ReLU()
+            ...   )
+            ...   (embedding): Linear(in_features=1024, out_features=16, bias=True)
+            ...   (log_var): Linear(in_features=1024, out_features=16, bias=True)
+            ... )
+
+    and then passed to a :class:`pythae.models` instance
+
+        >>> from pythae.models import VAE
+        >>> model = VAE(model_config=model_config, encoder=encoder)
+        >>> model.encoder
+        ... Encoder_VAE_MNIST(
+        ...   (conv_layers): Sequential(
+        ...     (0): Conv2d(1, 128, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
+        ...     (1): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        ...     (2): ReLU()
+        ...     (3): Conv2d(128, 256, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
+        ...     (4): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        ...     (5): ReLU()
+        ...     (6): Conv2d(256, 512, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
+        ...     (7): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        ...     (8): ReLU()
+        ...     (9): Conv2d(512, 1024, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
+        ...     (10): BatchNorm2d(1024, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        ...     (11): ReLU()
+        ...   )
+        ...   (embedding): Linear(in_features=1024, out_features=16, bias=True)
+        ...   (log_var): Linear(in_features=1024, out_features=16, bias=True)
+        ... )
+    """
+
+    def __init__(self, args: dict):
+
+        self.input_dim = (3, 64, 64)
+        self.latent_dim = args.latent_dim
+        self.n_channels = 3
+        
+        self.discriminator_input_dim = args.discriminator_input_dim
+
+        layers = nn.ModuleList()
+
+        layers.append(
+            nn.Sequential(
+                nn.Conv2d(self.n_channels, 128, 4, 2, padding=1),
+                nn.Tanh(),
+            )
+        )
+
+        layers.append(
+            nn.Sequential(
+                nn.Conv2d(128, 256, 4, 2, padding=1),
+                nn.Tanh(),
+            )
+        )
+
+        layers.append(
+            nn.Sequential(
+                nn.Conv2d(256, 512, 4, 2, padding=1),
+                nn.Tanh(),
+            )
+        )
+
+        layers.append(
+            nn.Sequential(
+                nn.Conv2d(512, 1024, 4, 2, padding=1),
+                nn.Tanh(),
+            )
+        )
+
+        layers.append(
+            nn.Sequential(
+                nn.Linear(1024*4*4, 1),
+                nn.Sigmoid()
+            )
+        )
+
+        BaseLayeredDiscriminator.__init__(self, layers=layers)
+
+    def forward(self, x:torch.Tensor, output_layer_level:int=None):
+
+        if output_layer_level is not None:
+
+            assert output_layer_level <= self.depth, (
+                f'Cannot output layer deeper ({output_layer_level}) than depth ({self.depth})'
+            )
+
+        for i in range(self.depth):
+
+            if i == 4:
+                x = x.reshape(x.shape[0], -1)
+
+            x = self.layers[i](x)
+
+            if i == output_layer_level:
+                break
+        
+        output = ModelOuput(
+            adversarial_cost=x
+        )
+    
+        return output
+
+
