@@ -1,6 +1,6 @@
 {
     "latent_dim": 64,
     "reconstruction_loss": "mse",
-    "adversarial_loss_scale": 0.1,
+    "adversarial_loss_scale": 0.00001,
     "reconstruction_layer": 3
   }

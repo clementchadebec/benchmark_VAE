@@ -456,7 +456,7 @@ class LayeredDiscriminator_CELEBA(BaseLayeredDiscriminator):
 
             x = self.layers[i](x)
 
-            if i == output_layer_level:
+            if i+1 == output_layer_level:
                 break
         
         output = ModelOuput(
