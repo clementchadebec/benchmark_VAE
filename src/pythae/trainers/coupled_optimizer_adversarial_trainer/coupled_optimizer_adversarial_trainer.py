@@ -358,7 +358,7 @@ class CoupledOptimizerAdversarialTrainer(BaseTrainer):
                 loss = encoder_loss + decoder_loss + discriminator_loss
 
                 epoch_encoder_loss += encoder_loss.item()
-                epoch_decoder_loss += encoder_loss.item()
+                epoch_decoder_loss += decoder_loss.item()
                 epoch_discriminator_loss += discriminator_loss.item()
                 epoch_loss += loss.item()
 
