@@ -1,8 +1,8 @@
 import torch
 import os
 
-from ...models import VAE
-from .beta_vae_config import BetaVAEConfig
+from ...models import AE
+from .vq_vae_config import VQVAEConfig
 from ...data.datasets import BaseDataset
 from ..base.base_utils import ModelOuput
 from ..nn import BaseEncoder, BaseDecoder
@@ -13,12 +13,12 @@ from typing import Optional
 import torch.nn.functional as F
 
 
-class VQVAE(VAE):
+class VQVAE(AE):
     r"""
-    :math:`\beta`-VAE model.
+    Vector Quantized-VAE model.
     
     Args:
-        model_config(BetaVAEConfig): The Variational Autoencoder configuration seting the main 
+        model_config(VQVAEConfig): The Variational Autoencoder configuration seting the main 
         parameters of the model
 
         encoder (BaseEncoder): An instance of BaseEncoder (inheriting from `torch.nn.Module` which
@@ -38,14 +38,14 @@ class VQVAE(VAE):
 
     def __init__(
         self,
-        model_config: BetaVAEConfig,
+        model_config: VQVAEConfig,
         encoder: Optional[BaseEncoder] = None,
         decoder: Optional[BaseDecoder] = None,
     ):
 
         VAE.__init__(self, model_config=model_config, encoder=encoder, decoder=decoder)
 
-        self.model_name = "BetaVAE"
+        self.model_name = "VQVAE"
         self.beta = model_config.beta
 
     def forward(self, inputs: BaseDataset):
@@ -121,7 +121,7 @@ class VQVAE(VAE):
             )
 
         path_to_model_config = os.path.join(dir_path, "model_config.json")
-        model_config = BetaVAEConfig.from_json_file(path_to_model_config)
+        model_config = VQVAEConfig.from_json_file(path_to_model_config)
 
         return model_config
 

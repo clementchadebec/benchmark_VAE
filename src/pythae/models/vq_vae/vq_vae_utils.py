@@ -25,7 +25,9 @@ class Quantizer(nn.Module):
 
     def forward(self, z: torch.Tensor):
 
-        z = z.permute(0, 2, 3, 1)        
+        if len(z.shape) > 2:
+
+            z = z.permute(0, 2, 3, 1)        
         
         # TODO should be reshaped before enterring here []
 
@@ -59,9 +61,14 @@ class Quantizer(nn.Module):
 
         loss = commitment_loss * self.beta + embedding_loss
 
+        if len(z.shape) > 2:
+            quantized = quantized.permute(0, 3, 1, 2)
+
         output = ModelOutput(
-            quantized_vector=quantized.permute(3, 1, 2),
+            quantized_vector=quantized,
             loss=loss,
             commitment_loss=commitment_loss,
             embedding_loss=embedding_loss,
         )
+
+        return output
