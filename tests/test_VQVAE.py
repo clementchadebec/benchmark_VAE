@@ -264,19 +264,19 @@ class Test_Model_forward:
         )  # This is an extract of 3 data from MNIST (unnormalized) used to test custom architecture
 
     @pytest.fixture
-    def wae(self, model_configs, demo_data):
+    def vae(self, model_configs, demo_data):
         model_configs.input_dim = tuple(demo_data["data"][0].shape)
         return VQVAE(model_configs)
 
-    def test_model_train_output(self, wae, demo_data):
+    def test_model_train_output(self, vae, demo_data):
 
-        wae.train()
+        vae.train()
 
-        out = wae(demo_data)
+        out = vae(demo_data)
 
         assert isinstance(out, ModelOutput)
 
-        assert set(["loss", "recon_loss", "mmd_loss", "recon_x", "z"]) == set(
+        assert set(["loss", "recon_loss", "vq_loss", "recon_x", "z"]) == set(
             out.keys()
         )
 
@@ -307,7 +307,7 @@ class Test_VQVAETraining:
             torch.rand(1),
         ]
     )
-    def wae(self, model_configs, custom_encoder, custom_decoder, request):
+    def vae(self, model_configs, custom_encoder, custom_decoder, request):
         # randomized
 
         alpha = request.param
@@ -329,10 +329,10 @@ class Test_VQVAETraining:
         return model
 
     @pytest.fixture(params=[None, Adagrad, Adam, Adadelta, SGD, RMSprop])
-    def optimizers(self, request, wae, training_configs):
+    def optimizers(self, request, vae, training_configs):
         if request.param is not None:
             optimizer = request.param(
-                wae.parameters(), lr=training_configs.learning_rate
+                vae.parameters(), lr=training_configs.learning_rate
             )
 
         else:
@@ -340,9 +340,9 @@ class Test_VQVAETraining:
 
         return optimizer
 
-    def test_wae_train_step(self, wae, train_dataset, training_configs, optimizers):
+    def test_vae_train_step(self, vae, train_dataset, training_configs, optimizers):
         trainer = BaseTrainer(
-            model=wae,
+            model=vae,
             train_dataset=train_dataset,
             training_config=training_configs,
             optimizer=optimizers,
@@ -362,9 +362,9 @@ class Test_VQVAETraining:
             ]
         )
 
-    def test_wae_eval_step(self, wae, train_dataset, training_configs, optimizers):
+    def test_vae_eval_step(self, vae, train_dataset, training_configs, optimizers):
         trainer = BaseTrainer(
-            model=wae,
+            model=vae,
             train_dataset=train_dataset,
             eval_dataset=train_dataset,
             training_config=training_configs,
@@ -385,12 +385,12 @@ class Test_VQVAETraining:
             ]
         )
 
-    def test_wae_main_train_loop(
-        self, tmpdir, wae, train_dataset, training_configs, optimizers
+    def test_vae_main_train_loop(
+        self, tmpdir, vae, train_dataset, training_configs, optimizers
     ):
 
         trainer = BaseTrainer(
-            model=wae,
+            model=vae,
             train_dataset=train_dataset,
             eval_dataset=train_dataset,
             training_config=training_configs,
@@ -412,13 +412,13 @@ class Test_VQVAETraining:
         )
 
     def test_checkpoint_saving(
-        self, tmpdir, wae, train_dataset, training_configs, optimizers
+        self, tmpdir, vae, train_dataset, training_configs, optimizers
     ):
 
         dir_path = training_configs.output_dir
 
         trainer = BaseTrainer(
-            model=wae,
+            model=vae,
             train_dataset=train_dataset,
             training_config=training_configs,
             optimizer=optimizers,
@@ -443,14 +443,14 @@ class Test_VQVAETraining:
         )
 
         # check pickled custom decoder
-        if not wae.model_config.uses_default_decoder:
+        if not vae.model_config.uses_default_decoder:
             assert "decoder.pkl" in files_list
 
         else:
             assert not "decoder.pkl" in files_list
 
         # check pickled custom encoder
-        if not wae.model_config.uses_default_encoder:
+        if not vae.model_config.uses_default_encoder:
             assert "encoder.pkl" in files_list
 
         else:
@@ -506,7 +506,7 @@ class Test_VQVAETraining:
         )
 
     def test_checkpoint_saving_during_training(
-        self, tmpdir, wae, train_dataset, training_configs, optimizers
+        self, tmpdir, vae, train_dataset, training_configs, optimizers
     ):
         #
         target_saving_epoch = training_configs.steps_saving
@@ -514,7 +514,7 @@ class Test_VQVAETraining:
         dir_path = training_configs.output_dir
 
         trainer = BaseTrainer(
-            model=wae,
+            model=vae,
             train_dataset=train_dataset,
             training_config=training_configs,
             optimizer=optimizers,
@@ -525,7 +525,7 @@ class Test_VQVAETraining:
         trainer.train()
 
         training_dir = os.path.join(
-            dir_path, f"VQVAEtraining_{trainer._training_signature}"
+            dir_path, f"VQVAE_training_{trainer._training_signature}"
         )
         assert os.path.isdir(training_dir)
 
@@ -543,14 +543,14 @@ class Test_VQVAETraining:
         )
 
         # check pickled custom decoder
-        if not wae.model_config.uses_default_decoder:
+        if not vae.model_config.uses_default_decoder:
             assert "decoder.pkl" in files_list
 
         else:
             assert not "decoder.pkl" in files_list
 
         # check pickled custom encoder
-        if not wae.model_config.uses_default_encoder:
+        if not vae.model_config.uses_default_encoder:
             assert "encoder.pkl" in files_list
 
         else:
@@ -568,13 +568,13 @@ class Test_VQVAETraining:
         )
 
     def test_final_model_saving(
-        self, tmpdir, wae, train_dataset, training_configs, optimizers
+        self, tmpdir, vae, train_dataset, training_configs, optimizers
     ):
 
         dir_path = training_configs.output_dir
 
         trainer = BaseTrainer(
-            model=wae,
+            model=vae,
             train_dataset=train_dataset,
             training_config=training_configs,
             optimizer=optimizers,
@@ -585,7 +585,7 @@ class Test_VQVAETraining:
         model = deepcopy(trainer._best_model)
 
         training_dir = os.path.join(
-            dir_path, f"VQVAEtraining_{trainer._training_signature}"
+            dir_path, f"VQVAE_training_{trainer._training_signature}"
         )
         assert os.path.isdir(training_dir)
 
@@ -599,14 +599,14 @@ class Test_VQVAETraining:
         )
 
         # check pickled custom decoder
-        if not wae.model_config.uses_default_decoder:
+        if not vae.model_config.uses_default_decoder:
             assert "decoder.pkl" in files_list
 
         else:
             assert not "decoder.pkl" in files_list
 
         # check pickled custom encoder
-        if not wae.model_config.uses_default_encoder:
+        if not vae.model_config.uses_default_encoder:
             assert "encoder.pkl" in files_list
 
         else:
@@ -627,15 +627,15 @@ class Test_VQVAETraining:
         assert type(model_rec.encoder.cpu()) == type(model.encoder.cpu())
         assert type(model_rec.decoder.cpu()) == type(model.decoder.cpu())
 
-    def test_wae_training_pipeline(
-        self, tmpdir, wae, train_dataset, training_configs
+    def test_vae_training_pipeline(
+        self, tmpdir, vae, train_dataset, training_configs
     ):
 
         dir_path = training_configs.output_dir
 
         # build pipeline
         pipeline = TrainingPipeline(
-            model=wae, training_config=training_configs
+            model=vae, training_config=training_configs
         )
 
         # Launch Pipeline
@@ -647,7 +647,7 @@ class Test_VQVAETraining:
         model = deepcopy(pipeline.trainer._best_model)
 
         training_dir = os.path.join(
-            dir_path, f"VQVAEtraining_{pipeline.trainer._training_signature}"
+            dir_path, f"VQVAE_training_{pipeline.trainer._training_signature}"
         )
         assert os.path.isdir(training_dir)
 
@@ -661,14 +661,14 @@ class Test_VQVAETraining:
         )
 
         # check pickled custom decoder
-        if not wae.model_config.uses_default_decoder:
+        if not vae.model_config.uses_default_decoder:
             assert "decoder.pkl" in files_list
 
         else:
             assert not "decoder.pkl" in files_list
 
         # check pickled custom encoder
-        if not wae.model_config.uses_default_encoder:
+        if not vae.model_config.uses_default_encoder:
             assert "encoder.pkl" in files_list
 
         else:

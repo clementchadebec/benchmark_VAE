@@ -87,21 +87,21 @@ class VQVAE(AE):
         quantizer_output = self.quantizer(embeddings)
 
         quantized_embed = quantizer_output.quantized_vector
-        recon_x = selr.decoder(quantized_embed).reconstruction
+        recon_x = self.decoder(quantized_embed).reconstruction
 
-        loss, recon_loss, vq_loss = self.loss_function(recon_x, x, quantized_output)
+        loss, recon_loss, vq_loss = self.loss_function(recon_x, x, quantizer_output)
 
         output = ModelOutput(
-            reconstruction_loss=recon_loss,
+            recon_loss=recon_loss,
             vq_loss=vq_loss,
             loss=loss,
             recon_x=recon_x,
-            z=z,
+            z=quantized_embed,
         )
 
         return output
 
-    def loss_function(self, recon_x, x, quantized_output):
+    def loss_function(self, recon_x, x, quantizer_output):
 
        
         recon_loss = F.mse_loss(
@@ -110,7 +110,7 @@ class VQVAE(AE):
             reduction='none'
         ).sum(dim=-1)
 
-        vq_loss = quantized_output.loss
+        vq_loss = quantizer_output.loss
 
         return (recon_loss + vq_loss).mean(dim=0), recon_loss.mean(dim=0), vq_loss.mean(dim=0)
 
