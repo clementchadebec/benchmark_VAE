@@ -46,10 +46,18 @@ class VQVAE(AE):
 
         VAE.__init__(self, model_config=model_config, encoder=encoder, decoder=decoder)
 
-        self.quantizer = Quantizer(model_config=model_config)
+        self._set_quntizer(model_config, encoder)
 
         self.model_name = "VQVAE"
         self.beta = model_config.beta
+
+    def _set_quantizer(self, model_config, encoder):
+
+        x = torch.randn((2, self.model_config.input_dim)).to(self.device)
+        z = encoder(x).embedding
+
+        self.model_config.embedding_dim = tuple(z.shape[1:])
+        self.quantizer = Quantizer(model_config=model_config)
 
     def forward(self, inputs: BaseDataset):
         """
@@ -74,11 +82,11 @@ class VQVAE(AE):
         quantized_embed = quantizer_output.quantized_vector
         recon_x = selr.decoder(quantized_embed).reconstruction
 
-        loss, recon_loss, kld = self.loss_function(recon_x, x, quantized_output)
+        loss, recon_loss, vq_loss = self.loss_function(recon_x, x, quantized_output)
 
         output = ModelOuput(
             reconstruction_loss=recon_loss,
-            reg_loss=kld,
+            vq_loss=vq_loss,
             loss=loss,
             recon_x=recon_x,
             z=z,
@@ -88,25 +96,16 @@ class VQVAE(AE):
 
     def loss_function(self, recon_x, x, quantized_output):
 
-        if self.model_config.reconstruction_loss == "mse":
+       
+        recon_loss = F.mse_loss(
+            recon_x.reshape(x.shape[0], -1),
+            x.reshape(x.shape[0], -1),
+            reduction='none'
+        ).sum(dim=-1)
 
-            recon_loss = F.mse_loss(
-                recon_x.reshape(x.shape[0], -1),
-                x.reshape(x.shape[0], -1),
-                reduction='none'
-            ).sum(dim=-1)
+        vq_loss = quantized_output.loss
 
-        elif self.model_config.reconstruction_loss == "bce":
-
-            recon_loss = F.binary_cross_entropy(
-                recon_x.reshape(x.shape[0], -1),
-                x.reshape(x.shape[0], -1),
-                reduction='none'
-            ).sum(dim=-1)
-
-        KLD = -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp(), dim=-1)
-
-        return (recon_loss + self.beta * KLD).mean(dim=0), recon_loss.mean(dim=0), KLD.mean(dim=0)
+        return (recon_loss + vq_loss).mean(dim=0), recon_loss.mean(dim=0), vq_loss.mean(dim=0)
 
     def _sample_gauss(self, mu, std):
         # Reparametrization trick

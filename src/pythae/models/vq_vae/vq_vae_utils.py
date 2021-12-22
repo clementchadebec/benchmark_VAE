@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import numpy as np
 from ..base.base_utils import ModelOuput
 import torch.nn.functional as F
 
@@ -18,7 +19,7 @@ class Quantizer(nn.Module):
             self.beta = model_config.beta
 
             self.embeddings = self.embedding = nn.Embedding(
-                self.embedding_dim, self.num_embeddings)
+                np.prod(self.embedding_dim), self.num_embeddings)
 
             self.embeddings.weight.data.uniform_(
                 -1 / self.K, 1 / self.K)
