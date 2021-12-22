@@ -170,7 +170,7 @@ class VAEGAN(VAE):
             true_discr_layer.reshape(N, -1),
             recon_discr_layer.reshape(N, -1),
             reduction='none'
-        ).sum(dim=-1)
+        ).mean(dim=-1)
 
         encoder_loss = KLD + recon_loss
 
