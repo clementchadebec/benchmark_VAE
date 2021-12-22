@@ -3,6 +3,7 @@ import os
 
 from ...models import AE
 from .vq_vae_config import VQVAEConfig
+from .vq_vae_utils import Quantizer
 from ...data.datasets import BaseDataset
 from ..base.base_utils import ModelOuput
 from ..nn import BaseEncoder, BaseDecoder
@@ -45,6 +46,8 @@ class VQVAE(AE):
 
         VAE.__init__(self, model_config=model_config, encoder=encoder, decoder=decoder)
 
+        self.quantizer = Quantizer(model_config=model_config)
+
         self.model_name = "VQVAE"
         self.beta = model_config.beta
 
@@ -64,13 +67,14 @@ class VQVAE(AE):
 
         encoder_output = self.encoder(x)
 
-        mu, log_var = encoder_output.embedding, encoder_output.log_covariance
+        embeddings = encoder_output.embedding
 
-        std = torch.exp(0.5 * log_var)
-        z, eps = self._sample_gauss(mu, std)
-        recon_x = self.decoder(z)["reconstruction"]
+        quantizer_output = self.quantizer(embeddings)
 
-        loss, recon_loss, kld = self.loss_function(recon_x, x, mu, log_var, z)
+        quantized_embed = quantizer_output.quantized_vector
+        recon_x = selr.decoder(quantized_embed).reconstruction
+
+        loss, recon_loss, kld = self.loss_function(recon_x, x, quantized_output)
 
         output = ModelOuput(
             reconstruction_loss=recon_loss,
@@ -82,7 +86,7 @@ class VQVAE(AE):
 
         return output
 
-    def loss_function(self, recon_x, x, mu, log_var, z):
+    def loss_function(self, recon_x, x, quantized_output):
 
         if self.model_config.reconstruction_loss == "mse":
 
