@@ -5,7 +5,7 @@ from ...models import AE
 from .vq_vae_config import VQVAEConfig
 from .vq_vae_utils import Quantizer
 from ...data.datasets import BaseDataset
-from ..base.base_utils import ModelOuput
+from ..base.base_utils import ModelOutput
 from ..nn import BaseEncoder, BaseDecoder
 from ..nn.default_architectures import Encoder_VAE_MLP
 
@@ -44,17 +44,24 @@ class VQVAE(AE):
         decoder: Optional[BaseDecoder] = None,
     ):
 
-        VAE.__init__(self, model_config=model_config, encoder=encoder, decoder=decoder)
+        AE.__init__(self, model_config=model_config, encoder=encoder, decoder=decoder)
 
-        self._set_quntizer(model_config, encoder)
+        self._set_quantizer(model_config)
 
         self.model_name = "VQVAE"
         self.beta = model_config.beta
 
-    def _set_quantizer(self, model_config, encoder):
+    def _set_quantizer(self, model_config):
 
-        x = torch.randn((2, self.model_config.input_dim)).to(self.device)
-        z = encoder(x).embedding
+        if model_config.input_dim is None:
+            raise AttributeError(
+                "No input dimension provided !"
+                "'input_dim' parameter of VQVAEConfig instance must be set to 'data_shape' where "
+                "the shape of the data is (C, H, W ..). Unable to set quantizer"
+            )
+
+        x = torch.randn((2,) + self.model_config.input_dim).to(self.device)
+        z = self.encoder(x).embedding
 
         self.model_config.embedding_dim = tuple(z.shape[1:])
         self.quantizer = Quantizer(model_config=model_config)
@@ -67,7 +74,7 @@ class VQVAE(AE):
             inputs (BaseDataset): The training datasat with labels
 
         Returns:
-            ModelOuput: An instance of ModelOutput containing all the relevant parameters
+            ModelOutput: An instance of ModelOutput containing all the relevant parameters
 
         """
 
@@ -84,7 +91,7 @@ class VQVAE(AE):
 
         loss, recon_loss, vq_loss = self.loss_function(recon_x, x, quantized_output)
 
-        output = ModelOuput(
+        output = ModelOutput(
             reconstruction_loss=recon_loss,
             vq_loss=vq_loss,
             loss=loss,

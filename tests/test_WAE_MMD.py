@@ -6,7 +6,7 @@ import torch
 from torch.optim import SGD, Adadelta, Adagrad, Adam, RMSprop
 
 from pythae.customexception import BadInheritanceError
-from pythae.models.base.base_utils import ModelOuput
+from pythae.models.base.base_utils import ModelOutput
 from pythae.models import WAE_MMD, WAE_MMD_Config
 
 from pythae.trainers import BaseTrainer, BaseTrainingConfig
@@ -278,7 +278,7 @@ class Test_Model_forward:
 
         out = wae(demo_data)
 
-        assert isinstance(out, ModelOuput)
+        assert isinstance(out, ModelOutput)
 
         assert set(["loss", "recon_loss", "mmd_loss", "recon_x", "z"]) == set(
             out.keys()

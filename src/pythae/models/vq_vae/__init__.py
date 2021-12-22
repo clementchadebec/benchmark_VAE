@@ -9,6 +9,6 @@ Available samplers
 """
 
 from .vq_vae_model import VQVAE
-from .vq_vae_config import VQVAE_Config
+from .vq_vae_config import VQVAEConfig
 
 __all__ = ["VQVAE", "VQVAEConfig"]

@@ -4,7 +4,7 @@ import os
 from ...models import AE
 from .wae_mmd_config import WAE_MMD_Config
 from ...data.datasets import BaseDataset
-from ..base.base_utils import ModelOuput
+from ..base.base_utils import ModelOutput
 
 from ..nn import BaseDecoder, BaseEncoder
 from ..nn.default_architectures import Encoder_AE_MLP
@@ -49,14 +49,14 @@ class WAE_MMD(AE):
 
         self.kernel_choice = model_config.kernel_choice
 
-    def forward(self, inputs: BaseDataset) -> ModelOuput:
+    def forward(self, inputs: BaseDataset) -> ModelOutput:
         """The input data is encoded and decoded
         
         Args:
             inputs (BaseDataset): An instance of pythae's datasets
             
         Returns:
-            ModelOuput: An instance of ModelOutput containing all the relevant parameters
+            ModelOutput: An instance of ModelOutput containing all the relevant parameters
         """
 
         x = inputs["data"]
@@ -68,7 +68,7 @@ class WAE_MMD(AE):
 
         loss, recon_loss, mmd_loss = self.loss_function(recon_x, x, z, z_prior)
 
-        output = ModelOuput(
+        output = ModelOutput(
             loss=loss, recon_loss=recon_loss, mmd_loss=mmd_loss, recon_x=recon_x, z=z
         )
 
