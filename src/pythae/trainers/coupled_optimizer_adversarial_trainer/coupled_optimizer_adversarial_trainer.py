@@ -341,7 +341,7 @@ class CoupledOptimizerAdversarialTrainer(BaseTrainer):
         epoch_loss = 0
 
         with tqdm(self.eval_loader, unit="batch") as tepoch:
-            for inputs in tepoch:
+            for i, inputs in enumerate(tepoch):
 
                 tepoch.set_description(
                     f"Eval of epoch {epoch}/{self.training_config.num_epochs}"
@@ -364,6 +364,14 @@ class CoupledOptimizerAdversarialTrainer(BaseTrainer):
 
                 if epoch_loss != epoch_loss:
                     raise ArithmeticError("NaN detected in eval loss")
+
+                tepoch.set_postfix(
+                    {
+                        'encoder_loss': epoch_encoder_loss / (i+1),
+                        'decoder_loss': epoch_decoder_loss / (i+1),
+                        'discriminator_loss': epoch_discriminator_loss / (i+1)
+                    }
+                )
 
             epoch_encoder_loss /= len(self.eval_loader)
             epoch_decoder_loss /= len(self.eval_loader)
@@ -390,33 +398,47 @@ class CoupledOptimizerAdversarialTrainer(BaseTrainer):
         epoch_loss = 0
 
         with tqdm(self.train_loader, unit="batch") as tepoch:
-            for inputs in tepoch:
+            for i, inputs in enumerate(tepoch):
 
                 tepoch.set_description(
                     f"Training of epoch {epoch}/{self.training_config.num_epochs}"
                 )
 
                 inputs = self._set_inputs_to_device(inputs)
-                
-                # Reset optimizers
-                self.encoder_optimizer.zero_grad()
-                self.decoder_optimizer.zero_grad()
-                self.discriminator_optimizer.zero_grad()
 
                 model_output = self.model(inputs)
-
                 encoder_loss = model_output.encoder_loss
-                encoder_loss.backward(retain_graph=True)
-
                 decoder_loss = model_output.decoder_loss
-                decoder_loss.backward(retain_graph=True)
-                
                 discriminator_loss = model_output.discriminator_loss
-                discriminator_loss.backward()
+                
+                # Reset optimizers
+                if model_output.update_encoder:
+                    self.encoder_optimizer.zero_grad()
+                    encoder_loss.backward(retain_graph=True)
+               
+                if model_output.update_decoder:
+                    self.decoder_optimizer.zero_grad()
+                    decoder_loss.backward(retain_graph=True)
+                
+                if model_output.update_discriminator:
+                    self.discriminator_optimizer.zero_grad()
+                    discriminator_loss.backward()
 
                 self.encoder_optimizer.step()
-                self.decoder_optimizer.step()
-                self.discriminator_optimizer.step()
+
+                if model_output.update_decoder:
+                    #print('update dec')
+                    self.decoder_optimizer.step()
+
+                if model_output.update_discriminator:
+                    #print('update discr')
+                    self.discriminator_optimizer.step()
+                
+
+                
+                
+                
+                
 
                 loss = encoder_loss + decoder_loss + discriminator_loss
 
@@ -424,6 +446,14 @@ class CoupledOptimizerAdversarialTrainer(BaseTrainer):
                 epoch_decoder_loss += decoder_loss.item()
                 epoch_discriminator_loss += discriminator_loss.item()
                 epoch_loss += loss.item()
+
+                tepoch.set_postfix(
+                    {
+                        'encoder_loss': epoch_encoder_loss / (i+1),
+                        'decoder_loss': epoch_decoder_loss / (i+1),
+                        'discriminator_loss': epoch_discriminator_loss / (i+1)
+                    }
+                )
 
             # Allows model updates if needed
             self.model.update()

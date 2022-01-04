@@ -88,6 +88,8 @@ class VAEGAN(VAE):
         
         self.adversarial_loss_scale = self.model_config.adversarial_loss_scale
         self.reconstruction_layer = self.model_config.reconstruction_layer
+        self.margin = self.model_config.margin
+        self.equilibrium = self.model_config.equilibrium
 
     def set_discriminator(self, discriminator: BaseLayeredDiscriminator) -> None:
         r"""This method is called to set the metric network outputing the
@@ -130,7 +132,7 @@ class VAEGAN(VAE):
 
         z_prior = torch.randn_like(z, device=x.device).requires_grad_(True)
 
-        recon_loss, encoder_loss, decoder_loss, discriminator_loss = self.loss_function(
+        recon_loss, encoder_loss, decoder_loss, discriminator_loss, update_encoder, update_decoder, update_discriminator = self.loss_function(
             recon_x, x, z, z_prior, mu, log_var
         )
 
@@ -142,6 +144,9 @@ class VAEGAN(VAE):
             encoder_loss=encoder_loss,
             decoder_loss=decoder_loss,
             discriminator_loss=discriminator_loss,
+            update_encoder=update_encoder,
+            update_decoder=update_decoder,
+            update_discriminator=update_discriminator,
             recon_x=recon_x,
             z=z
         )
@@ -170,45 +175,70 @@ class VAEGAN(VAE):
             true_discr_layer.reshape(N, -1),
             recon_discr_layer.reshape(N, -1),
             reduction='none'
-        ).mean(dim=-1)
+        ).sum(dim=-1)
 
         encoder_loss = KLD + recon_loss
 
         gen_prior = self.decoder(z_prior).reconstruction
 
-        x_ = x.clone().detach().requires_grad_(True)
-        recon_x_ = recon_x.clone().detach().requires_grad_(True)
-        gen_prior_ = gen_prior.clone().detach().requires_grad_(True)
+        #x_ = x.clone().detach().requires_grad_(True)
+        #recon_x_ = recon_x.clone().detach().requires_grad_(True)
+        #gen_prior_ = gen_prior.clone().detach().requires_grad_(True)
 
-        true_adversarial_score = self.discriminator(x_).adversarial_cost.flatten() 
-        gen_adversarial_score = self.discriminator(recon_x_).adversarial_cost.flatten()
-        prior_adversarial_score = self.discriminator(gen_prior_).adversarial_cost.flatten()
+        true_adversarial_score = self.discriminator(x).adversarial_cost.flatten() 
+        gen_adversarial_score = self.discriminator(recon_x).adversarial_cost.flatten()
+        prior_adversarial_score = self.discriminator(gen_prior).adversarial_cost.flatten()
 
         true_labels = torch.ones(N, requires_grad=False).to(self.device)
-        fake_labels = torch.zeros(N, requires_grad=False).to(self.device)        
+        fake_labels = torch.zeros(N, requires_grad=False).to(self.device)
+
+        original_dis_cost = F.binary_cross_entropy(
+            true_adversarial_score, true_labels) # original are true
+        prior_dis_cost = F.binary_cross_entropy(
+            prior_adversarial_score, fake_labels)  # prior is false
 
         discriminator_loss = (
             (
-                F.binary_cross_entropy(true_adversarial_score, true_labels) # original are true
+                original_dis_cost
             )
             +
             (
-                F.binary_cross_entropy(prior_adversarial_score, fake_labels) # prior is false
+                prior_dis_cost
             )
-            +
-            (
-                F.binary_cross_entropy(gen_adversarial_score, fake_labels) # generated are false
-            )
+            #+
+            #(
+            #    F.binary_cross_entropy(gen_adversarial_score, fake_labels) # generated are false
+            #)
         )
 
         decoder_loss = (1 - self.adversarial_loss_scale) * recon_loss \
             - self.adversarial_loss_scale * discriminator_loss
 
+        update_encoder = True
+        update_discriminator = True
+        update_decoder = True
+
+        # margins for training stability
+        if original_dis_cost.mean() < self.equilibrium - self.margin or  prior_dis_cost.mean() \
+            < self.equilibrium - self.margin:
+            update_discriminator = False
+
+        if original_dis_cost.mean() > self.equilibrium + self.margin or prior_dis_cost.mean() \
+            > self.equilibrium + self.margin:
+            update_decoder = False
+
+        if not update_decoder and not update_discriminator:
+            update_discriminator = True
+            update_decoder = True
+
         return (
             (recon_loss).mean(dim=0),
             (encoder_loss).mean(dim=0),
             (decoder_loss).mean(dim=0),
-            (discriminator_loss).mean(dim=0)
+            (discriminator_loss).mean(dim=0),
+            update_encoder,
+            update_decoder,
+            update_discriminator
         )
 
     def _sample_gauss(self, mu, std):

@@ -20,3 +20,5 @@ class VAEGANConfig(VAEConfig):
     reconstruction_layer: int = -1
     uses_default_discriminator: bool = True
     discriminator_input_dim: Union[Tuple[int, ...], None] = None
+    equilibrium: float = 0.68
+    margin: float = 0.4
