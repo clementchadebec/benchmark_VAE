@@ -270,7 +270,7 @@ You want to contribute to this library by adding a model, a sampler or simply fi
 | RAE_GP | ![RAE GMM](https://github.com/clementchadebec/benchmark_VAE/blob/aae/examples/showcases/rae_gp_reconstruction_mnist.png)  |  ![RAE GMM](https://github.com/clementchadebec/benchmark_VAE/blob/aae/examples/showcases/rae_gp_reconstruction_celeba.png)
 | Riemannian Hamiltonian VAE (RHVAE)| ![RHVAE](https://github.com/clementchadebec/benchmark_VAE/blob/aae/examples/showcases/rhvae_reconstruction_mnist.png) | ![RHVAE RHVAE](https://github.com/clementchadebec/benchmark_VAE/blob/aae/examples/showcases/rhvae_reconstruction_celeba.png)
 
-
+----------------------------
 ### Generation
 
 |               Models               |                                                                                    MNIST                                                                     |                     CELEBA             
