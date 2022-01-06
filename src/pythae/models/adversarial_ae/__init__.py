@@ -1,5 +1,6 @@
 """Implementation of an Adversarial Autoencoder model as proposed in 
-(https://arxiv.org/pdf/1511.05644.pdf)
+(https://arxiv.org/pdf/1511.05644.pdf). This model tries to make the posterior distribution match 
+the prior using adversarial training.
 
 Available samplers
 -------------------
@@ -7,7 +8,9 @@ Available samplers
 .. autosummary::
     ~pythae.samplers.NormalSampler
     ~pythae.samplers.GaussianMixtureSampler
+    ~pythae.samplers.TwoStageVAESampler
     :nosignatures:
+
 
 """
 

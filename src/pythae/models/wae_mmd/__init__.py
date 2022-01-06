@@ -1,4 +1,4 @@
-"""This module is the implementation of the Wasserstein Autoencoder proposed as in 
+"""This module is the implementation of the Wasserstein Autoencoder proposed in 
 (https://arxiv.org/pdf/1711.01558.pdf).
 
 Available samplers

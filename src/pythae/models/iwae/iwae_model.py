@@ -15,7 +15,7 @@ import torch.nn.functional as F
 
 class IWAE(VAE):
     """
-    IWAE model.
+    Importance Weighted Autoencoder model.
     
     Args:
         model_config(IWAEConfig): The IWAE configuration seting the main 

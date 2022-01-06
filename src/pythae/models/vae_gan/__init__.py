@@ -7,7 +7,9 @@ Available samplers
 .. autosummary::
     ~pythae.samplers.NormalSampler
     ~pythae.samplers.GaussianMixtureSampler
+    ~pythae.samplers.TwoStageVAESampler
     :nosignatures:
+
 """
 
 from .vae_gan_model import VAEGAN

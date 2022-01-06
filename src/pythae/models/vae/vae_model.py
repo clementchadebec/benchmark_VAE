@@ -14,7 +14,7 @@ import torch.nn.functional as F
 
 
 class VAE(BaseAE):
-    """Vanilla Autoencoder model.
+    """Vanilla Variational Autoencoder model.
     
     Args:
         model_config(VAEConfig): The Variational Autoencoder configuration seting the main 
