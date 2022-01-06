@@ -279,7 +279,7 @@ class CoupledOptimizerAdversarialTrainer(BaseTrainer):
                 self.training_config.steps_saving is not None
                 and epoch % self.training_config.steps_saving == 0
             ):
-                self.save_checkpoint(dir_path=training_dir, epoch=epoch)
+                self.save_checkpoint(model=best_model, dir_path=training_dir, epoch=epoch)
                 logger.info(f"Saved checkpoint at epoch {epoch}\n")
 
                 if log_verbose:
@@ -466,7 +466,7 @@ class CoupledOptimizerAdversarialTrainer(BaseTrainer):
         return epoch_loss, epoch_encoder_loss, epoch_decoder_loss, epoch_discriminator_loss
 
 
-    def save_checkpoint(self, dir_path, epoch: int):
+    def save_checkpoint(self, model: BaseAE, dir_path, epoch: int):
         """Saves a checkpoint alowing to restart training from here
 
         Args:
@@ -493,7 +493,7 @@ class CoupledOptimizerAdversarialTrainer(BaseTrainer):
         )
 
         # save model
-        self.model.save(checkpoint_dir)
+        model.save(checkpoint_dir)
 
         # save training config
         self.training_config.save_json(checkpoint_dir, "training_config")
