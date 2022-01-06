@@ -70,7 +70,7 @@ Below is the list of the models currently implemented in the library.
 | Regularized AE with gradient penalty (RAE_GP) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/notebooks/models_training/rae_gp_training.ipynb) | [link](https://arxiv.org/abs/1903.12436) | [link](https://github.com/ParthaEth/Regularized_autoencoders-RAE-/tree/master/) |
 | Riemannian Hamiltonian VAE (RHVAE) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/notebooks/models_training/rhvae_training.ipynb) | [link](https://arxiv.org/abs/2105.00026) | |
 
-**See [reconstruction](#Reconstruction) and [generation](#Generation) results for all aforementionned models**
+**See [reconstruction](#1) Reconstruction) and [generation](#2) Generation) results for all aforementionned models**
 
 ## Available Samplers
 
@@ -253,7 +253,8 @@ You want to contribute to this library by adding a model, a sampler or simply fi
 
 ## Results
 
-### Reconstruction
+### 1) Reconstruction
+
 
 |               Models               |                                                                                    MNIST                                                                     |                     CELEBA             
 |:----------------------------------:|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|:--------------------------------------------:|
@@ -273,7 +274,7 @@ You want to contribute to this library by adding a model, a sampler or simply fi
 | Riemannian Hamiltonian VAE (RHVAE)| ![RHVAE](https://github.com/clementchadebec/benchmark_VAE/blob/aae/examples/showcases/rhvae_reconstruction_mnist.png) | ![RHVAE RHVAE](https://github.com/clementchadebec/benchmark_VAE/blob/aae/examples/showcases/rhvae_reconstruction_celeba.png)
 
 ----------------------------
-### Generation
+### 2) Generation
 
 |               Models               |                                                                                    MNIST                                                                     |                     CELEBA             
 |:----------------------------------:|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|:--------------------------------------------:|
