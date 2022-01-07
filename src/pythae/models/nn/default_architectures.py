@@ -1,22 +1,34 @@
 import torch
 import numpy as np
 import torch.nn as nn
+from typing import List
 
-from pythae.models.nn import BaseEncoder, BaseDecoder, BaseMetric
+from pythae.models.nn import BaseEncoder, BaseDecoder, BaseMetric, BaseLayeredEncoder
 from ..base.base_utils import ModelOuput
 
 
 class Encoder_AE_MLP(BaseEncoder):
     def __init__(self, args: dict):
-        BaseEncoder.__init__(self)
 
         self.input_dim = args.input_dim
         self.latent_dim = args.latent_dim
 
-        self.layers = nn.Sequential(nn.Linear(np.prod(args.input_dim), 500), nn.ReLU())
-        self.mu = nn.Linear(500, self.latent_dim)
+        layers = nn.ModuleList()
 
-    def forward(self, x):
+        layers.append(
+            nn.Sequential(nn.Linear(np.prod(args.input_dim), 512), nn.ReLU())
+        )
+
+        BaseEncoder.__init__(self, layers)
+
+        self.mu = nn.Linear(512, self.latent_dim)
+
+    def forward(self, x, output_layer_levels:List[int]):
+        assert all(self.depth > levels > 0), (
+            f'Cannot output layer deeper than depth ({self.depth}) or with non-positive indice. '\
+            f'Got ({output_layer_levels})'
+            )
+
         out = self.layers(x.reshape(-1, np.prod(self.input_dim)))
 
         output = ModelOuput(embedding=self.mu(out))
@@ -26,14 +38,20 @@ class Encoder_AE_MLP(BaseEncoder):
 
 class Encoder_VAE_MLP(BaseEncoder):
     def __init__(self, args: dict):
-        BaseEncoder.__init__(self)
 
         self.input_dim = args.input_dim
         self.latent_dim = args.latent_dim
 
-        self.layers = nn.Sequential(nn.Linear(np.prod(args.input_dim), 500), nn.ReLU())
-        self.mu = nn.Linear(500, self.latent_dim)
-        self.std = nn.Linear(500, self.latent_dim)
+        layers = nn.ModuleList()
+
+        layers.append(
+            nn.Sequential(nn.Linear(np.prod(args.input_dim), 512), nn.ReLU())
+        )
+
+        BaseEncoder.__init__(self, layers)
+
+        self.mu = nn.Linear(512, self.latent_dim)
+        self.std = nn.Linear(512, self.latent_dim)
 
     def forward(self, x):
         out = self.layers(x.reshape(-1, np.prod(self.input_dim)))
@@ -52,9 +70,9 @@ class Decoder_AE_MLP(BaseDecoder):
         # assert 0, np.prod(args.input_dim)
 
         self.layers = nn.Sequential(
-            nn.Linear(args.latent_dim, 500),
+            nn.Linear(args.latent_dim, 512),
             nn.ReLU(),
-            nn.Linear(500, int(np.prod(args.input_dim))),
+            nn.Linear(512, int(np.prod(args.input_dim))),
             nn.Sigmoid(),
         )
 
@@ -79,10 +97,10 @@ class Metric_MLP(BaseMetric):
         self.input_dim = args.input_dim
         self.latent_dim = args.latent_dim
 
-        self.layers = nn.Sequential(nn.Linear(np.prod(args.input_dim), 400), nn.ReLU())
-        self.diag = nn.Linear(400, self.latent_dim)
+        self.layers = nn.Sequential(nn.Linear(np.prod(args.input_dim), 512), nn.ReLU())
+        self.diag = nn.Linear(512, self.latent_dim)
         k = int(self.latent_dim * (self.latent_dim - 1) / 2)
-        self.lower = nn.Linear(400, k)
+        self.lower = nn.Linear(512, k)
 
     def forward(self, x):
 
