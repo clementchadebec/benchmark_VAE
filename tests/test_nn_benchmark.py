@@ -29,7 +29,7 @@ class Test_MNIST_Benchmark:
         decoder = Decoder_AE_MNIST(ae_mnist_config).to(device)
 
         embedding = encoder(mnist_like_data).embedding
-    
+
         assert embedding.shape == (mnist_like_data.shape[0], ae_mnist_config.latent_dim)
 
         reconstruction = decoder(embedding).reconstruction

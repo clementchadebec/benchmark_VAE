@@ -121,7 +121,7 @@ class Encoder_AE_MNIST(BaseEncoder):
         )
 
         self.layers = layers
-        self.depth = len(layers) + 1
+        self.depth = len(layers)
 
         self.embedding = nn.Linear(1024, args.latent_dim)
 
@@ -149,7 +149,7 @@ class Encoder_AE_MNIST(BaseEncoder):
                 if i+1 in output_layer_levels:
                     output[f'embedding_layer_{i+1}'] = out
         
-        output['embedding'] = self.embedding(out)
+        output['embedding'] = self.embedding(out.reshape(x.shape[0], -1))
 
         return output
 
@@ -272,7 +272,7 @@ class Encoder_VAE_MNIST(BaseEncoder):
         )
 
         self.layers = layers
-        self.depth = len(layers) + 1
+        self.depth = len(layers)
 
         self.embedding = nn.Linear(1024, args.latent_dim)
         self.log_var = nn.Linear(1024, args.latent_dim)
@@ -302,8 +302,8 @@ class Encoder_VAE_MNIST(BaseEncoder):
                 if i+1 in output_layer_levels:
                     output[f'embedding_layer_{i+1}'] = out
         
-        output['embedding'] = self.embedding(out)
-        output['log_covariance'] = self.log_var(out)
+        output['embedding'] = self.embedding(out.reshape(x.shape[0], -1))
+        output['log_covariance'] = self.log_var(out.reshape(x.shape[0], -1))
 
         return output
 
@@ -431,6 +431,6 @@ class Decoder_AE_MNIST(BaseDecoder):
             if i == 0:
                 out = out.reshape(z.shape[0], 1024, 4, 4)
 
-        output['reconstruction'] = out.reshape((z.shape[0],) + self.input_dim)
+        output['reconstruction'] = out
 
         return output

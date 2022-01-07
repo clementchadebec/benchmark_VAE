@@ -20,7 +20,7 @@ class Encoder_AE_MLP(BaseEncoder):
         )
 
         self.layers = layers
-        self.depth = len(layers) + 1
+        self.depth = len(layers)
 
         self.embedding = nn.Linear(512, self.latent_dim)
 
@@ -62,7 +62,7 @@ class Encoder_VAE_MLP(BaseEncoder):
         )
 
         self.layers = layers
-        self.depth = len(layers) + 1
+        self.depth = len(layers)
 
         self.embedding = nn.Linear(512, self.latent_dim)
         self.log_var = nn.Linear(512, self.latent_dim)

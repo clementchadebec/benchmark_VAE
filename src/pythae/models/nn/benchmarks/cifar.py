@@ -3,6 +3,7 @@
 import torch
 import torch.nn as nn
 
+from typing import List
 from ..base_architectures import BaseEncoder, BaseDecoder
 from ....models.base.base_utils import ModelOuput
 from ....models import BaseAEConfig
@@ -118,11 +119,11 @@ class Encoder_AE_CIFAR(BaseEncoder):
         )
 
         self.layers = layers
-        self.depth = len(layers) + 1
+        self.depth = len(layers)
 
         self.embedding = nn.Linear(1024 * 2 * 2, args.latent_dim)
 
-    def forward(self, x: torch.Tensor):
+    def forward(self, x: torch.Tensor, output_layer_levels:List[int]=None):
         """Forward 
         
         Returns:
@@ -147,7 +148,7 @@ class Encoder_AE_CIFAR(BaseEncoder):
                 if i+1 in output_layer_levels:
                     output[f'embedding_layer_{i+1}'] = out
         
-        output['embedding'] = self.embedding(out)
+        output['embedding'] = self.embedding(out.reshape(x.shape[0], -1))
 
         return output
 
@@ -269,12 +270,12 @@ class Encoder_VAE_CIFAR(BaseEncoder):
         )
 
         self.layers = layers
-        self.depth = len(layers) + 1
+        self.depth = len(layers)
 
         self.embedding = nn.Linear(1024 * 2 * 2, args.latent_dim)
         self.log_var = nn.Linear(1024 * 2 * 2, args.latent_dim)
 
-    def forward(self, x: torch.Tensor):
+    def forward(self, x: torch.Tensor, output_layer_levels:List[int]=None):
         """Forward method
 
         Returns:
@@ -299,8 +300,8 @@ class Encoder_VAE_CIFAR(BaseEncoder):
                 if i+1 in output_layer_levels:
                     output[f'embedding_layer_{i+1}'] = out
         
-        output['embedding'] = self.embedding(out)
-        output['log_covariance'] = self.log_var(out)
+        output['embedding'] = self.embedding(out.reshape(x.shape[0], -1))
+        output['log_covariance'] = self.log_var(out.reshape(x.shape[0], -1))
 
         return output
 
@@ -367,7 +368,7 @@ class Decoder_AE_CIFAR(BaseDecoder):
     """
     def __init__(self, args: dict):
         BaseDecoder.__init__(self)
-        self.input_dim = (3, 28, 28)
+        self.input_dim = (3, 32, 32)
         self.latent_dim = args.latent_dim
         self.n_channels = 3
 
@@ -403,7 +404,7 @@ class Decoder_AE_CIFAR(BaseDecoder):
         self.layers = layers
         self.depth = len(layers)
 
-    def forward(self, z: torch.Tensor):
+    def forward(self, z: torch.Tensor, output_layer_levels:List[int]=None):
         """Forward method
         
         Returns:
@@ -429,8 +430,8 @@ class Decoder_AE_CIFAR(BaseDecoder):
                     output[f'reconstruction_layer_{i+1}'] = out
 
             if i == 0:
-                out = out.reshape(z.shape[0], 1024, 4, 4)
+                out = out.reshape(z.shape[0], 1024, 8, 8)
 
-        output['reconstruction'] = out.reshape((z.shape[0],) + self.input_dim)
+        output['reconstruction'] = out
 
         return output

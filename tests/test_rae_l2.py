@@ -114,7 +114,7 @@ class Test_Model_Saving:
 
         model = RAE_L2(model_configs)
 
-        model.state_dict()["encoder.layers.0.weight"][0] = 0
+        model.state_dict()["encoder.layers.0.0.weight"][0] = 0
 
         model.save(dir_path=dir_path)
 
@@ -140,7 +140,7 @@ class Test_Model_Saving:
 
         model = RAE_L2(model_configs, encoder=custom_encoder)
 
-        model.state_dict()["encoder.layers.0.weight"][0] = 0
+        model.state_dict()["encoder.layers.0.0.weight"][0] = 0
 
         model.save(dir_path=dir_path)
 
@@ -168,7 +168,7 @@ class Test_Model_Saving:
 
         model = RAE_L2(model_configs, decoder=custom_decoder)
 
-        model.state_dict()["encoder.layers.0.weight"][0] = 0
+        model.state_dict()["encoder.layers.0.0.weight"][0] = 0
 
         model.save(dir_path=dir_path)
 
@@ -198,7 +198,7 @@ class Test_Model_Saving:
 
         model = RAE_L2(model_configs, encoder=custom_encoder, decoder=custom_decoder)
 
-        model.state_dict()["encoder.layers.0.weight"][0] = 0
+        model.state_dict()["encoder.layers.0.0.weight"][0] = 0
 
         model.save(dir_path=dir_path)
 
@@ -228,7 +228,7 @@ class Test_Model_Saving:
 
         model = RAE_L2(model_configs, encoder=custom_encoder, decoder=custom_decoder)
 
-        model.state_dict()["encoder.layers.0.weight"][0] = 0
+        model.state_dict()["encoder.layers.0.0.weight"][0] = 0
 
         model.save(dir_path=dir_path)
 

@@ -3,7 +3,7 @@ import typing
 import torch
 import torch.nn as nn
 import numpy as np
-
+from typing import List
 from pythae.models.nn import *
 from pythae.models.base.base_utils import ModelOuput
 
@@ -15,29 +15,60 @@ class Encoder_AE_Conv(BaseEncoder):
         self.latent_dim = args.latent_dim
         self.n_channels = 1
 
-        self.layers = nn.Sequential(
-            nn.Conv2d(
-                self.n_channels, out_channels=32, kernel_size=3, stride=2, padding=1
-            ),
-            nn.BatchNorm2d(32),
-            nn.ReLU(),
-            nn.Conv2d(32, out_channels=32, kernel_size=3, stride=2, padding=1),
-            nn.BatchNorm2d(32),
-            nn.ReLU(),
-            nn.Conv2d(32, out_channels=32, kernel_size=3, stride=2, padding=1),
-            nn.BatchNorm2d(32),
-            nn.ReLU(),
+        layers = nn.ModuleList()
+
+        layers.append(
+            nn.Sequential(
+                nn.Conv2d(
+                    self.n_channels, out_channels=32, kernel_size=3, stride=2, padding=1
+                ),
+                nn.BatchNorm2d(32),
+                nn.ReLU()
+            )
         )
 
-        self.fc1 = nn.Sequential(nn.Linear(512, 400), nn.ReLU())
+        layers.append(
+            nn.Sequential(
+                nn.Conv2d(32, out_channels=32, kernel_size=3, stride=2, padding=1),
+                nn.BatchNorm2d(32),
+                nn.ReLU(),
+            )
+        )
 
-        self.mu = nn.Linear(400, self.latent_dim)
+        layers.append(
+            nn.Sequential(
+                nn.Conv2d(32, out_channels=32, kernel_size=3, stride=2, padding=1),
+                nn.BatchNorm2d(32),
+                nn.ReLU()
+            )
+        )
 
-    def forward(self, x):
-        out = self.layers(x)
-        out = self.fc1(out.reshape(x.shape[0], -1))
 
-        output = ModelOuput(embedding=self.mu(out))
+        self.layers = layers
+        self.depth = len(layers)
+
+        self.embedding = nn.Linear(512, self.latent_dim)
+
+    def forward(self, x, output_layer_levels:List[int]=None):
+        output = ModelOuput()
+
+        if output_layer_levels is not None:
+
+            assert all(self.depth >= levels > 0), (
+                f'Cannot output layer deeper than depth ({self.depth}) or with non-positive indice. '\
+                f'Got ({output_layer_levels})'
+                )
+
+        out = x
+
+        for i in range(self.depth):
+            out = self.layers[i](out)
+
+            if output_layer_levels is not None:
+                if i+1 in output_layer_levels:
+                    output[f'embedding_layer_{i+1}'] = out
+        
+        output['embedding'] = self.embedding(out.reshape(x.shape[0], -1))
 
         return output
 
@@ -49,32 +80,64 @@ class Encoder_VAE_Conv(BaseEncoder):
         self.latent_dim = args.latent_dim
         self.n_channels = 1
 
-        self.layers = nn.Sequential(
-            nn.Conv2d(
-                self.n_channels, out_channels=32, kernel_size=3, stride=2, padding=1
-            ),
-            nn.BatchNorm2d(32),
-            nn.ReLU(),
-            nn.Conv2d(32, out_channels=32, kernel_size=3, stride=2, padding=1),
-            nn.BatchNorm2d(32),
-            nn.ReLU(),
-            nn.Conv2d(32, out_channels=32, kernel_size=3, stride=2, padding=1),
-            nn.BatchNorm2d(32),
-            nn.ReLU(),
+        layers = nn.ModuleList()
+
+        layers.append(
+            nn.Sequential(
+                nn.Conv2d(
+                    self.n_channels, out_channels=32, kernel_size=3, stride=2, padding=1
+                ),
+                nn.BatchNorm2d(32),
+                nn.ReLU()
+            )
         )
 
-        self.fc1 = nn.Sequential(nn.Linear(512, 400), nn.ReLU())
+        layers.append(
+            nn.Sequential(
+                nn.Conv2d(32, out_channels=32, kernel_size=3, stride=2, padding=1),
+                nn.BatchNorm2d(32),
+                nn.ReLU(),
+            )
+        )
 
-        self.mu = nn.Linear(400, self.latent_dim)
-        self.std = nn.Linear(400, self.latent_dim)
+        layers.append(
+            nn.Sequential(
+                nn.Conv2d(32, out_channels=32, kernel_size=3, stride=2, padding=1),
+                nn.BatchNorm2d(32),
+                nn.ReLU()
+            )
+        )
 
-    def forward(self, x):
-        out = self.layers(x)
-        out = self.fc1(out.reshape(x.shape[0], -1))
+        self.layers = layers
+        self.depth = len(layers)
 
-        output = ModelOuput(embedding=self.mu(out), log_covariance=self.std(out))
+        self.embedding = nn.Linear(512, self.latent_dim)
+        self.log_var = nn.Linear(512, self.latent_dim)
+
+    def forward(self, x, output_layer_levels:List[int]=None):
+        output = ModelOuput()
+
+        if output_layer_levels is not None:
+
+            assert all(self.depth >= levels > 0), (
+                f'Cannot output layer deeper than depth ({self.depth}) or with non-positive indice. '\
+                f'Got ({output_layer_levels})'
+                )
+
+        out = x
+
+        for i in range(self.depth):
+            out = self.layers[i](out)
+
+            if output_layer_levels is not None:
+                if i+1 in output_layer_levels:
+                    output[f'embedding_layer_{i+1}'] = out
+        
+        output['embedding'] = self.embedding(out.reshape(x.shape[0], -1))
+        output['log_covariance'] = self.log_var(out.reshape(x.shape[0], -1))
 
         return output
+
 
 
 class Decoder_AE_Conv(BaseDecoder):
@@ -84,40 +147,83 @@ class Decoder_AE_Conv(BaseDecoder):
         self.latent_dim = args.latent_dim
         self.n_channels = 1
 
-        self.fc1 = nn.Sequential(
-            nn.Linear(self.latent_dim, 400), nn.ReLU(), nn.Linear(400, 512), nn.ReLU()
+        layers = nn.ModuleList()
+
+        layers.append(
+            nn.Sequential(
+                nn.Linear(self.latent_dim, 256),
+                nn.ReLU(),
+                nn.Linear(256, 512),
+                nn.ReLU()
+            )
         )
 
-        self.layers = nn.Sequential(
-            nn.ConvTranspose2d(32, out_channels=32, kernel_size=3, stride=2, padding=1),
-            nn.BatchNorm2d(32),
-            nn.ReLU(),
-            nn.ConvTranspose2d(
-                32,
-                out_channels=32,
-                kernel_size=3,
-                stride=2,
-                padding=1,
-                output_padding=1,
-            ),
-            nn.BatchNorm2d(32),
-            nn.ReLU(),
-            nn.ConvTranspose2d(
-                32,
-                out_channels=self.n_channels,
-                kernel_size=3,
-                stride=2,
-                padding=1,
-                output_padding=1,
-            ),
-            nn.BatchNorm2d(self.n_channels),
-            nn.Sigmoid(),
+        layers.append(
+            nn.Sequential(
+                nn.ConvTranspose2d(32, out_channels=32, kernel_size=3, stride=2, padding=1),
+                nn.BatchNorm2d(32),
+                nn.ReLU(),
+            )
         )
 
-    def forward(self, z):
-        out = self.fc1(z)
-        reconstruction = self.layers(out.reshape(z.shape[0], 32, 4, 4))
-        output = ModelOuput(reconstruction=reconstruction)
+        layers.append(
+            nn.Sequential(
+                nn.ConvTranspose2d(
+                    32,
+                    out_channels=32,
+                    kernel_size=3,
+                    stride=2,
+                    padding=1,
+                    output_padding=1,
+                ),
+                nn.BatchNorm2d(32),
+                nn.ReLU(),
+            )
+        )
+        
+        layers.append(
+            nn.Sequential(
+                nn.ConvTranspose2d(
+                    32,
+                    out_channels=self.n_channels,
+                    kernel_size=3,
+                    stride=2,
+                    padding=1,
+                    output_padding=1,
+                ),
+                nn.BatchNorm2d(self.n_channels),
+                nn.Sigmoid(),
+            )
+        )
+
+        self.layers = layers
+        self.depth = len(layers)
+
+
+    def forward(self, z, output_layer_levels:List[int]=None):
+        output = ModelOuput()
+
+        if output_layer_levels is not None:
+
+            assert all(self.depth >= levels > 0), (
+                f'Cannot output layer deeper than depth ({self.depth}) or with non-positive indice. '\
+                f'Got ({output_layer_levels})'
+                )
+
+        out = z
+
+        for i in range(self.depth):
+            out = self.layers[i](out)
+
+            if output_layer_levels is not None:
+                if i+1 in output_layer_levels:
+                    output[f'reconstruction_layer_{i+1}'] = out
+
+            if i == 0:
+                out = out.reshape(z.shape[0], 32, 4, 4)
+
+        output['reconstruction'] = out
+
         return output
 
 

@@ -3,6 +3,7 @@
 import torch
 import torch.nn as nn
 
+from typing import List
 from ..base_architectures import BaseEncoder, BaseDecoder
 from ....models.base.base_utils import ModelOuput
 from ....models import BaseAEConfig
@@ -120,11 +121,11 @@ class Encoder_AE_CELEBA(BaseEncoder):
         )
 
         self.layers = layers
-        self.depth = len(layers) + 1
+        self.depth = len(layers)
 
         self.embedding = nn.Linear(1024 * 4 * 4, args.latent_dim)
 
-    def forward(self, x: torch.Tensor):
+    def forward(self, x: torch.Tensor, output_layer_levels:List[int]=None):
         """Forward method
         
         Returns:
@@ -148,7 +149,7 @@ class Encoder_AE_CELEBA(BaseEncoder):
                 if i+1 in output_layer_levels:
                     output[f'embedding_layer_{i+1}'] = out
         
-        output['embedding'] = self.embedding(out)
+        output['embedding'] = self.embedding(out.reshape(x.shape[0], -1))
 
         return output
 
@@ -271,12 +272,12 @@ class Encoder_VAE_CELEBA(BaseEncoder):
         )
 
         self.layers = layers
-        self.depth = len(layers) + 1
+        self.depth = len(layers)
 
         self.embedding = nn.Linear(1024 * 4 * 4, args.latent_dim)
         self.log_var = nn.Linear(1024 * 4 * 4, args.latent_dim)
 
-    def forward(self, x: torch.Tensor):
+    def forward(self, x: torch.Tensor, output_layer_levels:List[int]=None):
         """Forward method
         
         Returns:
@@ -301,8 +302,8 @@ class Encoder_VAE_CELEBA(BaseEncoder):
                 if i+1 in output_layer_levels:
                     output[f'embedding_layer_{i+1}'] = out
         
-        output['embedding'] = self.embedding(out)
-        output['log_covariance'] = self.log_var(out)
+        output['embedding'] = self.embedding(out.reshape(x.shape[0], -1))
+        output['log_covariance'] = self.log_var(out.reshape(x.shape[0], -1))
 
         return output
 
@@ -420,7 +421,10 @@ class Decoder_AE_CELEBA(BaseDecoder):
             )
         )
 
-    def forward(self, z: torch.Tensor):
+        self.layers = layers
+        self.depth = len(layers)
+
+    def forward(self, z: torch.Tensor, output_layer_levels:List[int]=None):
         """Forward method
         
         Returns:
@@ -445,8 +449,8 @@ class Decoder_AE_CELEBA(BaseDecoder):
                     output[f'reconstruction_layer_{i+1}'] = out
 
             if i == 0:
-                out = out.reshape(z.shape[0], 1024, 4, 4)
+                out = out.reshape(z.shape[0], 1024, 8, 8)
 
-        output['reconstruction'] = out.reshape((z.shape[0],) + self.input_dim)
+        output['reconstruction'] = out
 
         return output
