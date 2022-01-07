@@ -1,6 +1,6 @@
 """This module is the implementation of the Beta_VAE proposed in
 (https://openreview.net/pdf?id=Sy2fzU9gl).
-This models tweaks add a new parameter to the VAE loss function balancing the weight of the 
+This models adds a new parameter to the VAE loss function balancing the weight of the 
 reconstruction term and KL term.
 
 

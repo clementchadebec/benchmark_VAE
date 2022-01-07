@@ -1,5 +1,5 @@
 """This module is the implementation of the Regularized AE with L2 decoder parameter regularization
- proposed in (https://arxiv.org/pdf/1903.12436.pdf).
+proposed in (https://arxiv.org/pdf/1903.12436.pdf).
 
 Available samplers
 -------------------

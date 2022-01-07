@@ -16,7 +16,7 @@ from typing import Optional
 
 class HVAE(VAE):
     r"""
-    Hamiltonian VAE model.
+    Hamiltonian VAE.
 
     Args:
         model_config (HVAEConfig): A model configuration setting the main parameters of the model
