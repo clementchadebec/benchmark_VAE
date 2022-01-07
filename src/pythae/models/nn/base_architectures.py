@@ -8,11 +8,8 @@ class BaseEncoder(nn.Module):
     """This is a base class for Encoders neural networks.
     """
 
-    def __init__(self, layers: nn.ModuleList):
+    def __init__(self):
         nn.Module.__init__(self)
-
-        self.layers = layers
-        self.depth = len(layers) + 1
 
     def forward(self, x):
         r"""This function must be implemented in a child class.
@@ -54,11 +51,8 @@ class BaseDecoder(nn.Module):
     """This is a base class for Decoders neural networks.
     """
 
-    def __init__(self, layers: nn.ModuleList):
+    def __init__(self):
         nn.Module.__init__(self)
-
-        self.layers = layers
-        self.depth = len(layers)
 
     def forward(self, z: torch.Tensor):
         r"""This function must be implemented in a child class.

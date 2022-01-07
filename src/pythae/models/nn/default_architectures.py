@@ -3,13 +3,13 @@ import numpy as np
 import torch.nn as nn
 from typing import List
 
-from pythae.models.nn import BaseEncoder, BaseDecoder, BaseMetric, BaseLayeredEncoder
+from pythae.models.nn import BaseEncoder, BaseDecoder, BaseMetric
 from ..base.base_utils import ModelOuput
 
 
 class Encoder_AE_MLP(BaseEncoder):
     def __init__(self, args: dict):
-
+        BaseEncoder.__init__(self)
         self.input_dim = args.input_dim
         self.latent_dim = args.latent_dim
 
@@ -19,26 +19,39 @@ class Encoder_AE_MLP(BaseEncoder):
             nn.Sequential(nn.Linear(np.prod(args.input_dim), 512), nn.ReLU())
         )
 
-        BaseEncoder.__init__(self, layers)
+        self.layers = layers
+        self.depth = len(layers) + 1
 
-        self.mu = nn.Linear(512, self.latent_dim)
+        self.embedding = nn.Linear(512, self.latent_dim)
 
-    def forward(self, x, output_layer_levels:List[int]):
-        assert all(self.depth > levels > 0), (
-            f'Cannot output layer deeper than depth ({self.depth}) or with non-positive indice. '\
-            f'Got ({output_layer_levels})'
-            )
+    def forward(self, x, output_layer_levels:List[int]=None):
+        output = ModelOuput()
 
-        out = self.layers(x.reshape(-1, np.prod(self.input_dim)))
+        if output_layer_levels is not None:
 
-        output = ModelOuput(embedding=self.mu(out))
+            assert all(self.depth >= levels > 0), (
+                f'Cannot output layer deeper than depth ({self.depth}) or with non-positive indice. '\
+                f'Got ({output_layer_levels})'
+                )
+
+
+        out = x.reshape(-1, np.prod(self.input_dim))
+
+        for i in range(self.depth):
+            out = self.layers[i](out)
+
+            if output_layer_levels is not None:
+                if i+1 in output_layer_levels:
+                    output[f'embedding_layer_{i+1}'] = out
+        
+        output['embedding'] = self.embedding(out)
 
         return output
 
 
 class Encoder_VAE_MLP(BaseEncoder):
     def __init__(self, args: dict):
-
+        BaseEncoder.__init__(self)
         self.input_dim = args.input_dim
         self.latent_dim = args.latent_dim
 
@@ -48,15 +61,34 @@ class Encoder_VAE_MLP(BaseEncoder):
             nn.Sequential(nn.Linear(np.prod(args.input_dim), 512), nn.ReLU())
         )
 
-        BaseEncoder.__init__(self, layers)
+        self.layers = layers
+        self.depth = len(layers) + 1
 
-        self.mu = nn.Linear(512, self.latent_dim)
-        self.std = nn.Linear(512, self.latent_dim)
+        self.embedding = nn.Linear(512, self.latent_dim)
+        self.log_var = nn.Linear(512, self.latent_dim)
 
-    def forward(self, x):
-        out = self.layers(x.reshape(-1, np.prod(self.input_dim)))
+    def forward(self, x, output_layer_levels:List[int]=None):
+        output = ModelOuput()
 
-        output = ModelOuput(embedding=self.mu(out), log_covariance=self.std(out))
+        if output_layer_levels is not None:
+
+            assert all(self.depth >= levels > 0), (
+                f'Cannot output layer deeper than depth ({self.depth}) or with non-positive indice. '\
+                f'Got ({output_layer_levels})'
+                )
+
+
+        out = x.reshape(-1, np.prod(self.input_dim))
+
+        for i in range(self.depth):
+            out = self.layers[i](out)
+
+            if output_layer_levels is not None:
+                if i+1 in output_layer_levels:
+                    output[f'embedding_layer_{i+1}'] = out
+
+        output['embedding'] = self.embedding(out)
+        output['log_covariance'] = self.log_var(out)
 
         return output
 
@@ -69,16 +101,48 @@ class Decoder_AE_MLP(BaseDecoder):
 
         # assert 0, np.prod(args.input_dim)
 
-        self.layers = nn.Sequential(
-            nn.Linear(args.latent_dim, 512),
-            nn.ReLU(),
-            nn.Linear(512, int(np.prod(args.input_dim))),
-            nn.Sigmoid(),
+        layers = nn.ModuleList()
+
+        layers.append(
+            nn.Sequential(
+                nn.Linear(args.latent_dim, 512),
+                nn.ReLU()
+            )
         )
 
-    def forward(self, z):
-        reconstruction = self.layers(z).reshape((z.shape[0],) + self.input_dim)
-        output = ModelOuput(reconstruction=reconstruction)
+        layers.append(
+            nn.Sequential(
+                nn.Linear(512, int(np.prod(args.input_dim))),
+                nn.Sigmoid(),
+            )
+        )
+       
+        self.layers = layers
+        self.depth = len(layers)
+
+
+    def forward(self, z: torch.Tensor, output_layer_levels:List[int]=None):
+
+        output = ModelOuput()
+
+        if output_layer_levels is not None:
+
+            assert all(self.depth >= levels > 0), (
+                f'Cannot output layer deeper than depth ({self.depth}) or with non-positive indice. '\
+                f'Got ({output_layer_levels})'
+                )
+
+        out = z
+
+        for i in range(self.depth):
+            out = self.layers[i](out)
+
+            if output_layer_levels is not None:
+                if i+1 in output_layer_levels:
+                    output[f'reconstruction_layer_{i+1}'] = out
+
+        output['reconstruction'] = out.reshape((z.shape[0],) + self.input_dim)
+
         return output
 
 

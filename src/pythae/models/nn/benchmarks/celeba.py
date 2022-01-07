@@ -85,20 +85,42 @@ class Encoder_AE_CELEBA(BaseEncoder):
         self.latent_dim = args.latent_dim
         self.n_channels = 3
 
-        self.conv_layers = nn.Sequential(
-            nn.Conv2d(self.n_channels, 128, 5, 2, padding=1),
-            nn.BatchNorm2d(128),
-            nn.ReLU(),
-            nn.Conv2d(128, 256, 5, 2, padding=1),
-            nn.BatchNorm2d(256),
-            nn.ReLU(),
-            nn.Conv2d(256, 512, 5, 2, padding=2),
-            nn.BatchNorm2d(512),
-            nn.ReLU(),
-            nn.Conv2d(512, 1024, 5, 2, padding=2),
-            nn.BatchNorm2d(1024),
-            nn.ReLU(),
+        layers = nn.ModuleList()
+
+        layers.append(
+            nn.Sequential(
+                nn.Conv2d(self.n_channels, 128, 5, 2, padding=1),
+                nn.BatchNorm2d(128),
+                nn.ReLU(),
+            )
         )
+
+        layers.append(
+            nn.Sequential(
+                nn.Conv2d(128, 256, 5, 2, padding=1),
+                nn.BatchNorm2d(256),
+                nn.ReLU(),
+            )
+        )
+
+        layers.append(
+            nn.Sequential(
+                nn.Conv2d(256, 512, 5, 2, padding=2),
+                nn.BatchNorm2d(512),
+                nn.ReLU(),
+            )
+        )
+
+        layers.append(
+            nn.Sequential(
+                nn.Conv2d(512, 1024, 5, 2, padding=2),
+                nn.BatchNorm2d(1024),
+                nn.ReLU(),
+            )
+        )
+
+        self.layers = layers
+        self.depth = len(layers) + 1
 
         self.embedding = nn.Linear(1024 * 4 * 4, args.latent_dim)
 
@@ -108,8 +130,26 @@ class Encoder_AE_CELEBA(BaseEncoder):
         Returns:
             ModelOuput: An instance of ModelOutput containing the embeddings of the input data under
             the key `embedding`"""
-        h1 = self.conv_layers(x).reshape(x.shape[0], -1)
-        output = ModelOuput(embedding=self.embedding(h1))
+        output = ModelOuput()
+
+        if output_layer_levels is not None:
+
+            assert all(self.depth >= levels > 0), (
+                f'Cannot output layer deeper than depth ({self.depth}) or with non-positive indice. '\
+                f'Got ({output_layer_levels})'
+                )
+
+        out = x
+
+        for i in range(self.depth):
+            out = self.layers[i](out)
+
+            if output_layer_levels is not None:
+                if i+1 in output_layer_levels:
+                    output[f'embedding_layer_{i+1}'] = out
+        
+        output['embedding'] = self.embedding(out)
+
         return output
 
 
@@ -196,20 +236,42 @@ class Encoder_VAE_CELEBA(BaseEncoder):
         self.latent_dim = args.latent_dim
         self.n_channels = 3
 
-        self.conv_layers = torch.nn.Sequential(
-            nn.Conv2d(self.n_channels, 128, 4, 2, padding=1),
-            nn.BatchNorm2d(128),
-            nn.ReLU(),
-            nn.Conv2d(128, 256, 4, 2, padding=1),
-            nn.BatchNorm2d(256),
-            nn.ReLU(),
-            nn.Conv2d(256, 512, 4, 2, padding=1),
-            nn.BatchNorm2d(512),
-            nn.ReLU(),
-            nn.Conv2d(512, 1024, 4, 2, padding=1),
-            nn.BatchNorm2d(1024),
-            nn.ReLU(),
+        layers = nn.ModuleList()
+
+        layers.append(
+            nn.Sequential(
+                nn.Conv2d(self.n_channels, 128, 5, 2, padding=1),
+                nn.BatchNorm2d(128),
+                nn.ReLU(),
+            )
         )
+
+        layers.append(
+            nn.Sequential(
+                nn.Conv2d(128, 256, 5, 2, padding=1),
+                nn.BatchNorm2d(256),
+                nn.ReLU(),
+            )
+        )
+
+        layers.append(
+            nn.Sequential(
+                nn.Conv2d(256, 512, 5, 2, padding=2),
+                nn.BatchNorm2d(512),
+                nn.ReLU(),
+            )
+        )
+
+        layers.append(
+            nn.Sequential(
+                nn.Conv2d(512, 1024, 5, 2, padding=2),
+                nn.BatchNorm2d(1024),
+                nn.ReLU(),
+            )
+        )
+
+        self.layers = layers
+        self.depth = len(layers) + 1
 
         self.embedding = nn.Linear(1024 * 4 * 4, args.latent_dim)
         self.log_var = nn.Linear(1024 * 4 * 4, args.latent_dim)
@@ -221,10 +283,27 @@ class Encoder_VAE_CELEBA(BaseEncoder):
             ModelOuput: An instance of ModelOutput containing the embeddings of the input data under
             the key `embedding` and the **log** of the diagonal coefficient of the covariance 
             matrices under the key `log_covariance`"""
-        h1 = self.conv_layers(x).reshape(x.shape[0], -1)
-        output = ModelOuput(
-            embedding=self.embedding(h1), log_covariance=self.log_var(h1)
-        )
+        output = ModelOuput()
+
+        if output_layer_levels is not None:
+
+            assert all(self.depth >= levels > 0), (
+                f'Cannot output layer deeper than depth ({self.depth}) or with non-positive indice. '\
+                f'Got ({output_layer_levels})'
+                )
+
+        out = x
+
+        for i in range(self.depth):
+            out = self.layers[i](out)
+
+            if output_layer_levels is not None:
+                if i+1 in output_layer_levels:
+                    output[f'embedding_layer_{i+1}'] = out
+        
+        output['embedding'] = self.embedding(out)
+        output['log_covariance'] = self.log_var(out)
+
         return output
 
 
@@ -302,20 +381,43 @@ class Decoder_AE_CELEBA(BaseDecoder):
         self.latent_dim = args.latent_dim
         self.n_channels = 3
 
-        self.fc = nn.Linear(args.latent_dim, 1024 * 8 * 8)
+        layers = nn.ModuleList()
 
-        self.deconv_layers = nn.Sequential(
-            nn.ConvTranspose2d(1024, 512, 5, 2, padding=2),
-            nn.BatchNorm2d(512),
-            nn.ReLU(),
-            nn.ConvTranspose2d(512, 256, 5, 2, padding=1, output_padding=0),
-            nn.BatchNorm2d(256),
-            nn.ReLU(),
-            nn.ConvTranspose2d(256, 128, 5, 2, padding=2, output_padding=1),
-            nn.BatchNorm2d(128),
-            nn.ReLU(),
-            nn.ConvTranspose2d(128, self.n_channels, 5, 1, padding=1),
-            nn.Sigmoid(),
+        layers.append(
+            nn.Sequential(
+                nn.Linear(args.latent_dim, 1024 * 8 * 8)
+            )
+        )
+
+        layers.append(
+            nn.Sequential(
+                nn.ConvTranspose2d(1024, 512, 5, 2, padding=2),
+                nn.BatchNorm2d(512),
+                nn.ReLU(),
+            )
+        )
+
+        layers.append(
+            nn.Sequential(
+                nn.ConvTranspose2d(512, 256, 5, 2, padding=1, output_padding=0),
+                nn.BatchNorm2d(256),
+                nn.ReLU(),
+            )
+        )
+
+        layers.append(
+            nn.Sequential(
+                nn.ConvTranspose2d(256, 128, 5, 2, padding=2, output_padding=1),
+                nn.BatchNorm2d(128),
+                nn.ReLU(),
+            )
+        )
+
+        layers.append(
+            nn.Sequential(
+                nn.ConvTranspose2d(128, self.n_channels, 5, 1, padding=1),
+                nn.Sigmoid(),
+            )
         )
 
     def forward(self, z: torch.Tensor):
@@ -324,7 +426,27 @@ class Decoder_AE_CELEBA(BaseDecoder):
         Returns:
             ModelOuput: An instance of ModelOutput containing the reconstruction of the latent code 
             under the key `reconstruction`"""
-        h1 = self.fc(z).reshape(z.shape[0], 1024, 8, 8)
-        output = ModelOuput(reconstruction=self.deconv_layers(h1))
+        output = ModelOuput()
+
+        if output_layer_levels is not None:
+
+            assert all(self.depth >= levels > 0), (
+                f'Cannot output layer deeper than depth ({self.depth}) or with non-positive indice. '\
+                f'Got ({output_layer_levels})'
+                )
+
+        out = z
+
+        for i in range(self.depth):
+            out = self.layers[i](out)
+
+            if output_layer_levels is not None:
+                if i+1 in output_layer_levels:
+                    output[f'reconstruction_layer_{i+1}'] = out
+
+            if i == 0:
+                out = out.reshape(z.shape[0], 1024, 4, 4)
+
+        output['reconstruction'] = out.reshape((z.shape[0],) + self.input_dim)
 
         return output
