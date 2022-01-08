@@ -400,7 +400,7 @@ class LayeredDiscriminator_MNIST(BaseLayeredDiscriminator):
             nn.Sequential(
                 nn.Conv2d(128, 256, 4, 2, padding=1),
                 #nn.BatchNorm2d(256),
-                nn.ReLU(),
+                nn.Tanh(),
             )
         )
 
