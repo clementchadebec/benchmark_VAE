@@ -407,6 +407,7 @@ class LayeredDiscriminator_CELEBA(BaseLayeredDiscriminator):
         layers.append(
             nn.Sequential(
                 nn.Conv2d(self.n_channels, 128, 4, 2, padding=1),
+                nn.BatchNorm2d(128),
                 nn.ReLU(),
             )
         )
@@ -414,13 +415,15 @@ class LayeredDiscriminator_CELEBA(BaseLayeredDiscriminator):
         layers.append(
             nn.Sequential(
                 nn.Conv2d(128, 256, 4, 2, padding=1),
-                nn.ReLU(),
+                nn.BatchNorm2d(256),
+                nn.Tanh(),
             )
         )
 
         layers.append(
             nn.Sequential(
                 nn.Conv2d(256, 512, 4, 2, padding=1),
+                nn.BatchNorm2d(512),
                 nn.ReLU(),
             )
         )
@@ -428,6 +431,7 @@ class LayeredDiscriminator_CELEBA(BaseLayeredDiscriminator):
         layers.append(
             nn.Sequential(
                 nn.Conv2d(512, 1024, 4, 2, padding=1),
+                nn.BatchNorm2d(1024),
                 nn.ReLU(),
             )
         )
