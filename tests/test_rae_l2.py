@@ -680,6 +680,8 @@ class Test_RAE_L2_Training:
             model=rae, training_config=training_configs
         )
 
+        assert pipeline.training_config.__dict__ == training_configs.__dict__
+
         # Launch Pipeline
         pipeline(
             train_data=train_dataset.data,  # gives tensor to pipeline

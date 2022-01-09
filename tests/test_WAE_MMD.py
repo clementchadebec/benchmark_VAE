@@ -642,6 +642,8 @@ class Test_WAE_MMD_Training:
             model=wae, training_config=training_configs
         )
 
+        assert pipeline.training_config.__dict__ == training_configs.__dict__
+
         # Launch Pipeline
         pipeline(
             train_data=train_dataset.data,  # gives tensor to pipeline

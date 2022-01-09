@@ -1,4 +1,4 @@
-"""This module implements the bdual optimizer trainer using two distinct optimizers for the encoder 
+"""This module implements the dual optimizer trainer using two distinct optimizers for the encoder 
 and the decoder. It is suitable for all models but must be used in particular to train a 
 :class:`~pythae.models.RAE_L2`.
 
