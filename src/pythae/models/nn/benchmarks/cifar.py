@@ -124,31 +124,37 @@ class Encoder_AE_CIFAR(BaseEncoder):
         self.embedding = nn.Linear(1024 * 2 * 2, args.latent_dim)
 
     def forward(self, x: torch.Tensor, output_layer_levels:List[int]=None):
-        """Forward 
+        """Forward method
         
         Returns:
             ModelOuput: An instance of ModelOutput containing the embeddings of the input data under
-            the key `embedding`
-        """
+            the key `embedding`"""
         output = ModelOuput()
+
+        max_depth = self.depth
 
         if output_layer_levels is not None:
 
-            assert all(self.depth >= levels > 0), (
-                f'Cannot output layer deeper than depth ({self.depth}) or with non-positive indice. '\
-                f'Got ({output_layer_levels})'
+            assert all(self.depth >= levels > 0 or levels==-1 for levels in output_layer_levels), (
+                f'Cannot output layer deeper than depth ({self.depth}) '\
+                f'indice. Got ({output_layer_levels})'
                 )
+
+            if -1 in output_layer_levels:
+                max_depth = self.depth
+            else:
+                max_depth = max(output_layer_levels)
 
         out = x
 
-        for i in range(self.depth):
+        for i in range(max_depth):
             out = self.layers[i](out)
 
             if output_layer_levels is not None:
                 if i+1 in output_layer_levels:
                     output[f'embedding_layer_{i+1}'] = out
-        
-        output['embedding'] = self.embedding(out.reshape(x.shape[0], -1))
+            if i+1 == self.depth:
+                output['embedding'] = self.embedding(out.reshape(x.shape[0], -1))
 
         return output
 
@@ -277,31 +283,39 @@ class Encoder_VAE_CIFAR(BaseEncoder):
 
     def forward(self, x: torch.Tensor, output_layer_levels:List[int]=None):
         """Forward method
-
+        
         Returns:
             ModelOuput: An instance of ModelOutput containing the embeddings of the input data under
             the key `embedding` and the **log** of the diagonal coefficient of the covariance 
             matrices under the key `log_covariance`"""
         output = ModelOuput()
 
+        max_depth = self.depth
+
         if output_layer_levels is not None:
 
-            assert all(self.depth >= levels > 0), (
-                f'Cannot output layer deeper than depth ({self.depth}) or with non-positive indice. '\
-                f'Got ({output_layer_levels})'
+            assert all(self.depth >= levels > 0 or levels==-1 for levels in output_layer_levels), (
+                f'Cannot output layer deeper than depth ({self.depth}) '\
+                f'indice. Got ({output_layer_levels})'
                 )
+
+            if -1 in output_layer_levels:
+                max_depth = self.depth
+            else:
+                max_depth = max(output_layer_levels)
 
         out = x
 
-        for i in range(self.depth):
+        for i in range(max_depth):
             out = self.layers[i](out)
 
             if output_layer_levels is not None:
                 if i+1 in output_layer_levels:
                     output[f'embedding_layer_{i+1}'] = out
         
-        output['embedding'] = self.embedding(out.reshape(x.shape[0], -1))
-        output['log_covariance'] = self.log_var(out.reshape(x.shape[0], -1))
+            if i+1 == self.depth:
+                output['embedding'] = self.embedding(out.reshape(x.shape[0], -1))
+                output['log_covariance'] = self.log_var(out.reshape(x.shape[0], -1))
 
         return output
 
@@ -413,16 +427,23 @@ class Decoder_AE_CIFAR(BaseDecoder):
         """
         output = ModelOuput()
 
+        max_depth = self.depth
+
         if output_layer_levels is not None:
 
-            assert all(self.depth >= levels > 0), (
-                f'Cannot output layer deeper than depth ({self.depth}) or with non-positive indice. '\
-                f'Got ({output_layer_levels})'
+            assert all(self.depth >= levels > 0 or levels==-1 for levels in output_layer_levels), (
+                f'Cannot output layer deeper than depth ({self.depth}) '\
+                f'indice. Got ({output_layer_levels})'
                 )
+
+            if -1 in output_layer_levels:
+                max_depth = self.depth
+            else:
+                max_depth = max(output_layer_levels)
 
         out = z
 
-        for i in range(self.depth):
+        for i in range(max_depth):
             out = self.layers[i](out)
 
             if output_layer_levels is not None:
@@ -430,8 +451,9 @@ class Decoder_AE_CIFAR(BaseDecoder):
                     output[f'reconstruction_layer_{i+1}'] = out
 
             if i == 0:
-                out = out.reshape(z.shape[0], 1024, 8, 8)
+                out = out.reshape(z.shape[0], 1024, 4, 4)
 
-        output['reconstruction'] = out
+            if i+1 == self.depth:
+                output['reconstruction'] = out
 
         return output

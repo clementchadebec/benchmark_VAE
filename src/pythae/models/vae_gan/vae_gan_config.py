@@ -17,7 +17,7 @@ class VAEGANConfig(VAEConfig):
         reconstruction_layer (int): The reconstruction layer depth used for reconstruction metric
         """
     adversarial_loss_scale: float = 0.5
-    reconstruction_layer: int = -1
+    reconstruction_layer: int = 1
     uses_default_discriminator: bool = True
     discriminator_input_dim: Union[Tuple[int, ...], None] = None
     equilibrium: float = 0.68

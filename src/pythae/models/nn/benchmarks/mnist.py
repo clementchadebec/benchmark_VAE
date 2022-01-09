@@ -12,7 +12,7 @@ from ....models import BaseAEConfig
 from pythae.models.nn import (
     BaseEncoder,
     BaseDecoder,
-    BaseLayeredDiscriminator
+    BaseDiscriminator
 )
 
 
@@ -139,23 +139,30 @@ class Encoder_AE_MNIST(BaseEncoder):
             the key `embedding`"""
         output = ModelOuput()
 
+        max_depth = self.depth
+
         if output_layer_levels is not None:
 
-            assert all(self.depth >= levels > 0), (
-                f'Cannot output layer deeper than depth ({self.depth}) or with non-positive indice. '\
-                f'Got ({output_layer_levels})'
+            assert all(self.depth >= levels > 0 or levels==-1 for levels in output_layer_levels), (
+                f'Cannot output layer deeper than depth ({self.depth}) '\
+                f'indice. Got ({output_layer_levels})'
                 )
+
+            if -1 in output_layer_levels:
+                max_depth = self.depth
+            else:
+                max_depth = max(output_layer_levels)
 
         out = x
 
-        for i in range(self.depth):
+        for i in range(max_depth):
             out = self.layers[i](out)
 
             if output_layer_levels is not None:
                 if i+1 in output_layer_levels:
                     output[f'embedding_layer_{i+1}'] = out
-        
-        output['embedding'] = self.embedding(out.reshape(x.shape[0], -1))
+            if i+1 == self.depth:
+                output['embedding'] = self.embedding(out.reshape(x.shape[0], -1))
 
         return output
 
@@ -292,24 +299,32 @@ class Encoder_VAE_MNIST(BaseEncoder):
             matrices under the key `log_covariance`"""
         output = ModelOuput()
 
+        max_depth = self.depth
+
         if output_layer_levels is not None:
 
-            assert all(self.depth >= levels > 0), (
-                f'Cannot output layer deeper than depth ({self.depth}) or with non-positive indice. '\
-                f'Got ({output_layer_levels})'
+            assert all(self.depth >= levels > 0 or levels==-1 for levels in output_layer_levels), (
+                f'Cannot output layer deeper than depth ({self.depth}) '\
+                f'indice. Got ({output_layer_levels})'
                 )
+
+            if -1 in output_layer_levels:
+                max_depth = self.depth
+            else:
+                max_depth = max(output_layer_levels)
 
         out = x
 
-        for i in range(self.depth):
+        for i in range(max_depth):
             out = self.layers[i](out)
 
             if output_layer_levels is not None:
                 if i+1 in output_layer_levels:
                     output[f'embedding_layer_{i+1}'] = out
         
-        output['embedding'] = self.embedding(out.reshape(x.shape[0], -1))
-        output['log_covariance'] = self.log_var(out.reshape(x.shape[0], -1))
+            if i+1 == self.depth:
+                output['embedding'] = self.embedding(out.reshape(x.shape[0], -1))
+                output['log_covariance'] = self.log_var(out.reshape(x.shape[0], -1))
 
         return output
 
@@ -418,16 +433,23 @@ class Decoder_AE_MNIST(BaseDecoder):
         """
         output = ModelOuput()
 
+        max_depth = self.depth
+
         if output_layer_levels is not None:
 
-            assert all(self.depth >= levels > 0), (
-                f'Cannot output layer deeper than depth ({self.depth}) or with non-positive indice. '\
-                f'Got ({output_layer_levels})'
+            assert all(self.depth >= levels > 0 or levels==-1 for levels in output_layer_levels), (
+                f'Cannot output layer deeper than depth ({self.depth}) '\
+                f'indice. Got ({output_layer_levels})'
                 )
+
+            if -1 in output_layer_levels:
+                max_depth = self.depth
+            else:
+                max_depth = max(output_layer_levels)
 
         out = z
 
-        for i in range(self.depth):
+        for i in range(max_depth):
             out = self.layers[i](out)
 
             if output_layer_levels is not None:
@@ -437,12 +459,13 @@ class Decoder_AE_MNIST(BaseDecoder):
             if i == 0:
                 out = out.reshape(z.shape[0], 1024, 4, 4)
 
-        output['reconstruction'] = out
+            if i+1 == self.depth:
+                output['reconstruction'] = out
 
         return output
 
 
-class LayeredDiscriminator_MNIST(BaseLayeredDiscriminator):
+class Discriminator_MNIST(BaseDiscriminator):
     """
     A Convolutional encoder Neural net suited for MNIST and Variational Autoencoder-based 
     models.
@@ -502,6 +525,7 @@ class LayeredDiscriminator_MNIST(BaseLayeredDiscriminator):
     """
 
     def __init__(self, args: dict):
+        BaseDiscriminator.__init__(self)
 
         self.input_dim = (1, 28, 28)
         self.latent_dim = args.latent_dim
@@ -548,28 +572,41 @@ class LayeredDiscriminator_MNIST(BaseLayeredDiscriminator):
             )
         )
 
-        BaseLayeredDiscriminator.__init__(self, layers=layers)
+        self.layers = layers
+        self.depth = len(layers)
 
-    def forward(self, x:torch.Tensor, output_layer_level:int=None):
 
-        if output_layer_level is not None:
+    def forward(self, x:torch.Tensor, output_layer_levels:List[int]=None):
 
-            assert output_layer_level <= self.depth, (
-                f'Cannot output layer deeper ({output_layer_level}) than depth ({self.depth})'
-            )
+        output = ModelOuput()
 
-        for i in range(self.depth):
+        max_depth = self.depth
+
+        if output_layer_levels is not None:
+
+            assert all(self.depth >= levels > 0 or levels==-1 for levels in output_layer_levels), (
+                f'Cannot output layer deeper than depth ({self.depth}) '\
+                f'indice. Got ({output_layer_levels})'
+                )
+
+            if -1 in output_layer_levels:
+                max_depth = self.depth
+            else:
+                max_depth = max(output_layer_levels)
+
+        out = x
+
+        for i in range(max_depth):
 
             if i == 4:
-                x = x.reshape(x.shape[0], -1)
-
-            x = self.layers[i](x)
-
-            if i + 1 == output_layer_level:
-                break
-        
-        output = ModelOuput(
-            adversarial_cost=x
-        )
+                out = out.reshape(x.shape[0], -1)
     
+            out = self.layers[i](out)
+
+            if output_layer_levels is not None:
+                if i+1 in output_layer_levels:
+                    output[f'embedding_layer_{i+1}'] = out
+            if i+1 == self.detph:
+                output['embedding'] = out
+
         return output
