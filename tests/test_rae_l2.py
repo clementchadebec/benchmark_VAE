@@ -445,7 +445,7 @@ class Test_RAE_L2_Training:
         encoder_optimizer = deepcopy(trainer.encoder_optimizer)
         decoder_optimizer = deepcopy(trainer.decoder_optimizer)
 
-        trainer.save_checkpoint(dir_path=dir_path, epoch=0)
+        trainer.save_checkpoint(dir_path=dir_path, epoch=0, model=model)
 
         checkpoint_dir = os.path.join(dir_path, "checkpoint_epoch_0")
 

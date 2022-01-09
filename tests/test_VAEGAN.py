@@ -578,7 +578,7 @@ class Test_VAEGAN_Training:
         decoder_optimizer = deepcopy(trainer.decoder_optimizer)
         discriminator_optimizer = deepcopy(trainer.discriminator_optimizer)
 
-        trainer.save_checkpoint(dir_path=dir_path, epoch=0)
+        trainer.save_checkpoint(dir_path=dir_path, epoch=0, model=model)
 
         checkpoint_dir = os.path.join(dir_path, "checkpoint_epoch_0")
 
