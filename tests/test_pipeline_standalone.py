@@ -33,9 +33,9 @@ class Test_Pipeline_Standalone:
         
         tmpdir.mkdir("dummy_folder")
         dir_path = os.path.join(tmpdir, "dummy_folder")
-        pipe = TrainingPipeline(
-            training_config=BaseTrainingConfig(num_epochs=1, output_dir=dir_path)
-        )
+        pipe = TrainingPipeline()
+        pipe.training_config.output_dir = dir_path
+        pipe.training_config.num_epochs = 1
         pipe(train_dataset.data)
         assert isinstance(pipe.model, VAE)
         

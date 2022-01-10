@@ -51,7 +51,7 @@ class Test_MNIST_Benchmark:
         return request.param
 
     def test_discriminator(self, ae_mnist_config, mnist_like_data, recon_layer):
-        discriminator = LayeredDiscriminator_MNIST(ae_mnist_config)
+        discriminator = LayeredDiscriminator_MNIST(ae_mnist_config).to(device)
 
         score = discriminator(mnist_like_data, output_layer_level=recon_layer).adversarial_cost
 
@@ -187,7 +187,7 @@ class Test_CELEBA_Benchmark:
         return request.param
 
     def test_discriminator(self, ae_celeba_config, celeba_like_data, recon_layer):
-        discriminator = LayeredDiscriminator_CELEBA(ae_celeba_config)
+        discriminator = LayeredDiscriminator_CELEBA(ae_celeba_config).to(device)
 
         score = discriminator(celeba_like_data, output_layer_level=recon_layer).adversarial_cost
 
