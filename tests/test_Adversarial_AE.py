@@ -8,7 +8,7 @@ import torch
 from torch.optim import SGD, Adadelta, Adagrad, Adam, RMSprop
 
 from pythae.customexception import BadInheritanceError
-from pythae.models.base.base_utils import ModelOuput
+from pythae.models.base.base_utils import ModelOutput
 from pythae.models import Adversarial_AE, Adversarial_AE_Config
 from pythae.trainers import AdversarialTrainer, AdversarialTrainerConfig, BaseTrainingConfig
 from pythae.pipelines import TrainingPipeline
@@ -371,7 +371,7 @@ class Test_Model_forward:
 
         out = adversarial_ae(demo_data)
 
-        assert isinstance(out, ModelOuput)
+        assert isinstance(out, ModelOutput)
 
         assert set(
             ["loss",
@@ -560,7 +560,7 @@ class Test_Adversarial_AE_Training:
         autoencoder_optimizer = deepcopy(trainer.autoencoder_optimizer)
         discriminator_optimizer = deepcopy(trainer.discriminator_optimizer)
 
-        trainer.save_checkpoint(dir_path=dir_path, epoch=0)
+        trainer.save_checkpoint(dir_path=dir_path, epoch=0, model=model)
 
         checkpoint_dir = os.path.join(dir_path, "checkpoint_epoch_0")
 

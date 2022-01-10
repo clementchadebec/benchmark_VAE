@@ -3,7 +3,7 @@
 import torch
 import torch.nn as nn
 
-from ....models.base.base_utils import ModelOuput
+from ....models.base.base_utils import ModelOutput
 from ....models import BaseAEConfig
 
 from pythae.models.nn import (
@@ -110,10 +110,10 @@ class Encoder_AE_CELEBA(BaseEncoder):
         """Forward method
         
         Returns:
-            ModelOuput: An instance of ModelOutput containing the embeddings of the input data under
+            ModelOutput: An instance of ModelOutput containing the embeddings of the input data under
             the key `embedding`"""
         h1 = self.conv_layers(x).reshape(x.shape[0], -1)
-        output = ModelOuput(embedding=self.embedding(h1))
+        output = ModelOutput(embedding=self.embedding(h1))
         return output
 
 
@@ -222,11 +222,11 @@ class Encoder_VAE_CELEBA(BaseEncoder):
         """Forward method
         
         Returns:
-            ModelOuput: An instance of ModelOutput containing the embeddings of the input data under
+            ModelOutput: An instance of ModelOutput containing the embeddings of the input data under
             the key `embedding` and the **log** of the diagonal coefficient of the covariance 
             matrices under the key `log_covariance`"""
         h1 = self.conv_layers(x).reshape(x.shape[0], -1)
-        output = ModelOuput(
+        output = ModelOutput(
             embedding=self.embedding(h1), log_covariance=self.log_var(h1)
         )
         return output
@@ -326,10 +326,10 @@ class Decoder_AE_CELEBA(BaseDecoder):
         """Forward method
         
         Returns:
-            ModelOuput: An instance of ModelOutput containing the reconstruction of the latent code 
+            ModelOutput: An instance of ModelOutput containing the reconstruction of the latent code 
             under the key `reconstruction`"""
         h1 = self.fc(z).reshape(z.shape[0], 1024, 8, 8)
-        output = ModelOuput(reconstruction=self.deconv_layers(h1))
+        output = ModelOutput(reconstruction=self.deconv_layers(h1))
 
         return output
 
@@ -399,8 +399,6 @@ class LayeredDiscriminator_CELEBA(BaseLayeredDiscriminator):
         self.input_dim = (3, 64, 64)
         self.latent_dim = args.latent_dim
         self.n_channels = 3
-        
-        self.discriminator_input_dim = args.discriminator_input_dim
 
         layers = nn.ModuleList()
 
@@ -463,7 +461,7 @@ class LayeredDiscriminator_CELEBA(BaseLayeredDiscriminator):
             if i+1 == output_layer_level:
                 break
         
-        output = ModelOuput(
+        output = ModelOutput(
             adversarial_cost=x
         )
     

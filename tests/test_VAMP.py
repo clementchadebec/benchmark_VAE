@@ -6,7 +6,7 @@ import torch
 from torch.optim import SGD, Adadelta, Adagrad, Adam, RMSprop
 
 from pythae.customexception import BadInheritanceError
-from pythae.models.base.base_utils import ModelOuput
+from pythae.models.base.base_utils import ModelOutput
 from pythae.models import VAMP, VAMPConfig
 
 from pythae.trainers import BaseTrainer, BaseTrainingConfig
@@ -280,7 +280,7 @@ class Test_Model_forward:
 
         out = vamp(demo_data)
 
-        assert isinstance(out, ModelOuput)
+        assert isinstance(out, ModelOutput)
 
         assert set(["reconstruction_loss", "reg_loss", "loss", "recon_x", "z"]) == set(
             out.keys()
@@ -411,7 +411,7 @@ class Test_VAMP_Training:
         model = deepcopy(trainer.model)
         optimizer = deepcopy(trainer.optimizer)
 
-        trainer.save_checkpoint(dir_path=dir_path, epoch=0)
+        trainer.save_checkpoint(dir_path=dir_path, epoch=0, model=model)
 
         checkpoint_dir = os.path.join(dir_path, "checkpoint_epoch_0")
 

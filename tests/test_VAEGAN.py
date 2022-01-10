@@ -8,7 +8,7 @@ import torch
 from torch.optim import SGD, Adadelta, Adagrad, Adam, RMSprop
 
 from pythae.customexception import BadInheritanceError
-from pythae.models.base.base_utils import ModelOuput
+from pythae.models.base.base_utils import ModelOutput
 from pythae.models import VAEGAN, VAEGANConfig
 from pythae.trainers import CoupledOptimizerAdversarialTrainer, CoupledOptimizerAdversarialTrainerConfig, BaseTrainingConfig
 from pythae.pipelines import TrainingPipeline
@@ -376,7 +376,7 @@ class Test_Model_forward:
 
         out = adversarial_ae(demo_data)
 
-        assert isinstance(out, ModelOuput)
+        assert isinstance(out, ModelOutput)
 
         assert set(
             ["loss",
@@ -385,7 +385,11 @@ class Test_Model_forward:
             "decoder_loss",
             "discriminator_loss",
             "recon_x",
-            "z"]
+            "z",
+            "update_discriminator",
+            "update_encoder",
+            "update_decoder"
+            ]
         ) == set(
             out.keys()
         )
@@ -575,7 +579,7 @@ class Test_VAEGAN_Training:
         decoder_optimizer = deepcopy(trainer.decoder_optimizer)
         discriminator_optimizer = deepcopy(trainer.discriminator_optimizer)
 
-        trainer.save_checkpoint(dir_path=dir_path, epoch=0)
+        trainer.save_checkpoint(dir_path=dir_path, epoch=0, model=model)
 
         checkpoint_dir = os.path.join(dir_path, "checkpoint_epoch_0")
 

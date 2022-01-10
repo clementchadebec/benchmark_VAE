@@ -9,7 +9,7 @@ import shutil
 from ...data.preprocessors import DataProcessor
 from torch.utils.data import DataLoader
 from ..base.base_sampler import BaseSampler
-from ...models.base.base_utils import ModelOuput
+from ...models.base.base_utils import ModelOutput
 from ...models.nn import BaseEncoder, BaseDecoder
 from ...models import RHVAE, RHVAEConfig
 from ...models import VAE, VAEConfig
@@ -47,7 +47,7 @@ class SecondEncoder(BaseEncoder):
             def forward(self, z:torch.Tensor):
                 out = self.layers(z)
 
-                output = ModelOuput(
+                output = ModelOutput(
                     embedding=self.mu(out),
                     log_covariance=self.std(out)
                 )
@@ -87,7 +87,7 @@ class SecondDecoder(BaseDecoder):
 
                 z = self.reconstruction(out)
 
-                output = ModelOuput(
+                output = ModelOutput(
                     reconstruction= z + self.gamma_z * torch.randn_like(z)
                 )
 

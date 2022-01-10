@@ -4,7 +4,7 @@ import os
 from ...models import AE
 from .rae_gp_config import RAE_GP_Config
 from ...data.datasets import BaseDataset
-from ..base.base_utils import ModelOuput
+from ..base.base_utils import ModelOutput
 
 from ..nn import BaseDecoder, BaseEncoder
 
@@ -47,14 +47,14 @@ class RAE_GP(AE):
         self.model_name = "RAE_GP"
 
 
-    def forward(self, inputs: BaseDataset) -> ModelOuput:
+    def forward(self, inputs: BaseDataset) -> ModelOutput:
         """The input data is encoded and decoded
         
         Args:
             inputs (BaseDataset): An instance of pythae's datasets
             
         Returns:
-            ModelOuput: An instance of ModelOutput containing all the relevant parameters
+            ModelOutput: An instance of ModelOutput containing all the relevant parameters
         """
 
         x = inputs["data"].requires_grad_(True)
@@ -64,7 +64,7 @@ class RAE_GP(AE):
 
         loss, recon_loss, gen_reg_loss, embedding_loss = self.loss_function(recon_x, x, z)
 
-        output = ModelOuput(
+        output = ModelOutput(
             loss=loss,
             recon_loss=recon_loss,
             gen_reg_loss=gen_reg_loss,

@@ -1,7 +1,7 @@
 from ..base import BaseAE
 from .ae_config import AEConfig
 from ...data.datasets import BaseDataset
-from ..base.base_utils import ModelOuput
+from ..base.base_utils import ModelOutput
 
 from ..nn import BaseDecoder, BaseEncoder
 from ..nn.default_architectures import Encoder_AE_MLP
@@ -62,14 +62,14 @@ class AE(BaseAE):
 
         self.set_encoder(encoder)
 
-    def forward(self, inputs: BaseDataset) -> ModelOuput:
+    def forward(self, inputs: BaseDataset) -> ModelOutput:
         """The input data is encoded and decoded
         
         Args:
             inputs (BaseDataset): An instance of pythae's datasets
             
         Returns:
-            ModelOuput: An instance of ModelOutput containing all the relevant parameters
+            ModelOutput: An instance of ModelOutput containing all the relevant parameters
         """
 
         x = inputs["data"]
@@ -79,7 +79,7 @@ class AE(BaseAE):
 
         loss = self.loss_function(recon_x, x)
 
-        output = ModelOuput(loss=loss, recon_x=recon_x, z=z)
+        output = ModelOutput(loss=loss, recon_x=recon_x, z=z)
 
         return output
 

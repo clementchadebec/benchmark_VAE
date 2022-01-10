@@ -4,7 +4,7 @@ import os
 from ...models import VAE
 from .beta_vae_config import BetaVAEConfig
 from ...data.datasets import BaseDataset
-from ..base.base_utils import ModelOuput
+from ..base.base_utils import ModelOutput
 from ..nn import BaseEncoder, BaseDecoder
 from ..nn.default_architectures import Encoder_VAE_MLP
 
@@ -56,7 +56,7 @@ class BetaVAE(VAE):
             inputs (BaseDataset): The training datasat with labels
 
         Returns:
-            ModelOuput: An instance of ModelOutput containing all the relevant parameters
+            ModelOutput: An instance of ModelOutput containing all the relevant parameters
 
         """
 
@@ -72,7 +72,7 @@ class BetaVAE(VAE):
 
         loss, recon_loss, kld = self.loss_function(recon_x, x, mu, log_var, z)
 
-        output = ModelOuput(
+        output = ModelOutput(
             reconstruction_loss=recon_loss,
             reg_loss=kld,
             loss=loss,

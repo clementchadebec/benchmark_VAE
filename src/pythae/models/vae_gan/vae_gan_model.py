@@ -7,7 +7,7 @@ from ...customexception import BadInheritanceError
 from ...models import VAE
 from .vae_gan_config import VAEGANConfig
 from ...data.datasets import BaseDataset
-from ..base.base_utils import ModelOuput, CPU_Unpickler
+from ..base.base_utils import ModelOutput, CPU_Unpickler
 
 from ..nn import BaseDecoder, BaseEncoder, BaseLayeredDiscriminator
 from ..nn.default_architectures import LayeredDiscriminator_MLP
@@ -110,14 +110,14 @@ class VAEGAN(VAE):
 
         self.discriminator = discriminator
 
-    def forward(self, inputs: BaseDataset) -> ModelOuput:
+    def forward(self, inputs: BaseDataset) -> ModelOutput:
         """The input data is encoded and decoded
         
         Args:
             inputs (BaseDataset): An instance of pythae's datasets
             
         Returns:
-            ModelOuput: An instance of ModelOutput containing all the relevant parameters
+            ModelOutput: An instance of ModelOutput containing all the relevant parameters
         """
 
         x = inputs["data"]
@@ -138,7 +138,7 @@ class VAEGAN(VAE):
 
         loss = encoder_loss + decoder_loss + discriminator_loss
 
-        output = ModelOuput(
+        output = ModelOutput(
             loss=loss,
             recon_loss=recon_loss,
             encoder_loss=encoder_loss,

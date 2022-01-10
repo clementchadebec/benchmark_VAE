@@ -6,7 +6,7 @@ import torch
 from torch.optim import SGD, Adadelta, Adagrad, Adam, RMSprop
 
 from pythae.customexception import BadInheritanceError
-from pythae.models.base.base_utils import ModelOuput
+from pythae.models.base.base_utils import ModelOutput
 from pythae.models import RAE_L2, RAE_L2_Config
 
 from pythae.trainers import CoupledOptimizerTrainer,CoupledOptimizerTrainerConfig, BaseTrainingConfig
@@ -278,7 +278,7 @@ class Test_Model_forward:
 
         out = rae(demo_data)
 
-        assert isinstance(out, ModelOuput)
+        assert isinstance(out, ModelOutput)
 
         assert set(["loss", "recon_loss", "embedding_loss", "recon_x", "z"]) == set(
             out.keys()
@@ -445,7 +445,7 @@ class Test_RAE_L2_Training:
         encoder_optimizer = deepcopy(trainer.encoder_optimizer)
         decoder_optimizer = deepcopy(trainer.decoder_optimizer)
 
-        trainer.save_checkpoint(dir_path=dir_path, epoch=0)
+        trainer.save_checkpoint(dir_path=dir_path, epoch=0, model=model)
 
         checkpoint_dir = os.path.join(dir_path, "checkpoint_epoch_0")
 

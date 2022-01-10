@@ -9,7 +9,7 @@ from pythae.models.nn import (
     BaseDiscriminator,
     BaseLayeredDiscriminator
 )
-from ..base.base_utils import ModelOuput
+from ..base.base_utils import ModelOutput
 
 
 class Encoder_AE_MLP(BaseEncoder):
@@ -25,7 +25,7 @@ class Encoder_AE_MLP(BaseEncoder):
     def forward(self, x):
         out = self.layers(x.reshape(-1, np.prod(self.input_dim)))
 
-        output = ModelOuput(embedding=self.mu(out))
+        output = ModelOutput(embedding=self.mu(out))
 
         return output
 
@@ -44,7 +44,7 @@ class Encoder_VAE_MLP(BaseEncoder):
     def forward(self, x):
         out = self.layers(x.reshape(-1, np.prod(self.input_dim)))
 
-        output = ModelOuput(embedding=self.mu(out), log_covariance=self.std(out))
+        output = ModelOutput(embedding=self.mu(out), log_covariance=self.std(out))
 
         return output
 
@@ -66,7 +66,7 @@ class Decoder_AE_MLP(BaseDecoder):
 
     def forward(self, z):
         reconstruction = self.layers(z).reshape((z.shape[0],) + self.input_dim)
-        output = ModelOuput(reconstruction=reconstruction)
+        output = ModelOutput(reconstruction=reconstruction)
         return output
 
 
@@ -106,7 +106,7 @@ class Metric_MLP(BaseMetric):
         # add diagonal coefficients
         L = L + torch.diag_embed(h21.exp())
 
-        output = ModelOuput(L=L)
+        output = ModelOutput(L=L)
 
         return output
 
@@ -126,7 +126,7 @@ class Discriminator_MLP(BaseDiscriminator):
     def forward(self, x):
         out = self.layers(x.reshape(-1, np.prod(self.discriminator_input_dim)))
 
-        output = ModelOuput(adversarial_cost=out)
+        output = ModelOutput(adversarial_cost=out)
 
         return output
 
@@ -173,7 +173,7 @@ class LayeredDiscriminator_MLP(BaseLayeredDiscriminator):
             if i == output_layer_level:
                 break
         
-        output = ModelOuput(
+        output = ModelOutput(
             adversarial_cost=x
         )
     

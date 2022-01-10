@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-from ..base.base_utils import ModelOuput
+from ..base.base_utils import ModelOutput
 
 
 class BaseEncoder(nn.Module):
@@ -22,7 +22,7 @@ class BaseEncoder(nn.Module):
         .. code-block::
 
             >>> from pythae.models.nn import BaseEncoder
-            >>> from pythae.models.base.base_utils import ModelOuput
+            >>> from pythae.models.base.base_utils import ModelOutput
             ...
             >>> class My_Encoder(BaseEncoder):
             ...
@@ -32,7 +32,7 @@ class BaseEncoder(nn.Module):
             ...
             ...     def forward(self, x: torch.Tensor):
             ...         # your code
-            ...         output = ModelOuput(
+            ...         output = ModelOutput(
             ...             embedding=embedding,
             ...             log_covariance=log_var # for VAE based models
             ...         )
@@ -65,7 +65,7 @@ class BaseDecoder(nn.Module):
         .. code-block::
 
             >>> from pythae.models.nn import BaseDecoder
-            >>> from pythae.models.base.base_utils import ModelOuput
+            >>> from pythae.models.base.base_utils import ModelOutput
             ...
             >>> class My_decoder(BaseDecoder):
             ...
@@ -75,7 +75,7 @@ class BaseDecoder(nn.Module):
             ...
             ...    def forward(self, z: torch.Tensor):
             ...        # your code
-            ...        output = ModelOuput(
+            ...        output = ModelOutput(
             ...             reconstruction=reconstruction
             ...         )
             ...        return output
@@ -114,7 +114,7 @@ class BaseMetric(nn.Module):
         .. code-block::
 
             >>> from pythae.models.nn import BaseMetric
-            >>> from pythae.models.base.base_utils import ModelOuput
+            >>> from pythae.models.base.base_utils import ModelOutput
             ...
             >>> class My_Metric(BaseMetric):
             ...
@@ -124,7 +124,7 @@ class BaseMetric(nn.Module):
             ...
             ...    def forward(self, x: torch.Tensor):
             ...        # your code
-            ...        output = ModelOuput(
+            ...        output = ModelOutput(
             ...             L=L # L matrices in the metric of  Riemannian based VAE (see docs)
             ...         )
             ...        return output
@@ -156,7 +156,7 @@ class BaseDiscriminator(nn.Module):
         .. code-block::
 
             >>> from pythae.models.nn import BaseDiscriminator
-            >>> from pythae.models.base.base_utils import ModelOuput
+            >>> from pythae.models.base.base_utils import ModelOutput
             ...
             >>> class My_Discriminator(BaseDiscriminator):
             ...
@@ -166,7 +166,7 @@ class BaseDiscriminator(nn.Module):
             ...
             ...     def forward(self, x: torch.Tensor):
             ...         # your code
-            ...         output = ModelOuput(
+            ...         output = ModelOutput(
             ...             adversarial_cost=adversarial_cost
             ...         )
             ...         return output
@@ -213,7 +213,7 @@ class BaseLayeredDiscriminator(nn.Module):
         .. code-block::
 
             >>> from pythae.models.nn import BaseLayeredDiscriminator
-            >>> from pythae.models.base.base_utils import ModelOuput
+            >>> from pythae.models.base.base_utils import ModelOutput
             ...
             >>> class My_layeredDiscriminator(BaseLayeredDiscriminator):
             ...
@@ -231,7 +231,7 @@ class BaseLayeredDiscriminator(nn.Module):
             ...         for i, layer in enumerate(self.layers):
             ...             ...
             ...
-            ...         output = ModelOuput(
+            ...         output = ModelOutput(
             ...             adversarial_cost=adversarial_cost
             ...         )
             ...         return output

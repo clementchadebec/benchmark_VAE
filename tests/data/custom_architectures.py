@@ -5,7 +5,7 @@ import torch.nn as nn
 import numpy as np
 
 from pythae.models.nn import *
-from pythae.models.base.base_utils import ModelOuput
+from pythae.models.base.base_utils import ModelOutput
 
 
 class Encoder_AE_Conv(BaseEncoder):
@@ -37,7 +37,7 @@ class Encoder_AE_Conv(BaseEncoder):
         out = self.layers(x)
         out = self.fc1(out.reshape(x.shape[0], -1))
 
-        output = ModelOuput(embedding=self.mu(out))
+        output = ModelOutput(embedding=self.mu(out))
 
         return output
 
@@ -72,7 +72,7 @@ class Encoder_VAE_Conv(BaseEncoder):
         out = self.layers(x)
         out = self.fc1(out.reshape(x.shape[0], -1))
 
-        output = ModelOuput(embedding=self.mu(out), log_covariance=self.std(out))
+        output = ModelOutput(embedding=self.mu(out), log_covariance=self.std(out))
 
         return output
 
@@ -117,7 +117,7 @@ class Decoder_AE_Conv(BaseDecoder):
     def forward(self, z):
         out = self.fc1(z)
         reconstruction = self.layers(out.reshape(z.shape[0], 32, 4, 4))
-        output = ModelOuput(reconstruction=reconstruction)
+        output = ModelOutput(reconstruction=reconstruction)
         return output
 
 
@@ -148,7 +148,7 @@ class Encoder_MLP_Custom(BaseEncoder):
     def forward(self, x):
         out = self.layers(x.reshape(-1, int(np.prod(self.input_dim))))
 
-        output = ModelOuput(embedding=self.mu(out), log_covariance=self.std(out))
+        output = ModelOutput(embedding=self.mu(out), log_covariance=self.std(out))
 
         return output
 
@@ -174,7 +174,7 @@ class Decoder_MLP_Custom(BaseDecoder):
 
     def forward(self, z):
         out = self.layers(z)
-        output = ModelOuput(reconstruction=out)
+        output = ModelOutput(reconstruction=out)
         return output
 
 
@@ -214,7 +214,7 @@ class Metric_MLP_Custom(BaseMetric):
         # add diagonal coefficients
         L = L + torch.diag_embed(h21.exp())
 
-        output = ModelOuput(L=L)
+        output = ModelOutput(L=L)
 
         return output
 
@@ -234,7 +234,7 @@ class Discriminator_MLP_Custom(BaseDiscriminator):
     def forward(self, x):
         out = self.layers(x.reshape(-1, np.prod(self.discriminator_input_dim)))
 
-        output = ModelOuput(adversarial_cost=out)
+        output = ModelOutput(adversarial_cost=out)
 
         return output
 
@@ -280,7 +280,7 @@ class LayeredDiscriminator_MLP_Custom(BaseLayeredDiscriminator):
             if i == output_layer_level:
                 break
         
-        output = ModelOuput(
+        output = ModelOutput(
             adversarial_cost=x
         )
     
@@ -293,7 +293,7 @@ class EncoderWrongInputDim(BaseEncoder):
         self.fc = nn.Linear(int(np.prod(args.input_dim)) - 1, args.latent_dim)
 
     def forward(self, x):
-        output = ModelOuput(
+        output = ModelOutput(
             embedding=self.fc(x.reshape(-1, int(np.prod(self.input_dim))))
         )
         return output
@@ -307,7 +307,7 @@ class DecoderWrongInputDim(BaseDecoder):
 
     def forward(self, z):
         out = self.fc(z.reshape(-1, self.latent_dim))
-        output = ModelOuput(reconstruction=out)
+        output = ModelOutput(reconstruction=out)
         return output
 
 
@@ -319,7 +319,7 @@ class MetricWrongInputDim(BaseMetric):
 
     def forward(self, x):
         L = self.fc(x.reshape(-1, int(np.prod(self.input_dim))))
-        output = ModelOuput(L=L)
+        output = ModelOutput(L=L)
         return output
 
 
@@ -330,7 +330,7 @@ class EncoderWrongOutputDim(BaseEncoder):
         self.fc = nn.Linear(int(np.prod(args.input_dim)), args.latent_dim - 1)
 
     def forward(self, x):
-        output = ModelOuput(embedding=self.fc(x.reshape(-1, self.input_dim)))
+        output = ModelOutput(embedding=self.fc(x.reshape(-1, self.input_dim)))
         return output
 
 
@@ -342,7 +342,7 @@ class DecoderWrongOutputDim(BaseDecoder):
 
     def forward(self, z):
         out = self.fc(z.reshape(-1, self.latent_dim))
-        output = ModelOuput(reconstruction=out)
+        output = ModelOutput(reconstruction=out)
         return output
 
 
@@ -354,7 +354,7 @@ class MetricWrongOutputDim(BaseMetric):
 
     def forward(self, x):
         L = self.fc(x.reshape(-1, int(np.prod(self.input_dim))))
-        output = ModelOuput(L=L)
+        output = ModelOutput(L=L)
         return output
 
 
@@ -365,7 +365,7 @@ class EncoderWrongOutput(BaseEncoder):
         self.fc = nn.Linear(int(np.prod(args.input_dim)), args.latent_dim)
 
     def forward(self, x):
-        output = ModelOuput(
+        output = ModelOutput(
             embedding=self.fc(x.reshape(-1, int(np.prod(self.input_dim))))
         )
         return output
@@ -379,7 +379,7 @@ class DecoderWrongOutput(BaseDecoder):
 
     def forward(self, z):
         out = self.fc(z.reshape(-1, self.latent_dim))
-        output = ModelOuput(reconstruction=out)
+        output = ModelOutput(reconstruction=out)
         return output, output, output
 
 
@@ -391,7 +391,7 @@ class MetricWrongOutput(BaseMetric):
 
     def forward(self, x):
         L = self.fc(x.reshape(-1, self.input_dim))
-        output = ModelOuput(L=L)
+        output = ModelOutput(L=L)
         return output, output
 
 

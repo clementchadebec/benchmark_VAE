@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 
 from ..base_architectures import BaseEncoder, BaseDecoder
-from ....models.base.base_utils import ModelOuput
+from ....models.base.base_utils import ModelOutput
 from ....models import BaseAEConfig
 
 
@@ -104,11 +104,11 @@ class Encoder_AE_CIFAR(BaseEncoder):
         """Forward 
         
         Returns:
-            ModelOuput: An instance of ModelOutput containing the embeddings of the input data under
+            ModelOutput: An instance of ModelOutput containing the embeddings of the input data under
             the key `embedding`
         """
         h1 = self.conv_layers(x).reshape(x.shape[0], -1)
-        output = ModelOuput(embedding=self.embedding(h1))
+        output = ModelOutput(embedding=self.embedding(h1))
         return output
 
 
@@ -216,11 +216,11 @@ class Encoder_VAE_CIFAR(BaseEncoder):
         """Forward method
 
         Returns:
-            ModelOuput: An instance of ModelOutput containing the embeddings of the input data under
+            ModelOutput: An instance of ModelOutput containing the embeddings of the input data under
             the key `embedding` and the **log** of the diagonal coefficient of the covariance 
             matrices under the key `log_covariance`"""
         h1 = self.conv_layers(x).reshape(x.shape[0], -1)
-        output = ModelOuput(
+        output = ModelOutput(
             embedding=self.embedding(h1), log_covariance=self.log_var(h1)
         )
         return output
@@ -308,9 +308,9 @@ class Decoder_AE_CIFAR(BaseDecoder):
         """Forward method
         
         Returns:
-            ModelOuput: An instance of ModelOutput containing the reconstruction of the latent code 
+            ModelOutput: An instance of ModelOutput containing the reconstruction of the latent code 
             under the key `reconstruction`
         """
         h1 = self.fc(z).reshape(z.shape[0], 1024, 8, 8)
-        output = ModelOuput(reconstruction=self.deconv_layers(h1))
+        output = ModelOutput(reconstruction=self.deconv_layers(h1))
         return output
