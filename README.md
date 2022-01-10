@@ -13,7 +13,10 @@
 	</a>
 	<a href="https://codecov.io/gh/clementchadebec/benchmark_VAE">
   <img src="https://codecov.io/gh/clementchadebec/benchmark_VAE/branch/main/graph/badge.svg?token=KEM7KKISXJ"/>
-</a
+</a>
+<a href="https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/aae/examples/notebooks/overview_notebook.ipynb">
+  <img src="https://colab.research.google.com/assets/colab-badge.svg"/>
+</a>
 	</a>
 </p>
 
