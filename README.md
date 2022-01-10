@@ -14,7 +14,7 @@
 	<a href="https://codecov.io/gh/clementchadebec/benchmark_VAE">
   <img src="https://codecov.io/gh/clementchadebec/benchmark_VAE/branch/main/graph/badge.svg?token=KEM7KKISXJ"/>
 </a>
-<a href="https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/aae/examples/notebooks/overview_notebook.ipynb">
+<a href="https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/notebooks/overview_notebook.ipynb">
   <img src="https://colab.research.google.com/assets/colab-badge.svg"/>
 </a>
 	</a>
@@ -262,20 +262,20 @@ First let's have a look at the reconstructed samples taken from the evaluation s
 
 |               Models               |                                                                                    MNIST                                                                     |                     CELEBA             
 |:----------------------------------:|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|:--------------------------------------------:|
-| Eval data                  | ![Eval](https://github.com/clementchadebec/benchmark_VAE/blob/aae/examples/showcases/eval_reconstruction_mnist.png) | ![AE](https://github.com/clementchadebec/benchmark_VAE/blob/aae/examples/showcases/eval_reconstruction_celeba.png)  
-| AE                  | ![AE](https://github.com/clementchadebec/benchmark_VAE/blob/aae/examples/showcases/ae_reconstruction_mnist.png) | ![AE](https://github.com/clementchadebec/benchmark_VAE/blob/aae/examples/showcases/ae_reconstruction_celeba.png)                                                                            |
-| VAE | ![VAE](https://github.com/clementchadebec/benchmark_VAE/blob/aae/examples/showcases/vae_reconstruction_mnist.png) |  ![VAE](https://github.com/clementchadebec/benchmark_VAE/blob/aae/examples/showcases/vae_reconstruction_celeba.png)
-| Beta-VAE| ![Beta](https://github.com/clementchadebec/benchmark_VAE/blob/aae/examples/showcases/beta_vae_reconstruction_mnist.png) | ![Beta Normal](https://github.com/clementchadebec/benchmark_VAE/blob/aae/examples/showcases/beta_vae_reconstruction_celeba.png)
-| IWAE | ![IWAE](https://github.com/clementchadebec/benchmark_VAE/blob/aae/examples/showcases/iwae_reconstruction_mnist.png) | ![IWAE](https://github.com/clementchadebec/benchmark_VAE/blob/aae/examples/showcases/iwae_reconstruction_celeba.png)
-| WAE| ![WAE](https://github.com/clementchadebec/benchmark_VAE/blob/aae/examples/showcases/wae_reconstruction_mnist.png) | ![WAE](https://github.com/clementchadebec/benchmark_VAE/blob/aae/examples/showcases/wae_reconstruction_celeba.png)
-| INFO VAE| ![INFO](https://github.com/clementchadebec/benchmark_VAE/blob/aae/examples/showcases/infovae_reconstruction_mnist.png) | ![INFO](https://github.com/clementchadebec/benchmark_VAE/blob/aae/examples/showcases/infovae_reconstruction_celeba.png)
-| VAMP | ![VAMP](https://github.com/clementchadebec/benchmark_VAE/blob/aae/examples/showcases/vamp_reconstruction_mnist.png) | ![VAMP](https://github.com/clementchadebec/benchmark_VAE/blob/aae/examples/showcases/vamp_reconstruction_celeba.png) |
-| Adversarial_AE          | ![AAE](https://github.com/clementchadebec/benchmark_VAE/blob/aae/examples/showcases/aae_reconstruction_mnist.png) | ![AAE](https://github.com/clementchadebec/benchmark_VAE/blob/aae/examples/showcases/aae_reconstruction_celeba.png) |
-| VAE_GAN          | ![VAEGAN](https://github.com/clementchadebec/benchmark_VAE/blob/aae/examples/showcases/vaegan_reconstruction_mnist.png) | ![VAEGAN](https://github.com/clementchadebec/benchmark_VAE/blob/aae/examples/showcases/vaegan_reconstruction_celeba.png) |
-| HVAE             | ![HVAE](https://github.com/clementchadebec/benchmark_VAE/blob/aae/examples/showcases/hvae_reconstruction_mnist.png) | ![HVAE](https://github.com/clementchadebec/benchmark_VAE/blob/aae/examples/showcases/hvae_reconstruction_celeba.png)
-| RAE_L2 | ![RAE L2](https://github.com/clementchadebec/benchmark_VAE/blob/aae/examples/showcases/rae_l2_reconstruction_mnist.png)  |  ![RAE L2](https://github.com/clementchadebec/benchmark_VAE/blob/aae/examples/showcases/rae_l2_reconstruction_celeba.png)
-| RAE_GP | ![RAE GMM](https://github.com/clementchadebec/benchmark_VAE/blob/aae/examples/showcases/rae_gp_reconstruction_mnist.png)  |  ![RAE GMM](https://github.com/clementchadebec/benchmark_VAE/blob/aae/examples/showcases/rae_gp_reconstruction_celeba.png)
-| Riemannian Hamiltonian VAE (RHVAE)| ![RHVAE](https://github.com/clementchadebec/benchmark_VAE/blob/aae/examples/showcases/rhvae_reconstruction_mnist.png) | ![RHVAE RHVAE](https://github.com/clementchadebec/benchmark_VAE/blob/aae/examples/showcases/rhvae_reconstruction_celeba.png)
+| Eval data                  | ![Eval](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/eval_reconstruction_mnist.png) | ![AE](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/eval_reconstruction_celeba.png)  
+| AE                  | ![AE](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/ae_reconstruction_mnist.png) | ![AE](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/ae_reconstruction_celeba.png)                                                                            |
+| VAE | ![VAE](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/vae_reconstruction_mnist.png) |  ![VAE](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/vae_reconstruction_celeba.png)
+| Beta-VAE| ![Beta](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/beta_vae_reconstruction_mnist.png) | ![Beta Normal](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/beta_vae_reconstruction_celeba.png)
+| IWAE | ![IWAE](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/iwae_reconstruction_mnist.png) | ![IWAE](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/iwae_reconstruction_celeba.png)
+| WAE| ![WAE](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/wae_reconstruction_mnist.png) | ![WAE](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/wae_reconstruction_celeba.png)
+| INFO VAE| ![INFO](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/infovae_reconstruction_mnist.png) | ![INFO](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/infovae_reconstruction_celeba.png)
+| VAMP | ![VAMP](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/vamp_reconstruction_mnist.png) | ![VAMP](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/vamp_reconstruction_celeba.png) |
+| Adversarial_AE          | ![AAE](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/main_reconstruction_mnist.png) | ![AAE](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/main_reconstruction_celeba.png) |
+| VAE_GAN          | ![VAEGAN](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/vaegan_reconstruction_mnist.png) | ![VAEGAN](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/vaegan_reconstruction_celeba.png) |
+| HVAE             | ![HVAE](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/hvae_reconstruction_mnist.png) | ![HVAE](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/hvae_reconstruction_celeba.png)
+| RAE_L2 | ![RAE L2](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/rae_l2_reconstruction_mnist.png)  |  ![RAE L2](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/rae_l2_reconstruction_celeba.png)
+| RAE_GP | ![RAE GMM](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/rae_gp_reconstruction_mnist.png)  |  ![RAE GMM](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/rae_gp_reconstruction_celeba.png)
+| Riemannian Hamiltonian VAE (RHVAE)| ![RHVAE](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/rhvae_reconstruction_mnist.png) | ![RHVAE RHVAE](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/rhvae_reconstruction_celeba.png)
 
 ----------------------------
 ### Generation
