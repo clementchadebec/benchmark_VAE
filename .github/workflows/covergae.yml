@@ -8,7 +8,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: ubuntu-latest
     env:
       OS: ${{ matrix.os }}
       PYTHON: '3.7'
@@ -23,7 +23,7 @@ jobs:
         pip install .
         pip install pytest
         pip install pytest-cov
-        pytest --cov=pythae ./ --cov-report=xml
+        pytest --cov=pythae ./ --cov-report=xml --runslow
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v2
       with:
