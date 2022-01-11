@@ -1,8 +1,6 @@
 name: Running tests (avoid slow)
 on: 
   push:
-    branches:
-      - main
 jobs:
   run:
     runs-on: ${{ matrix.os }}

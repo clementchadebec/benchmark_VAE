@@ -460,7 +460,7 @@ class Test_VAEGAN_Training:
 
         return model
 
-    @pytest.fixture(params=[None, Adagrad, Adam, Adadelta, SGD, RMSprop])
+    @pytest.fixture(params=[Adam])
     def optimizers(self, request, adversarial_ae, training_configs):
         if request.param is not None:
             encoder_optimizer = request.param(

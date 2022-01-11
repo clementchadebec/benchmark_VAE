@@ -333,7 +333,7 @@ class Test_RAE_GP_Training:
 
         return model
 
-    @pytest.fixture(params=[None, Adagrad, Adam, Adadelta, SGD, RMSprop])
+    @pytest.fixture(params=[Adam])
     def optimizers(self, request, rae, training_configs):
         if request.param is not None:
             optimizer = request.param(

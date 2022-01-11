@@ -329,7 +329,7 @@ class Test_VAE_Training:
 
         return model
 
-    @pytest.fixture(params=[None, Adagrad, Adam, Adadelta, SGD, RMSprop])
+    @pytest.fixture(params=[Adam])
     def optimizers(self, request, vae, training_configs):
         if request.param is not None:
             optimizer = request.param(

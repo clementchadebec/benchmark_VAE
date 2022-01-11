@@ -36,8 +36,8 @@ def model_configs_no_input_dim(request):
 
 @pytest.fixture(
     params=[
-        RHVAEConfig(input_dim=(1, 28, 28), latent_dim=10, reconstruction_loss="bce"),
-        RHVAEConfig(input_dim=(1, 2, 18), latent_dim=5),
+        RHVAEConfig(input_dim=(1, 28, 28), latent_dim=1, n_lf=1, reconstruction_loss="bce"),
+        RHVAEConfig(input_dim=(1, 2, 18), latent_dim=2, n_lf=1)
     ]
 )
 def model_configs(request):
@@ -459,9 +459,7 @@ class Test_RHVAE_Training:
         params=[
             torch.rand(1),
             torch.rand(1),
-            torch.rand(1),
-            torch.rand(1),
-            torch.rand(1),
+            torch.rand(1)
         ]
     )
     def rhvae(
@@ -502,7 +500,7 @@ class Test_RHVAE_Training:
 
         return model
 
-    @pytest.fixture(params=[None, Adagrad, Adam, Adadelta, SGD, RMSprop])
+    @pytest.fixture(params=[Adam])
     def optimizers(self, request, rhvae, training_configs):
         if request.param is not None:
             optimizer = request.param(
