@@ -286,6 +286,7 @@ class Test_Model_forward:
         assert out.recon_x.shape == (demo_data["data"].shape[0] * iwae.n_samples,) +  demo_data["data"].shape[1:]
 
 
+@pytest.mark.slow
 class Test_IWAE_Training:
     @pytest.fixture
     def train_dataset(self):

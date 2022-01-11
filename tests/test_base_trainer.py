@@ -328,7 +328,7 @@ class Test_Sanity_Checks:
         with pytest.raises(ModelError):
             trainer._run_model_sanity_check(rhvae, train_dataset)
 
-
+@pytest.mark.slow
 class Test_Main_Training:
     @pytest.fixture(params=[BaseTrainingConfig(num_epochs=3)])
     def training_configs(self, tmpdir, request):

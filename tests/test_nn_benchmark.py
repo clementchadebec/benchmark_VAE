@@ -9,8 +9,6 @@ from pythae.models.nn.benchmarks.cifar import *
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
-
-
 class Test_MNIST_Benchmark:
     @pytest.fixture(
     params=[

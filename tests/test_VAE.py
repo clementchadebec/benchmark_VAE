@@ -286,6 +286,7 @@ class Test_Model_forward:
         assert out.recon_x.shape == demo_data["data"].shape
 
 
+@pytest.mark.slow
 class Test_VAE_Training:
     @pytest.fixture
     def train_dataset(self):

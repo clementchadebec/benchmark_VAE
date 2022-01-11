@@ -193,6 +193,7 @@ class Test_Build_Optimizer:
         )
 
 
+@pytest.mark.slow
 class Test_Main_Training:
     @pytest.fixture(params=[CoupledOptimizerAdversarialTrainerConfig(num_epochs=3)])
     def training_configs(self, tmpdir, request):
