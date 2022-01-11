@@ -17,6 +17,8 @@ The Base Architectures
 .. autosummary::
    ~pythae.models.nn.BaseEncoder
    ~pythae.models.nn.BaseDecoder
+   ~pythae.models.nn.BaseDiscriminator
+   ~pythae.models.nn.BaseLayeredDiscriminator
    ~pythae.models.nn.BaseMetric
    :nosignatures:
 
@@ -36,6 +38,8 @@ MNIST
    ~pythae.models.nn.benchmarks.mnist.Encoder_AE_MNIST
    ~pythae.models.nn.benchmarks.mnist.Encoder_VAE_MNIST
    ~pythae.models.nn.benchmarks.mnist.Decoder_AE_MNIST
+   ~pythae.models.nn.benchmarks.mnist.Discriminator_VAE_MNIST
+   ~pythae.models.nn.benchmarks.mnist.LayeredDiscriminator_MNIST
    :nosignatures:
 
 CIFAR
@@ -60,6 +64,7 @@ CELEBA-64
    ~pythae.models.nn.benchmarks.celeba.Encoder_AE_CELEBA
    ~pythae.models.nn.benchmarks.celeba.Encoder_VAE_CELEBA
    ~pythae.models.nn.benchmarks.celeba.Decoder_AE_CELEBA
+   ~pythae.models.nn.benchmarks.celeba.LayeredDiscriminator_CELEBA
    :nosignatures:
 
 .. note::

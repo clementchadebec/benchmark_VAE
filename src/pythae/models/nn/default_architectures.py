@@ -2,8 +2,14 @@ import torch
 import numpy as np
 import torch.nn as nn
 
-from pythae.models.nn import BaseEncoder, BaseDecoder, BaseMetric
-from ..base.base_utils import ModelOuput
+from pythae.models.nn import (
+    BaseEncoder,
+    BaseDecoder,
+    BaseMetric,
+    BaseDiscriminator,
+    BaseLayeredDiscriminator
+)
+from ..base.base_utils import ModelOutput
 
 
 class Encoder_AE_MLP(BaseEncoder):
@@ -19,7 +25,7 @@ class Encoder_AE_MLP(BaseEncoder):
     def forward(self, x):
         out = self.layers(x.reshape(-1, np.prod(self.input_dim)))
 
-        output = ModelOuput(embedding=self.mu(out))
+        output = ModelOutput(embedding=self.mu(out))
 
         return output
 
@@ -38,7 +44,7 @@ class Encoder_VAE_MLP(BaseEncoder):
     def forward(self, x):
         out = self.layers(x.reshape(-1, np.prod(self.input_dim)))
 
-        output = ModelOuput(embedding=self.mu(out), log_covariance=self.std(out))
+        output = ModelOutput(embedding=self.mu(out), log_covariance=self.std(out))
 
         return output
 
@@ -60,7 +66,7 @@ class Decoder_AE_MLP(BaseDecoder):
 
     def forward(self, z):
         reconstruction = self.layers(z).reshape((z.shape[0],) + self.input_dim)
-        output = ModelOuput(reconstruction=reconstruction)
+        output = ModelOutput(reconstruction=reconstruction)
         return output
 
 
@@ -100,6 +106,75 @@ class Metric_MLP(BaseMetric):
         # add diagonal coefficients
         L = L + torch.diag_embed(h21.exp())
 
-        output = ModelOuput(L=L)
+        output = ModelOutput(L=L)
 
+        return output
+
+class Discriminator_MLP(BaseDiscriminator):
+    def __init__(self, args: dict):
+        BaseDiscriminator.__init__(self)
+
+        self.discriminator_input_dim = args.discriminator_input_dim
+
+        self.layers = nn.Sequential(
+            nn.Linear(np.prod(args.discriminator_input_dim), 256),
+            nn.ReLU(),
+            nn.Linear(256, 1),
+            nn.Sigmoid()
+        )
+
+    def forward(self, x):
+        out = self.layers(x.reshape(-1, np.prod(self.discriminator_input_dim)))
+
+        output = ModelOutput(adversarial_cost=out)
+
+        return output
+
+class LayeredDiscriminator_MLP(BaseLayeredDiscriminator):
+    def __init__(self, args: dict):
+        
+        self.discriminator_input_dim = args.discriminator_input_dim
+
+        layers = nn.ModuleList()
+
+        layers.append(
+            nn.Sequential(
+                nn.Linear(np.prod(args.discriminator_input_dim), 512),
+                nn.ReLU()
+            )
+        )
+
+        layers.append(
+            nn.Linear(512, 256),
+        )
+
+        layers.append(
+            nn.Sequential(
+                nn.Linear(256, 1),
+                nn.Sigmoid()
+            )
+        )
+
+        BaseLayeredDiscriminator.__init__(self, layers=layers)
+
+    def forward(self, x:torch.Tensor, output_layer_level:int=None):
+
+        if output_layer_level is not None:
+
+            assert output_layer_level <= self.depth, (
+                f'Cannot output layer deeper ({output_layer_level}) than depth ({self.depth})'
+            )
+
+        x = x.reshape(x.shape[0], -1)
+
+        for i in range(self.depth):
+            x = self.layers[i](x)
+
+            if i == output_layer_level:
+                break
+        
+        output = ModelOutput(
+            adversarial_cost=x
+        )
+    
         return output

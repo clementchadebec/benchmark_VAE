@@ -4,7 +4,7 @@ import os
 from ...models import VAE
 from .iwae_config import IWAEConfig
 from ...data.datasets import BaseDataset
-from ..base.base_utils import ModelOuput
+from ..base.base_utils import ModelOutput
 from ..nn import BaseEncoder, BaseDecoder
 from ..nn.default_architectures import Encoder_VAE_MLP
 
@@ -15,7 +15,7 @@ import torch.nn.functional as F
 
 class IWAE(VAE):
     """
-    IWAE model.
+    Importance Weighted Autoencoder model.
     
     Args:
         model_config(IWAEConfig): The IWAE configuration seting the main 
@@ -27,7 +27,7 @@ class IWAE(VAE):
             (https://en.wikipedia.org/wiki/Multilayer_perceptron) is used. Default: None.
 
         decoder (BaseDecoder): An instance of BaseDecoder (inheriting from `torch.nn.Module` which
-            plays the role of encoder. This argument allows you to use your own neural networks
+            plays the role of decoder. This argument allows you to use your own neural networks
             architectures if desired. If None is provided, a simple Multi Layer Preception
             (https://en.wikipedia.org/wiki/Multilayer_perceptron) is used. Default: None.
 
@@ -57,7 +57,7 @@ class IWAE(VAE):
             inputs (BaseDataset): The training datasat with labels
 
         Returns:
-            ModelOuput: An instance of ModelOutput containing all the relevant parameters
+            ModelOutput: An instance of ModelOutput containing all the relevant parameters
 
         """
 
@@ -76,7 +76,7 @@ class IWAE(VAE):
 
         loss, recon_loss, kld = self.loss_function(recon_x, x, mu, log_var, z)
 
-        output = ModelOuput(
+        output = ModelOutput(
             reconstruction_loss=recon_loss,
             reg_loss=kld,
             loss=loss,

@@ -7,7 +7,7 @@ import numpy as np
 
 from ...models import VAE
 from ...data.datasets import BaseDataset
-from ..base.base_utils import ModelOuput
+from ..base.base_utils import ModelOutput
 from ..nn import BaseEncoder, BaseDecoder
 from .hvae_config import HVAEConfig
 
@@ -16,7 +16,7 @@ from typing import Optional
 
 class HVAE(VAE):
     r"""
-    Hamiltonian VAE model.
+    Hamiltonian VAE.
 
     Args:
         model_config (HVAEConfig): A model configuration setting the main parameters of the model
@@ -27,7 +27,7 @@ class HVAE(VAE):
             (https://en.wikipedia.org/wiki/Multilayer_perceptron) is used. Default: None.
 
         decoder (BaseDecoder): An instance of BaseDecoder (inheriting from `torch.nn.Module` which
-            plays the role of encoder. This argument allows you to use your own neural networks
+            plays the role of decoder. This argument allows you to use your own neural networks
             architectures if desired. If None is provided, a simple Multi Layer Preception
             (https://en.wikipedia.org/wiki/Multilayer_perceptron) is used. Default: None.
 
@@ -57,7 +57,7 @@ class HVAE(VAE):
             requires_grad=True if model_config.learn_beta_zero else False,
         )
 
-    def forward(self, inputs: BaseDataset) -> ModelOuput:
+    def forward(self, inputs: BaseDataset) -> ModelOutput:
         r"""
         The input data is first encoded. The reparametrization is used to produce a sample
         :math:`z_0` from the approximate posterior :math:`q_{\phi}(z|x)`. Then 
@@ -115,7 +115,7 @@ class HVAE(VAE):
 
         loss = self.loss_function(recon_x, x, z0, z, rho, eps0, gamma, mu, log_var)
 
-        output = ModelOuput(
+        output = ModelOutput(
             loss=loss,
             recon_x=recon_x,
             z=z,

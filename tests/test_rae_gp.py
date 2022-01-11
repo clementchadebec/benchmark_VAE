@@ -6,7 +6,7 @@ import torch
 from torch.optim import SGD, Adadelta, Adagrad, Adam, RMSprop
 
 from pythae.customexception import BadInheritanceError
-from pythae.models.base.base_utils import ModelOuput
+from pythae.models.base.base_utils import ModelOutput
 from pythae.models import RAE_GP, RAE_GP_Config
 
 from pythae.trainers import BaseTrainer, BaseTrainingConfig
@@ -278,7 +278,7 @@ class Test_Model_forward:
 
         out = rae(demo_data)
 
-        assert isinstance(out, ModelOuput)
+        assert isinstance(out, ModelOutput)
 
         assert set(["loss", "recon_loss", "gen_reg_loss", "embedding_loss", "recon_x", "z"]) == set(
             out.keys()
@@ -434,7 +434,7 @@ class Test_RAE_GP_Training:
         model = deepcopy(trainer.model)
         optimizer = deepcopy(trainer.optimizer)
 
-        trainer.save_checkpoint(dir_path=dir_path, epoch=0)
+        trainer.save_checkpoint(dir_path=dir_path, epoch=0, model=model)
 
         checkpoint_dir = os.path.join(dir_path, "checkpoint_epoch_0")
 
@@ -641,6 +641,8 @@ class Test_RAE_GP_Training:
         pipeline = TrainingPipeline(
             model=rae, training_config=training_configs
         )
+
+        assert pipeline.training_config.__dict__ == training_configs.__dict__
 
         # Launch Pipeline
         pipeline(

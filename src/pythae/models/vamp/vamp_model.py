@@ -6,7 +6,7 @@ import os
 from ...models import VAE
 from .vamp_config import VAMPConfig
 from ...data.datasets import BaseDataset
-from ..base.base_utils import ModelOuput
+from ..base.base_utils import ModelOutput
 from ..nn import BaseEncoder, BaseDecoder
 from ..nn.default_architectures import Encoder_VAE_MLP
 
@@ -16,7 +16,7 @@ import torch.nn.functional as F
 
 
 class VAMP(VAE):
-    """VAMP VAE model
+    """Variational Mixture of Posteriors (VAMP) VAE model
     
     Args:
         model_config(VAEConfig): The Variational Autoencoder configuration seting the main 
@@ -77,7 +77,7 @@ class VAMP(VAE):
             inputs (BaseDataset): The training datasat with labels
 
         Returns:
-            ModelOuput: An instance of ModelOutput containing all the relevant parameters
+            ModelOutput: An instance of ModelOutput containing all the relevant parameters
 
         """
 
@@ -98,7 +98,7 @@ class VAMP(VAE):
 
         loss, recon_loss, kld = self.loss_function(recon_x, x, mu, log_var, z)
 
-        output = ModelOuput(
+        output = ModelOutput(
             reconstruction_loss=recon_loss,
             reg_loss=kld,
             loss=loss,

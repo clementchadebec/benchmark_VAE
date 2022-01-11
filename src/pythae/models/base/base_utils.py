@@ -4,8 +4,8 @@ import dill
 import torch
 import io
 
-class ModelOuput(OrderedDict):
-    """Base ModelOuput class fixing the output type from the models. This class is inspired from
+class ModelOutput(OrderedDict):
+    """Base ModelOutput class fixing the output type from the models. This class is inspired from
     the ``ModelOutput`` class from hugginface transformers library"""
 
     def __getitem__(self, k):

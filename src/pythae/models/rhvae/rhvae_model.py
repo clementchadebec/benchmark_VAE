@@ -13,7 +13,7 @@ import numpy as np
 
 from ...customexception import BadInheritanceError
 from ...data.datasets import BaseDataset
-from ..base.base_utils import ModelOuput, CPU_Unpickler
+from ..base.base_utils import ModelOutput, CPU_Unpickler
 from ...models import VAE
 from ..nn import BaseEncoder, BaseDecoder, BaseMetric
 from ..nn.default_architectures import Metric_MLP
@@ -36,7 +36,7 @@ class RHVAE(VAE):
             (https://en.wikipedia.org/wiki/Multilayer_perceptron) is used. Default: None.
 
         decoder (BaseDecoder): An instance of BaseDecoder (inheriting from `torch.nn.Module` which
-            plays the role of encoder. This argument allows you to use your own neural networks
+            plays the role of decoder. This argument allows you to use your own neural networks
             architectures if desired. If None is provided, a simple Multi Layer Preception
             (https://en.wikipedia.org/wiki/Multilayer_perceptron) is used. Default: None.
 
@@ -137,7 +137,7 @@ class RHVAE(VAE):
 
         self.metric = metric
 
-    def forward(self, inputs: BaseDataset) -> ModelOuput:
+    def forward(self, inputs: BaseDataset) -> ModelOutput:
         r"""
         The input data is first encoded. The reparametrization is used to produce a sample
         :math:`z_0` from the approximate posterior :math:`q_{\phi}(z|x)`. Then Riemannian
@@ -149,7 +149,7 @@ class RHVAE(VAE):
             inputs (BaseDataset): The training data with labels
 
         Returns:
-            ModelOuput: An instance of ModelOutput containing all the relevant parameters
+            ModelOutput: An instance of ModelOutput containing all the relevant parameters
         """
 
         x = inputs["data"]
@@ -241,7 +241,7 @@ class RHVAE(VAE):
             recon_x, x, z0, z, rho, eps0, gamma, mu, log_var, G_inv, G_log_det
         )
 
-        output = ModelOuput(
+        output = ModelOutput(
             loss=loss,
             recon_x=recon_x,
             z=z,

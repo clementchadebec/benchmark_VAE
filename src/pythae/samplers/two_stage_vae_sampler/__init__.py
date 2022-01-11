@@ -7,8 +7,11 @@ Available models:
 .. autosummary::
     ~pythae.models.VAE
     ~pythae.models.BetaVAE
+    ~pythae.models.IWAE
     ~pythae.models.INFOVAE_MMD
     ~pythae.models.VAMP
+    ~pythae.models.Adversarial_AE
+    ~pythae.models.VAEGAN
     ~pythae.models.HVAE
     ~pythae.models.RHVAE
     :nosignatures:

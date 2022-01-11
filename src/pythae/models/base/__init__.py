@@ -10,7 +10,7 @@ It contains:
    parameters (*e.g.* latent dimension ...)
 - | a :class:`~pythae.models.BaseAE` instance which creates a BaseAE model having a basic
    autoencoding architecture
-- | The :class:`~pythae.models.base.base_utils.ModelOuput` instance used for neural nets outputs and 
+- | The :class:`~pythae.models.base.base_utils.ModelOutput` instance used for neural nets outputs and 
    model outputs of the :class:`forward` method).
 """
 

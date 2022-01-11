@@ -13,7 +13,7 @@ from ..nn.default_architectures import Encoder_AE_MLP, Decoder_AE_MLP
 
 from .base_config import BaseAEConfig
 
-from .base_utils import ModelOuput, CPU_Unpickler
+from .base_utils import ModelOutput, CPU_Unpickler
 
 
 class BaseAE(nn.Module):
@@ -29,7 +29,7 @@ class BaseAE(nn.Module):
             (https://en.wikipedia.org/wiki/Multilayer_perceptron) is used. Default: None.
 
         decoder (BaseDecoder): An instance of BaseDecoder (inheriting from `torch.nn.Module` which
-            plays the role of encoder. This argument allows you to use your own neural networks
+            plays the role of decoder. This argument allows you to use your own neural networks
             architectures if desired. If None is provided, a simple Multi Layer Preception
             (https://en.wikipedia.org/wiki/Multilayer_perceptron) is used. Default: None.
 
@@ -73,16 +73,16 @@ class BaseAE(nn.Module):
 
         self.device = None
 
-    def forward(self, inputs: BaseDataset) -> ModelOuput:
+    def forward(self, inputs: BaseDataset) -> ModelOutput:
         """Main forward pass outputing the VAE outputs
-        This function should output a :class:`~pythae.models.base.base_utils.ModelOuput` instance 
+        This function should output a :class:`~pythae.models.base.base_utils.ModelOutput` instance 
         gathering all the model outputs
 
         Args:
             inputs (BaseDataset): The training data with labels, masks etc...
 
         Returns:
-            ModelOuput: A ModelOutput instance providing the outputs of the model.
+            ModelOutput: A ModelOutput instance providing the outputs of the model.
 
         .. note::
             The loss must be computed in this forward pass and accessed through

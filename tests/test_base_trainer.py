@@ -128,14 +128,6 @@ class Test_Build_Optimizer:
         )
         return optimizer
 
-    @pytest.fixture(params=[Adagrad, Adam, Adadelta, SGD, RMSprop])
-    def schedulers(self, request, model_sample, training_configs_learning_rate):
-
-        optimizer = request.param(
-            model_sample.parameters(), lr=training_configs_learning_rate.learning_rate
-        )
-        return optimizer
-
     def test_default_optimizer_building(
         self, model_sample, train_dataset, training_configs_learning_rate
     ):

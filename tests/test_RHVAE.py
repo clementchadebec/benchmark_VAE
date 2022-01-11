@@ -7,7 +7,7 @@ import torch
 from torch.optim import SGD, Adadelta, Adagrad, Adam, RMSprop
 
 from pythae.customexception import BadInheritanceError
-from pythae.models.base.base_utils import ModelOuput
+from pythae.models.base.base_utils import ModelOutput
 from pythae.models import RHVAE, RHVAEConfig
 from pythae.trainers import BaseTrainer, BaseTrainingConfig
 from pythae.pipelines import TrainingPipeline
@@ -603,7 +603,7 @@ class Test_RHVAE_Training:
         model = deepcopy(trainer.model)
         optimizer = deepcopy(trainer.optimizer)
 
-        trainer.save_checkpoint(dir_path=dir_path, epoch=0)
+        trainer.save_checkpoint(dir_path=dir_path, epoch=0, model=model)
 
         checkpoint_dir = os.path.join(dir_path, "checkpoint_epoch_0")
 
@@ -841,6 +841,8 @@ class Test_RHVAE_Training:
         pipeline = TrainingPipeline(
             model=rhvae, training_config=training_configs
         )
+
+        assert pipeline.training_config.__dict__ == training_configs.__dict__
 
         # Launch Pipeline
         pipeline(

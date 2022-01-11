@@ -7,12 +7,15 @@ Available models:
     ~pythae.models.AE
     ~pythae.models.VAE
     ~pythae.models.BetaVAE
+    ~pythae.models.IWAE
+    ~pythae.models.WAE_MMD
     ~pythae.models.INFOVAE_MMD
+    ~pythae.models.VAMP
+    ~pythae.models.Adversarial_AE
+    ~pythae.models.VAEGAN
+    ~pythae.models.HVAE
     ~pythae.models.RAE_GP
     ~pythae.models.RAE_L2
-    ~pythae.models.WAE_MMD
-    ~pythae.models.VAMP
-    ~pythae.models.HVAE
     ~pythae.models.RHVAE
     :nosignatures:
 """

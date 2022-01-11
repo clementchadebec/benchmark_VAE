@@ -12,5 +12,5 @@ BaseAE
 .. autoclass:: pythae.models.BaseAE
    :members:
 
-.. autoclass:: pythae.models.base.base_utils.ModelOuput
+.. autoclass:: pythae.models.base.base_utils.ModelOutput
    :members:
