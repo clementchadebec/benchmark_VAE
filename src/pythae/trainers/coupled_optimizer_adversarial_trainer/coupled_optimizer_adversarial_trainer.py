@@ -433,12 +433,6 @@ class CoupledOptimizerAdversarialTrainer(BaseTrainer):
                 if model_output.update_discriminator:
                     #print('update discr')
                     self.discriminator_optimizer.step()
-                
-
-                
-                
-                
-                
 
                 loss = encoder_loss + decoder_loss + discriminator_loss
 
