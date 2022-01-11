@@ -13,7 +13,10 @@
 	</a>
 	<a href="https://codecov.io/gh/clementchadebec/benchmark_VAE">
   <img src="https://codecov.io/gh/clementchadebec/benchmark_VAE/branch/main/graph/badge.svg?token=KEM7KKISXJ"/>
-</a
+</a>
+<a href="https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/notebooks/overview_notebook.ipynb">
+  <img src="https://colab.research.google.com/assets/colab-badge.svg"/>
+</a>
 	</a>
 </p>
 
@@ -57,18 +60,20 @@ Below is the list of the models currently implemented in the library.
 |               Models               |                                                                                    Training example                                                                                    |                     Paper                    |                           Official Implementation                          |
 |:----------------------------------:|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|:--------------------------------------------:|:--------------------------------------------------------------------------:|
 | Autoencoder (AE)                   | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/notebooks/models_training/ae_training.ipynb) |                                              |                                                                            |
-| Variational Autoencoder (VAE)      | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/notebooks/models_training/vae_training.ipynb) | [link](https://arxiv.org/pdf/1312.6114.pdf)  |
+| Variational Autoencoder (VAE)      | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/notebooks/models_training/vae_training.ipynb) | [link](https://arxiv.org/abs/1312.6114)  |
 | Beta Variational Autoencoder (Beta_VAE) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/notebooks/models_training/beta_vae_training.ipynb) | [link](https://openreview.net/pdf?id=Sy2fzU9gl)  |                                                                            |
-| Importance Weighted Autoencoder (IWAE) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/notebooks/models_training/iwae_training.ipynb) | [link](https://arxiv.org/pdf/1509.00519v4.pdf)  | [link](https://github.com/yburda/iwae)                                                                            |
-| Wasserstein Autoencoder (WAE)      | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/notebooks/models_training/wae_training.ipynb) | [link](https://arxiv.org/pdf/1711.01558.pdf) | [link](https://github.com/tolstikhin/wae)                                  |
-| Info Variational Autoencoder (INFOVAE_MMD)      | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/notebooks/models_training/info_vae_training.ipynb) | [link](https://arxiv.org/pdf/1706.02262.pdf) |                                   |
-| VAMP Autoencoder (VAMP)            | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/notebooks/models_training/vamp_training.ipynb) | [link](https://arxiv.org/pdf/1705.07120.pdf) | [link](https://github.com/jmtomczak/vae_vampprior)                         |
-| Hamiltonian VAE (HVAE)             | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/notebooks/models_training/hvae_training.ipynb) | [link](https://arxiv.org/pdf/1805.11328.pdf) | [link](https://github.com/anthonycaterini/hvae-nips)                       |
-| Regularized AE with L2 decoder param (RAE_L2) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/notebooks/models_training/rae_l2_training.ipynb) | [link](https://arxiv.org/pdf/1903.12436.pdf) | [link](https://github.com/ParthaEth/Regularized_autoencoders-RAE-/tree/master/models/rae) |
-| Regularized AE with gradient penalty (RAE_GP) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/notebooks/models_training/rae_gp_training.ipynb) | [link](https://arxiv.org/pdf/1903.12436.pdf) | [link](https://github.com/ParthaEth/Regularized_autoencoders-RAE-/tree/master/models/rae) |
-| Riemannian Hamiltonian VAE (RHVAE) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/notebooks/models_training/rhvae_training.ipynb) | [link](https://arxiv.org/pdf/2105.00026.pdf) | |
+| Importance Weighted Autoencoder (IWAE) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/notebooks/models_training/iwae_training.ipynb) | [link](https://arxiv.org/abs/1509.00519v4)  | [link](https://github.com/yburda/iwae)                                                                            |
+| Wasserstein Autoencoder (WAE)      | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/notebooks/models_training/wae_training.ipynb) | [link](https://arxiv.org/abs/1711.01558) | [link](https://github.com/tolstikhin/wae)                                  |
+| Info Variational Autoencoder (INFOVAE_MMD)      | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/notebooks/models_training/info_vae_training.ipynb) | [link](https://arxiv.org/abs/1706.02262) |                                   |
+| VAMP Autoencoder (VAMP)            | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/notebooks/models_training/vamp_training.ipynb) | [link](https://arxiv.org/abs/1705.07120) | [link](https://github.com/jmtomczak/vae_vampprior)                         |
+| Adversarial Autoencoder (Adversarial_AE)                   | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/notebooks/models_training/adversarial_ae_training.ipynb) | [link](https://arxiv.org/abs/1511.05644)
+| Variational Autoencoder GAN (VAEGAN) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/notebooks/models_training/vaegan_training.ipynb) | [link](https://arxiv.org/abs/1512.09300) | [link](https://github.com/andersbll/autoencoding_beyond_pixels)
+| Hamiltonian VAE (HVAE)             | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/notebooks/models_training/hvae_training.ipynb) | [link](https://arxiv.org/abs/1805.11328) | [link](https://github.com/anthonycaterini/hvae-nips)                       |
+| Regularized AE with L2 decoder param (RAE_L2) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/notebooks/models_training/rae_l2_training.ipynb) | [link](https://arxiv.org/abs/1903.12436) | [link](https://github.com/ParthaEth/Regularized_autoencoders-RAE-/tree/master/) |
+| Regularized AE with gradient penalty (RAE_GP) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/notebooks/models_training/rae_gp_training.ipynb) | [link](https://arxiv.org/abs/1903.12436) | [link](https://github.com/ParthaEth/Regularized_autoencoders-RAE-/tree/master/) |
+| Riemannian Hamiltonian VAE (RHVAE) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/notebooks/models_training/rhvae_training.ipynb) | [link](https://arxiv.org/abs/2105.00026) | |
 
-**See [results](#Results) for all aforementionned models**
+**See [reconstruction](#Reconstruction) and [generation](#Generation) results for all aforementionned models**
 
 ## Available Samplers
 
@@ -76,10 +81,10 @@ Below is the list of the models currently implemented in the library.
 
 |                Samplers               |   Models  		  | Paper 											  | Official Implementation 				  |
 |:-------------------------------------:|:-------------------:|:-------------------------------------------------:|:-----------------------------------------:|
-| Normal prior (NormalSampler)                         | all models		  | [link](https://arxiv.org/pdf/1312.6114.pdf)		  |
-| Gaussian mixture (GaussianMixtureSampler) | all models		  | [link](https://arxiv.org/pdf/1903.12436.pdf) 	  | [link](https://github.com/ParthaEth/Regularized_autoencoders-RAE-/tree/master/models/rae) |
-| VAMP prior sampler (VAMPSampler)                   |    VAMP   		  | [link](https://arxiv.org/pdf/1705.07120.pdf) 	  | [link](https://github.com/jmtomczak/vae_vampprior) |
-| Manifold sampler (RHVAESampler)                     |    RHVAE  		  | [link](https://arxiv.org/pdf/2105.00026.pdf)      |													|
+| Normal prior (NormalSampler)                         | all models		  | [link](https://arxiv.org/abs/1312.6114)		  |
+| Gaussian mixture (GaussianMixtureSampler) | all models		  | [link](https://arxiv.org/abs/1903.12436) 	  | [link](https://github.com/ParthaEth/Regularized_autoencoders-RAE-/tree/master/models/rae) |
+| VAMP prior sampler (VAMPSampler)                   |    VAMP   		  | [link](https://arxiv.org/abs/1705.07120) 	  | [link](https://github.com/jmtomczak/vae_vampprior) |
+| Manifold sampler (RHVAESampler)                     |    RHVAE  		  | [link](https://arxiv.org/abs/2105.00026)      |													|
 | Two stage VAE sampler (TwoStageVAESampler)					| all VAE based models| [link](https://openreview.net/pdf?id=B1e0X3C9tQ)  | [link](https://github.com/daib13/TwoStageVAE/) |)
 
 
@@ -251,6 +256,32 @@ You want to contribute to this library by adding a model, a sampler or simply fi
 
 ## Results
 
+### Reconstruction
+First let's have a look at the reconstructed samples taken from the evaluation set. 
+
+
+|               Models               |                                                                                    MNIST                                                                     |                     CELEBA             
+|:----------------------------------:|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|:--------------------------------------------:|
+| Eval data                  | ![Eval](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/eval_reconstruction_mnist.png) | ![AE](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/eval_reconstruction_celeba.png)  
+| AE                  | ![AE](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/ae_reconstruction_mnist.png) | ![AE](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/ae_reconstruction_celeba.png)                                                                            |
+| VAE | ![VAE](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/vae_reconstruction_mnist.png) |  ![VAE](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/vae_reconstruction_celeba.png)
+| Beta-VAE| ![Beta](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/beta_vae_reconstruction_mnist.png) | ![Beta Normal](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/beta_vae_reconstruction_celeba.png)
+| IWAE | ![IWAE](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/iwae_reconstruction_mnist.png) | ![IWAE](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/iwae_reconstruction_celeba.png)
+| WAE| ![WAE](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/wae_reconstruction_mnist.png) | ![WAE](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/wae_reconstruction_celeba.png)
+| INFO VAE| ![INFO](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/infovae_reconstruction_mnist.png) | ![INFO](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/infovae_reconstruction_celeba.png)
+| VAMP | ![VAMP](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/vamp_reconstruction_mnist.png) | ![VAMP](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/vamp_reconstruction_celeba.png) |
+| Adversarial_AE          | ![AAE](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/aae_reconstruction_mnist.png) | ![AAE](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/aae_reconstruction_celeba.png) |
+| VAE_GAN          | ![VAEGAN](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/vaegan_reconstruction_mnist.png) | ![VAEGAN](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/vaegan_reconstruction_celeba.png) |
+| HVAE             | ![HVAE](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/hvae_reconstruction_mnist.png) | ![HVAE](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/hvae_reconstruction_celeba.png)
+| RAE_L2 | ![RAE L2](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/rae_l2_reconstruction_mnist.png)  |  ![RAE L2](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/rae_l2_reconstruction_celeba.png)
+| RAE_GP | ![RAE GMM](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/rae_gp_reconstruction_mnist.png)  |  ![RAE GMM](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/rae_gp_reconstruction_celeba.png)
+| Riemannian Hamiltonian VAE (RHVAE)| ![RHVAE](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/rhvae_reconstruction_mnist.png) | ![RHVAE RHVAE](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/rhvae_reconstruction_celeba.png)
+
+----------------------------
+### Generation
+
+Here, we show the generated samples using using eahc model implemented in the library and different samplers.
+
 |               Models               |                                                                                    MNIST                                                                     |                     CELEBA             
 |:----------------------------------:|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|:--------------------------------------------:|
 | AE  + GaussianMixtureSampler                  | ![AE GMM](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/ae_gmm_sampling_mnist.png) | ![AE GMM](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/ae_gmm_sampling_celeba.png)                                                                            |
@@ -261,6 +292,8 @@ You want to contribute to this library by adding a model, a sampler or simply fi
 | WAE + NormalSampler| ![WAE Normal](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/wae_normal_sampling_mnist.png) | ![WAE Normal](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/wae_normal_sampling_celeba.png)
 | INFO VAE + NormalSampler| ![INFO Normal](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/infovae_normal_sampling_mnist.png) | ![INFO Normal](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/infovae_normal_sampling_celeba.png)
 | VAMP + VAMPSampler          | ![VAMP Vamp](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/vamp_vamp_sampling_mnist.png) | ![VAMP Vamp](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/vamp_vamp_sampling_celeba.png) |
+| Adversarial_AE + NormalSampler          | ![AAE_Normal](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/aae_normal_sampling_mnist.png) | ![AAE_Normal](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/aae_normal_sampling_celeba.png) |
+| VAEGAN + NormalSampler          | ![VAEGAN_Normal](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/vaegan_normal_sampling_mnist.png) | ![VAEGAN_Normal](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/vaegan_normal_sampling_celeba.png) |
 | HVAE + NormalSampler             | ![HVAE Normal](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/hvae_normal_sampling_mnist.png) | ![HVAE GMM](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/hvae_normal_sampling_celeba.png)
 | RAE_L2 + GaussianMixtureSampler | ![RAE L2 GMM](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/rae_l2_gmm_sampling_mnist.png)  |  ![RAE L2 GMM](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/rae_l2_gmm_sampling_celeba.png)
 | RAE_GP + GaussianMixtureSampler| ![RAE GMM](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/rae_gp_gmm_sampling_mnist.png)  |  ![RAE GMM](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/rae_gp_gmm_sampling_celeba.png)

@@ -29,7 +29,7 @@ class BaseAE(nn.Module):
             (https://en.wikipedia.org/wiki/Multilayer_perceptron) is used. Default: None.
 
         decoder (BaseDecoder): An instance of BaseDecoder (inheriting from `torch.nn.Module` which
-            plays the role of encoder. This argument allows you to use your own neural networks
+            plays the role of decoder. This argument allows you to use your own neural networks
             architectures if desired. If None is provided, a simple Multi Layer Preception
             (https://en.wikipedia.org/wiki/Multilayer_perceptron) is used. Default: None.
 

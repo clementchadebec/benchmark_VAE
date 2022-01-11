@@ -4,6 +4,7 @@ several pythae's instances which are articulated together.
 
 A :class:`__call__` function is defined and used to launch the Pipeline. """
 
+from .base_pipeline import Pipeline
 from .training import TrainingPipeline
 
-__all__ = ["TrainingPipeline"]
+__all__ = ["Pipeline", "TrainingPipeline"]

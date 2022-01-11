@@ -10,7 +10,7 @@ from pythae.data.preprocessors import DataProcessor
 from pythae.models import RHVAE
 from pythae.models.rhvae import RHVAEConfig
 from pythae.pipelines import TrainingPipeline
-from pythae.trainers import BaseTrainingConfig, CoupledOptimizerTrainerConfig
+from pythae.trainers import BaseTrainingConfig, CoupledOptimizerTrainerConfig, AdversarialTrainerConfig
 
 logger = logging.getLogger(__name__)
 console = logging.StreamHandler()
@@ -36,7 +36,7 @@ ap.add_argument(
 ap.add_argument(
     "--model_name",
     help="The name of the model to train",
-    choices=["ae", "vae", "beta_vae", "iwae", "wae", "info_vae", "rae_gp","rae_l2", "vamp", "hvae", "rhvae"],
+    choices=["ae", "vae", "beta_vae", "iwae", "wae", "info_vae", "rae_gp","rae_l2", "vamp", "hvae", "rhvae", 'aae', "vaegan"],
     required=True,
 )
 ap.add_argument(
@@ -60,6 +60,7 @@ def main(args):
         from pythae.models.nn.benchmarks.mnist import Encoder_AE_MNIST as Encoder_AE
         from pythae.models.nn.benchmarks.mnist import Encoder_VAE_MNIST as Encoder_VAE
         from pythae.models.nn.benchmarks.mnist import Decoder_AE_MNIST as Decoder_AE
+        from pythae.models.nn.benchmarks.mnist import LayeredDiscriminator_MNIST as LayerDiscriminator
 
     elif args.dataset == "cifar10":
 
@@ -72,6 +73,7 @@ def main(args):
         from pythae.models.nn.benchmarks.celeba import Encoder_AE_CELEBA as Encoder_AE
         from pythae.models.nn.benchmarks.celeba import Encoder_VAE_CELEBA as Encoder_VAE
         from pythae.models.nn.benchmarks.celeba import Decoder_AE_CELEBA as Decoder_AE
+        from pythae.models.nn.benchmarks.celeba import LayeredDiscriminator_CELEBA as LayerDiscriminator
 
     try:
         logger.info(f"\nLoading {args.dataset} data...\n")
@@ -294,6 +296,43 @@ def main(args):
             decoder=Decoder_AE(model_config),
         )
 
+    elif args.model_name == "aae":
+        from pythae.models import Adversarial_AE, Adversarial_AE_Config
+
+        if args.model_config is not None:
+            model_config = Adversarial_AE_Config.from_json_file(args.model_config)
+
+        else:
+            model_config = Adversarial_AE_Config()
+
+        model_config.input_dim = data_input_dim
+
+        model = Adversarial_AE(
+            model_config=model_config,
+            encoder=Encoder_VAE(model_config),
+            decoder=Decoder_AE(model_config),
+        )
+
+    elif args.model_name == "vaegan":
+        from pythae.models import VAEGAN, VAEGANConfig
+
+        if args.model_config is not None:
+            model_config = VAEGANConfig.from_json_file(
+                args.model_config
+            )
+
+        else:
+            model_config = VAEGANConfig()
+
+        model_config.input_dim = data_input_dim
+
+        model = VAEGAN(
+            model_config=model_config,
+            encoder=Encoder_VAE(model_config),
+            decoder=Decoder_AE(model_config),
+            discriminator=LayerDiscriminator(model_config)
+        )
+
     logger.info(f"Successfully build {args.model_name.upper()} model !\n")
 
     encoder_num_param = sum(
@@ -319,6 +358,18 @@ def main(args):
 
     if model.model_name == 'RAE_L2':
         training_config = CoupledOptimizerTrainerConfig.from_json_file(args.training_config)
+
+    elif model.model_name == 'Adversarial_AE':
+        training_config = AdversarialTrainerConfig.from_json_file(args.training_config)
+
+    elif model.model_name == 'VAEGAN':
+        from pythae.trainers import (
+            CoupledOptimizerAdversarialTrainer,
+            CoupledOptimizerAdversarialTrainerConfig
+        )
+        training_config = CoupledOptimizerAdversarialTrainerConfig.from_json_file(
+            args.training_config
+        )
 
     else:
         training_config = BaseTrainingConfig.from_json_file(args.training_config)

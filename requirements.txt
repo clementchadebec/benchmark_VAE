@@ -1,4 +1,4 @@
-numpy==1.19
+numpy>=1.19
 torch==1.9.0
 dill==0.3.3
 pydantic==1.8.2

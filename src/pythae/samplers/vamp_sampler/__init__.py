@@ -1,4 +1,4 @@
-"""Implementation of a VAMP prior sampler as proposed in (https://arxiv.org/pdf/1705.07120.pdf).
+"""Implementation of a VAMP prior sampler as proposed in (https://arxiv.org/abs/1705.07120).
 
 Available models:
 ------------------

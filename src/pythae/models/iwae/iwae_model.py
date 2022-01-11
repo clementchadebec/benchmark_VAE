@@ -15,7 +15,7 @@ import torch.nn.functional as F
 
 class IWAE(VAE):
     """
-    IWAE model.
+    Importance Weighted Autoencoder model.
     
     Args:
         model_config(IWAEConfig): The IWAE configuration seting the main 
@@ -27,7 +27,7 @@ class IWAE(VAE):
             (https://en.wikipedia.org/wiki/Multilayer_perceptron) is used. Default: None.
 
         decoder (BaseDecoder): An instance of BaseDecoder (inheriting from `torch.nn.Module` which
-            plays the role of encoder. This argument allows you to use your own neural networks
+            plays the role of decoder. This argument allows you to use your own neural networks
             architectures if desired. If None is provided, a simple Multi Layer Preception
             (https://en.wikipedia.org/wiki/Multilayer_perceptron) is used. Default: None.
 

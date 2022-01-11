@@ -286,6 +286,7 @@ class Test_Model_forward:
         assert out.recon_x.shape == (demo_data["data"].shape[0] * iwae.n_samples,) +  demo_data["data"].shape[1:]
 
 
+@pytest.mark.slow
 class Test_IWAE_Training:
     @pytest.fixture
     def train_dataset(self):
@@ -330,7 +331,7 @@ class Test_IWAE_Training:
 
         return model
 
-    @pytest.fixture(params=[None, Adagrad, Adam, Adadelta, SGD, RMSprop])
+    @pytest.fixture(params=[Adam])
     def optimizers(self, request, iwae, training_configs):
         if request.param is not None:
             optimizer = request.param(
@@ -436,7 +437,7 @@ class Test_IWAE_Training:
         model = deepcopy(trainer.model)
         optimizer = deepcopy(trainer.optimizer)
 
-        trainer.save_checkpoint(dir_path=dir_path, epoch=0)
+        trainer.save_checkpoint(dir_path=dir_path, epoch=0, model=model)
 
         checkpoint_dir = os.path.join(dir_path, "checkpoint_epoch_0")
 
@@ -643,6 +644,8 @@ class Test_IWAE_Training:
         pipeline = TrainingPipeline(
             model=iwae, training_config=training_configs
         )
+
+        assert pipeline.training_config.__dict__ == training_configs.__dict__
 
         # Launch Pipeline
         pipeline(

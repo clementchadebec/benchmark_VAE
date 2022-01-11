@@ -1,5 +1,5 @@
 """This module is the implementation of the Importance Weighted Autoencoder
-proposed in (https://arxiv.org/pdf/1509.00519v4.pdf).
+proposed in (https://arxiv.org/abs/1509.00519v4).
 
 Available samplers
 -------------------

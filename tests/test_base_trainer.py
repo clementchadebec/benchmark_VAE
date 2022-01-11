@@ -128,14 +128,6 @@ class Test_Build_Optimizer:
         )
         return optimizer
 
-    @pytest.fixture(params=[Adagrad, Adam, Adadelta, SGD, RMSprop])
-    def schedulers(self, request, model_sample, training_configs_learning_rate):
-
-        optimizer = request.param(
-            model_sample.parameters(), lr=training_configs_learning_rate.learning_rate
-        )
-        return optimizer
-
     def test_default_optimizer_building(
         self, model_sample, train_dataset, training_configs_learning_rate
     ):
@@ -336,7 +328,7 @@ class Test_Sanity_Checks:
         with pytest.raises(ModelError):
             trainer._run_model_sanity_check(rhvae, train_dataset)
 
-
+@pytest.mark.slow
 class Test_Main_Training:
     @pytest.fixture(params=[BaseTrainingConfig(num_epochs=3)])
     def training_configs(self, tmpdir, request):

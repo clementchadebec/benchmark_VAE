@@ -1,4 +1,4 @@
-"""Implementation of a Vanilla Autoencoder model
+"""Implementation of a Vanilla Autoencoder model.
 
 Available samplers
 -------------------

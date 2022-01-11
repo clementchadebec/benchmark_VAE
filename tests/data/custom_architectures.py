@@ -218,6 +218,73 @@ class Metric_MLP_Custom(BaseMetric):
 
         return output
 
+class Discriminator_MLP_Custom(BaseDiscriminator):
+    def __init__(self, args: dict):
+        BaseDiscriminator.__init__(self)
+
+        self.discriminator_input_dim = args.discriminator_input_dim
+
+
+        self.layers = nn.Sequential(
+            nn.Linear(np.prod(args.discriminator_input_dim), 10),
+            nn.ReLU(),
+            nn.Linear(10, 1),
+            nn.Sigmoid())
+
+    def forward(self, x):
+        out = self.layers(x.reshape(-1, np.prod(self.discriminator_input_dim)))
+
+        output = ModelOutput(adversarial_cost=out)
+
+        return output
+
+class LayeredDiscriminator_MLP_Custom(BaseLayeredDiscriminator):
+    def __init__(self, args: dict):
+        
+        self.discriminator_input_dim = args.discriminator_input_dim
+
+        layers = nn.ModuleList()
+
+        layers.append(
+            nn.Sequential(
+                nn.Linear(np.prod(args.discriminator_input_dim), 10),
+                nn.ReLU(inplace=True)
+            )
+        )
+
+        layers.append(
+            nn.Linear(10, 5),
+        )
+
+        layers.append(
+            nn.Sequential(
+                nn.Linear(5, 1),
+                nn.Sigmoid()
+            )
+        )
+        BaseLayeredDiscriminator.__init__(self, layers=layers)
+
+    def forward(self, x:torch.Tensor, output_layer_level:int=None):
+
+        if output_layer_level is not None:
+
+            assert output_layer_level <= self.depth, (
+                f'Cannot output layer deeper ({output_layer_level}) than depth ({self.depth})'
+            )
+
+        x = x.reshape(x.shape[0], -1)
+
+        for i in range(self.depth):
+            x = self.layers[i](x)
+
+            if i == output_layer_level:
+                break
+        
+        output = ModelOutput(
+            adversarial_cost=x
+        )
+    
+        return output
 
 class EncoderWrongInputDim(BaseEncoder):
     def __init__(self, args):

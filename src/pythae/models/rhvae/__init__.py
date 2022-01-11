@@ -1,5 +1,5 @@
 r"""This is an implementation of the Riemannian Hamiltonian VAE model proposed in
-(https://arxiv.org/pdf/2010.11518.pdf). This model provides a way to
+(https://arxiv.org/abs/2105.00026). This model provides a way to
 learn the Riemannian latent structure of a given set of data set through a parametrized
 Riemannian metric having the following shape:
 :math:`\mathbf{G}^{-1}(z) = \sum \limits _{i=1}^N L_{\psi_i} L_{\psi_i}^{\top} \exp
@@ -7,7 +7,7 @@ Riemannian metric having the following shape:
 
 It is particularly well suited for High
 Dimensional data combined with low sample number and proved relevant for Data Augmentation as
-proved in (https://arxiv.org/pdf/2105.00026.pdf).
+proved in (https://arxiv.org/abs/2105.00026).
 
 Available samplers
 -------------------

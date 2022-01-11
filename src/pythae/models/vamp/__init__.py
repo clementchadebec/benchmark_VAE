@@ -1,5 +1,5 @@
 """This module is the implementation of a Variational Mixture of Posterior prior 
-Variational Auto Encoder proposed in (https://arxiv.org/pdf/1705.07120.pdf).
+Variational Auto Encoder proposed in (https://arxiv.org/abs/1705.07120).
 
 Available samplers
 -------------------

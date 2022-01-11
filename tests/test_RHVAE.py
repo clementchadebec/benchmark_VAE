@@ -36,8 +36,8 @@ def model_configs_no_input_dim(request):
 
 @pytest.fixture(
     params=[
-        RHVAEConfig(input_dim=(1, 28, 28), latent_dim=10, reconstruction_loss="bce"),
-        RHVAEConfig(input_dim=(1, 2, 18), latent_dim=5),
+        RHVAEConfig(input_dim=(1, 28, 28), latent_dim=1, n_lf=1, reconstruction_loss="bce"),
+        RHVAEConfig(input_dim=(1, 2, 18), latent_dim=2, n_lf=1)
     ]
 )
 def model_configs(request):
@@ -440,6 +440,7 @@ class Test_Model_forward:
         assert out.recon_x.shape == demo_data["data"].shape
 
 
+@pytest.mark.slow
 class Test_RHVAE_Training:
     @pytest.fixture
     def train_dataset(self):
@@ -458,9 +459,7 @@ class Test_RHVAE_Training:
         params=[
             torch.rand(1),
             torch.rand(1),
-            torch.rand(1),
-            torch.rand(1),
-            torch.rand(1),
+            torch.rand(1)
         ]
     )
     def rhvae(
@@ -501,7 +500,7 @@ class Test_RHVAE_Training:
 
         return model
 
-    @pytest.fixture(params=[None, Adagrad, Adam, Adadelta, SGD, RMSprop])
+    @pytest.fixture(params=[Adam])
     def optimizers(self, request, rhvae, training_configs):
         if request.param is not None:
             optimizer = request.param(
@@ -603,7 +602,7 @@ class Test_RHVAE_Training:
         model = deepcopy(trainer.model)
         optimizer = deepcopy(trainer.optimizer)
 
-        trainer.save_checkpoint(dir_path=dir_path, epoch=0)
+        trainer.save_checkpoint(dir_path=dir_path, epoch=0, model=model)
 
         checkpoint_dir = os.path.join(dir_path, "checkpoint_epoch_0")
 
@@ -841,6 +840,8 @@ class Test_RHVAE_Training:
         pipeline = TrainingPipeline(
             model=rhvae, training_config=training_configs
         )
+
+        assert pipeline.training_config.__dict__ == training_configs.__dict__
 
         # Launch Pipeline
         pipeline(

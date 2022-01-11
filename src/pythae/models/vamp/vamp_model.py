@@ -16,7 +16,7 @@ import torch.nn.functional as F
 
 
 class VAMP(VAE):
-    """VAMP VAE model
+    """Variational Mixture of Posteriors (VAMP) VAE model
     
     Args:
         model_config(VAEConfig): The Variational Autoencoder configuration seting the main 

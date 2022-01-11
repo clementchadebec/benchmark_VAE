@@ -27,6 +27,9 @@ from .rae_gp import RAE_GP, RAE_GP_Config
 from .iwae import IWAE, IWAEConfig
 from .info_vae import INFOVAE_MMD, INFOVAE_MMD_Config
 from .vq_vae import VQVAE, VQVAEConfig
+from .adversarial_ae import Adversarial_AE, Adversarial_AE_Config
+from .vae_gan import VAEGAN, VAEGANConfig
+
 
 __all__ = [
     "BaseAE",
@@ -55,4 +58,8 @@ __all__ = [
     "INFOVAE_MMD_Config",
     "VQVAE",
     "VQVAE_Config"
+    "Adversarial_AE",
+    "Adversarial_AE_Config",
+    "VAEGAN",
+    "VAEGANConfig"
 ]
