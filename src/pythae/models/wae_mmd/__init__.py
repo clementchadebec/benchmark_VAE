@@ -1,5 +1,5 @@
 """This module is the implementation of the Wasserstein Autoencoder proposed in 
-(https://arxiv.org/pdf/1711.01558.pdf).
+(https://arxiv.org/abs/1711.01558).
 
 Available samplers
 -------------------

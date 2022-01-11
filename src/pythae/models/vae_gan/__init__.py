@@ -1,5 +1,5 @@
 """This module is the implementation of the VAE-GAN model
-proposed in (https://arxiv.org/pdf/1512.09300.pdf).
+proposed in (https://arxiv.org/abs/1512.09300).
 
 Available samplers
 -------------------

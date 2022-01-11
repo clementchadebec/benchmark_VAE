@@ -49,24 +49,8 @@ class Encoder_AE_MNIST(BaseEncoder):
 
         >>> from pythae.models import AE
         >>> model = AE(model_config=model_config, encoder=encoder)
-        >>> model.encoder
-        ... Encoder_AE_MNIST(
-        ...   (conv_layers): Sequential(
-        ...     (0): Conv2d(1, 128, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
-        ...     (1): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-        ...     (2): ReLU()
-        ...     (3): Conv2d(128, 256, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
-        ...     (4): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-        ...     (5): ReLU()
-        ...     (6): Conv2d(256, 512, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
-        ...     (7): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-        ...     (8): ReLU()
-        ...     (9): Conv2d(512, 1024, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
-        ...     (10): BatchNorm2d(1024, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-        ...     (11): ReLU()
-        ...   )
-        ...   (embedding): Linear(in_features=1024, out_features=16, bias=True)
-        ... )
+        >>> model.encoder == encoder
+        ... True
 
     .. note::
 
@@ -156,30 +140,13 @@ class Encoder_VAE_MNIST(BaseEncoder):
 
         >>> from pythae.models import VAE
         >>> model = VAE(model_config=model_config, encoder=encoder)
-        >>> model.encoder
-        ... Encoder_VAE_MNIST(
-        ...   (conv_layers): Sequential(
-        ...     (0): Conv2d(1, 128, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
-        ...     (1): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-        ...     (2): ReLU()
-        ...     (3): Conv2d(128, 256, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
-        ...     (4): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-        ...     (5): ReLU()
-        ...     (6): Conv2d(256, 512, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
-        ...     (7): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-        ...     (8): ReLU()
-        ...     (9): Conv2d(512, 1024, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
-        ...     (10): BatchNorm2d(1024, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-        ...     (11): ReLU()
-        ...   )
-        ...   (embedding): Linear(in_features=1024, out_features=16, bias=True)
-        ...   (log_var): Linear(in_features=1024, out_features=16, bias=True)
-        ... )
+        >>> model.encoder == encoder
+        ... True
 
     .. note::
 
         Please note that this encoder is only suitable for Variational Autoencoder based models 
-        since it outputs the embeddings and the **log** of the covariance diagonal coffecients 
+        since it outputs the embeddings and the **log** of the covariance diagonal coefficients 
         of the input data under the key `embedding` and `log_covariance`.
 
         .. code-block::
@@ -264,24 +231,13 @@ class Decoder_AE_MNIST(BaseDecoder):
 
         >>> from pythae.models import VAE
         >>> model = VAE(model_config=model_config, decoder=decoder)
-        >>> model.decoder
-        ... Decoder_AE_MNIST(
-        ...   (fc): Linear(in_features=16, out_features=16384, bias=True)
-        ...   (deconv_layers): Sequential(
-        ...     (0): ConvTranspose2d(1024, 512, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1))
-        ...     (1): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-        ...     (2): ReLU()
-        ...     (3): ConvTranspose2d(512, 256, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1), output_padding=(1, 1))
-        ...     (4): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-        ...     (5): ReLU()
-        ...     (6): ConvTranspose2d(256, 1, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1), output_padding=(1, 1))
-        ...     (7): Sigmoid()
-        ...   )
-        ... )
+        >>> model.decoder == decoder
+        ... True
 
     .. note::
 
         Please note that this decoder is suitable for **all** models.
+
         .. code-block::
 
             >>> import torch
@@ -323,61 +279,65 @@ class Decoder_AE_MNIST(BaseDecoder):
 
 class LayeredDiscriminator_MNIST(BaseLayeredDiscriminator):
     """
-    A Convolutional encoder Neural net suited for MNIST and Variational Autoencoder-based 
-    models.
+    A Convolutional discriminator Neural net with accessible layers and suited for MNIST.
 
 
     It can be built as follows:
 
     .. code-block::
 
-            >>> from pythae.models.nn.benchmarks.mnist import Encoder_VAE_MNIST
-            >>> from pythae.models import VAEConfig
-            >>> model_config = VAEConfig(input_dim=(1, 28, 28), latent_dim=16)
-            >>> encoder = Encoder_VAE_MNIST(model_config)
-            >>> encoder
-            ... Encoder_VAE_MNIST(
-            ...   (conv_layers): Sequential(
-            ...     (0): Conv2d(1, 128, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
-            ...     (1): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-            ...     (2): ReLU()
-            ...     (3): Conv2d(128, 256, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
-            ...     (4): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-            ...     (5): ReLU()
-            ...     (6): Conv2d(256, 512, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
-            ...     (7): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-            ...     (8): ReLU()
-            ...     (9): Conv2d(512, 1024, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
-            ...     (10): BatchNorm2d(1024, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-            ...     (11): ReLU()
+            >>> from pythae.models.nn.benchmarks.mnist import LayeredDiscriminator_MNIST
+            >>> from pythae.models import VAEGANConfig
+            >>> model_config = VAEGANConfig(input_dim=(1, 28, 28), latent_dim=16)
+            >>> discriminator = LayeredDiscriminator_MNIST(model_config)
+            >>> discriminator
+            ... LayeredDiscriminator_MNIST(
+            ...   (layers): ModuleList(
+            ...     (0): Sequential(
+            ...       (0): Conv2d(1, 128, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
+            ...       (1): ReLU()
+            ...     )
+            ...     (1): Sequential(
+            ...       (0): Conv2d(128, 256, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
+            ...       (1): Tanh()
+            ...     )
+            ...     (2): Sequential(
+            ...       (0): Conv2d(256, 512, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
+            ...       (1): ReLU()
+            ...     )
+            ...     (3): Sequential(
+            ...       (0): Conv2d(512, 1024, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
+            ...       (1): ReLU()
+            ...     )
+            ...     (4): Sequential(
+            ...       (0): Linear(in_features=1024, out_features=1, bias=True)
+            ...       (1): Sigmoid()
+            ...     )
             ...   )
-            ...   (embedding): Linear(in_features=1024, out_features=16, bias=True)
-            ...   (log_var): Linear(in_features=1024, out_features=16, bias=True)
             ... )
 
     and then passed to a :class:`pythae.models` instance
 
-        >>> from pythae.models import VAE
-        >>> model = VAE(model_config=model_config, encoder=encoder)
-        >>> model.encoder
-        ... Encoder_VAE_MNIST(
-        ...   (conv_layers): Sequential(
-        ...     (0): Conv2d(1, 128, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
-        ...     (1): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-        ...     (2): ReLU()
-        ...     (3): Conv2d(128, 256, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
-        ...     (4): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-        ...     (5): ReLU()
-        ...     (6): Conv2d(256, 512, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
-        ...     (7): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-        ...     (8): ReLU()
-        ...     (9): Conv2d(512, 1024, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
-        ...     (10): BatchNorm2d(1024, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-        ...     (11): ReLU()
-        ...   )
-        ...   (embedding): Linear(in_features=1024, out_features=16, bias=True)
-        ...   (log_var): Linear(in_features=1024, out_features=16, bias=True)
-        ... )
+        >>> from pythae.models import VAEGAN
+        >>> model = VAEGAN(model_config=model_config, discriminator=discriminator)
+        >>> model.discriminator == discriminator
+        ... True
+
+     .. note::
+
+        Please note that this decoder is suitable for GAN-based models.
+        
+        .. code-block::
+
+            >>> import torch
+            >>> input = torch.randn(2, 1, 28, 28)
+            >>> out = discriminator(input) # Take the last layer for adversarial score 
+            >>> out.adversarial_cost.shape
+            ... torch.Size([2, 1])
+            >>> out = discriminator(input, output_layer_level=2) # Take layer 2
+            >>> out.adversarial_cost.shape
+            ... torch.Size([2, 256, 7, 7])
+
     """
 
     def __init__(self, args: dict):

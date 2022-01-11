@@ -7,7 +7,8 @@ Available models:
 ------------------
 
 .. autosummary::
-    ~pythae.models.Adversaral_AE
+    ~pythae.models.Adversarial_AE
+    ~pythae.models.VAEGAN
     :nosignatures:
 """
 

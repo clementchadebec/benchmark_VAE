@@ -1,5 +1,5 @@
 """This module is the implementation of the Regularized AE with gradient penalty regularization
-proposed in (https://arxiv.org/pdf/1903.12436.pdf).
+proposed in (https://arxiv.org/abs/1903.12436).
 
 Available samplers
 -------------------

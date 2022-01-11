@@ -4,7 +4,7 @@ VAEGAN
 
 
 .. automodule::
-   pythae.models.vaegan
+   pythae.models.vae_gan
 
 .. autoclass:: pythae.models.VAEGANConfig
    :members:

@@ -1,4 +1,5 @@
 """This module is the implementation of a Vanilla Variational Autoencoder
+(https://arxiv.org/abs/1312.6114).
 
 Available samplers
 -------------------

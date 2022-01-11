@@ -1,4 +1,4 @@
-"""Implementation of a Manifold sampler proposed in (https://arxiv.org/pdf/2105.00026.pdf).
+"""Implementation of a Manifold sampler proposed in (https://arxiv.org/abs/2105.00026).
 
 Available models:
 ------------------

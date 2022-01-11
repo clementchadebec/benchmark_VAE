@@ -1,5 +1,5 @@
 """Implementation of an Adversarial Autoencoder model as proposed in 
-(https://arxiv.org/pdf/1511.05644.pdf). This model tries to make the posterior distribution match 
+(https://arxiv.org/abs/1511.05644). This model tries to make the posterior distribution match 
 the prior using adversarial training.
 
 Available samplers
