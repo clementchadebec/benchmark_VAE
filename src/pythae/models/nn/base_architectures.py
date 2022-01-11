@@ -231,7 +231,11 @@ class BaseLayeredDiscriminator(nn.Module):
             ...         for i, layer in enumerate(self.layers):
             ...             ...
             ...
+<<<<<<< HEAD
             ...         output = ModelOutput(
+=======
+            ...         output = ModelOuput(
+>>>>>>> ladder_vae
             ...             adversarial_cost=adversarial_cost
             ...         )
             ...         return output

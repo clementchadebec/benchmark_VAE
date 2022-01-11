@@ -158,8 +158,8 @@ class Adversarial_AE(VAE):
             ).sum(dim=-1)
 
 
-        gen_adversarial_score = self.discriminator(z).adversarial_cost.flatten()
-        prior_adversarial_score = self.discriminator(z_prior).adversarial_cost.flatten()
+        gen_adversarial_score = self.discriminator(z).embedding.flatten()
+        prior_adversarial_score = self.discriminator(z_prior).embedding.flatten()
 
         true_labels = torch.ones(N, requires_grad=False).to(self.device)
         fake_labels = torch.zeros(N, requires_grad=False).to(self.device)
@@ -177,7 +177,7 @@ class Adversarial_AE(VAE):
 
         z_ = z.clone().detach().requires_grad_(True)
 
-        gen_adversarial_score_ = self.discriminator(z_).adversarial_cost.flatten()
+        gen_adversarial_score_ = self.discriminator(z_).embedding.flatten()
         
         discriminator_loss = (
             0.5 * (
@@ -212,7 +212,6 @@ class Adversarial_AE(VAE):
 
         # This creates the dir if not available
         super().save(dir_path)
-
         model_path = dir_path
 
         model_dict = {

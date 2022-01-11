@@ -127,8 +127,8 @@ class Encoder_AE_CELEBA(BaseEncoder):
         if output_layer_levels is not None:
 
             assert all(self.depth >= levels > 0 or levels==-1 for levels in output_layer_levels), (
-                f'Cannot output layer deeper than depth ({self.depth}) '\
-                f'indice. Got ({output_layer_levels})'
+                f'Cannot output layer deeper than depth ({self.depth}). '\
+                f'Got ({output_layer_levels}).'
                 )
 
             if -1 in output_layer_levels:
@@ -271,8 +271,8 @@ class Encoder_VAE_CELEBA(BaseEncoder):
         if output_layer_levels is not None:
 
             assert all(self.depth >= levels > 0 or levels==-1 for levels in output_layer_levels), (
-                f'Cannot output layer deeper than depth ({self.depth}) '\
-                f'indice. Got ({output_layer_levels})'
+                f'Cannot output layer deeper than depth ({self.depth}). '\
+                f'Got ({output_layer_levels}).'
                 )
 
             if -1 in output_layer_levels:
@@ -409,8 +409,8 @@ class Decoder_AE_CELEBA(BaseDecoder):
         if output_layer_levels is not None:
 
             assert all(self.depth >= levels > 0 or levels==-1 for levels in output_layer_levels), (
-                f'Cannot output layer deeper than depth ({self.depth}) '\
-                f'indice. Got ({output_layer_levels})'
+                f'Cannot output layer deeper than depth ({self.depth}). '\
+                f'Got ({output_layer_levels}).'
                 )
 
             if -1 in output_layer_levels:
@@ -423,12 +423,12 @@ class Decoder_AE_CELEBA(BaseDecoder):
         for i in range(max_depth):
             out = self.layers[i](out)
 
+            if i == 0:
+                out = out.reshape(z.shape[0], 1024, 8, 8)
+
             if output_layer_levels is not None:
                 if i+1 in output_layer_levels:
                     output[f'reconstruction_layer_{i+1}'] = out
-
-            if i == 0:
-                out = out.reshape(z.shape[0], 1024, 4, 4)
 
             if i+1 == self.depth:
                 output['reconstruction'] = out
@@ -557,8 +557,8 @@ class Discriminator_CELEBA(BaseDiscriminator):
         if output_layer_levels is not None:
 
             assert all(self.depth >= levels > 0 or levels==-1 for levels in output_layer_levels), (
-                f'Cannot output layer deeper than depth ({self.depth}) '\
-                f'indice. Got ({output_layer_levels})'
+                f'Cannot output layer deeper than depth ({self.depth}). '\
+                f'Got ({output_layer_levels}).'
                 )
 
             if -1 in output_layer_levels:
@@ -578,7 +578,7 @@ class Discriminator_CELEBA(BaseDiscriminator):
             if output_layer_levels is not None:
                 if i+1 in output_layer_levels:
                     output[f'embedding_layer_{i+1}'] = out
-            if i+1 == self.detph:
+            if i+1 == self.depth:
                 output['embedding'] = out
 
         return output

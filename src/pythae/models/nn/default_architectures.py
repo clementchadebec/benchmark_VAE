@@ -37,8 +37,8 @@ class Encoder_AE_MLP(BaseEncoder):
         if output_layer_levels is not None:
 
             assert all(self.depth >= levels > 0 or levels==-1 for levels in output_layer_levels), (
-                f'Cannot output layer deeper than depth ({self.depth}) '\
-                f'indice. Got ({output_layer_levels})'
+                f'Cannot output layer deeper than depth ({self.depth}). '\
+                f'Got ({output_layer_levels}).'
                 )
 
             if -1 in output_layer_levels:
@@ -86,8 +86,8 @@ class Encoder_VAE_MLP(BaseEncoder):
         if output_layer_levels is not None:
 
             assert all(self.depth >= levels > 0 or levels==-1 for levels in output_layer_levels), (
-                f'Cannot output layer deeper than depth ({self.depth}) '\
-                f'indice. Got ({output_layer_levels})'
+                f'Cannot output layer deeper than depth ({self.depth}). '\
+                f'Got ({output_layer_levels}).'
                 )
 
             if -1 in output_layer_levels:
@@ -147,8 +147,8 @@ class Decoder_AE_MLP(BaseDecoder):
         if output_layer_levels is not None:
 
             assert all(self.depth >= levels > 0 or levels==-1 for levels in output_layer_levels), (
-                f'Cannot output layer deeper than depth ({self.depth}) '\
-                f'indice. Got ({output_layer_levels})'
+                f'Cannot output layer deeper than depth ({self.depth}). '\
+                f'Got ({output_layer_levels}).'
                 )
 
             if -1 in output_layer_levels:
@@ -249,8 +249,8 @@ class Discriminator_MLP(BaseDiscriminator):
         if output_layer_levels is not None:
 
             assert all(self.depth >= levels > 0 or levels==-1 for levels in output_layer_levels), (
-                f'Cannot output layer deeper than depth ({self.depth}) '\
-                f'indice. Got ({output_layer_levels})'
+                f'Cannot output layer deeper than depth ({self.depth}). '\
+                f'Got ({output_layer_levels}).'
                 )
 
             if -1 in output_layer_levels:

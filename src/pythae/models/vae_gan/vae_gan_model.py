@@ -75,7 +75,10 @@ class VAEGAN(VAE):
 
         self.set_discriminator(discriminator)
 
-        assert model_config.reconstruction_layer <= discriminator.depth, (
+        if self.model_config.reconstruction_layer == -1:
+            self.model_config.reconstruction_layer = discriminator.depth
+
+        assert self.model_config.reconstruction_layer <= discriminator.depth, (
                 "Ensure that the targeted reconstruction layer ("
                 f"{model_config.reconstruction_layer}) is not deeper than the "
                 f"discriminator ({discriminator.depth})"
@@ -85,6 +88,11 @@ class VAEGAN(VAE):
 
         assert 0 <= self.model_config.adversarial_loss_scale <= 1, \
             'adversarial_loss_scale must be in [0, 1]'
+
+        assert 0 <= self.model_config.reconstruction_layer <= discriminator.depth, (
+            'Cannot use reconstruction layer deeper than discriminator depth '\
+            f'({discriminator.depth}). Got ({output_layer_levels})'
+        )
         
         self.adversarial_loss_scale = self.model_config.adversarial_loss_scale
         self.reconstruction_layer = self.model_config.reconstruction_layer
