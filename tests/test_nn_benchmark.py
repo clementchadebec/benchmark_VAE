@@ -28,7 +28,7 @@ class Test_MNIST_Benchmark:
         decoder = Decoder_AE_MNIST(ae_mnist_config).to(device)
 
         embedding = encoder(mnist_like_data).embedding
-    
+
         assert embedding.shape == (mnist_like_data.shape[0], ae_mnist_config.latent_dim)
 
         reconstruction = decoder(embedding).reconstruction
@@ -49,7 +49,7 @@ class Test_MNIST_Benchmark:
         return request.param
 
     def test_discriminator(self, ae_mnist_config, mnist_like_data, recon_layer):
-        discriminator = LayeredDiscriminator_MNIST(ae_mnist_config).to(device)
+        discriminator = LayeredDiscriminator_MNIST(ae_mnist_config)
 
         score = discriminator(mnist_like_data, output_layer_level=recon_layer).adversarial_cost
 

@@ -15,12 +15,12 @@ from pythae.pipelines import TrainingPipeline
 from pythae.models.nn.default_architectures import (
     Decoder_AE_MLP,
     Encoder_VAE_MLP,
-    LayeredDiscriminator_MLP
+    Discriminator_MLP
 )
 from tests.data.custom_architectures import (
     Decoder_AE_Conv,
     Encoder_VAE_Conv,
-    LayeredDiscriminator_MLP_Custom,
+    Discriminator_MLP_Custom,
     NetBadInheritance,
 )
 
@@ -56,7 +56,7 @@ def custom_decoder(model_configs):
 
 @pytest.fixture
 def custom_discriminator(model_configs):
-    return LayeredDiscriminator_MLP_Custom(model_configs)
+    return Discriminator_MLP_Custom(model_configs)
 
 
 class Test_Model_Building:
@@ -155,7 +155,7 @@ class Test_Model_Saving:
 
         model = VAEGAN(model_configs)
 
-        model.state_dict()["encoder.layers.0.weight"][0] = 0
+        model.state_dict()["encoder.layers.0.0.weight"][0] = 0
 
         model.save(dir_path=dir_path)
 
@@ -182,7 +182,7 @@ class Test_Model_Saving:
 
         model = VAEGAN(model_configs, encoder=custom_encoder)
 
-        model.state_dict()["encoder.layers.0.weight"][0] = 0
+        model.state_dict()["encoder.layers.0.0.weight"][0] = 0
 
         model.save(dir_path=dir_path)
 
@@ -210,7 +210,7 @@ class Test_Model_Saving:
 
         model = VAEGAN(model_configs, decoder=custom_decoder)
 
-        model.state_dict()["encoder.layers.0.weight"][0] = 0
+        model.state_dict()["encoder.layers.0.0.weight"][0] = 0
 
         model.save(dir_path=dir_path)
 
@@ -238,7 +238,7 @@ class Test_Model_Saving:
 
         model = VAEGAN(model_configs, discriminator=custom_discriminator)
 
-        model.state_dict()["encoder.layers.0.weight"][0] = 0
+        model.state_dict()["encoder.layers.0.0.weight"][0] = 0
 
         model.save(dir_path=dir_path)
 
@@ -274,7 +274,7 @@ class Test_Model_Saving:
             discriminator=custom_discriminator,
         )
 
-        model.state_dict()["encoder.layers.0.weight"][0] = 0
+        model.state_dict()["encoder.layers.0.0.weight"][0] = 0
 
         model.save(dir_path=dir_path)
 
@@ -316,7 +316,7 @@ class Test_Model_Saving:
             discriminator=custom_discriminator,
         )
 
-        model.state_dict()["encoder.layers.0.weight"][0] = 0
+        model.state_dict()["encoder.layers.0.0.weight"][0] = 0
 
         model.save(dir_path=dir_path)
 

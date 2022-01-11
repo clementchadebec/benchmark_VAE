@@ -36,6 +36,7 @@ ap.add_argument(
 ap.add_argument(
     "--model_name",
     help="The name of the model to train",
+<<<<<<< HEAD
     choices=[
         "ae",
         "vae",
@@ -52,6 +53,9 @@ ap.add_argument(
         "vaegan",
         "vqvae"
     ],
+=======
+    choices=["ae", "vae", "beta_vae", "iwae", "wae", "info_vae", "rae_gp","rae_l2", "vamp", "hvae", "rhvae", 'aae', "vaegan"],
+>>>>>>> ladder_vae
     required=True,
 )
 ap.add_argument(
