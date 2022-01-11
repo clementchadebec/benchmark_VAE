@@ -57,7 +57,7 @@ __all__ = [
     "INFOVAE_MMD", 
     "INFOVAE_MMD_Config",
     "VQVAE",
-    "VQVAE_Config"
+    "VQVAEConfig",
     "Adversarial_AE",
     "Adversarial_AE_Config",
     "VAEGAN",

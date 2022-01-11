@@ -36,7 +36,22 @@ ap.add_argument(
 ap.add_argument(
     "--model_name",
     help="The name of the model to train",
-    choices=["ae", "vae", "beta_vae", "iwae", "wae", "info_vae", "rae_gp","rae_l2", "vamp", "hvae", "rhvae", 'aae', "vaegan"],
+    choices=[
+        "ae",
+        "vae",
+        "beta_vae",
+        "iwae",
+        "wae",
+        "info_vae",
+        "rae_gp",
+        "rae_l2",
+        "vamp",
+        "hvae",
+        "rhvae",
+        "aae",
+        "vaegan",
+        "vqvae"
+    ],
     required=True,
 )
 ap.add_argument(
@@ -331,6 +346,23 @@ def main(args):
             encoder=Encoder_VAE(model_config),
             decoder=Decoder_AE(model_config),
             discriminator=LayerDiscriminator(model_config)
+        )
+
+    elif args.model_name == "vqvae":
+        from pythae.models import VQVAE, VQVAEConfig
+
+        if args.model_config is not None:
+            model_config = VQVAEConfig.from_json_file(args.model_config)
+
+        else:
+            model_config = VQVAEConfig()
+
+        model_config.input_dim = data_input_dim
+
+        model = VQVAE(
+            model_config=model_config,
+            encoder=Encoder_AE(model_config),
+            decoder=Decoder_AE(model_config),
         )
 
     logger.info(f"Successfully build {args.model_name.upper()} model !\n")

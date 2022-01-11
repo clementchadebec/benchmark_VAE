@@ -283,7 +283,7 @@ class Test_Model_forward:
         assert out.z.shape[0] == demo_data["data"].shape[0]
         assert out.recon_x.shape == demo_data["data"].shape
 
-
+@pytest.mark.slow
 class Test_VQVAETraining:
     @pytest.fixture
     def train_dataset(self):
@@ -430,7 +430,7 @@ class Test_VQVAETraining:
         model = deepcopy(trainer.model)
         optimizer = deepcopy(trainer.optimizer)
 
-        trainer.save_checkpoint(dir_path=dir_path, epoch=0)
+        trainer.save_checkpoint(dir_path=dir_path, epoch=0, model=model)
 
         checkpoint_dir = os.path.join(dir_path, "checkpoint_epoch_0")
 

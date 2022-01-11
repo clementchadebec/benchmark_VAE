@@ -6,6 +6,8 @@ import torch.nn.functional as F
 
 from .vq_vae_config import VQVAEConfig
 
+"""Code inspired from https://github.com/deepmind/sonnet/blob/v2/sonnet/src/nets/vqvae.py"""
+
 class Quantizer(nn.Module):
 
     def __init__(

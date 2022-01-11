@@ -1,0 +1,5 @@
+{
+    "latent_dim": 1024,
+    "beta": 0.25,
+    "num_embeddings": 512
+  }
