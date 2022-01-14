@@ -15,8 +15,6 @@ from .base_config import BaseAEConfig
 
 from .base_utils import ModelOutput, CPU_Unpickler
 
-device = "cuda" if torch.cuda.is_available else 'cpu'
-
 class BaseAE(nn.Module):
     """Base class for Autoencoder based models.
 
@@ -72,7 +70,7 @@ class BaseAE(nn.Module):
 
         self.set_decoder(decoder)
 
-        self.device = device
+        self.device = "cuda" if torch.cuda.is_available() else 'cpu'
 
     def forward(self, inputs: BaseDataset) -> ModelOutput:
         """Main forward pass outputing the VAE outputs
