@@ -20,16 +20,16 @@ from tests.data.custom_architectures import (
 PATH = os.path.dirname(os.path.abspath(__file__))
 
 
-@pytest.fixture(params=[VQVAEConfig(), VQVAEConfig(latent_dim=5)])
+@pytest.fixture(params=[VQVAEConfig(), VQVAEConfig(latent_dim=4)])
 def model_configs_no_input_dim(request):
     return request.param
 
 
 @pytest.fixture(
     params=[
-        VQVAEConfig(input_dim=(1, 28, 28), num_embeddings=10),
+        VQVAEConfig(input_dim=(1, 28, 28), latent_dim=4, num_embeddings=10), #  ! Needs squared latent_dim !
         VQVAEConfig(
-            input_dim=(1, 28, 28), beta=.02
+            input_dim=(1, 28, 28), beta=.02, latent_dim=4,
         ),
     ]
 )
