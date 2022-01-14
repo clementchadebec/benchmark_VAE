@@ -28,19 +28,27 @@ class Encoder_AE_CELEBA(BaseEncoder):
             >>> encoder = Encoder_AE_CELEBA(model_config)
             >>> encoder
             ... Encoder_AE_CELEBA(
-            ...   (conv_layers): Sequential(
-            ...     (0): Conv2d(3, 128, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
-            ...     (1): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-            ...     (2): ReLU()
-            ...     (3): Conv2d(128, 256, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
-            ...     (4): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-            ...     (5): ReLU()
-            ...     (6): Conv2d(256, 512, kernel_size=(5, 5), stride=(2, 2), padding=(2, 2))
-            ...     (7): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-            ...     (8): ReLU()
-            ...     (9): Conv2d(512, 1024, kernel_size=(5, 5), stride=(2, 2), padding=(2, 2))
-            ...     (10): BatchNorm2d(1024, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-            ...     (11): ReLU()
+            ...   (layers): ModuleList(
+            ...     (0): Sequential(
+            ...       (0): Conv2d(3, 128, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
+            ...       (1): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            ...       (2): ReLU()
+            ...     )
+            ...     (1): Sequential(
+            ...       (0): Conv2d(128, 256, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
+            ...       (1): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            ...       (2): ReLU()
+            ...     )
+            ...     (2): Sequential(
+            ...       (0): Conv2d(256, 512, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
+            ...       (1): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            ...       (2): ReLU()
+            ...     )
+            ...     (3): Sequential(
+            ...       (0): Conv2d(512, 1024, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
+            ...       (1): BatchNorm2d(1024, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            ...       (2): ReLU()
+            ...     )
             ...   )
             ...   (embedding): Linear(in_features=16384, out_features=64, bias=True)
             ... )
@@ -117,9 +125,15 @@ class Encoder_AE_CELEBA(BaseEncoder):
     def forward(self, x: torch.Tensor, output_layer_levels:List[int]=None):
         """Forward method
         
+        Args:
+            output_layer_levels (List[int]): The levels of the layers where the outputs are
+                extracted. If None, the last layer's output is returned. Default: None.
+
         Returns:
-            ModelOutput: An instance of ModelOutput containing the embeddings of the input data under
-            the key `embedding`"""
+            ModelOutput: An instance of ModelOutput containing the embeddings of the input data 
+            under the key `embedding`. Optional: The outputs of the layers specified in 
+            `output_layer_levels` arguments are available under the keys `embedding_layer_i` where
+            i is the layer's level."""
         output = ModelOutput()
 
         max_depth = self.depth
@@ -165,19 +179,27 @@ class Encoder_VAE_CELEBA(BaseEncoder):
             >>> encoder = Encoder_VAE_CELEBA(model_config)
             >>> encoder
             ... Encoder_VAE_CELEBA(
-            ...   (conv_layers): Sequential(
-            ...     (0): Conv2d(3, 128, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
-            ...     (1): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-            ...     (2): ReLU()
-            ...     (3): Conv2d(128, 256, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
-            ...     (4): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-            ...     (5): ReLU()
-            ...     (6): Conv2d(256, 512, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
-            ...     (7): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-            ...     (8): ReLU()
-            ...     (9): Conv2d(512, 1024, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
-            ...     (10): BatchNorm2d(1024, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-            ...     (11): ReLU()
+            ...   (layers): ModuleList(
+            ...     (0): Sequential(
+            ...       (0): Conv2d(3, 128, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
+            ...       (1): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            ...       (2): ReLU()
+            ...     )
+            ...     (1): Sequential(
+            ...       (0): Conv2d(128, 256, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
+            ...       (1): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            ...       (2): ReLU()
+            ...     )
+            ...     (2): Sequential(
+            ...       (0): Conv2d(256, 512, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
+            ...       (1): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            ...       (2): ReLU()
+            ...     )
+            ...     (3): Sequential(
+            ...       (0): Conv2d(512, 1024, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
+            ...       (1): BatchNorm2d(1024, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            ...       (2): ReLU()
+            ...     )
             ...   )
             ...   (embedding): Linear(in_features=16384, out_features=64, bias=True)
             ...   (log_var): Linear(in_features=16384, out_features=64, bias=True)
@@ -259,11 +281,18 @@ class Encoder_VAE_CELEBA(BaseEncoder):
 
     def forward(self, x: torch.Tensor, output_layer_levels:List[int]=None):
         """Forward method
+
+        Args:
+            output_layer_levels (List[int]): The levels of the layers where the outputs are
+                extracted. If None, the last layer's output is returned. Default: None.
         
         Returns:
-            ModelOutput: An instance of ModelOutput containing the embeddings of the input data under
-            the key `embedding` and the **log** of the diagonal coefficient of the covariance 
-            matrices under the key `log_covariance`"""
+            ModelOutput: An instance of ModelOutput containing the embeddings of the input data 
+            under the key `embedding` and the **log** of the diagonal coefficient of the covariance 
+            matrices under the key `log_covariance`. Optional: The outputs of the layers specified 
+            in `output_layer_levels` arguments are available under the keys `embedding_layer_i` 
+            where i is the layer's level.
+        """
         output = ModelOutput()
 
         max_depth = self.depth
@@ -311,19 +340,29 @@ class Decoder_AE_CELEBA(BaseDecoder):
             >>> decoder = Decoder_AE_CELEBA(model_config)
             >>> decoder
             ... Decoder_AE_CELEBA(
-            ...   (fc): Linear(in_features=64, out_features=65536, bias=True)
-            ...   (deconv_layers): Sequential(
-            ...     (0): ConvTranspose2d(1024, 512, kernel_size=(5, 5), stride=(2, 2), padding=(2, 2))
-            ...     (1): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-            ...     (2): ReLU()
-            ...     (3): ConvTranspose2d(512, 256, kernel_size=(5, 5), stride=(2, 2), padding=(1, 1))
-            ...     (4): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-            ...     (5): ReLU()
-            ...     (6): ConvTranspose2d(256, 128, kernel_size=(5, 5), stride=(2, 2), padding=(2, 2), output_padding=(1, 1))
-            ...     (7): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-            ...     (8): ReLU()
-            ...     (9): ConvTranspose2d(128, 3, kernel_size=(5, 5), stride=(1, 1), padding=(1, 1))
-            ...     (10): Sigmoid()
+            ...   (layers): ModuleList(
+            ...     (0): Sequential(
+            ...       (0): Linear(in_features=64, out_features=65536, bias=True)
+            ...     )
+            ...     (1): Sequential(
+            ...       (0): ConvTranspose2d(1024, 512, kernel_size=(5, 5), stride=(2, 2), padding=(2, 2))
+            ...       (1): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            ...       (2): ReLU()
+            ...     )
+            ...     (2): Sequential(
+            ...       (0): ConvTranspose2d(512, 256, kernel_size=(5, 5), stride=(2, 2), padding=(1, 1))
+            ...       (1): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            ...       (2): ReLU()
+            ...     )
+            ...     (3): Sequential(
+            ...       (0): ConvTranspose2d(256, 128, kernel_size=(5, 5), stride=(2, 2), padding=(2, 2), output_padding=(1, 1))
+            ...       (1): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            ...       (2): ReLU()
+            ...     )
+            ...     (4): Sequential(
+            ...       (0): ConvTranspose2d(128, 3, kernel_size=(5, 5), stride=(1, 1), padding=(1, 1))
+            ...       (1): Sigmoid()
+            ...     )
             ...   )
             ... )
 
@@ -397,10 +436,16 @@ class Decoder_AE_CELEBA(BaseDecoder):
 
     def forward(self, z: torch.Tensor, output_layer_levels:List[int]=None):
         """Forward method
+
+        Args:
+            output_layer_levels (List[int]): The levels of the layers where the outputs are
+                extracted. If None, the last layer's output is returned. Default: None.
         
         Returns:
             ModelOutput: An instance of ModelOutput containing the reconstruction of the latent code 
-            under the key `reconstruction`
+            under the key `reconstruction`. Optional: The outputs of the layers specified in 
+            `output_layer_levels` arguments are available under the keys `reconstruction_layer_i` 
+            where i is the layer's level.
         """
         output = ModelOutput()
 
@@ -446,53 +491,47 @@ class Discriminator_CELEBA(BaseDiscriminator):
 
     .. code-block::
 
-            >>> from pythae.models.nn.benchmarks.mnist import Encoder_VAE_MNIST
-            >>> from pythae.models import VAEConfig
-            >>> model_config = VAEConfig(input_dim=(1, 28, 28), latent_dim=16)
-            >>> encoder = Encoder_VAE_MNIST(model_config)
-            >>> encoder
-            ... Encoder_VAE_MNIST(
-            ...   (conv_layers): Sequential(
-            ...     (0): Conv2d(1, 128, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
-            ...     (1): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-            ...     (2): ReLU()
-            ...     (3): Conv2d(128, 256, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
-            ...     (4): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-            ...     (5): ReLU()
-            ...     (6): Conv2d(256, 512, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
-            ...     (7): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-            ...     (8): ReLU()
-            ...     (9): Conv2d(512, 1024, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
-            ...     (10): BatchNorm2d(1024, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-            ...     (11): ReLU()
+            >>> from pythae.models.nn.benchmarks.celeba import Discriminator_CELEBA
+            >>> from pythae.models import VAEGANConfig
+            >>> model_config = VAEGANConfig(input_dim=(3, 64, 64), latent_dim=64)
+            >>> discriminator = Discriminator_CELEBA(model_config)
+            >>> discriminator
+            ... Discriminator_CELEBA(
+            ...   (layers): ModuleList(
+            ...     (0): Sequential(
+            ...       (0): Conv2d(3, 128, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
+            ...       (1): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            ...       (2): ReLU()
+            ...     )
+            ...     (1): Sequential(
+            ...       (0): Conv2d(128, 256, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
+            ...       (1): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            ...       (2): Tanh()
+            ...     )
+            ...     (2): Sequential(
+            ...       (0): Conv2d(256, 512, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
+            ...       (1): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            ...       (2): ReLU()
+            ...     )
+            ...     (3): Sequential(
+            ...       (0): Conv2d(512, 1024, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
+            ...       (1): BatchNorm2d(1024, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            ...       (2): ReLU()
+            ...     )
+            ...     (4): Sequential(
+            ...       (0): Linear(in_features=16384, out_features=1, bias=True)
+            ...       (1): Sigmoid()
+            ...     )
             ...   )
-            ...   (embedding): Linear(in_features=1024, out_features=16, bias=True)
-            ...   (log_var): Linear(in_features=1024, out_features=16, bias=True)
             ... )
+
 
     and then passed to a :class:`pythae.models` instance
 
-        >>> from pythae.models import VAE
-        >>> model = VAE(model_config=model_config, encoder=encoder)
-        >>> model.encoder
-        ... Encoder_VAE_MNIST(
-        ...   (conv_layers): Sequential(
-        ...     (0): Conv2d(1, 128, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
-        ...     (1): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-        ...     (2): ReLU()
-        ...     (3): Conv2d(128, 256, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
-        ...     (4): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-        ...     (5): ReLU()
-        ...     (6): Conv2d(256, 512, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
-        ...     (7): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-        ...     (8): ReLU()
-        ...     (9): Conv2d(512, 1024, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
-        ...     (10): BatchNorm2d(1024, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-        ...     (11): ReLU()
-        ...   )
-        ...   (embedding): Linear(in_features=1024, out_features=16, bias=True)
-        ...   (log_var): Linear(in_features=1024, out_features=16, bias=True)
-        ... )
+        >>> from pythae.models import VAEGAN
+        >>> model = VAEGAN(model_config=model_config, discriminator=discriminator)
+        >>> model.discriminator == discriminator
+        ... True
     """
 
     def __init__(self, args: dict):
@@ -549,6 +588,18 @@ class Discriminator_CELEBA(BaseDiscriminator):
         self.depth = len(layers)
 
     def forward(self, x:torch.Tensor, output_layer_levels:List[int]=None):
+        """Forward method
+
+        Args:
+            output_layer_levels (List[int]): The levels of the layers where the outputs are
+                extracted. If None, the last layer's output is returned. Default: None.
+        
+        Returns:
+            ModelOutput: An instance of ModelOutput containing the adversarial score of the input  
+            under the key `embedding`. Optional: The outputs of the layers specified in 
+            `output_layer_levels` arguments are available under the keys `embedding_layer_i` where
+            i is the layer's level.
+        """
 
         output = ModelOutput()
 

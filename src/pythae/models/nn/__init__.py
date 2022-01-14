@@ -7,14 +7,12 @@ from .base_architectures import (
     BaseDecoder,
     BaseEncoder,
     BaseMetric,
-    BaseDiscriminator,
-    BaseLayeredDiscriminator
+    BaseDiscriminator
 )
 
 __all__ = [
     "BaseDecoder",
     "BaseEncoder",
     "BaseMetric",
-    "BaseDiscriminator",
-    "BaseLayeredDiscriminator"
+    "BaseDiscriminator"
 ]

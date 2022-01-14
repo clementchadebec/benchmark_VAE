@@ -1,8 +1,10 @@
-"""This module is the implementation of the Vector Qauntized VAE proposed in 
+"""This module is the implementation of the Vector Quantized VAE proposed in 
 (https://arxiv.org/abs/1711.00937).
 
 Available samplers
 -------------------
+
+Normalizing flows sampler to come.
 
 .. autosummary::
 

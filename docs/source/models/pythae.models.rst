@@ -19,6 +19,7 @@ Models
     pythae.models.vamp
     pythae.models.aae
     pythae.models.vaegan
+    pythae.models.vqvae
     pythae.models.hvae
     pythae.models.rae_gp
     pythae.models.rae_l2
@@ -43,6 +44,7 @@ Available Models
     ~pythae.models.VAMP
     ~pythae.models.Adversarial_AE
     ~pythae.models.VAEGAN
+    ~pythae.models.VQVAE
     ~pythae.models.HVAE
     ~pythae.models.RAE_GP
     ~pythae.models.RAE_L2
