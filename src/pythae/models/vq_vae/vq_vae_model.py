@@ -89,6 +89,8 @@ class VQVAE(AE):
 
         embeddings = encoder_output.embedding
 
+        reshape_for_decoding = False
+
         if len(embeddings.shape) == 2:
             embeddings = embeddings.reshape(
                 embeddings.shape[0],
