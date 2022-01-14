@@ -1,5 +1,5 @@
 {
-    "latent_dim": 16,
+    "latent_dim": 64,
     "beta": 0.25,
     "quantization_loss_factor": 0.2,
     "num_embeddings": 128

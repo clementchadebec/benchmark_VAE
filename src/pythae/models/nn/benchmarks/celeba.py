@@ -29,10 +29,10 @@ class Encoder_AE_CELEBA(BaseEncoder):
             >>> encoder
             ... Encoder_AE_CELEBA(
             ...   (conv_layers): Sequential(
-            ...     (0): Conv2d(3, 128, kernel_size=(5, 5), stride=(2, 2), padding=(1, 1))
+            ...     (0): Conv2d(3, 128, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
             ...     (1): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
             ...     (2): ReLU()
-            ...     (3): Conv2d(128, 256, kernel_size=(5, 5), stride=(2, 2), padding=(1, 1))
+            ...     (3): Conv2d(128, 256, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
             ...     (4): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
             ...     (5): ReLU()
             ...     (6): Conv2d(256, 512, kernel_size=(5, 5), stride=(2, 2), padding=(2, 2))
@@ -79,7 +79,7 @@ class Encoder_AE_CELEBA(BaseEncoder):
 
         layers.append(
             nn.Sequential(
-                nn.Conv2d(self.n_channels, 128, 5, 2, padding=1),
+                nn.Conv2d(self.n_channels, 128, 4, 2, padding=1),
                 nn.BatchNorm2d(128),
                 nn.ReLU(),
             )
@@ -87,7 +87,7 @@ class Encoder_AE_CELEBA(BaseEncoder):
 
         layers.append(
             nn.Sequential(
-                nn.Conv2d(128, 256, 5, 2, padding=1),
+                nn.Conv2d(128, 256, 4, 2, padding=1),
                 nn.BatchNorm2d(256),
                 nn.ReLU(),
             )
@@ -95,7 +95,7 @@ class Encoder_AE_CELEBA(BaseEncoder):
 
         layers.append(
             nn.Sequential(
-                nn.Conv2d(256, 512, 5, 2, padding=2),
+                nn.Conv2d(256, 512, 4, 2, padding=1),
                 nn.BatchNorm2d(512),
                 nn.ReLU(),
             )
@@ -103,7 +103,7 @@ class Encoder_AE_CELEBA(BaseEncoder):
 
         layers.append(
             nn.Sequential(
-                nn.Conv2d(512, 1024, 5, 2, padding=2),
+                nn.Conv2d(512, 1024, 4, 2, padding=1),
                 nn.BatchNorm2d(1024),
                 nn.ReLU(),
             )
@@ -221,7 +221,7 @@ class Encoder_VAE_CELEBA(BaseEncoder):
 
         layers.append(
             nn.Sequential(
-                nn.Conv2d(self.n_channels, 128, 5, 2, padding=1),
+                nn.Conv2d(self.n_channels, 128, 4, 2, padding=1),
                 nn.BatchNorm2d(128),
                 nn.ReLU(),
             )
@@ -229,7 +229,7 @@ class Encoder_VAE_CELEBA(BaseEncoder):
 
         layers.append(
             nn.Sequential(
-                nn.Conv2d(128, 256, 5, 2, padding=1),
+                nn.Conv2d(128, 256, 4, 2, padding=1),
                 nn.BatchNorm2d(256),
                 nn.ReLU(),
             )
@@ -237,7 +237,7 @@ class Encoder_VAE_CELEBA(BaseEncoder):
 
         layers.append(
             nn.Sequential(
-                nn.Conv2d(256, 512, 5, 2, padding=2),
+                nn.Conv2d(256, 512, 4, 2, padding=1),
                 nn.BatchNorm2d(512),
                 nn.ReLU(),
             )
@@ -245,7 +245,7 @@ class Encoder_VAE_CELEBA(BaseEncoder):
 
         layers.append(
             nn.Sequential(
-                nn.Conv2d(512, 1024, 5, 2, padding=2),
+                nn.Conv2d(512, 1024, 4, 2, padding=1),
                 nn.BatchNorm2d(1024),
                 nn.ReLU(),
             )

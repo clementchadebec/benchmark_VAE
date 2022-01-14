@@ -14,4 +14,5 @@ class VQVAEConfig(AEConfig):
         num_embedding (int): The number of embedding points. Default: 512
     """
     beta: float = 0.25
+    quantization_loss_factor: float = 1.
     num_embeddings: int = 512

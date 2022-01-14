@@ -185,10 +185,10 @@ class Metric_MLP(BaseMetric):
         self.input_dim = args.input_dim
         self.latent_dim = args.latent_dim
 
-        self.layers = nn.Sequential(nn.Linear(np.prod(args.input_dim), 512), nn.ReLU())
-        self.diag = nn.Linear(512, self.latent_dim)
+        self.layers = nn.Sequential(nn.Linear(np.prod(args.input_dim), 400), nn.ReLU())
+        self.diag = nn.Linear(400, self.latent_dim)
         k = int(self.latent_dim * (self.latent_dim - 1) / 2)
-        self.lower = nn.Linear(512, k)
+        self.lower = nn.Linear(400, k)
 
     def forward(self, x):
 

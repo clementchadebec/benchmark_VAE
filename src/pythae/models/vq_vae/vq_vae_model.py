@@ -60,10 +60,15 @@ class VQVAE(AE):
                 "the shape of the data is (C, H, W ..). Unable to set quantizer"
             )
 
-        x = torch.randn((2,) + self.model_config.input_dim).to(self.device)
+        x = torch.randn((2,) + self.model_config.input_dim)
         z = self.encoder(x).embedding
+        if len(z.shape) == 2:
+            z = z.reshape(z.shape[0], 1, int(z.shape[-1]**0.5), int(z.shape[-1]**0.5))
 
-        self.model_config.embedding_dim = tuple(z.shape[1:])
+        z = z.permute(0, 2, 3, 1)
+
+
+        self.model_config.embedding_dim = z.shape[-1]
         self.quantizer = Quantizer(model_config=model_config)
 
     def forward(self, inputs: BaseDataset):
@@ -84,9 +89,25 @@ class VQVAE(AE):
 
         embeddings = encoder_output.embedding
 
+        if len(embeddings.shape) == 2:
+            embeddings = embeddings.reshape(
+                embeddings.shape[0],
+                1,
+                int(embeddings.shape[-1]**0.5),
+                int(embeddings.shape[-1]**0.5)
+            )
+
+            reshape_for_decoding = True
+
+        embeddings = embeddings.permute(0, 2, 3, 1)
+
         quantizer_output = self.quantizer(embeddings)
 
         quantized_embed = quantizer_output.quantized_vector
+
+        if reshape_for_decoding:
+            quantized_embed = quantized_embed.reshape(embeddings.shape[0], -1)
+
         recon_x = self.decoder(quantized_embed).reconstruction
 
         loss, recon_loss, vq_loss = self.loss_function(recon_x, x, quantizer_output)
@@ -110,7 +131,10 @@ class VQVAE(AE):
             reduction='none'
         ).sum(dim=-1)
 
-        vq_loss = quantizer_output.loss
+        vq_loss = (
+            self.model_config.beta * quantizer_output.commitment_loss + \
+            self.model_config.quantization_loss_factor * quantizer_output.embedding_loss
+        )
 
         return (recon_loss + vq_loss).mean(dim=0), recon_loss.mean(dim=0), vq_loss.mean(dim=0)
 
