@@ -70,7 +70,7 @@ class BaseAE(nn.Module):
 
         self.set_decoder(decoder)
 
-        self.device = "cuda" if torch.cuda.is_available() else 'cpu'
+        self.device = None
 
     def forward(self, inputs: BaseDataset) -> ModelOutput:
         """Main forward pass outputing the VAE outputs
