@@ -124,7 +124,7 @@ class RHVAE(VAE):
         :math:`L_{\psi_i}` of the metric matrices
 
         Args:
-            metric (BaseMetric): The metric module that need to be set to the model.
+            metric (BaseMetric): The metric module that needs to be set to the model.
 
         """
         if not issubclass(type(metric), BaseMetric):
