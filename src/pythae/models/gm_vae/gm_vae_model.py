@@ -43,7 +43,7 @@ class GMVAE(VAE):
         self,
         model_config: GMVAEConfig,
         encoder: Optional[BaseEncoder] = None,
-        mixture_encoder: Optional[BaseEncoder]=None,
+        mixture_encoder: Optional[BaseEncoder]=None, # To check
         decoder: Optional[BaseDecoder] = None,
     ):
 
