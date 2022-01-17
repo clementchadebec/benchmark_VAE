@@ -15,7 +15,6 @@ from .base_config import BaseAEConfig
 
 from .base_utils import ModelOutput, CPU_Unpickler
 
-
 class BaseAE(nn.Module):
     """Base class for Autoencoder based models.
 
@@ -59,7 +58,7 @@ class BaseAE(nn.Module):
                 raise AttributeError(
                     "No input dimension provided !"
                     "'input_dim' parameter of BaseAEConfig instance must be set to 'data_shape' where "
-                    "the shape of the data is [mini_batch x data_shape]. Unable to build decoder"
+                    "the shape of the data is (C, H, W ..)]. Unable to build decoder"
                     "automatically"
                 )
 

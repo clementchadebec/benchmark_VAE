@@ -9,8 +9,8 @@ from .vae_gan_config import VAEGANConfig
 from ...data.datasets import BaseDataset
 from ..base.base_utils import ModelOutput, CPU_Unpickler
 
-from ..nn import BaseDecoder, BaseEncoder, BaseLayeredDiscriminator
-from ..nn.default_architectures import LayeredDiscriminator_MLP
+from ..nn import BaseDecoder, BaseEncoder, BaseDiscriminator
+from ..nn.default_architectures import Discriminator_MLP
 
 from typing import Optional
 
@@ -34,7 +34,7 @@ class VAEGAN(VAE):
             architectures if desired. If None is provided, a simple Multi Layer Preception
             (https://en.wikipedia.org/wiki/Multilayer_perceptron) is used. Default: None.
 
-        discriminator (BaseLayeredDiscriminator): An instance of BaseDecoder (inheriting from 
+        discriminator (BaseDiscriminator): An instance of BaseDecoder (inheriting from 
             `torch.nn.Module` which plays the role of discriminator. This argument allows you to use
             your own neural networks architectures if desired. If None is provided, a simple Multi 
             Layer Preception (https://en.wikipedia.org/wiki/Multilayer_perceptron) is used. Default:
@@ -50,7 +50,7 @@ class VAEGAN(VAE):
         model_config: VAEGANConfig,
         encoder: Optional[BaseEncoder] = None,
         decoder: Optional[BaseDecoder] = None,
-        discriminator: Optional[BaseLayeredDiscriminator]=None
+        discriminator: Optional[BaseDiscriminator]=None
     ):
 
         VAE.__init__(self, model_config=model_config, encoder=encoder, decoder=decoder)
@@ -66,7 +66,7 @@ class VAEGAN(VAE):
 
             self.model_config.discriminator_input_dim = self.model_config.input_dim
 
-            discriminator = LayeredDiscriminator_MLP(model_config)
+            discriminator = Discriminator_MLP(model_config)
             self.model_config.uses_default_discriminator = True
 
         else:
@@ -75,7 +75,10 @@ class VAEGAN(VAE):
 
         self.set_discriminator(discriminator)
 
-        assert model_config.reconstruction_layer <= discriminator.depth, (
+        if self.model_config.reconstruction_layer == -1:
+            self.model_config.reconstruction_layer = discriminator.depth
+
+        assert self.model_config.reconstruction_layer <= discriminator.depth, (
                 "Ensure that the targeted reconstruction layer ("
                 f"{model_config.reconstruction_layer}) is not deeper than the "
                 f"discriminator ({discriminator.depth})"
@@ -85,13 +88,18 @@ class VAEGAN(VAE):
 
         assert 0 <= self.model_config.adversarial_loss_scale <= 1, \
             'adversarial_loss_scale must be in [0, 1]'
+
+        assert 0 <= self.model_config.reconstruction_layer <= discriminator.depth, (
+            'Cannot use reconstruction layer deeper than discriminator depth '\
+            f'({discriminator.depth}). Got ({output_layer_levels})'
+        )
         
         self.adversarial_loss_scale = self.model_config.adversarial_loss_scale
         self.reconstruction_layer = self.model_config.reconstruction_layer
         self.margin = self.model_config.margin
         self.equilibrium = self.model_config.equilibrium
 
-    def set_discriminator(self, discriminator: BaseLayeredDiscriminator) -> None:
+    def set_discriminator(self, discriminator: BaseDiscriminator) -> None:
         r"""This method is called to set the metric network outputing the
         :math:`L_{\psi_i}` of the metric matrices
 
@@ -99,11 +107,11 @@ class VAEGAN(VAE):
             metric (BaseMetric): The metric module that need to be set to the model.
 
         """
-        if not issubclass(type(discriminator), BaseLayeredDiscriminator):
+        if not issubclass(type(discriminator), BaseDiscriminator):
             raise BadInheritanceError(
                 (
-                    "Discriminator must inherit from BaseLayeredDiscriminator class from "
-                    "pythae.models.base_architectures.BaseLayeredDiscriminator. "
+                    "Discriminator must inherit from BaseDiscriminator class from "
+                    "pythae.models.base_architectures.BaseDiscriminator. "
                     "Refer to documentation."
                 )
             )
@@ -164,11 +172,15 @@ class VAEGAN(VAE):
 
         # feature maps of true data
         true_discr_layer = self.discriminator(
-            x, output_layer_level=self.reconstruction_layer).adversarial_cost
+            x, output_layer_levels=[self.reconstruction_layer])[
+                f'embedding_layer_{self.reconstruction_layer}'
+            ]
 
         # feature maps of recon data
         recon_discr_layer = self.discriminator(
-            recon_x, output_layer_level=self.reconstruction_layer).adversarial_cost
+            recon_x, output_layer_levels=[self.reconstruction_layer])[
+                f'embedding_layer_{self.reconstruction_layer}'
+            ]
 
         # MSE in feature space
         recon_loss = F.mse_loss(
@@ -185,9 +197,9 @@ class VAEGAN(VAE):
         #recon_x_ = recon_x.clone().detach().requires_grad_(True)
         #gen_prior_ = gen_prior.clone().detach().requires_grad_(True)
 
-        true_adversarial_score = self.discriminator(x).adversarial_cost.flatten() 
-        gen_adversarial_score = self.discriminator(recon_x).adversarial_cost.flatten()
-        prior_adversarial_score = self.discriminator(gen_prior).adversarial_cost.flatten()
+        true_adversarial_score = self.discriminator(x).embedding.flatten() 
+        gen_adversarial_score = self.discriminator(recon_x).embedding.flatten()
+        prior_adversarial_score = self.discriminator(gen_prior).embedding.flatten()
 
         true_labels = torch.ones(N, requires_grad=False).to(self.device)
         fake_labels = torch.zeros(N, requires_grad=False).to(self.device)

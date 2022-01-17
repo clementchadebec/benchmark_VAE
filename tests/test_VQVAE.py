@@ -7,9 +7,9 @@ from torch.optim import SGD, Adadelta, Adagrad, Adam, RMSprop
 
 from pythae.customexception import BadInheritanceError
 from pythae.models.base.base_utils import ModelOutput
-from pythae.models import RAE_L2, RAE_L2_Config
+from pythae.models import VQVAE, VQVAEConfig
 
-from pythae.trainers import CoupledOptimizerTrainer,CoupledOptimizerTrainerConfig, BaseTrainingConfig
+from pythae.trainers import BaseTrainer, BaseTrainingConfig
 from pythae.pipelines import TrainingPipeline
 from tests.data.custom_architectures import (
     Decoder_AE_Conv,
@@ -20,16 +20,16 @@ from tests.data.custom_architectures import (
 PATH = os.path.dirname(os.path.abspath(__file__))
 
 
-@pytest.fixture(params=[RAE_L2_Config(), RAE_L2_Config(latent_dim=5)])
+@pytest.fixture(params=[VQVAEConfig(), VQVAEConfig(latent_dim=4)])
 def model_configs_no_input_dim(request):
     return request.param
 
 
 @pytest.fixture(
     params=[
-        RAE_L2_Config(input_dim=(1, 28, 28), latent_dim=10, embedding_weight=1., reg_weight=1e-3),
-        RAE_L2_Config(
-            input_dim=(1, 2, 18), latent_dim=5, reg_weight=1.0
+        VQVAEConfig(input_dim=(1, 28, 28), latent_dim=4, num_embeddings=10), #  ! Needs squared latent_dim !
+        VQVAEConfig(
+            input_dim=(1, 28, 28), beta=.02, latent_dim=4,
         ),
     ]
 )
@@ -53,7 +53,7 @@ class Test_Model_Building:
         return NetBadInheritance()
 
     def test_build_model(self, model_configs):
-        model = RAE_L2(model_configs)
+        model = VQVAE(model_configs)
         assert all(
             [
                 model.input_dim == model_configs.input_dim,
@@ -63,43 +63,39 @@ class Test_Model_Building:
 
     def test_raises_bad_inheritance(self, model_configs, bad_net):
         with pytest.raises(BadInheritanceError):
-            model = RAE_L2(model_configs, encoder=bad_net)
+            model = VQVAE(model_configs, encoder=bad_net)
 
         with pytest.raises(BadInheritanceError):
-            model = RAE_L2(model_configs, decoder=bad_net)
+            model = VQVAE(model_configs, decoder=bad_net)
 
     def test_raises_no_input_dim(
         self, model_configs_no_input_dim, custom_encoder, custom_decoder
     ):
         with pytest.raises(AttributeError):
-            model = RAE_L2(model_configs_no_input_dim)
+            model = VQVAE(model_configs_no_input_dim)
 
         with pytest.raises(AttributeError):
-            model = RAE_L2(model_configs_no_input_dim, encoder=custom_encoder)
+            model = VQVAE(model_configs_no_input_dim, encoder=custom_encoder)
 
         with pytest.raises(AttributeError):
-            model = RAE_L2(model_configs_no_input_dim, decoder=custom_decoder)
-
-        model = RAE_L2(
-            model_configs_no_input_dim, encoder=custom_encoder, decoder=custom_decoder
-        )
+            model = VQVAE(model_configs_no_input_dim, decoder=custom_decoder)
 
     def test_build_custom_arch(self, model_configs, custom_encoder, custom_decoder):
 
-        model = RAE_L2(model_configs, encoder=custom_encoder, decoder=custom_decoder)
+        model = VQVAE(model_configs, encoder=custom_encoder, decoder=custom_decoder)
 
         assert model.encoder == custom_encoder
         assert not model.model_config.uses_default_encoder
         assert model.decoder == custom_decoder
         assert not model.model_config.uses_default_decoder
 
-        model = RAE_L2(model_configs, encoder=custom_encoder)
+        model = VQVAE(model_configs, encoder=custom_encoder)
 
         assert model.encoder == custom_encoder
         assert not model.model_config.uses_default_encoder
         assert model.model_config.uses_default_decoder
 
-        model = RAE_L2(model_configs, decoder=custom_decoder)
+        model = VQVAE(model_configs, decoder=custom_decoder)
 
         assert model.model_config.uses_default_encoder
         assert model.decoder == custom_decoder
@@ -112,7 +108,7 @@ class Test_Model_Saving:
         tmpdir.mkdir("dummy_folder")
         dir_path = dir_path = os.path.join(tmpdir, "dummy_folder")
 
-        model = RAE_L2(model_configs)
+        model = VQVAE(model_configs)
 
         model.state_dict()["encoder.layers.0.0.weight"][0] = 0
 
@@ -121,7 +117,7 @@ class Test_Model_Saving:
         assert set(os.listdir(dir_path)) == set(["model_config.json", "model.pt"])
 
         # reload model
-        model_rec = RAE_L2.load_from_folder(dir_path)
+        model_rec = VQVAE.load_from_folder(dir_path)
 
         # check configs are the same
         assert model_rec.model_config.__dict__ == model.model_config.__dict__
@@ -138,7 +134,7 @@ class Test_Model_Saving:
         tmpdir.mkdir("dummy_folder")
         dir_path = dir_path = os.path.join(tmpdir, "dummy_folder")
 
-        model = RAE_L2(model_configs, encoder=custom_encoder)
+        model = VQVAE(model_configs, encoder=custom_encoder)
 
         model.state_dict()["encoder.layers.0.0.weight"][0] = 0
 
@@ -149,7 +145,7 @@ class Test_Model_Saving:
         )
 
         # reload model
-        model_rec = RAE_L2.load_from_folder(dir_path)
+        model_rec = VQVAE.load_from_folder(dir_path)
 
         # check configs are the same
         assert model_rec.model_config.__dict__ == model.model_config.__dict__
@@ -166,7 +162,7 @@ class Test_Model_Saving:
         tmpdir.mkdir("dummy_folder")
         dir_path = dir_path = os.path.join(tmpdir, "dummy_folder")
 
-        model = RAE_L2(model_configs, decoder=custom_decoder)
+        model = VQVAE(model_configs, decoder=custom_decoder)
 
         model.state_dict()["encoder.layers.0.0.weight"][0] = 0
 
@@ -177,7 +173,7 @@ class Test_Model_Saving:
         )
 
         # reload model
-        model_rec = RAE_L2.load_from_folder(dir_path)
+        model_rec = VQVAE.load_from_folder(dir_path)
 
         # check configs are the same
         assert model_rec.model_config.__dict__ == model.model_config.__dict__
@@ -196,7 +192,7 @@ class Test_Model_Saving:
         tmpdir.mkdir("dummy_folder")
         dir_path = dir_path = os.path.join(tmpdir, "dummy_folder")
 
-        model = RAE_L2(model_configs, encoder=custom_encoder, decoder=custom_decoder)
+        model = VQVAE(model_configs, encoder=custom_encoder, decoder=custom_decoder)
 
         model.state_dict()["encoder.layers.0.0.weight"][0] = 0
 
@@ -207,7 +203,7 @@ class Test_Model_Saving:
         )
 
         # reload model
-        model_rec = RAE_L2.load_from_folder(dir_path)
+        model_rec = VQVAE.load_from_folder(dir_path)
 
         # check configs are the same
         assert model_rec.model_config.__dict__ == model.model_config.__dict__
@@ -226,7 +222,7 @@ class Test_Model_Saving:
         tmpdir.mkdir("dummy_folder")
         dir_path = dir_path = os.path.join(tmpdir, "dummy_folder")
 
-        model = RAE_L2(model_configs, encoder=custom_encoder, decoder=custom_decoder)
+        model = VQVAE(model_configs, encoder=custom_encoder, decoder=custom_decoder)
 
         model.state_dict()["encoder.layers.0.0.weight"][0] = 0
 
@@ -236,25 +232,25 @@ class Test_Model_Saving:
 
         # check raises decoder.pkl is missing
         with pytest.raises(FileNotFoundError):
-            model_rec = RAE_L2.load_from_folder(dir_path)
+            model_rec = VQVAE.load_from_folder(dir_path)
 
         os.remove(os.path.join(dir_path, "encoder.pkl"))
 
         # check raises encoder.pkl is missing
         with pytest.raises(FileNotFoundError):
-            model_rec = RAE_L2.load_from_folder(dir_path)
+            model_rec = VQVAE.load_from_folder(dir_path)
 
         os.remove(os.path.join(dir_path, "model.pt"))
 
         # check raises encoder.pkl is missing
         with pytest.raises(FileNotFoundError):
-            model_rec = RAE_L2.load_from_folder(dir_path)
+            model_rec = VQVAE.load_from_folder(dir_path)
 
         os.remove(os.path.join(dir_path, "model_config.json"))
 
         # check raises encoder.pkl is missing
         with pytest.raises(FileNotFoundError):
-            model_rec = RAE_L2.load_from_folder(dir_path)
+            model_rec = VQVAE.load_from_folder(dir_path)
 
 
 class Test_Model_forward:
@@ -268,36 +264,33 @@ class Test_Model_forward:
         )  # This is an extract of 3 data from MNIST (unnormalized) used to test custom architecture
 
     @pytest.fixture
-    def rae(self, model_configs, demo_data):
+    def vae(self, model_configs, demo_data):
         model_configs.input_dim = tuple(demo_data["data"][0].shape)
-        return RAE_L2(model_configs)
+        return VQVAE(model_configs)
 
-    def test_model_train_output(self, rae, demo_data):
+    def test_model_train_output(self, vae, demo_data):
 
-        rae.train()
+        vae.train()
 
-        out = rae(demo_data)
+        out = vae(demo_data)
 
         assert isinstance(out, ModelOutput)
 
-        assert set(["loss", "recon_loss", "embedding_loss", "recon_x", "z"]) == set(
+        assert set(["loss", "recon_loss", "vq_loss", "recon_x", "z"]) == set(
             out.keys()
         )
 
         assert out.z.shape[0] == demo_data["data"].shape[0]
         assert out.recon_x.shape == demo_data["data"].shape
 
-
 @pytest.mark.slow
-class Test_RAE_L2_Training:
+class Test_VQVAETraining:
     @pytest.fixture
     def train_dataset(self):
         return torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))
 
     @pytest.fixture(
-        params=[
-            CoupledOptimizerTrainerConfig(
-                num_epochs=3, steps_saving=2, learning_rate=1e-5, encoder_optim_decay=1e-3, decoder_optim_decay=1e-3,)]
+        params=[BaseTrainingConfig(num_epochs=3, steps_saving=2, learning_rate=1e-5)]
     )
     def training_configs(self, tmpdir, request):
         tmpdir.mkdir("dummy_folder")
@@ -314,50 +307,45 @@ class Test_RAE_L2_Training:
             torch.rand(1),
         ]
     )
-    def rae(self, model_configs, custom_encoder, custom_decoder, request):
+    def vae(self, model_configs, custom_encoder, custom_decoder, request):
         # randomized
 
         alpha = request.param
 
         if alpha < 0.25:
-            model = RAE_L2(model_configs)
+            model = VQVAE(model_configs)
 
         elif 0.25 <= alpha < 0.5:
-            model = RAE_L2(model_configs, encoder=custom_encoder)
+            model = VQVAE(model_configs, encoder=custom_encoder)
 
         elif 0.5 <= alpha < 0.75:
-            model = RAE_L2(model_configs, decoder=custom_decoder)
+            model = VQVAE(model_configs, decoder=custom_decoder)
 
         else:
-            model = RAE_L2(
+            model = VQVAE(
                 model_configs, encoder=custom_encoder, decoder=custom_decoder
             )
 
         return model
 
-    @pytest.fixture(params=[Adam])
-    def optimizers(self, request, rae, training_configs):
+    @pytest.fixture(params=[None, Adagrad, Adam, Adadelta, SGD, RMSprop])
+    def optimizers(self, request, vae, training_configs):
         if request.param is not None:
-            encoder_optimizer = request.param(
-                rae.encoder.parameters(), lr=training_configs.learning_rate
-            )
-            decoder_optimizer = request.param(
-                rae.decoder.parameters(), lr=training_configs.learning_rate
+            optimizer = request.param(
+                vae.parameters(), lr=training_configs.learning_rate
             )
 
         else:
-            encoder_optimizer = None
-            decoder_optimizer = None
+            optimizer = None
 
-        return (encoder_optimizer, decoder_optimizer)
+        return optimizer
 
-    def test_rae_train_step(self, rae, train_dataset, training_configs, optimizers):
-        trainer = CoupledOptimizerTrainer(
-            model=rae,
+    def test_vae_train_step(self, vae, train_dataset, training_configs, optimizers):
+        trainer = BaseTrainer(
+            model=vae,
             train_dataset=train_dataset,
             training_config=training_configs,
-            encoder_optimizer=optimizers[0],
-            decoder_optimizer=optimizers[1]
+            optimizer=optimizers,
         )
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
@@ -374,14 +362,13 @@ class Test_RAE_L2_Training:
             ]
         )
 
-    def test_rae_eval_step(self, rae, train_dataset, training_configs, optimizers):
-        trainer = CoupledOptimizerTrainer(
-            model=rae,
+    def test_vae_eval_step(self, vae, train_dataset, training_configs, optimizers):
+        trainer = BaseTrainer(
+            model=vae,
             train_dataset=train_dataset,
             eval_dataset=train_dataset,
             training_config=training_configs,
-            encoder_optimizer=optimizers[0],
-            decoder_optimizer=optimizers[1]
+            optimizer=optimizers,
         )
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
@@ -398,17 +385,16 @@ class Test_RAE_L2_Training:
             ]
         )
 
-    def test_rae_main_train_loop(
-        self, tmpdir, rae, train_dataset, training_configs, optimizers
+    def test_vae_main_train_loop(
+        self, tmpdir, vae, train_dataset, training_configs, optimizers
     ):
 
-        trainer = CoupledOptimizerTrainer(
-            model=rae,
+        trainer = BaseTrainer(
+            model=vae,
             train_dataset=train_dataset,
             eval_dataset=train_dataset,
             training_config=training_configs,
-            encoder_optimizer=optimizers[0],
-            decoder_optimizer=optimizers[1]
+            optimizer=optimizers,
         )
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
@@ -426,25 +412,23 @@ class Test_RAE_L2_Training:
         )
 
     def test_checkpoint_saving(
-        self, tmpdir, rae, train_dataset, training_configs, optimizers
+        self, tmpdir, vae, train_dataset, training_configs, optimizers
     ):
 
         dir_path = training_configs.output_dir
 
-        trainer = CoupledOptimizerTrainer(
-            model=rae,
+        trainer = BaseTrainer(
+            model=vae,
             train_dataset=train_dataset,
             training_config=training_configs,
-            encoder_optimizer=optimizers[0],
-            decoder_optimizer=optimizers[1]
+            optimizer=optimizers,
         )
 
         # Make a training step
         step_1_loss = trainer.train_step(epoch=1)
 
         model = deepcopy(trainer.model)
-        encoder_optimizer = deepcopy(trainer.encoder_optimizer)
-        decoder_optimizer = deepcopy(trainer.decoder_optimizer)
+        optimizer = deepcopy(trainer.optimizer)
 
         trainer.save_checkpoint(dir_path=dir_path, epoch=0, model=model)
 
@@ -454,19 +438,19 @@ class Test_RAE_L2_Training:
 
         files_list = os.listdir(checkpoint_dir)
 
-        assert set(["model.pt", "encoder_optimizer.pt", "decoder_optimizer.pt", "training_config.json"]).issubset(
+        assert set(["model.pt", "optimizer.pt", "training_config.json"]).issubset(
             set(files_list)
         )
 
         # check pickled custom decoder
-        if not rae.model_config.uses_default_decoder:
+        if not vae.model_config.uses_default_decoder:
             assert "decoder.pkl" in files_list
 
         else:
             assert not "decoder.pkl" in files_list
 
         # check pickled custom encoder
-        if not rae.model_config.uses_default_encoder:
+        if not vae.model_config.uses_default_encoder:
             assert "encoder.pkl" in files_list
 
         else:
@@ -486,7 +470,7 @@ class Test_RAE_L2_Training:
         )
 
         # check reload full model
-        model_rec = RAE_L2.load_from_folder(os.path.join(checkpoint_dir))
+        model_rec = VQVAE.load_from_folder(os.path.join(checkpoint_dir))
 
         assert all(
             [
@@ -500,15 +484,14 @@ class Test_RAE_L2_Training:
         assert type(model_rec.encoder.cpu()) == type(model.encoder.cpu())
         assert type(model_rec.decoder.cpu()) == type(model.decoder.cpu())
 
-        encoder_optim_rec_state_dict = torch.load(os.path.join(checkpoint_dir, "encoder_optimizer.pt"))
-        decoder_optim_rec_state_dict = torch.load(os.path.join(checkpoint_dir, "decoder_optimizer.pt"))
+        optim_rec_state_dict = torch.load(os.path.join(checkpoint_dir, "optimizer.pt"))
 
         assert all(
             [
                 dict_rec == dict_optimizer
                 for (dict_rec, dict_optimizer) in zip(
-                    encoder_optim_rec_state_dict["param_groups"],
-                    encoder_optimizer.state_dict()["param_groups"],
+                    optim_rec_state_dict["param_groups"],
+                    optimizer.state_dict()["param_groups"],
                 )
             ]
         )
@@ -517,44 +500,24 @@ class Test_RAE_L2_Training:
             [
                 dict_rec == dict_optimizer
                 for (dict_rec, dict_optimizer) in zip(
-                    encoder_optim_rec_state_dict["state"], encoder_optimizer.state_dict()["state"]
-                )
-            ]
-        )
-
-        assert all(
-            [
-                dict_rec == dict_optimizer
-                for (dict_rec, dict_optimizer) in zip(
-                    decoder_optim_rec_state_dict["param_groups"],
-                    decoder_optimizer.state_dict()["param_groups"],
-                )
-            ]
-        )
-
-        assert all(
-            [
-                dict_rec == dict_optimizer
-                for (dict_rec, dict_optimizer) in zip(
-                    decoder_optim_rec_state_dict["state"], decoder_optimizer.state_dict()["state"]
+                    optim_rec_state_dict["state"], optimizer.state_dict()["state"]
                 )
             ]
         )
 
     def test_checkpoint_saving_during_training(
-        self, tmpdir, rae, train_dataset, training_configs, optimizers
+        self, tmpdir, vae, train_dataset, training_configs, optimizers
     ):
         #
         target_saving_epoch = training_configs.steps_saving
 
         dir_path = training_configs.output_dir
 
-        trainer = CoupledOptimizerTrainer(
-            model=rae,
+        trainer = BaseTrainer(
+            model=vae,
             train_dataset=train_dataset,
             training_config=training_configs,
-            encoder_optimizer=optimizers[0],
-            decoder_optimizer=optimizers[1]
+            optimizer=optimizers,
         )
 
         model = deepcopy(trainer.model)
@@ -562,7 +525,7 @@ class Test_RAE_L2_Training:
         trainer.train()
 
         training_dir = os.path.join(
-            dir_path, f"RAE_L2_training_{trainer._training_signature}"
+            dir_path, f"VQVAE_training_{trainer._training_signature}"
         )
         assert os.path.isdir(training_dir)
 
@@ -575,19 +538,19 @@ class Test_RAE_L2_Training:
         files_list = os.listdir(checkpoint_dir)
 
         # check files
-        assert set(["model.pt", "encoder_optimizer.pt", "decoder_optimizer.pt", "training_config.json"]).issubset(
+        assert set(["model.pt", "optimizer.pt", "training_config.json"]).issubset(
             set(files_list)
         )
 
         # check pickled custom decoder
-        if not rae.model_config.uses_default_decoder:
+        if not vae.model_config.uses_default_decoder:
             assert "decoder.pkl" in files_list
 
         else:
             assert not "decoder.pkl" in files_list
 
         # check pickled custom encoder
-        if not rae.model_config.uses_default_encoder:
+        if not vae.model_config.uses_default_encoder:
             assert "encoder.pkl" in files_list
 
         else:
@@ -605,17 +568,16 @@ class Test_RAE_L2_Training:
         )
 
     def test_final_model_saving(
-        self, tmpdir, rae, train_dataset, training_configs, optimizers
+        self, tmpdir, vae, train_dataset, training_configs, optimizers
     ):
 
         dir_path = training_configs.output_dir
 
-        trainer = CoupledOptimizerTrainer(
-            model=rae,
+        trainer = BaseTrainer(
+            model=vae,
             train_dataset=train_dataset,
             training_config=training_configs,
-            encoder_optimizer=optimizers[0],
-            decoder_optimizer=optimizers[1]
+            optimizer=optimizers,
         )
 
         trainer.train()
@@ -623,7 +585,7 @@ class Test_RAE_L2_Training:
         model = deepcopy(trainer._best_model)
 
         training_dir = os.path.join(
-            dir_path, f"RAE_L2_training_{trainer._training_signature}"
+            dir_path, f"VQVAE_training_{trainer._training_signature}"
         )
         assert os.path.isdir(training_dir)
 
@@ -637,21 +599,21 @@ class Test_RAE_L2_Training:
         )
 
         # check pickled custom decoder
-        if not rae.model_config.uses_default_decoder:
+        if not vae.model_config.uses_default_decoder:
             assert "decoder.pkl" in files_list
 
         else:
             assert not "decoder.pkl" in files_list
 
         # check pickled custom encoder
-        if not rae.model_config.uses_default_encoder:
+        if not vae.model_config.uses_default_encoder:
             assert "encoder.pkl" in files_list
 
         else:
             assert not "encoder.pkl" in files_list
 
         # check reload full model
-        model_rec = RAE_L2.load_from_folder(os.path.join(final_dir))
+        model_rec = VQVAE.load_from_folder(os.path.join(final_dir))
 
         assert all(
             [
@@ -665,23 +627,16 @@ class Test_RAE_L2_Training:
         assert type(model_rec.encoder.cpu()) == type(model.encoder.cpu())
         assert type(model_rec.decoder.cpu()) == type(model.decoder.cpu())
 
-    def test_rae_training_pipeline(
-        self, tmpdir, rae, train_dataset, training_configs
+    def test_vae_training_pipeline(
+        self, tmpdir, vae, train_dataset, training_configs
     ):
-
-        with pytest.raises(AssertionError):
-            pipeline = TrainingPipeline(
-            model=rae, training_config=BaseTrainingConfig()
-        )
 
         dir_path = training_configs.output_dir
 
         # build pipeline
         pipeline = TrainingPipeline(
-            model=rae, training_config=training_configs
+            model=vae, training_config=training_configs
         )
-
-        assert pipeline.training_config.__dict__ == training_configs.__dict__
 
         # Launch Pipeline
         pipeline(
@@ -689,14 +644,10 @@ class Test_RAE_L2_Training:
             eval_data=train_dataset.data,  # gives tensor to pipeline
         )
 
-        # check decays are set accordingly to model params
-        assert pipeline.trainer.encoder_optimizer.param_groups[0]['weight_decay'] == 0.
-        assert pipeline.trainer.decoder_optimizer.param_groups[0]['weight_decay'] == rae.model_config.reg_weight
-
         model = deepcopy(pipeline.trainer._best_model)
 
         training_dir = os.path.join(
-            dir_path, f"RAE_L2_training_{pipeline.trainer._training_signature}"
+            dir_path, f"VQVAE_training_{pipeline.trainer._training_signature}"
         )
         assert os.path.isdir(training_dir)
 
@@ -710,21 +661,21 @@ class Test_RAE_L2_Training:
         )
 
         # check pickled custom decoder
-        if not rae.model_config.uses_default_decoder:
+        if not vae.model_config.uses_default_decoder:
             assert "decoder.pkl" in files_list
 
         else:
             assert not "decoder.pkl" in files_list
 
         # check pickled custom encoder
-        if not rae.model_config.uses_default_encoder:
+        if not vae.model_config.uses_default_encoder:
             assert "encoder.pkl" in files_list
 
         else:
             assert not "encoder.pkl" in files_list
 
         # check reload full model
-        model_rec = RAE_L2.load_from_folder(os.path.join(final_dir))
+        model_rec = VQVAE.load_from_folder(os.path.join(final_dir))
 
         assert all(
             [

@@ -141,7 +141,7 @@ class Test_Model_Saving:
         model.M_tens = torch.randn(3, 10, 10)
         model.centroids_tens = torch.randn(3, 10, 10)
 
-        model.state_dict()["encoder.layers.0.weight"][0] = 0
+        model.state_dict()["encoder.layers.0.0.weight"][0] = 0
 
         model.save(dir_path=dir_path)
 
@@ -173,7 +173,7 @@ class Test_Model_Saving:
 
         model = RHVAE(model_configs, encoder=custom_encoder)
 
-        model.state_dict()["encoder.layers.0.weight"][0] = 0
+        model.state_dict()["encoder.layers.0.0.weight"][0] = 0
 
         model.save(dir_path=dir_path)
 
@@ -207,7 +207,7 @@ class Test_Model_Saving:
 
         model = RHVAE(model_configs, decoder=custom_decoder)
 
-        model.state_dict()["encoder.layers.0.weight"][0] = 0
+        model.state_dict()["encoder.layers.0.0.weight"][0] = 0
 
         model.save(dir_path=dir_path)
 
@@ -241,7 +241,7 @@ class Test_Model_Saving:
 
         model = RHVAE(model_configs, metric=custom_metric)
 
-        model.state_dict()["encoder.layers.0.weight"][0] = 0
+        model.state_dict()["encoder.layers.0.0.weight"][0] = 0
 
         model.save(dir_path=dir_path)
 
@@ -282,7 +282,7 @@ class Test_Model_Saving:
             metric=custom_metric,
         )
 
-        model.state_dict()["encoder.layers.0.weight"][0] = 0
+        model.state_dict()["encoder.layers.0.0.weight"][0] = 0
 
         model.save(dir_path=dir_path)
 
@@ -336,7 +336,7 @@ class Test_Model_Saving:
             metric=custom_metric,
         )
 
-        model.state_dict()["encoder.layers.0.weight"][0] = 0
+        model.state_dict()["encoder.layers.0.0.weight"][0] = 0
 
         model.save(dir_path=dir_path)
 

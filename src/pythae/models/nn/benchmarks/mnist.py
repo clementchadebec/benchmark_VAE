@@ -2,7 +2,9 @@
 
 import torch
 import torch.nn as nn
+import numpy as np
 
+from typing import List
 from ..base_architectures import BaseEncoder, BaseDecoder
 from ....models.base.base_utils import ModelOutput
 from ....models import BaseAEConfig
@@ -10,7 +12,7 @@ from ....models import BaseAEConfig
 from pythae.models.nn import (
     BaseEncoder,
     BaseDecoder,
-    BaseLayeredDiscriminator
+    BaseDiscriminator
 )
 
 
@@ -28,22 +30,31 @@ class Encoder_AE_MNIST(BaseEncoder):
             >>> encoder = Encoder_AE_MNIST(model_config)
             >>> encoder
             ... Encoder_AE_MNIST(
-            ...     (conv_layers): Sequential(
-            ...         (0): Conv2d(1, 128, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
-            ...         (1): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-            ...         (2): ReLU()
-            ...         (3): Conv2d(128, 256, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
-            ...         (4): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-            ...         (5): ReLU()
-            ...         (6): Conv2d(256, 512, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
-            ...         (7): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-            ...         (8): ReLU()
-            ...         (9): Conv2d(512, 1024, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
-            ...         (10): BatchNorm2d(1024, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-            ...         (11): ReLU()
+            ...   (layers): ModuleList(
+            ...     (0): Sequential(
+            ...       (0): Conv2d(1, 128, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
+            ...       (1): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            ...       (2): ReLU()
             ...     )
-            ...         (embedding): Linear(in_features=1024, out_features=10, bias=True)
+            ...     (1): Sequential(
+            ...       (0): Conv2d(128, 256, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
+            ...       (1): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            ...       (2): ReLU()
             ...     )
+            ...     (2): Sequential(
+            ...       (0): Conv2d(256, 512, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
+            ...       (1): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            ...       (2): ReLU()
+            ...     )
+            ...     (3): Sequential(
+            ...       (0): Conv2d(512, 1024, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
+            ...       (1): BatchNorm2d(1024, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            ...       (2): ReLU()
+            ...     )
+            ...   )
+            ...   (embedding): Linear(in_features=1024, out_features=16, bias=True)
+            ... )
+
 
     and then passed to a :class:`pythae.models` instance
 
@@ -74,31 +85,84 @@ class Encoder_AE_MNIST(BaseEncoder):
         self.latent_dim = args.latent_dim
         self.n_channels = 1
 
-        self.conv_layers = nn.Sequential(
-            nn.Conv2d(self.n_channels, 128, 4, 2, padding=1),
-            nn.BatchNorm2d(128),
-            nn.ReLU(),
-            nn.Conv2d(128, 256, 4, 2, padding=1),
-            nn.BatchNorm2d(256),
-            nn.ReLU(),
-            nn.Conv2d(256, 512, 4, 2, padding=1),
-            nn.BatchNorm2d(512),
-            nn.ReLU(),
-            nn.Conv2d(512, 1024, 4, 2, padding=1),
-            nn.BatchNorm2d(1024),
-            nn.ReLU(),
+        layers = nn.ModuleList()
+
+        layers.append(
+            nn.Sequential(
+                nn.Conv2d(self.n_channels, 128, 4, 2, padding=1),
+                nn.BatchNorm2d(128),
+                nn.ReLU()
+            )
         )
+
+        layers.append(
+            nn.Sequential(
+                nn.Conv2d(128, 256, 4, 2, padding=1),
+                nn.BatchNorm2d(256),
+                nn.ReLU(),
+            )
+        )
+
+        layers.append(
+            nn.Sequential(
+                nn.Conv2d(256, 512, 4, 2, padding=1),
+                nn.BatchNorm2d(512),
+                nn.ReLU(),
+            )
+        )
+
+        layers.append(
+            nn.Sequential(
+                nn.Conv2d(512, 1024, 4, 2, padding=1),
+                nn.BatchNorm2d(1024),
+                nn.ReLU(),
+            )
+        )
+
+        self.layers = layers
+        self.depth = len(layers)
 
         self.embedding = nn.Linear(1024, args.latent_dim)
 
-    def forward(self, x: torch.Tensor):
+    def forward(self, x: torch.Tensor, output_layer_levels:List[int]=None):
         """Forward method
         
+        Args:
+            output_layer_levels (List[int]): The levels of the layers where the outputs are
+                extracted. If None, the last layer's output is returned. Default: None.
+
         Returns:
-            ModelOutput: An instance of ModelOutput containing the embeddings of the input data under
-            the key `embedding`"""
-        h1 = self.conv_layers(x).reshape(x.shape[0], -1)
-        output = ModelOutput(embedding=self.embedding(h1))
+            ModelOutput: An instance of ModelOutput containing the embeddings of the input data 
+            under the key `embedding`. Optional: The outputs of the layers specified in 
+            `output_layer_levels` arguments are available under the keys `embedding_layer_i` where
+            i is the layer's level."""
+        output = ModelOutput()
+
+        max_depth = self.depth
+
+        if output_layer_levels is not None:
+
+            assert all(self.depth >= levels > 0 or levels==-1 for levels in output_layer_levels), (
+                f'Cannot output layer deeper than depth ({self.depth}).'\
+                f'Got ({output_layer_levels}).'
+                )
+
+            if -1 in output_layer_levels:
+                max_depth = self.depth
+            else:
+                max_depth = max(output_layer_levels)
+
+        out = x
+
+        for i in range(max_depth):
+            out = self.layers[i](out)
+
+            if output_layer_levels is not None:
+                if i+1 in output_layer_levels:
+                    output[f'embedding_layer_{i+1}'] = out
+            if i+1 == self.depth:
+                output['embedding'] = self.embedding(out.reshape(x.shape[0], -1))
+
         return output
 
 
@@ -118,19 +182,27 @@ class Encoder_VAE_MNIST(BaseEncoder):
             >>> encoder = Encoder_VAE_MNIST(model_config)
             >>> encoder
             ... Encoder_VAE_MNIST(
-            ...   (conv_layers): Sequential(
-            ...     (0): Conv2d(1, 128, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
-            ...     (1): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-            ...     (2): ReLU()
-            ...     (3): Conv2d(128, 256, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
-            ...     (4): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-            ...     (5): ReLU()
-            ...     (6): Conv2d(256, 512, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
-            ...     (7): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-            ...     (8): ReLU()
-            ...     (9): Conv2d(512, 1024, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
-            ...     (10): BatchNorm2d(1024, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-            ...     (11): ReLU()
+            ...   (layers): ModuleList(
+            ...     (0): Sequential(
+            ...       (0): Conv2d(1, 128, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
+            ...       (1): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            ...       (2): ReLU()
+            ...     )
+            ...     (1): Sequential(
+            ...       (0): Conv2d(128, 256, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
+            ...       (1): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            ...       (2): ReLU()
+            ...     )
+            ...     (2): Sequential(
+            ...       (0): Conv2d(256, 512, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
+            ...       (1): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            ...       (2): ReLU()
+            ...     )
+            ...     (3): Sequential(
+            ...       (0): Conv2d(512, 1024, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
+            ...       (1): BatchNorm2d(1024, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            ...       (2): ReLU()
+            ...     )
             ...   )
             ...   (embedding): Linear(in_features=1024, out_features=16, bias=True)
             ...   (log_var): Linear(in_features=1024, out_features=16, bias=True)
@@ -168,35 +240,88 @@ class Encoder_VAE_MNIST(BaseEncoder):
         self.latent_dim = args.latent_dim
         self.n_channels = 1
 
-        self.conv_layers = nn.Sequential(
-            nn.Conv2d(self.n_channels, 128, 4, 2, padding=1),
-            nn.BatchNorm2d(128),
-            nn.ReLU(),
-            nn.Conv2d(128, 256, 4, 2, padding=1),
-            nn.BatchNorm2d(256),
-            nn.ReLU(),
-            nn.Conv2d(256, 512, 4, 2, padding=1),
-            nn.BatchNorm2d(512),
-            nn.ReLU(),
-            nn.Conv2d(512, 1024, 4, 2, padding=1),
-            nn.BatchNorm2d(1024),
-            nn.ReLU(),
+        layers = nn.ModuleList()
+
+        layers.append(
+            nn.Sequential(
+                nn.Conv2d(self.n_channels, 128, 4, 2, padding=1),
+                nn.BatchNorm2d(128),
+                nn.ReLU()
+            )
         )
+
+        layers.append(
+            nn.Sequential(
+                nn.Conv2d(128, 256, 4, 2, padding=1),
+                nn.BatchNorm2d(256),
+                nn.ReLU(),
+            )
+        )
+
+        layers.append(
+            nn.Sequential(
+                nn.Conv2d(256, 512, 4, 2, padding=1),
+                nn.BatchNorm2d(512),
+                nn.ReLU(),
+            )
+        )
+
+        layers.append(
+            nn.Sequential(
+                nn.Conv2d(512, 1024, 4, 2, padding=1),
+                nn.BatchNorm2d(1024),
+                nn.ReLU(),
+            )
+        )
+
+        self.layers = layers
+        self.depth = len(layers)
 
         self.embedding = nn.Linear(1024, args.latent_dim)
         self.log_var = nn.Linear(1024, args.latent_dim)
 
-    def forward(self, x: torch.Tensor):
+    def forward(self, x: torch.Tensor, output_layer_levels:List[int]=None):
         """Forward method
+
+        Args:
+            output_layer_levels (List[int]): The levels of the layers where the outputs are
+                extracted. If None, the last layer's output is returned. Default: None.
         
         Returns:
-            ModelOutput: An instance of ModelOutput containing the embeddings of the input data under
-            the key `embedding` and the **log** of the diagonal coefficient of the covariance 
-            matrices under the key `log_covariance`"""
-        h1 = self.conv_layers(x).reshape(x.shape[0], -1)
-        output = ModelOutput(
-            embedding=self.embedding(h1), log_covariance=self.log_var(h1)
-        )
+            ModelOutput: An instance of ModelOutput containing the embeddings of the input data 
+            under the key `embedding` and the **log** of the diagonal coefficient of the covariance 
+            matrices under the key `log_covariance`. Optional: The outputs of the layers specified 
+            in `output_layer_levels` arguments are available under the keys `embedding_layer_i` 
+            where i is the layer's level."""
+        output = ModelOutput()
+
+        max_depth = self.depth
+
+        if output_layer_levels is not None:
+
+            assert all(self.depth >= levels > 0 or levels==-1 for levels in output_layer_levels), (
+                f'Cannot output layer deeper than depth ({self.depth}).'\
+                f'Got ({output_layer_levels})'
+                )
+
+            if -1 in output_layer_levels:
+                max_depth = self.depth
+            else:
+                max_depth = max(output_layer_levels)
+
+        out = x
+
+        for i in range(max_depth):
+            out = self.layers[i](out)
+
+            if output_layer_levels is not None:
+                if i+1 in output_layer_levels:
+                    output[f'embedding_layer_{i+1}'] = out
+        
+            if i+1 == self.depth:
+                output['embedding'] = self.embedding(out.reshape(x.shape[0], -1))
+                output['log_covariance'] = self.log_var(out.reshape(x.shape[0], -1))
+
         return output
 
 
@@ -213,16 +338,22 @@ class Decoder_AE_MNIST(BaseDecoder):
             >>> decoder = Decoder_AE_MNIST(model_config)
             >>> decoder
             ... Decoder_AE_MNIST(
-            ...   (fc): Linear(in_features=16, out_features=16384, bias=True)
-            ...   (deconv_layers): Sequential(
-            ...     (0): ConvTranspose2d(1024, 512, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1))
-            ...     (1): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-            ...     (2): ReLU()
-            ...     (3): ConvTranspose2d(512, 256, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1), output_padding=(1, 1))
-            ...     (4): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-            ...     (5): ReLU()
-            ...     (6): ConvTranspose2d(256, 1, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1), output_padding=(1, 1))
-            ...     (7): Sigmoid()
+            ...   (layers): ModuleList(
+            ...     (0): Linear(in_features=16, out_features=16384, bias=True)
+            ...     (1): Sequential(
+            ...       (0): ConvTranspose2d(1024, 512, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1))
+            ...       (1): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            ...       (2): ReLU()
+            ...     )
+            ...     (2): Sequential(
+            ...       (0): ConvTranspose2d(512, 256, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1), output_padding=(1, 1))
+            ...       (1): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            ...       (2): ReLU()
+            ...     )
+            ...     (3): Sequential(
+            ...       (0): ConvTranspose2d(256, 1, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1), output_padding=(1, 1))
+            ...       (1): Sigmoid()
+            ...     )
             ...   )
             ... )
 
@@ -252,46 +383,101 @@ class Decoder_AE_MNIST(BaseDecoder):
         self.latent_dim = args.latent_dim
         self.n_channels = 1
 
-        self.fc = nn.Linear(args.latent_dim, 1024 * 4 * 4)
-        self.deconv_layers = nn.Sequential(
-            nn.ConvTranspose2d(1024, 512, 3, 2, padding=1),
-            nn.BatchNorm2d(512),
-            nn.ReLU(),
-            nn.ConvTranspose2d(512, 256, 3, 2, padding=1, output_padding=1),
-            nn.BatchNorm2d(256),
-            nn.ReLU(),
-            nn.ConvTranspose2d(256, self.n_channels, 3, 2, padding=1, output_padding=1),
-            nn.Sigmoid(),
+        layers = nn.ModuleList()
+
+        layers.append(
+            nn.Linear(args.latent_dim, 1024 * 4 * 4)
         )
 
-    def forward(self, z: torch.Tensor):
+        layers.append(
+            nn.Sequential(
+                nn.ConvTranspose2d(1024, 512, 3, 2, padding=1),
+                nn.BatchNorm2d(512),
+                nn.ReLU(),
+            )
+        )
+
+        layers.append(
+            nn.Sequential(
+                nn.ConvTranspose2d(512, 256, 3, 2, padding=1, output_padding=1),
+                nn.BatchNorm2d(256),
+                nn.ReLU(),
+            )
+        )
+        
+        layers.append(
+            nn.Sequential(
+                nn.ConvTranspose2d(256, self.n_channels, 3, 2, padding=1, output_padding=1),
+                nn.Sigmoid(),
+            )
+        )
+
+        self.layers = layers
+        self.depth = len(layers)
+
+    def forward(self, z: torch.Tensor, output_layer_levels:List[int]=None):
         """Forward method
+
+        Args:
+            output_layer_levels (List[int]): The levels of the layers where the outputs are
+                extracted. If None, the last layer's output is returned. Default: None.
         
         Returns:
             ModelOutput: An instance of ModelOutput containing the reconstruction of the latent code 
-            under the key `reconstruction`
+            under the key `reconstruction`. Optional: The outputs of the layers specified in 
+            `output_layer_levels` arguments are available under the keys `reconstruction_layer_i` 
+            where i is the layer's level.
         """
-        h1 = self.fc(z).reshape(z.shape[0], 1024, 4, 4)
-        output = ModelOutput(reconstruction=self.deconv_layers(h1))
+        output = ModelOutput()
+
+        max_depth = self.depth
+
+        if output_layer_levels is not None:
+
+            assert all(self.depth >= levels > 0 or levels==-1 for levels in output_layer_levels), (
+                f'Cannot output layer deeper than depth ({self.depth}).'\
+                f'Got ({output_layer_levels})'
+                )
+
+            if -1 in output_layer_levels:
+                max_depth = self.depth
+            else:
+                max_depth = max(output_layer_levels)
+
+        out = z
+
+        for i in range(max_depth):
+            out = self.layers[i](out)
+
+            if i == 0:
+                out = out.reshape(z.shape[0], 1024, 4, 4)
+
+            if output_layer_levels is not None:
+                if i+1 in output_layer_levels:
+                    output[f'reconstruction_layer_{i+1}'] = out
+
+            if i+1 == self.depth:
+                output['reconstruction'] = out
 
         return output
 
 
-class LayeredDiscriminator_MNIST(BaseLayeredDiscriminator):
+class Discriminator_MNIST(BaseDiscriminator):
     """
-    A Convolutional discriminator Neural net with accessible layers and suited for MNIST.
+    A Convolutional encoder Neural net suited for MNIST and Variational Autoencoder-based 
+    models.
 
 
     It can be built as follows:
 
     .. code-block::
 
-            >>> from pythae.models.nn.benchmarks.mnist import LayeredDiscriminator_MNIST
+            >>> from pythae.models.nn.benchmarks.mnist import Discriminator_MNIST
             >>> from pythae.models import VAEGANConfig
             >>> model_config = VAEGANConfig(input_dim=(1, 28, 28), latent_dim=16)
-            >>> discriminator = LayeredDiscriminator_MNIST(model_config)
+            >>> discriminator = Discriminator_MNIST(model_config)
             >>> discriminator
-            ... LayeredDiscriminator_MNIST(
+            ... Discriminator_MNIST(
             ...   (layers): ModuleList(
             ...     (0): Sequential(
             ...       (0): Conv2d(1, 128, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
@@ -322,25 +508,10 @@ class LayeredDiscriminator_MNIST(BaseLayeredDiscriminator):
         >>> model = VAEGAN(model_config=model_config, discriminator=discriminator)
         >>> model.discriminator == discriminator
         ... True
-
-     .. note::
-
-        Please note that this decoder is suitable for GAN-based models.
-        
-        .. code-block::
-
-            >>> import torch
-            >>> input = torch.randn(2, 1, 28, 28)
-            >>> out = discriminator(input) # Take the last layer for adversarial score 
-            >>> out.adversarial_cost.shape
-            ... torch.Size([2, 1])
-            >>> out = discriminator(input, output_layer_level=2) # Take layer 2
-            >>> out.adversarial_cost.shape
-            ... torch.Size([2, 256, 7, 7])
-
     """
 
     def __init__(self, args: dict):
+        BaseDiscriminator.__init__(self)
 
         self.input_dim = (1, 28, 28)
         self.latent_dim = args.latent_dim
@@ -387,28 +558,53 @@ class LayeredDiscriminator_MNIST(BaseLayeredDiscriminator):
             )
         )
 
-        BaseLayeredDiscriminator.__init__(self, layers=layers)
+        self.layers = layers
+        self.depth = len(layers)
 
-    def forward(self, x:torch.Tensor, output_layer_level:int=None):
 
-        if output_layer_level is not None:
+    def forward(self, x:torch.Tensor, output_layer_levels:List[int]=None):
+        """Forward method
 
-            assert output_layer_level <= self.depth, (
-                f'Cannot output layer deeper ({output_layer_level}) than depth ({self.depth})'
-            )
+        Args:
+            output_layer_levels (List[int]): The levels of the layers where the outputs are
+                extracted. If None, the last layer's output is returned. Default: None.
+        
+        Returns:
+            ModelOutput: An instance of ModelOutput containing the adversarial score of the input  
+            under the key `embedding`. Optional: The outputs of the layers specified in 
+            `output_layer_levels` arguments are available under the keys `embedding_layer_i` where
+            i is the layer's level.
+        """
 
-        for i in range(self.depth):
+        output = ModelOutput()
+
+        max_depth = self.depth
+
+        if output_layer_levels is not None:
+
+            assert all(self.depth >= levels > 0 or levels==-1 for levels in output_layer_levels), (
+                f'Cannot output layer deeper than depth ({self.depth}). '\
+                f'Got ({output_layer_levels}).'
+                )
+
+            if -1 in output_layer_levels:
+                max_depth = self.depth
+            else:
+                max_depth = max(output_layer_levels)
+
+        out = x
+
+        for i in range(max_depth):
 
             if i == 4:
-                x = x.reshape(x.shape[0], -1)
-
-            x = self.layers[i](x)
-
-            if i + 1 == output_layer_level:
-                break
-        
-        output = ModelOutput(
-            adversarial_cost=x
-        )
+                out = out.reshape(x.shape[0], -1)
     
+            out = self.layers[i](out)
+
+            if output_layer_levels is not None:
+                if i+1 in output_layer_levels:
+                    output[f'embedding_layer_{i+1}'] = out
+            if i+1 == self.depth:
+                output['embedding'] = out
+
         return output

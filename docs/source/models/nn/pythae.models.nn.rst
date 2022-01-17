@@ -18,7 +18,6 @@ The Base Architectures
    ~pythae.models.nn.BaseEncoder
    ~pythae.models.nn.BaseDecoder
    ~pythae.models.nn.BaseDiscriminator
-   ~pythae.models.nn.BaseLayeredDiscriminator
    ~pythae.models.nn.BaseMetric
    :nosignatures:
 

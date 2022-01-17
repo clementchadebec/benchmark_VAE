@@ -226,11 +226,12 @@ class HVAE(VAE):
 
         .. note::
             This function requires the folder to contain:
-                a ``model_config.json`` and a ``model.pt`` if no custom architectures were
-                provided
 
-                or
-                a ``model_config.json``, a ``model.pt`` and a ``encoder.pkl`` (resp.
+            - | a ``model_config.json`` and a ``model.pt`` if no custom architectures were provided
+
+            **or**
+
+            - a ``model_config.json``, a ``model.pt`` and a ``encoder.pkl`` (resp.
                 ``decoder.pkl``) if a custom encoder (resp. decoder) was provided
         """
 

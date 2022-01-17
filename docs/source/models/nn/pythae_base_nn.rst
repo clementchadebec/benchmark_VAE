@@ -17,6 +17,3 @@ details.
 
 .. autoclass:: pythae.models.nn.BaseDiscriminator
    :members:
-
-.. autoclass:: pythae.models.nn.BaseLayeredDiscriminator
-   :members:

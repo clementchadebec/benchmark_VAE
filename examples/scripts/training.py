@@ -36,7 +36,22 @@ ap.add_argument(
 ap.add_argument(
     "--model_name",
     help="The name of the model to train",
-    choices=["ae", "vae", "beta_vae", "iwae", "wae", "info_vae", "rae_gp","rae_l2", "vamp", "hvae", "rhvae", 'aae', "vaegan"],
+    choices=[
+        "ae",
+        "vae",
+        "beta_vae",
+        "iwae",
+        "wae",
+        "info_vae",
+        "rae_gp",
+        "rae_l2",
+        "vamp",
+        "hvae",
+        "rhvae",
+        "aae",
+        "vaegan",
+        "vqvae"
+    ],
     required=True,
 )
 ap.add_argument(
@@ -60,7 +75,7 @@ def main(args):
         from pythae.models.nn.benchmarks.mnist import Encoder_AE_MNIST as Encoder_AE
         from pythae.models.nn.benchmarks.mnist import Encoder_VAE_MNIST as Encoder_VAE
         from pythae.models.nn.benchmarks.mnist import Decoder_AE_MNIST as Decoder_AE
-        from pythae.models.nn.benchmarks.mnist import LayeredDiscriminator_MNIST as LayerDiscriminator
+        from pythae.models.nn.benchmarks.mnist import Discriminator_MNIST as Discriminator
 
     elif args.dataset == "cifar10":
 
@@ -73,7 +88,7 @@ def main(args):
         from pythae.models.nn.benchmarks.celeba import Encoder_AE_CELEBA as Encoder_AE
         from pythae.models.nn.benchmarks.celeba import Encoder_VAE_CELEBA as Encoder_VAE
         from pythae.models.nn.benchmarks.celeba import Decoder_AE_CELEBA as Decoder_AE
-        from pythae.models.nn.benchmarks.celeba import LayeredDiscriminator_CELEBA as LayerDiscriminator
+        from pythae.models.nn.benchmarks.celeba import Discriminator_CELEBA as Discriminator
 
     try:
         logger.info(f"\nLoading {args.dataset} data...\n")
@@ -330,7 +345,24 @@ def main(args):
             model_config=model_config,
             encoder=Encoder_VAE(model_config),
             decoder=Decoder_AE(model_config),
-            discriminator=LayerDiscriminator(model_config)
+            discriminator=Discriminator(model_config)
+        )
+
+    elif args.model_name == "vqvae":
+        from pythae.models import VQVAE, VQVAEConfig
+
+        if args.model_config is not None:
+            model_config = VQVAEConfig.from_json_file(args.model_config)
+
+        else:
+            model_config = VQVAEConfig()
+
+        model_config.input_dim = data_input_dim
+
+        model = VQVAE(
+            model_config=model_config,
+            encoder=Encoder_AE(model_config),
+            decoder=Decoder_AE(model_config),
         )
 
     logger.info(f"Successfully build {args.model_name.upper()} model !\n")

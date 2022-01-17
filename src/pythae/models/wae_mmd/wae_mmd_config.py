@@ -12,8 +12,6 @@ class WAE_MMD_Config(AEConfig):
     Parameters:
         input_dim (int): The input_data dimension
         latent_dim (int): The latent space dimension. Default: None.
-        default_encoder (bool): Whether the encoder default. Default: True.
-        default_decoder (bool): Whether the encoder default. Default: True.
         kernel_choice (str): The kernel to choose. Available options are ['rbf', 'imq'] i.e. 
             radial basis functions or inverse multiquadratic kernel. Default: 'imq'.
         reg_weight (float): The weight to apply between reconstruction and Maximum Mean 
