@@ -1,3 +1,4 @@
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
@@ -14,18 +15,18 @@ class MixtureGenerator(nn.Module):
 
        
         self.upper_layer = nn.Sequential(
-                        nn.Linear(np.prod(model_config.latent_dim, 512)),
+                        nn.Linear(np.prod(model_config.latent_dim), 512),
                         nn.ReLU()
                     )
 
-        self.means_layers = nn.ModuleDict()
-        self.log_covariances_layers = nn.Module()
+        self.means_layers = nn.ModuleList()
+        self.log_covariances_layers = nn.ModuleList()
 
         for i in range(model_config.number_components):
-            means_layers.append(
+            self.means_layers.append(
                 nn.Linear(512, model_config.gaussian_mixture_dim)
             )
-            log_covariances_layers.append(
+            self.log_covariances_layers.append(
                 nn.Linear(512, model_config.gaussian_mixture_dim)
             )
 

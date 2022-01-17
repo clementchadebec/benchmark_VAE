@@ -4,7 +4,7 @@ from ...models import VAEConfig
 
 
 @dataclass
-class BetaVAEConfig(VAEConfig):
+class GMVAEConfig(VAEConfig):
     r"""
     Gaussian Mixture VAE model config config class
 

@@ -5,7 +5,7 @@ import numpy as np
 
 from ...models import VAE
 from .gm_vae_config import GMVAEConfig
-from .gm_vae_utils import MixtureEncoder
+from .gm_vae_utils import MixtureGenerator
 from ...data.datasets import BaseDataset
 from ..base.base_utils import ModelOutput
 from ..nn import BaseEncoder, BaseDecoder
@@ -43,31 +43,15 @@ class GMVAE(VAE):
         self,
         model_config: GMVAEConfig,
         encoder: Optional[BaseEncoder] = None,
-        mixture_encoder: Optional[BaseEncoder]=None, # To check
         decoder: Optional[BaseDecoder] = None,
     ):
 
         VAE.__init__(self, model_config=model_config, encoder=encoder, decoder=decoder)
 
         self.model_name = "GMVAE"
-        self.beta = model_config.beta
-
-        if mixture_encoder is None:
-            if model_config.input_dim is None:
-                raise AttributeError(
-                    "No input dimension provided !"
-                    "'input_dim' parameter of BaseAEConfig instance must be set to 'data_shape' where "
-                    "the shape of the data is (C, H, W ..). Unable to build mixture_encoder "
-                    "automatically"
-                )
-
-            mixture_encoder = MixtureEncoder(model_config)
-            self.model_config.uses_default_mixture_encoder = True
-
-        else:
-            self.model_config.uses_default_encoder = False
-
-        self.set_mixture_encoder(mixture_encoder)
+    
+        mixture_generator = MixtureGenerator(model_config)
+        self.mixture_generator = mixture_generator
 
     def set_mixture_encoder(self, mixture_encoder):
         r"""This method is called to set the mixture encoder network outputing the
@@ -111,11 +95,11 @@ class GMVAE(VAE):
         z, eps_z = self._sample_gauss(mu_z, std_z)
         w, eps_w = self._sample_gauss(mu_w, std_w)
 
-        mixture_encoder_output = self.mixture_encoder(mu) # Provides the parameters of the mixture
+        mixture_generator_output = self.mixture_generator(mu) # Provides the parameters of the mixture
         
         gmm_means, gmm_log_var = (
-            mixture_encoder_output.gmm_means,
-            mixture_encoder_output.gmm_log_covariances
+            mixture_generator_output.gmm_means,
+            mixture_generator_output.gmm_log_covariances
         )
 
         recon_x = self.decoder(z)["reconstruction"]
