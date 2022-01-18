@@ -110,6 +110,65 @@ class Encoder_VAE_MLP(BaseEncoder):
         return output
 
 
+class Encoder_LadderVAE_MLP(BaseEncoder):
+    def __init__(self, args: dict):
+        BaseEncoder.__init__(self)
+        self.input_dim = args.input_dim
+        self.latent_dim = args.latent_dim
+        self.latent_dimensions = args.latent_dimensions
+
+        layers = nn.ModuleList()
+
+        layers.append(
+            nn.Sequential(nn.Linear(np.prod(args.input_dim), 512), nn.ReLU())
+        )
+
+        self.embedding_1 = nn.Linear(512, self.latent_dimensions[0])
+        self.log_var_1 = nn.Linear(512, self.latent_dimensions[0])
+
+        layers.append(
+            nn.Sequential(nn.Linear(self.latent_dimensions[0], 64), nn.ReLU())
+        )
+
+        self.layers = layers
+        self.depth = len(layers)
+
+        self.embedding = nn.Linear(64, self.latent_dim)
+        self.log_var = nn.Linear(64, self.latent_dim)
+
+    def forward(self, x, output_layer_levels:List[int]=None):
+        output = ModelOutput()
+
+        max_depth = self.depth
+
+        if output_layer_levels is not None:
+
+            assert all(self.depth >= levels > 0 or levels==-1 for levels in output_layer_levels), (
+                f'Cannot output layer deeper than depth ({self.depth}). '\
+                f'Got ({output_layer_levels}).'
+                )
+
+            if -1 in output_layer_levels:
+                max_depth = self.depth
+            else:
+                max_depth = max(output_layer_levels)
+
+        out = x.reshape(-1, np.prod(self.input_dim))
+
+        for i in range(max_depth):
+            out = self.layers[i](out)
+
+            if output_layer_levels is not None:
+                if 1 in output_layer_levels:
+                    output[f'embedding_layer_{i+1}'] = self.embedding_1(out)
+                    output[f'log_covariance_layer_{i+1}'] = self.log_var_1(out)
+            if i+1 == self.depth:
+                output['embedding'] = self.embedding(out)
+                output['log_covariance'] = self.log_var(out)
+
+        return output
+
+
 class Decoder_AE_MLP(BaseDecoder):
     def __init__(self, args: dict):
         BaseDecoder.__init__(self)
@@ -164,6 +223,80 @@ class Decoder_AE_MLP(BaseDecoder):
             if output_layer_levels is not None:
                 if i+1 in output_layer_levels:
                     output[f'reconstruction_layer_{i+1}'] = out
+            if i+1 == self.depth:
+                output['reconstruction'] = out.reshape((z.shape[0],) + self.input_dim)
+
+        return output
+
+
+class Decoder_LadderVAE_MLP(BaseDecoder):
+    def __init__(self, args: dict):
+        BaseDecoder.__init__(self)
+
+        self.input_dim = args.input_dim
+        self.latent_dimensions = args.latent_dimensions
+
+        # assert 0, np.prod(args.input_dim)
+
+        layers = nn.ModuleList()
+
+        layers.append(
+            nn.Sequential(
+                nn.Linear(args.latent_dim, 64),
+                nn.ReLU()
+            )
+        )
+
+        self.embedding_1 = nn.Linear(64, self.latent_dim[-1])
+        self.log_var_1 = nn.Linear(64, self.latent_dim[-1])
+
+        layers.append(
+            nn.Sequential(
+                nn.Linear(self.latent_dim[-1], int(np.prod(args.input_dim))),
+                nn.Sigmoid(),
+            )
+        )
+       
+        self.layers = layers
+        self.depth = len(layers)
+
+
+    def forward(self, z: torch.Tensor, output_layer_levels:List[int]=None):
+
+        output = ModelOutput()
+
+        max_depth = self.depth
+
+        if output_layer_levels is not None:
+
+            assert all(self.depth >= levels > 0 or levels==-1 for levels in output_layer_levels), (
+                f'Cannot output layer deeper than depth ({self.depth}). '\
+                f'Got ({output_layer_levels}).'
+                )
+
+            if -1 in output_layer_levels:
+                max_depth = self.depth
+            else:
+                max_depth = max(output_layer_levels)
+
+        out = z
+
+        for i in range(max_depth):
+            out = self.layers[i](out)
+
+            if output_layer_levels is not None:
+                if 1 in output_layer_levels:
+                    mu = self.embedding_1(out)
+                    log_var = self.log_var_1(out)
+
+                    # Reparametrization trick
+                    std = torch.exp(0.5 * log_var)
+                    eps = torch.randn_like(std)
+                    out = mu + eps * std
+
+                    output[f'embedding_layer_{i+1}'] = mu
+                    output[f'log_covariance_layer_{i+1}'] = log_var
+                    output[f'z_layer_{i+1}'] = out
             if i+1 == self.depth:
                 output['reconstruction'] = out.reshape((z.shape[0],) + self.input_dim)
 
