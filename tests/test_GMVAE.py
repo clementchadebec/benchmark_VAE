@@ -13,14 +13,14 @@ from pythae.trainers import BaseTrainer, BaseTrainingConfig
 from pythae.pipelines import TrainingPipeline
 from tests.data.custom_architectures import (
     Decoder_AE_Conv,
-    Encoder_VAE_Conv,
+    Encoder_GMVAE_Conv_Custom,
     NetBadInheritance,
 )
 
 PATH = os.path.dirname(os.path.abspath(__file__))
 
 
-@pytest.fixture(params=[GMVAEConfig(), GMVAEConfig(latent_dim=5, gaussian_mixture_dim=5)])
+@pytest.fixture(params=[GMVAEConfig(), GMVAEConfig(latent_dim=5, w_prior_latent_dim=5)])
 def model_configs_no_input_dim(request):
     return request.param
 
@@ -28,7 +28,7 @@ def model_configs_no_input_dim(request):
 @pytest.fixture(
     params=[
         GMVAEConfig(input_dim=(1, 28, 28), latent_dim=10, reconstruction_loss="bce"),
-        GMVAEConfig(input_dim=(1, 28), latent_dim=5, gaussian_mixture_dim=7),
+        GMVAEConfig(input_dim=(1, 28), latent_dim=5, w_prior_latent_dim=7),
     ]
 )
 def model_configs(request):
@@ -37,7 +37,7 @@ def model_configs(request):
 
 @pytest.fixture
 def custom_encoder(model_configs):
-    return Encoder_VAE_Conv(model_configs)
+    return Encoder_GMVAE_Conv_Custom(model_configs)
 
 
 @pytest.fixture

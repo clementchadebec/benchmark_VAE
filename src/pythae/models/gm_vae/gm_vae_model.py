@@ -9,7 +9,7 @@ from .gm_vae_utils import MixtureGenerator
 from ...data.datasets import BaseDataset
 from ..base.base_utils import ModelOutput
 from ..nn import BaseEncoder, BaseDecoder
-from ..nn.default_architectures import Encoder_VAE_MLP
+from ..nn.default_architectures import Encoder_GMVAE_MLP
 
 from typing import Optional
 
@@ -52,24 +52,23 @@ class GMVAE(VAE):
     
         mixture_generator = MixtureGenerator(model_config)
         self.mixture_generator = mixture_generator
-
-    def set_mixture_encoder(self, mixture_encoder):
-        r"""This method is called to set the mixture encoder network outputing the
-        :logits values for cluster sampling. 
-
-        Args:
-            mixture_encoder (BaseEncoder): The encoder module that needs to be set to the model.
-
-        """
-        if not issubclass(type(mixture_encoder), BaseEncoder):
-            raise BadInheritanceError(
-                (
-                    "Mixtrue encoder must inherit from BaseEncoder class from "
-                    "pythae.models.base_architectures.BaseEncoder. Refer to documentation."
+    
+        if encoder is None:
+            if model_config.input_dim is None:
+                raise AttributeError(
+                    "No input dimension provided !"
+                    "'input_dim' parameter of BaseAEConfig instance must be set to 'data_shape' where "
+                    "the shape of the data is (C, H, W ..). Unable to build encoder "
+                    "automatically"
                 )
-            )
 
-        self.mixture_encoder = mixture_encoder
+            encoder = Encoder_GMVAE_MLP(model_config)
+            self.model_config.uses_default_encoder = True
+
+        else:
+            self.model_config.uses_default_encoder = False
+
+        self.set_encoder(encoder)
 
     def forward(self, inputs: BaseDataset):
         """
@@ -95,7 +94,8 @@ class GMVAE(VAE):
         z, eps_z = self._sample_gauss(mu_z, std_z)
         w, eps_w = self._sample_gauss(mu_w, std_w)
 
-        mixture_generator_output = self.mixture_generator(mu) # Provides the parameters of the mixture
+        mixture_generator_output = self.mixture_generator(
+            mu_w) # Provides the parameters of the mixture
         
         gmm_means, gmm_log_var = (
             mixture_generator_output.gmm_means,
@@ -104,7 +104,7 @@ class GMVAE(VAE):
 
         recon_x = self.decoder(z)["reconstruction"]
 
-        loss, recon_loss, kld = self.loss_function(
+        loss, recon_loss, kld, kld_gmm, kld_categorical = self.loss_function(
             recon_x,
             x,
             mu_z,
@@ -164,10 +164,12 @@ class GMVAE(VAE):
             gmm_means,gmm_log_var
         )
 
-        p_y_given_zw = compute_log_p_y_given_zw(z, gmm_means, gmm_log_var)
+        p_y_given_zw = self.compute_p_y_given_zw(z, gmm_means, gmm_log_var)
 
-        KLD_categorical = (p_y_given_zw.log() * p_y_given_zw - \
-            torch.log(1 / self.model_config.number_components)).sum(dim=-1)
+        KLD_categorical = ((p_y_given_zw + 1e-10).log() * p_y_given_zw - \
+            torch.log(torch.tensor([1 / self.model_config.number_components]))).sum(dim=-1)
+
+        #assert 0, (z.shape, w.shape, self.encoder)
 
         return (
             (recon_loss + KLD + KLD_gmm + KLD_categorical).mean(dim=0),
@@ -192,7 +194,7 @@ class GMVAE(VAE):
                 gmm_log_var - log_var_z + \
                 (gmm_means - mu_z) ** 2 / gmm_log_var.exp() + \
                 log_var_z.exp() / gmm_log_var.exp()
-            )
+            ).sum(dim=-1)
 
             return KLD_gmm.sum(dim=-1)
 

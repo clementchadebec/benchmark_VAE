@@ -17,4 +17,4 @@ class GMVAEConfig(VAEConfig):
             distribution. Default: 10 
     """
     number_components: int = 10
-    gaussian_mixture_dim: int = 10
+    w_prior_latent_dim: int = 10

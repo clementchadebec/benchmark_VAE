@@ -15,7 +15,7 @@ class MixtureGenerator(nn.Module):
 
        
         self.upper_layer = nn.Sequential(
-                        nn.Linear(np.prod(model_config.latent_dim), 512),
+                        nn.Linear(np.prod(model_config.w_prior_latent_dim), 512),
                         nn.ReLU()
                     )
 
@@ -24,10 +24,10 @@ class MixtureGenerator(nn.Module):
 
         for i in range(model_config.number_components):
             self.means_layers.append(
-                nn.Linear(512, model_config.gaussian_mixture_dim)
+                nn.Linear(512, model_config.latent_dim)
             )
             self.log_covariances_layers.append(
-                nn.Linear(512, model_config.gaussian_mixture_dim)
+                nn.Linear(512, model_config.latent_dim)
             )
 
         self.model_config = model_config
@@ -37,7 +37,7 @@ class MixtureGenerator(nn.Module):
         gmm_means = torch.zeros(
             (
                 w.shape[0],
-                self.model_config.gaussian_mixture_dim,
+                self.model_config.latent_dim,
                 self.model_config.number_components
             )
         ).to(w.device)
@@ -45,7 +45,7 @@ class MixtureGenerator(nn.Module):
         gmm_log_covariances = torch.zeros(
             (
                 w.shape[0],
-                self.model_config.gaussian_mixture_dim,
+                self.model_config.latent_dim,
                 self.model_config.number_components
             )
         ).to(w.device)

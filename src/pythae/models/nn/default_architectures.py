@@ -113,8 +113,8 @@ class Encoder_GMVAE_MLP(BaseEncoder):
     def __init__(self, args: dict):
         BaseEncoder.__init__(self)
         self.input_dim = args.input_dim
-        self.latent_dim = args.latent_dim
-        self.gg_latent_dim = args.gmm_latent_dim
+        self.latent_dim = args.w_prior_latent_dim
+        self.gmm_latent_dim = args.latent_dim
 
         layers = nn.ModuleList()
 
