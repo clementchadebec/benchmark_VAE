@@ -248,6 +248,166 @@ class Decoder_AE_Conv(BaseDecoder):
 
         return output
 
+class Encoder_LadderVAE_MLP_Custom(BaseEncoder):
+    def __init__(self, args: dict):
+        BaseEncoder.__init__(self)
+        self.input_dim = args.input_dim
+        self.latent_dim = args.latent_dim
+        self.latent_dimensions = args.latent_dimensions
+
+        layers = nn.ModuleList()
+        mu_s = nn.ModuleList()
+        log_var_s = nn.ModuleList()
+
+        layers.append(
+            nn.Sequential(nn.Linear(np.prod(args.input_dim), 512), nn.ReLU())
+        )
+        mu_s.append(
+            nn.Linear(512, self.latent_dimensions[0])
+        )
+        log_var_s.append(
+            nn.Linear(512, self.latent_dimensions[0])
+        )
+
+        layers.append(
+            nn.Sequential(nn.Linear(self.latent_dimensions[0], 64), nn.ReLU())
+        )
+        mu_s.append(
+            nn.Linear(64, self.latent_dim)
+        )
+        log_var_s.append(
+            nn.Linear(64, self.latent_dim)
+        )
+
+        self.layers = layers
+        self.mu_s = mu_s
+        self.log_var_s = log_var_s
+        self.depth = len(layers)
+
+    def forward(self, x):
+        output = ModelOutput()
+
+        out = x.reshape(x.shape[0], -1)
+
+        for i in range(self.depth):
+            out = self.layers[i](out)
+
+            mu = self.mu_s[i](out)
+            log_var = self.log_var_s[i](out)
+
+            if i+1 == self.depth:
+                output['embedding'] = mu
+                output['log_covariance'] = log_var
+
+            else:
+                output[f'embedding_layer_{i+1}'] = mu
+                output[f'log_covariance_layer_{i+1}'] = log_var
+
+            out = mu
+
+        return output
+
+
+class Decoder_LadderVAE_MLP_Custom(BaseDecoder):
+    def __init__(self, args: dict):
+        BaseDecoder.__init__(self)
+
+        self.input_dim = args.input_dim
+        self.latent_dim = args.latent_dim
+        self.latent_dimensions = args.latent_dimensions
+
+        # assert 0, np.prod(args.input_dim)
+
+        layers = nn.ModuleList()
+        mu_s = nn.ModuleList()
+        log_var_s = nn.ModuleList()
+
+        layers.append(
+            nn.Sequential(
+                nn.Linear(args.latent_dim, 64),
+                nn.ReLU()
+            )
+        )
+        mu_s.append(
+            nn.Linear(64, self.latent_dimensions[-1])
+        )
+        log_var_s.append(
+            nn.Linear(64, self.latent_dimensions[-1])
+        )
+
+        layers.append(
+            nn.Sequential(
+                nn.Linear(self.latent_dimensions[-1], int(np.prod(args.input_dim))),
+                nn.Sigmoid(),
+            )
+        )
+       
+        self.layers = layers
+        self.mu_s = mu_s
+        self.log_var_s = log_var_s
+        self.depth = len(layers)
+
+
+    def forward(
+        self,
+        z: torch.Tensor,
+        mu_encoder: List[torch.Tensor],
+        log_var_encoder: List[torch.Tensor]
+        ):
+
+        mu_encoder.reverse()
+        log_var_encoder.reverse()
+
+        output = ModelOutput()
+
+        out = z
+
+        for i in range(self.depth):
+            out = self.layers[i](out)
+
+            if i+1 == self.depth:
+                output['reconstruction'] = out.reshape((z.shape[0],) + self.input_dim)
+
+            else:
+        
+                mu_dec = self.mu_s[i](out)
+                log_var_dec = self.log_var_s[i](out)
+
+                mu_enc = mu_encoder[i]
+                log_var_enc = log_var_encoder[i]
+
+                mu_new, log_var_new = self._update_mu_log_var(
+                    mu_enc, log_var_enc, mu_dec, log_var_dec)
+
+                std = torch.exp(0.5 * log_var_new)
+
+                out, _ = self._sample_gauss(mu_new, std)                    
+
+                output[f'embedding_layer_{i+1}'] = mu_new
+                output[f'log_covariance_layer_{i+1}'] = log_var_new
+                output[f'z_layer_{i+1}'] = out
+
+
+        return output
+
+    def _update_mu_log_var(self, mu_p, log_var_p, mu_q, log_var_q):
+        
+        mu_new = (
+            mu_p / log_var_p.exp() + mu_q / log_var_q.exp()) / (
+                1 / log_var_p.exp() + 1 / log_var_q.exp()
+            )
+
+        log_var_new = (1 / (1 / log_var_p.exp() + 1 / log_var_q.exp())).log()
+
+        return (mu_new, log_var_new)
+
+    def _sample_gauss(self, mu, std):
+        # Reparametrization trick
+        # Sample N(0, I)
+        eps = torch.randn_like(std)
+        return mu + eps * std, eps 
+
+
 
 class Metric_Custom(BaseMetric):
     def __init__(self):

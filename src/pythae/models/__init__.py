@@ -29,7 +29,7 @@ from .info_vae import INFOVAE_MMD, INFOVAE_MMD_Config
 from .vq_vae import VQVAE, VQVAEConfig
 from .adversarial_ae import Adversarial_AE, Adversarial_AE_Config
 from .vae_gan import VAEGAN, VAEGANConfig
-
+from .ladder_vae import LadderVAE, LadderVAEConfig
 
 __all__ = [
     "BaseAE",
@@ -61,5 +61,7 @@ __all__ = [
     "Adversarial_AE",
     "Adversarial_AE_Config",
     "VAEGAN",
-    "VAEGANConfig"
+    "VAEGANConfig",
+    "LadderVAE",
+    "LadderVAEConfig"
 ]

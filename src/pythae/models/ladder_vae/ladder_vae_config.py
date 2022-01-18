@@ -1,11 +1,11 @@
+from dataclasses import field
 from pydantic.dataclasses import dataclass
-from typing import List
-
+from typing import List, Union
 from ...models import VAEConfig
 
 
 @dataclass
-class BetaVAEConfig(VAEConfig):
+class LadderVAEConfig(VAEConfig):
     r"""
     Ladder VAE model config config class
 
@@ -25,5 +25,5 @@ class BetaVAEConfig(VAEConfig):
         encoder. 
 
     """
-    latent_dimensions: List(int) = [64]
+    latent_dimensions: List[int] = field(default_factory=lambda: [64])
     beta: float = 1.0
