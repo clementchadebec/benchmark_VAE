@@ -2,7 +2,7 @@ import pytest
 import torch
 import numpy as np
 
-from pythae.models import AEConfig, VAEConfig
+from pythae.models import AEConfig, VAEConfig, GMVAEConfig
 from pythae.models.nn.benchmarks.mnist import *
 from pythae.models.nn.benchmarks.celeba import *
 from pythae.models.nn.benchmarks.cifar import *
@@ -143,10 +143,6 @@ class Test_MNIST_Benchmark:
                 assert encoder_embed[f'embedding_layer_4'].shape[1] == 1024
                 assert decoder_recon[f'reconstruction_layer_4'].shape[1:] == ae_mnist_config.input_dim
 
-            if 5 in recon_layers_benchmark:
-                assert encoder_embed[f'embedding_layer_5'].shape[1] == 1
-
-
     def test_discriminator_benchmark(
         self, ae_mnist_config, mnist_like_data, recon_layers_benchmark):
         
@@ -236,8 +232,97 @@ class Test_MNIST_Benchmark:
                 assert encoder_embed[f'embedding_layer_4'].shape[1] == 1024
                 assert decoder_recon[f'reconstruction_layer_4'].shape[1:] == vae_mnist_config.input_dim
 
-            if 5 in recon_layers_benchmark:
-                assert encoder_embed[f'embedding_layer_5'].shape[1] == 1
+
+    @pytest.fixture(
+    params=[
+        GMVAEConfig(input_dim=(1, 28, 28), latent_dim=10),
+        GMVAEConfig(input_dim=(1, 28, 28), latent_dim=5, w_prior_latent_dim=7),
+    ]
+    )
+    def gmvae_mnist_config(self, request):
+        return request.param
+
+    def test_gmvae_encoding_decoding_default(
+        self, gmvae_mnist_config, mnist_like_data, recon_layers_default):
+        encoder = Encoder_GMVAE_MLP(gmvae_mnist_config).to(device)
+
+        encoder_output = encoder(mnist_like_data)
+    
+        embedding_z = encoder_output.embedding_z
+        log_var_z = encoder_output.log_covariance_z
+        embedding_w = encoder_output.embedding_w
+        log_var_w = encoder_output.log_covariance_w
+    
+        assert embedding_z.shape == (mnist_like_data.shape[0], gmvae_mnist_config.latent_dim)
+        assert log_var_z.shape == (mnist_like_data.shape[0], gmvae_mnist_config.latent_dim)
+        assert embedding_w.shape == (mnist_like_data.shape[0], gmvae_mnist_config.w_prior_latent_dim)
+        assert log_var_w.shape == (mnist_like_data.shape[0], gmvae_mnist_config.w_prior_latent_dim)
+        
+        encoder_embed = encoder(mnist_like_data, output_layer_levels=recon_layers_default)
+
+        if recon_layers_default is None:
+            assert set([
+                'embedding_z', 'log_covariance_z', 'embedding_w', 'log_covariance_w'
+                ]).issubset(set(encoder_embed.keys()))
+
+        else:
+            for lev in recon_layers_default:
+                assert f'embedding_layer_{lev}' in encoder_embed.keys()
+
+        if recon_layers_default is None:
+            assert encoder_embed['embedding_z'].shape[1] == gmvae_mnist_config.latent_dim
+            assert encoder_embed['log_covariance_z'].shape[1] == gmvae_mnist_config.latent_dim
+            assert encoder_embed['embedding_w'].shape[1] == gmvae_mnist_config.w_prior_latent_dim
+            assert encoder_embed['log_covariance_w'].shape[1] == gmvae_mnist_config.w_prior_latent_dim
+
+        else:
+            if 1 in recon_layers_default:
+                assert encoder_embed[f'embedding_layer_1'].shape[1] == 512
+
+    def test_gmvae_encoding_decoding_benchmark(self, gmvae_mnist_config, mnist_like_data, recon_layers_benchmark):
+        encoder = Encoder_GMVAE_MNIST(gmvae_mnist_config).to(device)
+
+        encoder_output = encoder(mnist_like_data)
+    
+        embedding_z = encoder_output.embedding_z
+        log_var_z = encoder_output.log_covariance_z
+        embedding_w = encoder_output.embedding_w
+        log_var_w = encoder_output.log_covariance_w
+    
+        assert embedding_z.shape == (mnist_like_data.shape[0], gmvae_mnist_config.latent_dim)
+        assert log_var_z.shape == (mnist_like_data.shape[0], gmvae_mnist_config.latent_dim)
+        assert embedding_w.shape == (mnist_like_data.shape[0], gmvae_mnist_config.w_prior_latent_dim)
+        assert log_var_w.shape == (mnist_like_data.shape[0], gmvae_mnist_config.w_prior_latent_dim)
+
+        encoder_embed = encoder(mnist_like_data, output_layer_levels=recon_layers_benchmark)
+
+        if recon_layers_benchmark is None:
+            assert set([
+                'embedding_z', 'log_covariance_z', 'embedding_w', 'log_covariance_w'
+                ]).issubset(set(encoder_embed.keys()))
+
+        else:
+            for lev in recon_layers_benchmark:
+                assert f'embedding_layer_{lev}' in encoder_embed.keys()
+
+        if recon_layers_benchmark is None:
+            assert encoder_embed['embedding_z'].shape[1] == gmvae_mnist_config.latent_dim
+            assert encoder_embed['log_covariance_z'].shape[1] == gmvae_mnist_config.latent_dim
+            assert encoder_embed['embedding_w'].shape[1] == gmvae_mnist_config.w_prior_latent_dim
+            assert encoder_embed['log_covariance_w'].shape[1] == gmvae_mnist_config.w_prior_latent_dim
+
+        else:
+            if 1 in recon_layers_benchmark:
+                assert encoder_embed[f'embedding_layer_1'].shape[1] == 128
+
+            if 2 in recon_layers_benchmark:
+                assert encoder_embed[f'embedding_layer_2'].shape[1] == 256
+
+            if 3 in recon_layers_benchmark:
+                assert encoder_embed[f'embedding_layer_3'].shape[1] == 512
+
+            if 4 in recon_layers_benchmark:
+                assert encoder_embed[f'embedding_layer_4'].shape[1] == 1024
 
 
 class Test_CIFAR_Benchmark:
@@ -368,8 +453,61 @@ class Test_CIFAR_Benchmark:
                 assert encoder_embed[f'embedding_layer_4'].shape[1] == 1024
                 assert decoder_recon[f'reconstruction_layer_4'].shape[1:] == vae_cifar_config.input_dim
 
-            if 5 in recon_layers:
-                assert encoder_embed[f'embedding_layer_5'].shape[1] == 1
+    @pytest.fixture(
+    params=[
+        GMVAEConfig(input_dim=(3, 32, 32), latent_dim=10),
+        GMVAEConfig(input_dim=(3, 32, 32), latent_dim=5, w_prior_latent_dim=7),
+    ]
+    )
+    def gmvae_cifar_config(self, request):
+        return request.param
+
+    def test_gmvae_encoding_decoding_benchmark(self, gmvae_cifar_config, cifar_like_data, recon_layers):
+        encoder = Encoder_GMVAE_CIFAR(gmvae_cifar_config).to(device)
+
+        encoder_output = encoder(cifar_like_data)
+    
+        embedding_z = encoder_output.embedding_z
+        log_var_z = encoder_output.log_covariance_z
+        embedding_w = encoder_output.embedding_w
+        log_var_w = encoder_output.log_covariance_w
+    
+        assert embedding_z.shape == (cifar_like_data.shape[0], gmvae_cifar_config.latent_dim)
+        assert log_var_z.shape == (cifar_like_data.shape[0], gmvae_cifar_config.latent_dim)
+        assert embedding_w.shape == (cifar_like_data.shape[0], gmvae_cifar_config.w_prior_latent_dim)
+        assert log_var_w.shape == (cifar_like_data.shape[0], gmvae_cifar_config.w_prior_latent_dim)
+
+        encoder_embed = encoder(cifar_like_data, output_layer_levels=recon_layers)
+
+        if recon_layers is None:
+            assert set([
+                'embedding_z', 'log_covariance_z', 'embedding_w', 'log_covariance_w'
+                ]).issubset(set(encoder_embed.keys()))
+
+        else:
+            for lev in recon_layers:
+                assert f'embedding_layer_{lev}' in encoder_embed.keys()
+
+        if recon_layers is None:
+            assert encoder_embed['embedding_z'].shape[1] == gmvae_cifar_config.latent_dim
+            assert encoder_embed['log_covariance_z'].shape[1] == gmvae_cifar_config.latent_dim
+            assert encoder_embed['embedding_w'].shape[1] == gmvae_cifar_config.w_prior_latent_dim
+            assert encoder_embed['log_covariance_w'].shape[1] == gmvae_cifar_config.w_prior_latent_dim
+
+        else:
+            if 1 in recon_layers:
+                assert encoder_embed[f'embedding_layer_1'].shape[1] == 128
+
+            if 2 in recon_layers:
+                assert encoder_embed[f'embedding_layer_2'].shape[1] == 256
+
+            if 3 in recon_layers:
+                assert encoder_embed[f'embedding_layer_3'].shape[1] == 512
+
+            if 4 in recon_layers:
+                assert encoder_embed[f'embedding_layer_4'].shape[1] == 1024
+
+    
 
 
 class Test_CELEBA_Benchmark:
@@ -438,10 +576,6 @@ class Test_CELEBA_Benchmark:
             if 4 in recon_layers:
                 assert encoder_embed[f'embedding_layer_4'].shape[1] == 1024
                 assert decoder_recon[f'reconstruction_layer_4'].shape[1] == 128
-
-            if 5 in recon_layers:
-                assert encoder_embed[f'embedding_layer_5'].shape[1] == 1
-                assert decoder_recon[f'reconstruction_layer_4'].shape[1:] == ae_celeba_config.input_dim
 
 
     def test_discriminator(self, ae_celeba_config, celeba_like_data, recon_layers):
@@ -531,7 +665,3 @@ class Test_CELEBA_Benchmark:
             if 4 in recon_layers:
                 assert encoder_embed[f'embedding_layer_4'].shape[1] == 1024
                 assert decoder_recon[f'reconstruction_layer_4'].shape[1] == 128
-
-            if 5 in recon_layers:
-                assert encoder_embed[f'embedding_layer_5'].shape[1] == 1
-                assert decoder_recon[f'reconstruction_layer_4'].shape[1:] == vae_celeba_config.input_dim

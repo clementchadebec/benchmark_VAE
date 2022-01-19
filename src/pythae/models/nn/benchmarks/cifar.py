@@ -316,6 +316,91 @@ class Encoder_VAE_CIFAR(BaseEncoder):
 
         return output
 
+class Encoder_GMVAE_CIFAR(BaseEncoder):
+    def __init__(self, args: dict):
+        BaseEncoder.__init__(self)
+        self.input_dim = (3, 32, 32)
+        self.latent_dim = args.w_prior_latent_dim
+        self.gmm_latent_dim = args.latent_dim
+        self.n_channels = 3
+
+        layers = nn.ModuleList()
+
+        layers.append(
+            nn.Sequential(
+                nn.Conv2d(self.n_channels, 128, 4, 2, padding=1),
+                nn.BatchNorm2d(128),
+                nn.ReLU(),
+            )
+        )
+
+        layers.append(
+            nn.Sequential(
+                nn.Conv2d(128, 256, 4, 2, padding=1),
+                nn.BatchNorm2d(256),
+                nn.ReLU(),
+            )
+        )
+
+        layers.append(
+            nn.Sequential(
+                nn.Conv2d(256, 512, 4, 2, padding=1),
+                nn.BatchNorm2d(512),
+                nn.ReLU(),
+            )
+        )
+
+        layers.append(
+            nn.Sequential(
+                nn.Conv2d(512, 1024, 4, 2, padding=1),
+                nn.BatchNorm2d(1024),
+                nn.ReLU(),
+            )
+        )
+
+        self.layers = layers
+        self.depth = len(layers)
+
+        self.embedding_z = nn.Linear(1024*2*2, self.gmm_latent_dim)
+        self.log_var_z = nn.Linear(1024*2*2, self.gmm_latent_dim)
+
+        self.embedding_w = nn.Linear(1024*2*2, self.latent_dim)
+        self.log_var_w = nn.Linear(1024*2*2, self.latent_dim)
+
+    def forward(self, x, output_layer_levels:List[int]=None):
+        output = ModelOutput()
+
+        max_depth = self.depth
+
+        if output_layer_levels is not None:
+
+            assert all(self.depth >= levels > 0 or levels==-1 for levels in output_layer_levels), (
+                f'Cannot output layer deeper than depth ({self.depth}). '\
+                f'Got ({output_layer_levels}).'
+                )
+
+            if -1 in output_layer_levels:
+                max_depth = self.depth
+            else:
+                max_depth = max(output_layer_levels)
+
+        out = x
+
+        for i in range(max_depth):
+            out = self.layers[i](out)
+
+            if output_layer_levels is not None:
+                if i+1 in output_layer_levels:
+                    output[f'embedding_layer_{i+1}'] = out
+            if i+1 == self.depth:
+                output['embedding_z'] = self.embedding_z(out.reshape(x.shape[0], -1))
+                output['log_covariance_z'] = self.log_var_z(out.reshape(x.shape[0], -1))
+
+                output['embedding_w'] = self.embedding_w(out.reshape(x.shape[0], -1))
+                output['log_covariance_w'] = self.log_var_w(out.reshape(x.shape[0], -1))
+
+        return output
+
 
 class Decoder_AE_CIFAR(BaseDecoder):
     """
