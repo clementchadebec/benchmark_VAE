@@ -167,7 +167,8 @@ class GMVAE(VAE):
         p_y_given_zw = self.compute_p_y_given_zw(z, gmm_means, gmm_log_var)
 
         KLD_categorical = ((p_y_given_zw + 1e-10).log() * p_y_given_zw - \
-            torch.log(torch.tensor([1 / self.model_config.number_components]))).sum(dim=-1)
+            torch.log(
+                torch.tensor([1 / self.model_config.number_components]).to(z.device))).sum(dim=-1)
 
         #assert 0, (z.shape, w.shape, self.encoder)
 
