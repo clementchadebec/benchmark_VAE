@@ -19,6 +19,6 @@ class DisentangledBetaVAEConfig(VAEConfig):
     """
 
     beta: float = 1000.0
-    C: float = 50.
+    C: float = 50.0
     nb_epochs_to_convergence: int = 100
     epoch: int = 0
