@@ -20,7 +20,7 @@ from tests.data.custom_architectures import (
 PATH = os.path.dirname(os.path.abspath(__file__))
 
 
-@pytest.fixture(params=[LadderVAEConfig(), LadderVAEConfig(latent_dim=5, beta=5.0)])
+@pytest.fixture(params=[LadderVAEConfig(), LadderVAEConfig(latent_dim=5, warmup_epoch=5.0)])
 def model_configs_no_input_dim(request):
     return request.param
 
@@ -28,7 +28,7 @@ def model_configs_no_input_dim(request):
 @pytest.fixture(
     params=[
         LadderVAEConfig(input_dim=(1, 28, 28), latent_dim=10, reconstruction_loss="bce"),
-        LadderVAEConfig(input_dim=(1, 28), latent_dim=5, beta=5.2),
+        LadderVAEConfig(input_dim=(1, 28), latent_dim=5, warmup_epoch=2),
     ]
 )
 def model_configs(request):

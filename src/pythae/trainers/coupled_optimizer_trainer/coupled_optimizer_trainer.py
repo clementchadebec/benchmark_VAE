@@ -290,7 +290,7 @@ class CoupledOptimizerTrainer(BaseTrainer):
                 self.encoder_optimizer.zero_grad()
                 self.decoder_optimizer.zero_grad()
 
-                model_output = self.model(inputs)
+                model_output = self.model(inputs, epoch=epoch)
 
                 loss = model_output.loss
 

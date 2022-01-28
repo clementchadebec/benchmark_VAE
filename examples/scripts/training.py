@@ -50,7 +50,8 @@ ap.add_argument(
         "rhvae",
         "aae",
         "vaegan",
-        "vqvae"
+        "vqvae",
+        "ladder_vae"
     ],
     required=True,
 )
@@ -364,6 +365,29 @@ def main(args):
             encoder=Encoder_AE(model_config),
             decoder=Decoder_AE(model_config),
         )
+
+    elif args.model_name == "ladder_vae":
+        from pythae.models import LadderVAE, LadderVAEConfig
+
+        if args.model_config is not None:
+            model_config = LadderVAEConfig.from_json_file(args.model_config)
+
+        else:
+            model_config = LadderVAEConfig()
+
+        from pythae.models.nn.benchmarks.mnist import (
+            Encoder_LadderVAE_MNIST, Decoder_LadderVAE_MNIST
+        )
+
+        model_config.input_dim = data_input_dim
+
+        model = LadderVAE(
+            model_config=model_config,
+            encoder=Encoder_LadderVAE_MNIST(model_config),
+            decoder=Decoder_LadderVAE_MNIST(model_config),
+        )
+
+
 
     logger.info(f"Successfully build {args.model_name.upper()} model !\n")
 

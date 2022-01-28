@@ -1,5 +1,6 @@
 import torch
 import os
+import numpy as np
 
 from ...models import VAE
 from .ladder_vae_config import LadderVAEConfig
@@ -48,6 +49,7 @@ class LadderVAE(VAE):
         self.model_name = "LadderVAE"
         self.latent_dimensions = model_config.latent_dimensions
         self.beta = model_config.beta
+        self.warmup_epoch = model_config.warmup_epoch
 
         if encoder is None:
             if model_config.input_dim is None:
@@ -95,12 +97,12 @@ class LadderVAE(VAE):
             f'{self.decoder.depth - 1}.'
         )
 
-    def forward(self, inputs: BaseDataset):
+    def forward(self, inputs: BaseDataset, **kwargs):
         """
         The VAE model
 
         Args:
-            inputs (BaseDataset): The training datasat with labels
+            inputs (BaseDataset): The training dataset with labels
 
         Returns:
             ModelOutput: An instance of ModelOutput containing all the relevant parameters
@@ -108,6 +110,8 @@ class LadderVAE(VAE):
         """
 
         x = inputs["data"]
+
+        epoch = kwargs.pop('epoch', self.warmup_epoch)
 
         encoder_output = self.encoder(x)
 
@@ -119,6 +123,8 @@ class LadderVAE(VAE):
             log_var_p.append(encoder_output[f"log_covariance_layer_{i+1}"])
 
         mu, log_var = encoder_output.embedding, encoder_output.log_covariance
+
+        #print(mu.max())
 
         std = torch.exp(0.5 * log_var)
         z, eps = self._sample_gauss(mu, std)
@@ -148,7 +154,8 @@ class LadderVAE(VAE):
             log_var_p,
             z_q,
             mu_q,
-            log_var_q
+            log_var_q,
+            epoch
         )
 
         output = ModelOutput(
@@ -161,7 +168,8 @@ class LadderVAE(VAE):
 
         return output
 
-    def loss_function(self, recon_x, x, mu, log_var, z, mu_p, log_var_p, z_q, mu_q, log_var_q):
+    def loss_function(
+        self, recon_x, x, mu, log_var, z, mu_p, log_var_p, z_q, mu_q, log_var_q, epoch):
 
         if self.model_config.reconstruction_loss == "mse":
 
@@ -179,26 +187,33 @@ class LadderVAE(VAE):
                 reduction='none'
             ).sum(dim=-1)
 
-        llh_loss = torch.zeros(z.shape[0])
+        llh_loss = torch.zeros(z.shape[0]).to(z.device)
 
         for i in range(len(z_q)):
             k = len(z_q) - 1 - i 
             llh_loss += (
-                self._log_gaussian_density(z_q[k], mu_p[i], log_var_p[i]) - \
-                self._log_gaussian_density(z_q[k], mu_q[k], log_var_q[k])
-            )
+                0.5 * (log_var_p[i] - log_var_q[k] + (log_var_q[k].exp() + (mu_p[i] - mu_q[k])**2)/ (log_var_p[i].exp() + 1e-6) - 1)
 
-        llh_loss += self._log_normal_density(z)
+                #self._log_gaussian_density(z_q[k], mu_p[i], log_var_p[i]) - \
+                #self._log_gaussian_density(z_q[k], mu_q[k], log_var_q[k])
+            ).mean(dim=-1)
+
+        llh_loss += -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp(), dim=-1) #self._log_normal_density(z)
+
+        beta = min(self.beta, self.beta * epoch / self.warmup_epoch)
+        #beta = 1
+
+        #print(recon_loss.mean(), llh_loss.mean())
 
         return (
-            (recon_loss + self.beta * llh_loss).mean(dim=0),
+            (recon_loss + beta * llh_loss).mean(dim=0),
             recon_loss.mean(dim=0),
             llh_loss.mean(dim=0)
         )
 
     def _log_gaussian_density(self, z, mu, log_var):
         return (
-            -0.5 * (log_var + (z - mu) ** 2 / log_var.exp())
+            -0.5 * (log_var + (z - mu) ** 2 / (log_var.exp() +  1e-6))
         ).sum(dim=-1)
 
     def _log_normal_density(self, z):

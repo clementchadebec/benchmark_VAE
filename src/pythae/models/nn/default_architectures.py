@@ -122,7 +122,7 @@ class Encoder_LadderVAE_MLP(BaseEncoder):
         log_var_s = nn.ModuleList()
 
         layers.append(
-            nn.Sequential(nn.Linear(np.prod(args.input_dim), 512), nn.ReLU())
+            nn.Sequential(nn.Linear(np.prod(args.input_dim), 512), nn.BatchNorm1d(512), nn.ReLU())
         )
         mu_s.append(
             nn.Linear(512, self.latent_dimensions[0])
@@ -132,7 +132,17 @@ class Encoder_LadderVAE_MLP(BaseEncoder):
         )
 
         layers.append(
-            nn.Sequential(nn.Linear(self.latent_dimensions[0], 64), nn.ReLU())
+            nn.Sequential(nn.Linear(self.latent_dimensions[0], 256), nn.BatchNorm1d(256), nn.ReLU())
+        )
+        mu_s.append(
+            nn.Linear(256, self.latent_dimensions[1])
+        )
+        log_var_s.append(
+            nn.Linear(256, self.latent_dimensions[1])
+        )
+
+        layers.append(
+            nn.Sequential(nn.Linear(self.latent_dimensions[1], 64), nn.BatchNorm1d(64), nn.ReLU())
         )
         mu_s.append(
             nn.Linear(64, self.latent_dim)
@@ -140,6 +150,7 @@ class Encoder_LadderVAE_MLP(BaseEncoder):
         log_var_s.append(
             nn.Linear(64, self.latent_dim)
         )
+
 
         self.layers = layers
         self.mu_s = mu_s
@@ -247,6 +258,7 @@ class Decoder_LadderVAE_MLP(BaseDecoder):
         layers.append(
             nn.Sequential(
                 nn.Linear(args.latent_dim, 64),
+                nn.BatchNorm1d(64),
                 nn.ReLU()
             )
         )
@@ -259,7 +271,21 @@ class Decoder_LadderVAE_MLP(BaseDecoder):
 
         layers.append(
             nn.Sequential(
-                nn.Linear(self.latent_dimensions[-1], int(np.prod(args.input_dim))),
+                nn.Linear(self.latent_dimensions[-1], 256),
+                nn.BatchNorm1d(256),
+                nn.ReLU()
+            )
+        )
+        mu_s.append(
+            nn.Linear(256, self.latent_dimensions[-2])
+        )
+        log_var_s.append(
+            nn.Linear(256, self.latent_dimensions[-2])
+        )
+
+        layers.append(
+            nn.Sequential(
+                nn.Linear(self.latent_dimensions[-2], int(np.prod(args.input_dim))),
                 nn.Sigmoid(),
             )
         )
@@ -273,12 +299,15 @@ class Decoder_LadderVAE_MLP(BaseDecoder):
     def forward(
         self,
         z: torch.Tensor,
-        mu_encoder: List[torch.Tensor],
-        log_var_encoder: List[torch.Tensor]
+        mu_encoder: List[torch.Tensor]=None,
+        log_var_encoder: List[torch.Tensor]=None
         ):
 
-        mu_encoder.reverse()
-        log_var_encoder.reverse()
+        if mu_encoder is not None:
+            mu_encoder.reverse()
+
+        if log_var_encoder is not None:
+            log_var_encoder.reverse()
 
         output = ModelOutput()
 
@@ -291,35 +320,39 @@ class Decoder_LadderVAE_MLP(BaseDecoder):
                 output['reconstruction'] = out.reshape((z.shape[0],) + self.input_dim)
 
             else:
-        
                 mu_dec = self.mu_s[i](out)
                 log_var_dec = self.log_var_s[i](out)
 
-                mu_enc = mu_encoder[i]
-                log_var_enc = log_var_encoder[i]
+                if mu_encoder is None or log_var_encoder is None:
+                    mu_new, log_var_new = mu_dec, log_var_dec
 
-                mu_new, log_var_new = self._update_mu_log_var(
-                    mu_enc, log_var_enc, mu_dec, log_var_dec)
+                else:
+                    #print("sharing")
+                    mu_enc = mu_encoder[i]
+                    log_var_enc = log_var_encoder[i]
+                    mu_new, log_var_new = self._update_mu_log_var(
+                    mu_enc.detach(), log_var_enc.detach(), mu_dec, log_var_dec)
 
                 std = torch.exp(0.5 * log_var_new)
+               
+                out, _ = self._sample_gauss(mu_new, std)
 
-                out, _ = self._sample_gauss(mu_new, std)                    
 
-                output[f'embedding_layer_{i+1}'] = mu_new
-                output[f'log_covariance_layer_{i+1}'] = log_var_new
+                output[f'embedding_layer_{i+1}'] = mu_dec
+                output[f'log_covariance_layer_{i+1}'] = log_var_dec
                 output[f'z_layer_{i+1}'] = out
 
 
         return output
 
     def _update_mu_log_var(self, mu_p, log_var_p, mu_q, log_var_q):
-        
-        mu_new = (
-            mu_p / log_var_p.exp() + mu_q / log_var_q.exp()) / (
-                1 / log_var_p.exp() + 1 / log_var_q.exp()
-            )
 
-        log_var_new = (1 / (1 / log_var_p.exp() + 1 / log_var_q.exp())).log()
+        sigma_q = log_var_q.exp()
+        sigma_p = log_var_p.exp()
+        
+        mu_new = ( mu_p / (sigma_p - 1e-6) + mu_q / (sigma_q + 1e-6) ) / ((1 / sigma_p + 1e-6) + (1 / sigma_q + 1e-6))
+
+        log_var_new = (1 / (1 / (sigma_p + 1e-6) + 1 / (sigma_q  + 1e-6))).log()
 
         return (mu_new, log_var_new)
 

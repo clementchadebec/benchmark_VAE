@@ -17,13 +17,16 @@ class LadderVAEConfig(VAEConfig):
             Default: [64] i.e. 1 latent dimension in addition to the final one
             (latent_dim). This fits the 
             `~pythae.models.nn.default_architectures.Encoder_LadderVAE_MLP` neural net.
-        beta (float): The balancing factor. Default: 1
-
-    .. note::
+        beta (float): The balancing factor between reconstruction and KL. Default: 1
+        warmup_epoch (float): Number of epoch during whoch beta is increased toward 1. 
+            Default: 1
+    .. 
+        note::
 
         You must ensure that the length of the latent_dimensions arguments fits the depth of your
         encoder. 
 
     """
-    latent_dimensions: List[int] = field(default_factory=lambda: [64])
-    beta: float = 1.0
+    latent_dimensions: List[int] = field(default_factory=lambda: [64, 32])
+    beta: int = 1
+    warmup_epoch: int = 1

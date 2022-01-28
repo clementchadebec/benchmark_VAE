@@ -270,14 +270,25 @@ class Encoder_LadderVAE_MLP_Custom(BaseEncoder):
         )
 
         layers.append(
-            nn.Sequential(nn.Linear(self.latent_dimensions[0], 64), nn.ReLU())
+            nn.Sequential(nn.Linear(self.latent_dimensions[0], 256), nn.ReLU())
         )
         mu_s.append(
-            nn.Linear(64, self.latent_dim)
+            nn.Linear(256, self.latent_dimensions[1])
         )
         log_var_s.append(
-            nn.Linear(64, self.latent_dim)
+            nn.Linear(256, self.latent_dimensions[1])
         )
+
+        layers.append(
+            nn.Sequential(nn.Linear(self.latent_dimensions[1], 128), nn.ReLU())
+        )
+        mu_s.append(
+            nn.Linear(128, self.latent_dim)
+        )
+        log_var_s.append(
+            nn.Linear(128, self.latent_dim)
+        )
+
 
         self.layers = layers
         self.mu_s = mu_s
@@ -307,7 +318,6 @@ class Encoder_LadderVAE_MLP_Custom(BaseEncoder):
 
         return output
 
-
 class Decoder_LadderVAE_MLP_Custom(BaseDecoder):
     def __init__(self, args: dict):
         BaseDecoder.__init__(self)
@@ -324,20 +334,33 @@ class Decoder_LadderVAE_MLP_Custom(BaseDecoder):
 
         layers.append(
             nn.Sequential(
-                nn.Linear(args.latent_dim, 64),
+                nn.Linear(args.latent_dim, 128),
                 nn.ReLU()
             )
         )
         mu_s.append(
-            nn.Linear(64, self.latent_dimensions[-1])
+            nn.Linear(128, self.latent_dimensions[-1])
         )
         log_var_s.append(
-            nn.Linear(64, self.latent_dimensions[-1])
+            nn.Linear(128, self.latent_dimensions[-1])
         )
 
         layers.append(
             nn.Sequential(
-                nn.Linear(self.latent_dimensions[-1], int(np.prod(args.input_dim))),
+                nn.Linear(self.latent_dimensions[-1], 256),
+                nn.ReLU()
+            )
+        )
+        mu_s.append(
+            nn.Linear(256, self.latent_dimensions[-2])
+        )
+        log_var_s.append(
+            nn.Linear(256, self.latent_dimensions[-2])
+        )
+
+        layers.append(
+            nn.Sequential(
+                nn.Linear(self.latent_dimensions[-2], int(np.prod(args.input_dim))),
                 nn.Sigmoid(),
             )
         )
@@ -351,12 +374,15 @@ class Decoder_LadderVAE_MLP_Custom(BaseDecoder):
     def forward(
         self,
         z: torch.Tensor,
-        mu_encoder: List[torch.Tensor],
-        log_var_encoder: List[torch.Tensor]
+        mu_encoder: List[torch.Tensor]=None,
+        log_var_encoder: List[torch.Tensor]=None
         ):
 
-        mu_encoder.reverse()
-        log_var_encoder.reverse()
+        if mu_encoder is not None:
+            mu_encoder.reverse()
+
+        if log_var_encoder is not None:
+            log_var_encoder.reverse()
 
         output = ModelOutput()
 
@@ -373,15 +399,18 @@ class Decoder_LadderVAE_MLP_Custom(BaseDecoder):
                 mu_dec = self.mu_s[i](out)
                 log_var_dec = self.log_var_s[i](out)
 
-                mu_enc = mu_encoder[i]
-                log_var_enc = log_var_encoder[i]
+                if mu_encoder is None or log_var_encoder is None:
+                    mu_new, log_var_new = mu_dec, log_var_dec
 
-                mu_new, log_var_new = self._update_mu_log_var(
+                else:
+                    mu_enc = mu_encoder[i]
+                    log_var_enc = log_var_encoder[i]
+                    mu_new, log_var_new = self._update_mu_log_var(
                     mu_enc, log_var_enc, mu_dec, log_var_dec)
 
                 std = torch.exp(0.5 * log_var_new)
 
-                out, _ = self._sample_gauss(mu_new, std)                    
+                out, _ = self._sample_gauss(mu_new, std)   
 
                 output[f'embedding_layer_{i+1}'] = mu_new
                 output[f'log_covariance_layer_{i+1}'] = log_var_new
@@ -393,11 +422,11 @@ class Decoder_LadderVAE_MLP_Custom(BaseDecoder):
     def _update_mu_log_var(self, mu_p, log_var_p, mu_q, log_var_q):
         
         mu_new = (
-            mu_p / log_var_p.exp() + mu_q / log_var_q.exp()) / (
-                1 / log_var_p.exp() + 1 / log_var_q.exp()
+            mu_p / (log_var_p.exp()  + 1e-10) + mu_q / (log_var_q.exp()  + 1e-10)) / (
+                1 / (log_var_p.exp() + 1e-10) + 1 / (log_var_q.exp() + 1e-10)
             )
 
-        log_var_new = (1 / (1 / log_var_p.exp() + 1 / log_var_q.exp())).log()
+        log_var_new = (1 / (1 / (log_var_p.exp() + 1e-10) + 1 / (log_var_q.exp()  + 1e-10))).log()
 
         return (mu_new, log_var_new)
 

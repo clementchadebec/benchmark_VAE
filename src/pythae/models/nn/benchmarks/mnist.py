@@ -325,6 +325,173 @@ class Encoder_VAE_MNIST(BaseEncoder):
         return output
 
 
+class Encoder_LadderVAE_MNIST(BaseEncoder):
+    """
+    A Convolutional encoder Neural net suited for MNIST and Variational Autoencoder-based 
+    models.
+
+
+    It can be built as follows:
+
+    .. code-block::
+
+            >>> from pythae.models.nn.benchmarks.mnist import Encoder_VAE_MNIST
+            >>> from pythae.models import VAEConfig
+            >>> model_config = VAEConfig(input_dim=(1, 28, 28), latent_dim=16)
+            >>> encoder = Encoder_VAE_MNIST(model_config)
+            >>> encoder
+            ... Encoder_VAE_MNIST(
+            ...   (layers): ModuleList(
+            ...     (0): Sequential(
+            ...       (0): Conv2d(1, 128, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
+            ...       (1): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            ...       (2): ReLU()
+            ...     )
+            ...     (1): Sequential(
+            ...       (0): Conv2d(128, 256, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
+            ...       (1): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            ...       (2): ReLU()
+            ...     )
+            ...     (2): Sequential(
+            ...       (0): Conv2d(256, 512, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
+            ...       (1): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            ...       (2): ReLU()
+            ...     )
+            ...     (3): Sequential(
+            ...       (0): Conv2d(512, 1024, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
+            ...       (1): BatchNorm2d(1024, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            ...       (2): ReLU()
+            ...     )
+            ...   )
+            ...   (embedding): Linear(in_features=1024, out_features=16, bias=True)
+            ...   (log_var): Linear(in_features=1024, out_features=16, bias=True)
+            ... )
+
+    and then passed to a :class:`pythae.models` instance
+
+        >>> from pythae.models import VAE
+        >>> model = VAE(model_config=model_config, encoder=encoder)
+        >>> model.encoder == encoder
+        ... True
+
+    .. note::
+
+        Please note that this encoder is only suitable for Variational Autoencoder based models 
+        since it outputs the embeddings and the **log** of the covariance diagonal coefficients 
+        of the input data under the key `embedding` and `log_covariance`.
+
+        .. code-block::
+
+            >>> import torch
+            >>> input = torch.rand(2, 1, 28, 28)
+            >>> out = encoder(input)
+            >>> out.embedding.shape
+            ... torch.Size([2, 16])
+            >>> out.log_covariance.shape
+            ... torch.Size([2, 16])
+
+
+    """
+    def __init__(self, args: BaseAEConfig):
+        BaseEncoder.__init__(self)
+
+        self.input_dim = (1, 28, 28)
+        self.latent_dim = args.latent_dim
+        self.latent_dimensions = args.latent_dimensions
+        self.n_channels = 1
+
+        layers = nn.ModuleList()
+        mu_s = nn.ModuleList()
+        log_var_s = nn.ModuleList()
+
+        layers.append(
+            nn.Sequential(
+                nn.Conv2d(self.n_channels, 128, 4, 2, padding=1),
+                nn.BatchNorm2d(128),
+                nn.ReLU()
+            )
+        )
+        mu_s.append(
+            nn.Linear(128 * 14 * 14, self.latent_dimensions[0])
+        )
+        log_var_s.append(
+            nn.Linear(128 * 14 * 14, self.latent_dimensions[0])
+        )
+
+        layers.append(
+            nn.Sequential(
+                nn.Conv2d(128, 256, 4, 2, padding=1),
+                nn.BatchNorm2d(256),
+                nn.ReLU(),
+            )
+        )
+        mu_s.append(
+            nn.Linear(256 * 7 * 7, self.latent_dimensions[1])
+        )
+        log_var_s.append(
+            nn.Linear(256 * 7 * 7, self.latent_dimensions[1])
+        )
+
+        layers.append(
+            nn.Sequential(
+                nn.Conv2d(256, 512, 4, 2, padding=1),
+                nn.BatchNorm2d(512),
+                nn.ReLU(),
+            )
+        )
+        mu_s.append(
+            nn.Linear(512 * 3 * 3, self.latent_dimensions[2])
+        )
+        log_var_s.append(
+            nn.Linear(512 * 3 * 3, self.latent_dimensions[2])
+        )
+
+        layers.append(
+            nn.Sequential(
+                nn.Conv2d(512, 1024, 4, 2, padding=1),
+                nn.BatchNorm2d(1024),
+                nn.ReLU(),
+            )
+        )
+        mu_s.append(
+            nn.Linear(1024, self.latent_dim)
+        )
+        log_var_s.append(
+            nn.Linear(1024, self.latent_dim)
+        )
+
+        self.layers = layers
+        self.mu_s = mu_s
+        self.log_var_s = log_var_s
+        self.depth = len(layers)
+
+    
+
+    def forward(self, x: torch.Tensor):
+
+        output = ModelOutput()
+
+        max_depth = self.depth
+
+        out = x
+
+        for i in range(max_depth):
+            out = self.layers[i](out)
+
+            mu = self.mu_s[i](out.reshape(x.shape[0], -1))
+            log_var = self.log_var_s[i](out.reshape(x.shape[0], -1))
+
+            if i+1 == self.depth:
+                output['embedding'] = mu
+                output['log_covariance'] = log_var
+        
+            else:
+                output[f'embedding_layer_{i+1}'] = mu
+                output[f'log_covariance_layer_{i+1}'] = log_var
+
+        return output
+
+
 class Decoder_AE_MNIST(BaseDecoder):
     """
     A proposed Convolutional decoder Neural net suited for MNIST and Autoencoder-based 
@@ -460,6 +627,220 @@ class Decoder_AE_MNIST(BaseDecoder):
                 output['reconstruction'] = out
 
         return output
+
+
+class Decoder_LadderVAE_MNIST(BaseDecoder):
+    """
+    A proposed Convolutional decoder Neural net suited for MNIST and Autoencoder-based 
+    models.
+
+    .. code-block::
+
+            >>> from pythae.models.nn.benchmarks.mnist import Decoder_AE_MNIST
+            >>> from pythae.models import VAEConfig
+            >>> model_config = VAEConfig(input_dim=(1, 28, 28), latent_dim=16)
+            >>> decoder = Decoder_AE_MNIST(model_config)
+            >>> decoder
+            ... Decoder_AE_MNIST(
+            ...   (layers): ModuleList(
+            ...     (0): Linear(in_features=16, out_features=16384, bias=True)
+            ...     (1): Sequential(
+            ...       (0): ConvTranspose2d(1024, 512, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1))
+            ...       (1): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            ...       (2): ReLU()
+            ...     )
+            ...     (2): Sequential(
+            ...       (0): ConvTranspose2d(512, 256, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1), output_padding=(1, 1))
+            ...       (1): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            ...       (2): ReLU()
+            ...     )
+            ...     (3): Sequential(
+            ...       (0): ConvTranspose2d(256, 1, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1), output_padding=(1, 1))
+            ...       (1): Sigmoid()
+            ...     )
+            ...   )
+            ... )
+
+
+    and then passed to a :class:`pythae.models` instance
+
+        >>> from pythae.models import VAE
+        >>> model = VAE(model_config=model_config, decoder=decoder)
+        >>> model.decoder == decoder
+        ... True
+
+    .. note::
+
+        Please note that this decoder is suitable for **all** models.
+
+        .. code-block::
+
+            >>> import torch
+            >>> input = torch.randn(2, 16)
+            >>> out = decoder(input)
+            >>> out.reconstruction.shape
+            ... torch.Size([2, 1, 28, 28])
+    """
+    def __init__(self, args: dict):
+        BaseDecoder.__init__(self)
+        self.input_dim = (1, 28, 28)
+        self.latent_dim = args.latent_dim
+        self.latent_dimensions = args.latent_dimensions
+        self.n_channels = 1
+
+        layers = nn.ModuleList()
+        ladder_layers = nn.ModuleList()
+        mu_s = nn.ModuleList()
+        log_var_s = nn.ModuleList()
+
+        # ladder
+        ladder_layers.append(
+            nn.Sequential(
+                nn.Linear(args.latent_dim, 64),
+                nn.BatchNorm1d(64),
+                nn.ReLU()
+            )
+        )
+        mu_s.append(
+            nn.Linear(64, self.latent_dimensions[-1])
+        )
+        log_var_s.append(
+            nn.Linear(64, self.latent_dimensions[-1])
+        )
+
+        ladder_layers.append(
+            nn.Sequential(
+                nn.Linear(self.latent_dimensions[-1], 128),
+                nn.BatchNorm1d(128),
+                nn.ReLU()
+            )
+        )
+        mu_s.append(
+            nn.Linear(128, self.latent_dimensions[-2])
+        )
+        log_var_s.append(
+            nn.Linear(128, self.latent_dimensions[-2])
+        )
+
+        ladder_layers.append(
+            nn.Sequential(
+                nn.Linear(self.latent_dimensions[-2], 256),
+                nn.BatchNorm1d(256),
+                nn.ReLU()
+            )
+        )
+        mu_s.append(
+            nn.Linear(256, self.latent_dimensions[-3])
+        )
+        log_var_s.append(
+            nn.Linear(256, self.latent_dimensions[-3])
+        )
+
+
+        # decoding
+        layers.append(
+            nn.Linear(self.latent_dimensions[-3], 1024 * 4 * 4)
+        )
+
+        layers.append(
+            nn.Sequential(
+                nn.ConvTranspose2d(1024, 512, 3, 2, padding=1),
+                nn.BatchNorm2d(512),
+                nn.ReLU(),
+            )
+        )
+
+        layers.append(
+            nn.Sequential(
+                nn.ConvTranspose2d(512, 256, 3, 2, padding=1, output_padding=1),
+                nn.BatchNorm2d(256),
+                nn.ReLU(),
+            )
+        )
+        
+        layers.append(
+            nn.Sequential(
+                nn.ConvTranspose2d(256, self.n_channels, 3, 2, padding=1, output_padding=1),
+                nn.Sigmoid(),
+            )
+        )
+
+        self.layers = layers
+        self.ladder_layers = ladder_layers
+        self.mu_s = mu_s
+        self.log_var_s = log_var_s
+        self.depth = len(layers)
+        self.ladder_depth = len(ladder_layers)
+
+    def forward(self,
+        z: torch.Tensor,
+        mu_encoder: List[torch.Tensor]=None,
+        log_var_encoder: List[torch.Tensor]=None
+        ):
+
+        if mu_encoder is not None:
+            mu_encoder.reverse()
+
+        if log_var_encoder is not None:
+            log_var_encoder.reverse()
+
+        output = ModelOutput()
+
+        out = z
+
+        # encoding ladder
+        for i in range(self.ladder_depth):
+           
+            out = self.ladder_layers[i](out)
+
+            mu_dec = self.mu_s[i](out)
+            log_var_dec = self.log_var_s[i](out)
+
+            if mu_encoder is None or log_var_encoder is None:
+                    mu_new, log_var_new = mu_dec, log_var_dec
+
+            else:
+                mu_enc = mu_encoder[i]
+                log_var_enc = log_var_encoder[i]
+                mu_new, log_var_new = self._update_mu_log_var(
+                mu_enc.detach(), log_var_enc.detach(), mu_dec, log_var_dec)
+
+            std = torch.exp(0.5 * log_var_new)
+               
+            out, _ = self._sample_gauss(mu_new, std)
+
+
+            output[f'embedding_layer_{i+1}'] = mu_dec
+            output[f'log_covariance_layer_{i+1}'] = log_var_dec
+            output[f'z_layer_{i+1}'] = out
+
+        for i in range(self.depth):
+            out = self.layers[i](out)
+
+            if i == 0:
+                out = out.reshape(z.shape[0], 1024, 4, 4)
+
+            if i+1 == self.depth:
+                output['reconstruction'] = out
+
+        return output
+
+    def _update_mu_log_var(self, mu_p, log_var_p, mu_q, log_var_q):
+
+        sigma_q = log_var_q.exp()
+        sigma_p = log_var_p.exp()
+        
+        mu_new = ( mu_p / (sigma_p - 1e-6) + mu_q / (sigma_q + 1e-6) ) / ((1 / sigma_p + 1e-6) + (1 / sigma_q + 1e-6))
+
+        log_var_new = (1 / (1 / (sigma_p + 1e-6) + 1 / (sigma_q  + 1e-6))).log()
+
+        return (mu_new, log_var_new)
+
+    def _sample_gauss(self, mu, std):
+        # Reparametrization trick
+        # Sample N(0, I)
+        eps = torch.randn_like(std)
+        return mu + eps * std, eps 
 
 
 class Discriminator_MNIST(BaseDiscriminator):

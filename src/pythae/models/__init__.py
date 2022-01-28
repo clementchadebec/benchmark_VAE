@@ -14,6 +14,7 @@ and named likewise the model. The following modules can be found in this folder:
 - *modelname_utils.py* (optional): A module where utils methods are stored.
 """
 
+from .base.base_utils import ModelOutput
 from .base import BaseAE, BaseAEConfig
 from .ae import AE, AEConfig
 from .wae_mmd import WAE_MMD, WAE_MMD_Config
@@ -32,6 +33,7 @@ from .vae_gan import VAEGAN, VAEGANConfig
 from .ladder_vae import LadderVAE, LadderVAEConfig
 
 __all__ = [
+    "ModelOutput",
     "BaseAE",
     "BaseAEConfig",
     "AE",

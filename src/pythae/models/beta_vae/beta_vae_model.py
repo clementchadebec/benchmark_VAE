@@ -48,7 +48,7 @@ class BetaVAE(VAE):
         self.model_name = "BetaVAE"
         self.beta = model_config.beta
 
-    def forward(self, inputs: BaseDataset):
+    def forward(self, inputs: BaseDataset, **kwargs):
         """
         The VAE model
 
