@@ -62,7 +62,7 @@ class AE(BaseAE):
 
         self.set_encoder(encoder)
 
-    def forward(self, inputs: BaseDataset) -> ModelOutput:
+    def forward(self, inputs: BaseDataset, **kwargs) -> ModelOutput:
         """The input data is encoded and decoded
         
         Args:

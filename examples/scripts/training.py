@@ -50,7 +50,8 @@ ap.add_argument(
         "rhvae",
         "aae",
         "vaegan",
-        "vqvae"
+        "vqvae",
+        "msssim_vae"
     ],
     required=True,
 )
@@ -362,6 +363,23 @@ def main(args):
         model = VQVAE(
             model_config=model_config,
             encoder=Encoder_AE(model_config),
+            decoder=Decoder_AE(model_config),
+        )
+
+    elif args.model_name == "msssim_vae":
+        from pythae.models import MSSSIM_VAE, MSSSIM_VAEConfig
+
+        if args.model_config is not None:
+            model_config = MSSSIM_VAEConfig.from_json_file(args.model_config)
+
+        else:
+            model_config = MSSSIM_VAEConfig()
+
+        model_config.input_dim = data_input_dim
+
+        model = MSSSIM_VAE(
+            model_config=model_config,
+            encoder=Encoder_VAE(model_config),
             decoder=Decoder_AE(model_config),
         )
 

@@ -118,7 +118,7 @@ class VAEGAN(VAE):
 
         self.discriminator = discriminator
 
-    def forward(self, inputs: BaseDataset) -> ModelOutput:
+    def forward(self, inputs: BaseDataset, **kwargs) -> ModelOutput:
         """The input data is encoded and decoded
         
         Args:

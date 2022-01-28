@@ -51,7 +51,7 @@ class INFOVAE_MMD(VAE):
         self.lbd = self.model_config.lbd
         self.kernel_choice = model_config.kernel_choice
 
-    def forward(self, inputs: BaseDataset) -> ModelOutput:
+    def forward(self, inputs: BaseDataset, **kwargs) -> ModelOutput:
         """The input data is encoded and decoded
         
         Args:
