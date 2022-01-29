@@ -12,9 +12,9 @@ Models
     pythae.models.baseAE
     pythae.models.ae
     pythae.models.vae
-    pythae.models.msssimvae
     pythae.models.betavae
     pythae.models.iwae
+    pythae.models.msssimvae
     pythae.models.wae
     pythae.models.infovae
     pythae.models.vamp
@@ -38,9 +38,9 @@ Available Models
     ~pythae.models.BaseAE
     ~pythae.models.AE
     ~pythae.models.VAE
-    ~pythae.models.MSSSIM_VAE
     ~pythae.models.BetaVAE
     ~pythae.models.IWAE
+    ~pythae.models.MSSSIM_VAE
     ~pythae.models.WAE_MMD
     ~pythae.models.INFOVAE_MMD
     ~pythae.models.VAMP
