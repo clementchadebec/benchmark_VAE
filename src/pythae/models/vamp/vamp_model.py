@@ -69,7 +69,7 @@ class VAMP(VAE):
             model_config.number_components, requires_grad=False
         ).to(self.device)
 
-    def forward(self, inputs: BaseDataset):
+    def forward(self, inputs: BaseDataset, **kwargs):
         """
         The VAE model
 

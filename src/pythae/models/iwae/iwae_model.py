@@ -49,7 +49,7 @@ class IWAE(VAE):
         self.beta = model_config.beta
         self.n_samples = model_config.number_samples
 
-    def forward(self, inputs: BaseDataset):
+    def forward(self, inputs: BaseDataset, **kwargs):
         """
         The VAE model
 
