@@ -18,7 +18,7 @@ import torch.nn.functional as F
 
 class SVAE(VAE):
     r"""
-    :math:`\beta`-VAE model.
+    :math:`\mathcal{S}`-VAE model.
     
     Args:
         model_config(SVAEConfig): The Variational Autoencoder configuration seting the main 

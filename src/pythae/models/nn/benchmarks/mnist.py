@@ -327,20 +327,20 @@ class Encoder_VAE_MNIST(BaseEncoder):
 
 class Encoder_SVAE_MNIST(BaseEncoder):
     """
-    A Convolutional encoder Neural net suited for MNIST and Variational Autoencoder-based 
-    models.
+    A Convolutional encoder Neural net suited for mnist and Hyperspherical autoencoder
+    Variational Autoencoder.
 
 
     It can be built as follows:
 
     .. code-block::
 
-            >>> from pythae.models.nn.benchmarks.mnist import Encoder_VAE_MNIST
-            >>> from pythae.models import VAEConfig
-            >>> model_config = VAEConfig(input_dim=(1, 28, 28), latent_dim=16)
-            >>> encoder = Encoder_VAE_MNIST(model_config)
+            >>> from pythae.models.nn.benchmarks.mnist import Encoder_SVAE_MNIST
+            >>> from pythae.models import SVAEConfig
+            >>> model_config = SVAEConfig(input_dim=(1, 28, 28), latent_dim=16)
+            >>> encoder = Encoder_SVAE_MNIST(model_config)
             >>> encoder
-            ... Encoder_VAE_MNIST(
+            ... Encoder_SVAE_MNIST(
             ...   (layers): ModuleList(
             ...     (0): Sequential(
             ...       (0): Conv2d(1, 128, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
@@ -364,21 +364,21 @@ class Encoder_SVAE_MNIST(BaseEncoder):
             ...     )
             ...   )
             ...   (embedding): Linear(in_features=1024, out_features=16, bias=True)
-            ...   (log_var): Linear(in_features=1024, out_features=16, bias=True)
+            ...   (log_concentration): Linear(in_features=1024, out_features=1, bias=True)
             ... )
 
     and then passed to a :class:`pythae.models` instance
 
-        >>> from pythae.models import VAE
-        >>> model = VAE(model_config=model_config, encoder=encoder)
+        >>> from pythae.models import SVAE
+        >>> model = SVAE(model_config=model_config, encoder=encoder)
         >>> model.encoder == encoder
         ... True
 
     .. note::
 
-        Please note that this encoder is only suitable for Variational Autoencoder based models 
-        since it outputs the embeddings and the **log** of the covariance diagonal coefficients 
-        of the input data under the key `embedding` and `log_covariance`.
+        Please note that this encoder is only suitable for Hyperspherical Variational Autoencoder 
+        models since it outputs the embeddings and the **log** of the concentration in the 
+        Von Mises Fisher distributions under the key `embedding` and `log_concentration`.
 
         .. code-block::
 
@@ -387,8 +387,8 @@ class Encoder_SVAE_MNIST(BaseEncoder):
             >>> out = encoder(input)
             >>> out.embedding.shape
             ... torch.Size([2, 16])
-            >>> out.log_covariance.shape
-            ... torch.Size([2, 16])
+            >>> out.log_concentration.shape
+            ... torch.Size([2, 1])
 
 
     """
@@ -623,8 +623,7 @@ class Decoder_AE_MNIST(BaseDecoder):
 
 class Discriminator_MNIST(BaseDiscriminator):
     """
-    A Convolutional encoder Neural net suited for MNIST and Variational Autoencoder-based 
-    models.
+    A Convolutional discriminator Neural net suited for MNIST.
 
 
     It can be built as follows:

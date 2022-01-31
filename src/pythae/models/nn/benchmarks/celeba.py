@@ -327,19 +327,19 @@ class Encoder_VAE_CELEBA(BaseEncoder):
 
 class Encoder_SVAE_CELEBA(BaseEncoder):
     """
-    A Convolutional encoder Neural net suited for CELEBA-64 and 
-    Variational Autoencoder-based models.
+    A Convolutional encoder Neural net suited for CELEBA-64 and Hyperspherical autoencoder
+    Variational Autoencoder.
 
     It can be built as follows:
 
     .. code-block::
 
-            >>> from pythae.models.nn.benchmarks.celeba import Encoder_VAE_CELEBA
-            >>> from pythae.models import VAEConfig
-            >>> model_config = VAEConfig(input_dim=(3, 64, 64), latent_dim=64)
-            >>> encoder = Encoder_VAE_CELEBA(model_config)
+            >>> from pythae.models.nn.benchmarks.celeba import Encoder_SVAE_CELEBA
+            >>> from pythae.models import SVAEConfig
+            >>> model_config = SVAEConfig(input_dim=(3, 64, 64), latent_dim=64)
+            >>> encoder = Encoder_SVAE_CELEBA(model_config)
             >>> encoder
-            ... Encoder_VAE_CELEBA(
+            ... Encoder_SVAE_CELEBA(
             ...   (layers): ModuleList(
             ...     (0): Sequential(
             ...       (0): Conv2d(3, 128, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
@@ -363,24 +363,24 @@ class Encoder_SVAE_CELEBA(BaseEncoder):
             ...     )
             ...   )
             ...   (embedding): Linear(in_features=16384, out_features=64, bias=True)
-            ...   (log_var): Linear(in_features=16384, out_features=64, bias=True)
+            ...   (log_concentration): Linear(in_features=16384, out_features=1, bias=True)
             ... )
 
 
 
     and then passed to a :class:`pythae.models` instance
 
-        >>> from pythae.models import VAE
-        >>> model = VAE(model_config=model_config, encoder=encoder)
+        >>> from pythae.models import SVAE
+        >>> model = SVAE(model_config=model_config, encoder=encoder)
         >>> model.encoder == encoder
         ... True
 
 
     .. note::
 
-        Please note that this encoder is only suitable for Variational Autoencoder based models 
-        since it outputs the embeddings and the **log** of the covariance diagonal coefficients 
-        of the input data under the key `embedding` and `log_covariance`.
+        Please note that this encoder is only suitable for Hyperspherical Variational Autoencoder 
+        models since it outputs the embeddings and the **log** of the concentration in the 
+        Von Mises Fisher distributions under the key `embedding` and `log_concentration`.
 
         .. code-block::
 
@@ -389,8 +389,8 @@ class Encoder_SVAE_CELEBA(BaseEncoder):
             >>> out = encoder(input)
             >>> out.embedding.shape
             ... torch.Size([2, 64])
-            >>> out.log_covariance.shape
-            ... torch.Size([2, 64])
+            >>> out.log_concentration.shape
+            ... torch.Size([2, 1])
 
     """
     def __init__(self, args: BaseAEConfig):
@@ -644,8 +644,7 @@ class Decoder_AE_CELEBA(BaseDecoder):
 
 class Discriminator_CELEBA(BaseDiscriminator):
     """
-    A Convolutional encoder Neural net suited for MNIST and Variational Autoencoder-based 
-    models.
+    A Convolutional discriminator Neural net suited for CELEBA.
 
 
     It can be built as follows:

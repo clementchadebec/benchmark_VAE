@@ -17,6 +17,7 @@ Models
     pythae.models.wae
     pythae.models.infovae
     pythae.models.vamp
+    pythae.models.svae
     pythae.models.aae
     pythae.models.vaegan
     pythae.models.vqvae
@@ -42,6 +43,7 @@ Available Models
     ~pythae.models.WAE_MMD
     ~pythae.models.INFOVAE_MMD
     ~pythae.models.VAMP
+    ~pythae.models.SVAE
     ~pythae.models.Adversarial_AE
     ~pythae.models.VAEGAN
     ~pythae.models.VQVAE
