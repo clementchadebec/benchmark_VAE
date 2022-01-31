@@ -30,6 +30,7 @@ from .vq_vae import VQVAE, VQVAEConfig
 from .adversarial_ae import Adversarial_AE, Adversarial_AE_Config
 from .vae_gan import VAEGAN, VAEGANConfig
 from .msssim_vae import MSSSIM_VAE, MSSSIM_VAEConfig
+from .svae import SVAE, SVAEConfig
 
 
 __all__ = [
@@ -64,5 +65,7 @@ __all__ = [
     "VAEGAN",
     "VAEGANConfig",
     "MSSSIM_VAE",
-    "MSSSIM_VAEConfig"
+    "MSSSIM_VAEConfig",
+    "SVAE", 
+    "SVAEConfig"
 ]
