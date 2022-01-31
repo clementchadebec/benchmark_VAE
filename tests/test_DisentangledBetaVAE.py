@@ -419,7 +419,7 @@ class Test_DisentangledBetaVAE_Training:
         )
 
         # check that weights were updated
-        assert trainer.model.epoch = 1
+        assert trainer.model.epoch == 1
 
     def test_checkpoint_saving(
         self, tmpdir, betavae, train_dataset, training_configs, optimizers
