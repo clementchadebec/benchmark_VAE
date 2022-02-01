@@ -673,7 +673,7 @@ class Test_CELEBA_Benchmark:
                     vae_celeba_config.input_dim
 
 
-    def test_vae_encoding_decoding(self, vae_celeba_config, celeba_like_data, recon_layers):
+    def test_svae_encoding_decoding(self, vae_celeba_config, celeba_like_data, recon_layers):
         encoder = Encoder_SVAE_CELEBA(vae_celeba_config).to(device)
         decoder = Decoder_AE_CELEBA(vae_celeba_config).to(device)
 
