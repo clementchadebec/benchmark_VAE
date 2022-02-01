@@ -26,7 +26,6 @@ dummy_output_dir/*
 examples/notebooks/models_training/my_model/*
 examples/notebooks/test.ipynb
 
-
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
