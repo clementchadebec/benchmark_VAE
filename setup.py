@@ -34,6 +34,7 @@ setup(
     packages=find_packages(where="src"),
     install_requires=[
         "numpy>=1.19.0",
+        "scipy>=1.7.1",
         "torch>=1.9.0",
         "dill>=0.3.3",
         "pydantic>=1.8.2",

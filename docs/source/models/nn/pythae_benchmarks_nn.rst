@@ -22,8 +22,9 @@ MNIST
 .. autosummary::
    ~pythae.models.nn.benchmarks.mnist.Encoder_AE_MNIST
    ~pythae.models.nn.benchmarks.mnist.Encoder_VAE_MNIST
+   ~pythae.models.nn.benchmarks.mnist.Encoder_SVAE_MNIST
    ~pythae.models.nn.benchmarks.mnist.Decoder_AE_MNIST
-   ~pythae.models.nn.benchmarks.mnist.LayeredDiscriminator_MNIST
+   ~pythae.models.nn.benchmarks.mnist.Discriminator_MNIST
    :nosignatures:
 
 CIFAR
@@ -47,8 +48,9 @@ CELEBA-64
 .. autosummary::
    ~pythae.models.nn.benchmarks.celeba.Encoder_AE_CELEBA
    ~pythae.models.nn.benchmarks.celeba.Encoder_VAE_CELEBA
+   ~pythae.models.nn.benchmarks.celeba.Encoder_SVAE_CELEBA
    ~pythae.models.nn.benchmarks.celeba.Decoder_AE_CELEBA
-   ~pythae.models.nn.benchmarks.celeba.LayeredDiscriminator_CELEBA
+   ~pythae.models.nn.benchmarks.celeba.Discriminator_CELEBA
    :nosignatures:
 
 .. note::
