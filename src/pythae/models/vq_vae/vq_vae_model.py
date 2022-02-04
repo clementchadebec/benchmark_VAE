@@ -71,7 +71,7 @@ class VQVAE(AE):
         self.model_config.embedding_dim = z.shape[-1]
         self.quantizer = Quantizer(model_config=model_config)
 
-    def forward(self, inputs: BaseDataset):
+    def forward(self, inputs: BaseDataset, **kwargs):
         """
         The VAE model
 

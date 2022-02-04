@@ -72,7 +72,7 @@ class BaseAE(nn.Module):
 
         self.device = None
 
-    def forward(self, inputs: BaseDataset) -> ModelOutput:
+    def forward(self, inputs: BaseDataset, **kwargs) -> ModelOutput:
         """Main forward pass outputing the VAE outputs
         This function should output a :class:`~pythae.models.base.base_utils.ModelOutput` instance 
         gathering all the model outputs

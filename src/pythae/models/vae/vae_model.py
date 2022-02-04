@@ -63,7 +63,7 @@ class VAE(BaseAE):
 
         self.set_encoder(encoder)
 
-    def forward(self, inputs: BaseDataset):
+    def forward(self, inputs: BaseDataset, **kwargs):
         """
         The VAE model
 

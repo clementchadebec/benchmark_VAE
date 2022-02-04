@@ -50,7 +50,9 @@ ap.add_argument(
         "rhvae",
         "aae",
         "vaegan",
-        "vqvae"
+        "vqvae",
+        "msssim_vae",
+        "svae"
     ],
     required=True,
 )
@@ -74,6 +76,7 @@ def main(args):
 
         from pythae.models.nn.benchmarks.mnist import Encoder_AE_MNIST as Encoder_AE
         from pythae.models.nn.benchmarks.mnist import Encoder_VAE_MNIST as Encoder_VAE
+        from pythae.models.nn.benchmarks.mnist import Encoder_SVAE_MNIST as Encoder_SVAE
         from pythae.models.nn.benchmarks.mnist import Decoder_AE_MNIST as Decoder_AE
         from pythae.models.nn.benchmarks.mnist import Discriminator_MNIST as Discriminator
 
@@ -87,6 +90,7 @@ def main(args):
 
         from pythae.models.nn.benchmarks.celeba import Encoder_AE_CELEBA as Encoder_AE
         from pythae.models.nn.benchmarks.celeba import Encoder_VAE_CELEBA as Encoder_VAE
+        from pythae.models.nn.benchmarks.celeba import Encoder_SVAE_CELEBA as Encoder_SVAE
         from pythae.models.nn.benchmarks.celeba import Decoder_AE_CELEBA as Decoder_AE
         from pythae.models.nn.benchmarks.celeba import Discriminator_CELEBA as Discriminator
 
@@ -362,6 +366,40 @@ def main(args):
         model = VQVAE(
             model_config=model_config,
             encoder=Encoder_AE(model_config),
+            decoder=Decoder_AE(model_config),
+        )
+
+    elif args.model_name == "msssim_vae":
+        from pythae.models import MSSSIM_VAE, MSSSIM_VAEConfig
+
+        if args.model_config is not None:
+            model_config = MSSSIM_VAEConfig.from_json_file(args.model_config)
+
+        else:
+            model_config = MSSSIM_VAEConfig()
+
+        model_config.input_dim = data_input_dim
+
+        model = MSSSIM_VAE(
+            model_config=model_config,
+            encoder=Encoder_VAE(model_config),
+            decoder=Decoder_AE(model_config),
+        )
+
+    elif args.model_name == "svae":
+        from pythae.models import SVAE, SVAEConfig
+
+        if args.model_config is not None:
+            model_config = SVAEConfig.from_json_file(args.model_config)
+
+        else:
+            model_config = SVAE()
+
+        model_config.input_dim = data_input_dim
+
+        model = SVAE(
+            model_config=model_config,
+            encoder=Encoder_SVAE(model_config),
             decoder=Decoder_AE(model_config),
         )
 

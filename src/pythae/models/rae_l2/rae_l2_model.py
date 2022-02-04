@@ -47,7 +47,7 @@ class RAE_L2(AE):
         self.model_name = "RAE_L2"
 
 
-    def forward(self, inputs: BaseDataset) -> ModelOutput:
+    def forward(self, inputs: BaseDataset, **kwargs) -> ModelOutput:
         """The input data is encoded and decoded
         
         Args:

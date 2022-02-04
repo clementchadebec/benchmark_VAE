@@ -14,9 +14,11 @@ Models
     pythae.models.vae
     pythae.models.betavae
     pythae.models.iwae
+    pythae.models.msssimvae
     pythae.models.wae
     pythae.models.infovae
     pythae.models.vamp
+    pythae.models.svae
     pythae.models.aae
     pythae.models.vaegan
     pythae.models.vqvae
@@ -39,9 +41,11 @@ Available Models
     ~pythae.models.VAE
     ~pythae.models.BetaVAE
     ~pythae.models.IWAE
+    ~pythae.models.MSSSIM_VAE
     ~pythae.models.WAE_MMD
     ~pythae.models.INFOVAE_MMD
     ~pythae.models.VAMP
+    ~pythae.models.SVAE
     ~pythae.models.Adversarial_AE
     ~pythae.models.VAEGAN
     ~pythae.models.VQVAE

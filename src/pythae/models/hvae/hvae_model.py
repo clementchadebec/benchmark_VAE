@@ -57,7 +57,7 @@ class HVAE(VAE):
             requires_grad=True if model_config.learn_beta_zero else False,
         )
 
-    def forward(self, inputs: BaseDataset) -> ModelOutput:
+    def forward(self, inputs: BaseDataset, **kwargs) -> ModelOutput:
         r"""
         The input data is first encoded. The reparametrization is used to produce a sample
         :math:`z_0` from the approximate posterior :math:`q_{\phi}(z|x)`. Then 
