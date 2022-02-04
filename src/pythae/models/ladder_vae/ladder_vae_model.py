@@ -196,14 +196,16 @@ class LadderVAE(VAE):
 
                 #self._log_gaussian_density(z_q[k], mu_p[i], log_var_p[i]) - \
                 #self._log_gaussian_density(z_q[k], mu_q[k], log_var_q[k])
-            ).mean(dim=-1)
+            ).sum(dim=-1)
 
         llh_loss += -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp(), dim=-1) #self._log_normal_density(z)
 
-        beta = min(self.beta, self.beta * epoch / self.warmup_epoch)
+        beta = min(self.beta, self.beta * epoch / (self.warmup_epoch + 1))
         #beta = 1
 
         #print(recon_loss.mean(), llh_loss.mean())
+
+        print(recon_loss.mean(), llh_loss.mean())
 
         return (
             (recon_loss + beta * llh_loss).mean(dim=0),

@@ -1,6 +1,6 @@
 {
     "latent_dim": 16,
-    "warmup_epoch": 100,
-    "beta": 1,
+    "warmup_epoch": 50,
+    "beta": 0.01,
     "latent_dimensions": [64, 32, 16]
   }
