@@ -411,7 +411,7 @@ class BaseTrainer:
 
                 self.optimizer.zero_grad()
 
-                model_output = self.model(inputs)
+                model_output = self.model(inputs, epoch = epoch)
 
                 loss = model_output.loss
 

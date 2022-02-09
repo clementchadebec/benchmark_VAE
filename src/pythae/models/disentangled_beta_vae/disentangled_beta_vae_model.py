@@ -48,15 +48,14 @@ class DisentangledBetaVAE(VAE):
         self.model_name = "DisentangledBetaVAE"
         self.beta = model_config.beta
         self.C = model_config.C
-        self.nb_epochs_to_convergence = model_config.nb_epochs_to_convergence
-        self.epoch = model_config.epoch
+        self.warmup_epoch = model_config.warmup_epoch
 
-    def forward(self, inputs: BaseDataset):
+    def forward(self, inputs: BaseDataset, **kwargs):
         """
         The VAE model
 
         Args:
-            inputs (BaseDataset): The training datasat with labels
+            inputs (BaseDataset): The training dataset with labels
 
         Returns:
             ModelOutput: An instance of ModelOutput containing all the relevant parameters
@@ -64,6 +63,8 @@ class DisentangledBetaVAE(VAE):
         """
 
         x = inputs["data"]
+
+        epoch = kwargs.pop('epoch',self.warmup_epoch)
 
         encoder_output = self.encoder(x)
 
@@ -73,7 +74,7 @@ class DisentangledBetaVAE(VAE):
         z, eps = self._sample_gauss(mu, std)
         recon_x = self.decoder(z)["reconstruction"]
 
-        loss, recon_loss, kld = self.loss_function(recon_x, x, mu, log_var, z)
+        loss, recon_loss, kld = self.loss_function(recon_x, x, mu, log_var, z, epoch)
 
         output = ModelOutput(
             reconstruction_loss=recon_loss,
@@ -85,7 +86,7 @@ class DisentangledBetaVAE(VAE):
 
         return output
 
-    def loss_function(self, recon_x, x, mu, log_var, z):
+    def loss_function(self, recon_x, x, mu, log_var, z, epoch):
 
         if self.model_config.reconstruction_loss == "mse":
 
@@ -104,9 +105,8 @@ class DisentangledBetaVAE(VAE):
             ).sum(dim=-1)
 
         KLD = -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp(), dim=-1)
-        C_factor = min(self.epoch/self.nb_epochs_to_convergence,1)
+        C_factor = min(epoch/self.warmup_epoch,1)
         KLD_diff = torch.abs(KLD - self.C * C_factor)
-
 
         return (recon_loss + self.beta * KLD_diff).mean(dim=0), recon_loss.mean(dim=0), KLD.mean(dim=0)
 

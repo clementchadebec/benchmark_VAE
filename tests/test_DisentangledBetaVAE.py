@@ -7,7 +7,7 @@ from torch.optim import SGD, Adadelta, Adagrad, Adam, RMSprop
 
 from pythae.customexception import BadInheritanceError
 from pythae.models.base.base_utils import ModelOutput
-from pythae.models import DisentangledDisentangledBetaVAE, DisentangledBetaVAEConfig
+from pythae.models import DisentangledBetaVAE, DisentangledBetaVAEConfig
 
 from pythae.trainers import BaseTrainer, BaseTrainingConfig
 from pythae.pipelines import TrainingPipeline
@@ -417,9 +417,6 @@ class Test_DisentangledBetaVAE_Training:
                 for key in start_model_state_dict.keys()
             ]
         )
-
-        # check that weights were updated
-        assert trainer.model.epoch == 1
 
     def test_checkpoint_saving(
         self, tmpdir, betavae, train_dataset, training_configs, optimizers
