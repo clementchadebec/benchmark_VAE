@@ -5,7 +5,6 @@ Available models:
 ------------------
 
 .. autosummary::
-
     ~pythae.models.SVAE
     :nosignatures:
 """

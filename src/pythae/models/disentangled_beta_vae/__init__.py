@@ -1,4 +1,4 @@
-"""This module is the implementation of the Disentangled Beta VAE proposed in
+r"""This module is the implementation of the Disentangled Beta VAE proposed in
 (https://arxiv.org/abs/1804.03599).
 This model adds a new parameter to the :math:`\beta`-VAE loss function corresponding to the target 
 value for the KL between the prior and the posterior distribution. It is progressively increased
