@@ -52,7 +52,8 @@ ap.add_argument(
         "vaegan",
         "vqvae",
         "msssim_vae",
-        "svae"
+        "svae",
+        "disentangled_beta_vae"
     ],
     required=True,
 )
@@ -402,6 +403,24 @@ def main(args):
             encoder=Encoder_SVAE(model_config),
             decoder=Decoder_AE(model_config),
         )
+
+    elif args.model_name == "disentangled_beta_vae":
+        from pythae.models import DisentangledBetaVAE, DisentangledBetaVAEConfig
+
+        if args.model_config is not None:
+            model_config = DisentangledBetaVAEConfig.from_json_file(args.model_config)
+
+        else:
+            model_config = DisentangledBetaVAEConfig()
+
+        model_config.input_dim = data_input_dim
+
+        model = DisentangledBetaVAE(
+            model_config=model_config,
+            encoder=Encoder_VAE(model_config),
+            decoder=Decoder_AE(model_config),
+        )
+    
 
     logger.info(f"Successfully build {args.model_name.upper()} model !\n")
 

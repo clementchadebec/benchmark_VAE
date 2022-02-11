@@ -13,6 +13,7 @@ Models
     pythae.models.ae
     pythae.models.vae
     pythae.models.betavae
+    pythae.models.disentangled_betavae
     pythae.models.iwae
     pythae.models.msssimvae
     pythae.models.wae
@@ -40,6 +41,7 @@ Available Models
     ~pythae.models.AE
     ~pythae.models.VAE
     ~pythae.models.BetaVAE
+    ~pythae.models.DisentangledBetaVAE
     ~pythae.models.IWAE
     ~pythae.models.MSSSIM_VAE
     ~pythae.models.WAE_MMD
