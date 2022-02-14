@@ -7,6 +7,7 @@ Available models:
 .. autosummary::
     ~pythae.models.VAE
     ~pythae.models.BetaVAE
+    ~pythae.models.DisentangledBetaVAE
     ~pythae.models.IWAE
     ~pythae.models.INFOVAE_MMD
     ~pythae.models.VAMP
