@@ -25,6 +25,6 @@ Samplers
     ~pythae.samplers.GaussianMixtureSampler
     ~pythae.samplers.TwoStageVAESampler
     ~pythae.samplers.HypersphereUniformSampler
-    ~pythae.samplers.RHVAESampler
     ~pythae.samplers.VAMPSampler
+    ~pythae.samplers.RHVAESampler
     :nosignatures:

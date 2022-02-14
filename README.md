@@ -87,9 +87,10 @@ Below is the list of the models currently implemented in the library.
 |:-------------------------------------:|:-------------------:|:-------------------------------------------------:|:-----------------------------------------:|
 | Normal prior (NormalSampler)                         | all models		  | [link](https://arxiv.org/abs/1312.6114)		  |
 | Gaussian mixture (GaussianMixtureSampler) | all models		  | [link](https://arxiv.org/abs/1903.12436) 	  | [link](https://github.com/ParthaEth/Regularized_autoencoders-RAE-/tree/master/models/rae) |
+| Two stage VAE sampler (TwoStageVAESampler)					| all VAE based models| [link](https://openreview.net/pdf?id=B1e0X3C9tQ)  | [link](https://github.com/daib13/TwoStageVAE/) |)
+| Unit sphere uniform sampler (HypersphereUniformSampler)                     |    SVAE  		  | [link](https://arxiv.org/abs/1804.00891)      |		[link](https://github.com/nicola-decao/s-vae-pytorch)
 | VAMP prior sampler (VAMPSampler)                   |    VAMP   		  | [link](https://arxiv.org/abs/1705.07120) 	  | [link](https://github.com/jmtomczak/vae_vampprior) |
 | Manifold sampler (RHVAESampler)                     |    RHVAE  		  | [link](https://arxiv.org/abs/2105.00026)      |													|
-| Two stage VAE sampler (TwoStageVAESampler)					| all VAE based models| [link](https://openreview.net/pdf?id=B1e0X3C9tQ)  | [link](https://github.com/daib13/TwoStageVAE/) |)
 
 
 ## Launching a model training
@@ -270,6 +271,7 @@ First let's have a look at the reconstructed samples taken from the evaluation s
 | AE                  | ![AE](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/ae_reconstruction_mnist.png) | ![AE](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/ae_reconstruction_celeba.png)                                                                            |
 | VAE | ![VAE](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/vae_reconstruction_mnist.png) |  ![VAE](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/vae_reconstruction_celeba.png)
 | Beta-VAE| ![Beta](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/beta_vae_reconstruction_mnist.png) | ![Beta Normal](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/beta_vae_reconstruction_celeba.png)
+| Beta-VAE| ![Disentangled Beta](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/disentangled_beta_vae_reconstruction_mnist.png) | ![Disentangled Beta](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/disentangled_beta_vae_reconstruction_celeba.png)
 | IWAE | ![IWAE](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/iwae_reconstruction_mnist.png) | ![IWAE](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/iwae_reconstruction_celeba.png)
 | MSSSIM_VAE | ![MSSSIM VAE](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/msssim_vae_reconstruction_mnist.png) |  ![MSSSIM VAE](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/msssim_vae_reconstruction_celeba.png)
 | WAE| ![WAE](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/wae_reconstruction_mnist.png) | ![WAE](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/wae_reconstruction_celeba.png)
@@ -287,7 +289,7 @@ First let's have a look at the reconstructed samples taken from the evaluation s
 ----------------------------
 ### Generation
 
-Here, we show the generated samples using using eahc model implemented in the library and different samplers.
+Here, we show the generated samples using using each model implemented in the library and different samplers.
 
 |               Models               |                                                                                    MNIST                                                                     |                     CELEBA             
 |:----------------------------------:|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|:--------------------------------------------:|
@@ -295,6 +297,7 @@ Here, we show the generated samples using using eahc model implemented in the li
 | VAE  + NormalSampler    | ![VAE Normal](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/vae_normal_sampling_mnist.png) |  ![VAE Normal](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/vae_normal_sampling_celeba.png)
 | VAE  + GaussianMixtureSampler    | ![VAE GMM](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/vae_gmm_sampling_mnist.png) |  ![VAE GMM](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/vae_gmm_sampling_celeba.png)
 | Beta-VAE + NormalSampler | ![Beta Normal](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/beta_vae_normal_sampling_mnist.png) | ![Beta Normal](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/beta_vae_normal_sampling_celeba.png)
+| Beta-VAE + NormalSampler | ![Disentangled Beta Normal](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/disentangled_beta_vae_normal_smapling_mnist.png) | ![Disentangled Beta Normal](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/disentangled_beta_vae_normal_smapling_celeba.png)
 | IWAE +  Normal sampler | ![IWAE Normal](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/iwae_normal_sampling_mnist.png) | ![IWAE Normal](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/iwae_normal_sampling_celeba.png)
 | MSSSIM_VAE  + NormalSampler    | ![MSSSIM_VAE Normal](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/msssim_vae_normal_sampling_mnist.png) |  ![MSSSIM_VAE Normal](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/msssim_vae_normal_sampling_celeba.png)
 | WAE + NormalSampler| ![WAE Normal](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/wae_normal_sampling_mnist.png) | ![WAE Normal](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/wae_normal_sampling_celeba.png)

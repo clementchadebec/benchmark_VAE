@@ -1,5 +1,5 @@
 {
-    "latent_dim": 16,
+    "latent_dim": 64,
     "reconstruction_loss": "mse",
     "beta": 5,
     "C": 30.0,
