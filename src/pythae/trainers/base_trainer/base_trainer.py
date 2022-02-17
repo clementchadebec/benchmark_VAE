@@ -368,9 +368,12 @@ class BaseTrainer:
                     f"Eval of epoch {epoch}/{self.training_config.num_epochs}"
                 )
 
+                #update epoch in model
+                self.model.epoch = epoch
+
                 inputs = self._set_inputs_to_device(inputs)
 
-                model_output = self.model(inputs)
+                model_output = self.model(inputs, epoch=epoch)
 
                 loss = model_output.loss
 
@@ -408,7 +411,7 @@ class BaseTrainer:
 
                 self.optimizer.zero_grad()
 
-                model_output = self.model(inputs)
+                model_output = self.model(inputs, epoch = epoch)
 
                 loss = model_output.loss
 
