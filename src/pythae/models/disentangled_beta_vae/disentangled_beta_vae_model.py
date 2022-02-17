@@ -18,7 +18,7 @@ class DisentangledBetaVAE(VAE):
     Disentangled :math:`\beta`-VAE model.
     
     Args:
-        model_config(DisentangledBetaVAEConfig): The Variational Autoencoder configuration seting 
+        model_config(DisentangledBetaVAEConfig): The Variational Autoencoder configuration setting 
         the main parameters of the model
 
         encoder (BaseEncoder): An instance of BaseEncoder (inheriting from `torch.nn.Module` which
