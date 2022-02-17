@@ -15,11 +15,11 @@ import torch.nn.functional as F
 
 class DisentangledBetaVAE(VAE):
     r"""
-    :math:`\beta`-VAE model.
+    Disentangled :math:`\beta`-VAE model.
     
     Args:
-        model_config(DisentangledBetaVAEConfig): The Variational Autoencoder configuration seting the main 
-        parameters of the model
+        model_config(DisentangledBetaVAEConfig): The Variational Autoencoder configuration seting 
+        the main parameters of the model
 
         encoder (BaseEncoder): An instance of BaseEncoder (inheriting from `torch.nn.Module` which
             plays the role of encoder. This argument allows you to use your own neural networks
@@ -45,6 +45,10 @@ class DisentangledBetaVAE(VAE):
 
         VAE.__init__(self, model_config=model_config, encoder=encoder, decoder=decoder)
 
+        assert model_config.warmup_epoch >= 0, (
+            f"Provide a value of warmup epoch >= 0, got {model_config.warmup_epoch}"
+        )
+
         self.model_name = "DisentangledBetaVAE"
         self.beta = model_config.beta
         self.C = model_config.C
@@ -63,6 +67,7 @@ class DisentangledBetaVAE(VAE):
         """
 
         x = inputs["data"]
+
 
         epoch = kwargs.pop('epoch',self.warmup_epoch)
 
@@ -105,11 +110,15 @@ class DisentangledBetaVAE(VAE):
             ).sum(dim=-1)
 
         KLD = -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp(), dim=-1)
-        C_factor = min(epoch/self.warmup_epoch,1)
+        C_factor = min(epoch / (self.warmup_epoch + 1), 1)
         KLD_diff = torch.abs(KLD - self.C * C_factor)
 
-        return (recon_loss + self.beta * KLD_diff).mean(dim=0), recon_loss.mean(dim=0), KLD.mean(dim=0)
-
+        return (
+            (recon_loss + self.beta * KLD_diff).mean(dim=0),
+            recon_loss.mean(dim=0),
+            KLD.mean(dim=0)
+        )
+    
     def _sample_gauss(self, mu, std):
         # Reparametrization trick
         # Sample N(0, I)

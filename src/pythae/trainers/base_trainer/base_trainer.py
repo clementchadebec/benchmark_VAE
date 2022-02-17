@@ -373,7 +373,7 @@ class BaseTrainer:
 
                 inputs = self._set_inputs_to_device(inputs)
 
-                model_output = self.model(inputs)
+                model_output = self.model(inputs, epoch=epoch)
 
                 loss = model_output.loss
 

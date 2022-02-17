@@ -68,5 +68,7 @@ __all__ = [
     "MSSSIM_VAE",
     "MSSSIM_VAEConfig",
     "SVAE", 
-    "SVAEConfig"
+    "SVAEConfig",
+    "DisentangledBetaVAE",
+    "DisentangledBetaVAEConfig"
 ]

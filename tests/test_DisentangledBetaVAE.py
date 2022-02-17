@@ -20,7 +20,7 @@ from tests.data.custom_architectures import (
 PATH = os.path.dirname(os.path.abspath(__file__))
 
 
-@pytest.fixture(params=[DisentangledBetaVAEConfig(), DisentangledBetaVAEConfig(latent_dim=5, beta=5.0)])
+@pytest.fixture(params=[DisentangledBetaVAEConfig(), DisentangledBetaVAEConfig(latent_dim=5, beta=5.0, C=12, warmup_epoch=13)])
 def model_configs_no_input_dim(request):
     return request.param
 
@@ -28,7 +28,7 @@ def model_configs_no_input_dim(request):
 @pytest.fixture(
     params=[
         DisentangledBetaVAEConfig(input_dim=(1, 28, 28), latent_dim=10, reconstruction_loss="bce"),
-        DisentangledBetaVAEConfig(input_dim=(1, 28), latent_dim=5, beta=5.2),
+        DisentangledBetaVAEConfig(input_dim=(1, 28), latent_dim=5, beta=5.2, warmup_epoch=0),
     ]
 )
 def model_configs(request):

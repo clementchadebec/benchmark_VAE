@@ -1,0 +1,7 @@
+{
+    "latent_dim": 64,
+    "reconstruction_loss": "mse",
+    "beta": 5,
+    "C": 30.0,
+    "warmup_epoch": 25
+}

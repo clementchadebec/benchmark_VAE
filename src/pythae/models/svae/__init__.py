@@ -7,6 +7,7 @@ Available samplers
 -------------------
 
 .. autosummary::
+    ~pythae.samplers.HypersphereUniformSampler
     :nosignatures:
 """
 

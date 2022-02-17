@@ -1,7 +1,8 @@
-"""This module is the implementation of the Beta_VAE proposed in
-(https://openreview.net/pdf?id=Sy2fzU9gl).
-This models adds a new parameter to the VAE loss function balancing the weight of the 
-reconstruction term and KL term.
+r"""This module is the implementation of the Disentangled Beta VAE proposed in
+(https://arxiv.org/abs/1804.03599).
+This model adds a new parameter to the :math:`\beta`-VAE loss function corresponding to the target 
+value for the KL between the prior and the posterior distribution. It is progressively increased
+throughout training.
 
 
 Available samplers
