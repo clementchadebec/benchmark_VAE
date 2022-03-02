@@ -5,24 +5,24 @@ import dill
 from copy import deepcopy
 from ...customexception import BadInheritanceError
 from ...models import VAE
-from .adversarial_ae_config import Adversarial_AE_Config
+from .factor_vae_config import FactorVAEConfig
 from ...data.datasets import BaseDataset
 from ..base.base_utils import ModelOutput, CPU_Unpickler
-
-from ..nn import BaseDecoder, BaseEncoder, BaseDiscriminator
-from ..nn.default_architectures import Discriminator_MLP
+from ..nn import BaseEncoder, BaseDecoder, BaseDiscriminator
+from ..nn.default_architectures import Encoder_VAE_MLP, Discriminator_MLP
 
 from typing import Optional
 
 import torch.nn.functional as F
 
 
-class Adversarial_AE(VAE):
-    """Adversarial Autoencoder model.
+class FactorVAE(VAE):
+    r"""
+    FactorVAE model.
     
     Args:
-        model_config(Adversarial_AE_Config): The Autoencoder configuration seting the main 
-            parameters of the model
+        model_config(FactorVAEConfig): The Variational Autoencoder configuration seting the main 
+        parameters of the model
 
         encoder (BaseEncoder): An instance of BaseEncoder (inheriting from `torch.nn.Module` which
             plays the role of encoder. This argument allows you to use your own neural networks
@@ -47,7 +47,7 @@ class Adversarial_AE(VAE):
 
     def __init__(
         self,
-        model_config: Adversarial_AE_Config,
+        model_config: FactorVAEConfig,
         encoder: Optional[BaseEncoder] = None,
         decoder: Optional[BaseDecoder] = None,
         discriminator: Optional[BaseDiscriminator]=None
@@ -59,7 +59,7 @@ class Adversarial_AE(VAE):
             if model_config.latent_dim is None:
                 raise AttributeError(
                     "No latent dimension provided !"
-                    "'latent_dim' parameter of Adversarial_AE_Config instance "
+                    "'latent_dim' parameter of FactorVAE_Config instance "
                     "must be set to a value. Unable to build discriminator automatically."
                 )
 
@@ -73,13 +73,8 @@ class Adversarial_AE(VAE):
 
         self.set_discriminator(discriminator)
 
-        self.model_name = "Adversarial_AE"
-
-        assert 0 <= self.model_config.adversarial_loss_scale <= 1, \
-            'adversarial_loss_scale must be in [0, 1]'
-        
-        
-        self.adversarial_loss_scale = self.model_config.adversarial_loss_scale
+        self.model_name = "FactorVAE"
+        self.gamma = model_config.gamma
 
     def set_discriminator(self, discriminator: BaseDiscriminator) -> None:
         r"""This method is called to set the discriminator network
@@ -99,13 +94,15 @@ class Adversarial_AE(VAE):
         self.discriminator = discriminator
 
     def forward(self, inputs: BaseDataset, **kwargs) -> ModelOutput:
-        """The input data is encoded and decoded
-        
+        """
+        The VAE model
+
         Args:
-            inputs (BaseDataset): An instance of pythae's datasets
-            
+            inputs (BaseDataset): The training datasat with labels
+
         Returns:
             ModelOutput: An instance of ModelOutput containing all the relevant parameters
+
         """
 
         x = inputs["data"]
@@ -118,10 +115,8 @@ class Adversarial_AE(VAE):
         z, eps = self._sample_gauss(mu, std)
         recon_x = self.decoder(z)["reconstruction"]
 
-        z_prior = torch.randn_like(z, device=x.device).requires_grad_(True)
-
         recon_loss, autoencoder_loss, discriminator_loss = self.loss_function(
-            recon_x, x, z, z_prior
+            recon_x, x, mu, log_var, z
         )
 
         loss = autoencoder_loss + discriminator_loss
@@ -137,7 +132,7 @@ class Adversarial_AE(VAE):
 
         return output
 
-    def loss_function(self, recon_x, x, z, z_prior):
+    def loss_function(self, recon_x, x, mu, log_var, z):
 
         N = z.shape[0]  # batch size
 
@@ -157,37 +152,27 @@ class Adversarial_AE(VAE):
                 reduction='none'
             ).sum(dim=-1)
 
+        KLD = -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp(), dim=-1)
 
-        gen_adversarial_score = self.discriminator(z).embedding.flatten()
-        prior_adversarial_score = self.discriminator(z_prior).embedding.flatten()
+        z_permuted = self._permute_dims(z)#.clone().detach().requires_grad_(True)
 
-        true_labels = torch.ones(N, requires_grad=False).to(self.device)
-        fake_labels = torch.zeros(N, requires_grad=False).to(self.device)
-        
+        latent_adversarial_score = self.discriminator(z).embedding.flatten()
+        permuted_latent_adversarial_score = self.discriminator(z_permuted).embedding.flatten()
+
+        true_labels = torch.ones(N, requires_grad=False).to(z.device)
+        fake_labels = torch.zeros(N, requires_grad=False).to(z.device)
+
+        TC = F.binary_cross_entropy(
+                latent_adversarial_score, fake_labels
+            ) + F.binary_cross_entropy(
+                permuted_latent_adversarial_score, true_labels
+            )
 
         autoencoder_loss = (
-            self.adversarial_loss_scale * (
-                F.binary_cross_entropy(gen_adversarial_score, true_labels) # generated are true
-            )
-                +
-            (1 - self.adversarial_loss_scale) * (
-                recon_loss
-            )
+            recon_loss + KLD - self.gamma * TC
         )
 
-        z_ = z.clone().detach().requires_grad_(True)
-
-        gen_adversarial_score_ = self.discriminator(z_).embedding.flatten()
-        
-        discriminator_loss = (
-            0.5 * (
-                F.binary_cross_entropy(prior_adversarial_score, true_labels) # prior is true
-            )
-            +
-            0.5 * (
-                F.binary_cross_entropy(gen_adversarial_score_, fake_labels) # generated are false
-            )
-        )
+        discriminator_loss = 0.5 * TC
 
         return (
             (recon_loss).mean(dim=0),
@@ -201,6 +186,14 @@ class Adversarial_AE(VAE):
         eps = torch.randn_like(std)
         return mu + eps * std, eps
 
+    def _permute_dims(self, z):
+        permuted = torch.zeros_like(z)
+
+        for i in range(z.shape[-1]):
+            perms = torch.randperm(z.shape[0]).to(z.device)
+            permuted[:, i] = z[perms, i]
+
+        return permuted
 
     def save(self, dir_path: str):
         """Method to save the model at a specific location
@@ -224,7 +217,6 @@ class Adversarial_AE(VAE):
 
         torch.save(model_dict, os.path.join(model_path, "model.pt"))
 
-
     @classmethod
     def _load_model_config_from_folder(cls, dir_path):
         file_list = os.listdir(dir_path)
@@ -236,7 +228,7 @@ class Adversarial_AE(VAE):
             )
 
         path_to_model_config = os.path.join(dir_path, "model_config.json")
-        model_config = Adversarial_AE_Config.from_json_file(path_to_model_config)
+        model_config = FactorVAEConfig.from_json_file(path_to_model_config)
 
         return model_config
 

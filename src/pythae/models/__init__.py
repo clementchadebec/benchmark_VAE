@@ -19,6 +19,7 @@ from .ae import AE, AEConfig
 from .wae_mmd import WAE_MMD, WAE_MMD_Config
 from .vae import VAE, VAEConfig
 from .beta_vae import BetaVAE, BetaVAEConfig
+from .factor_vae import FactorVAE, FactorVAEConfig
 from .vamp import VAMP, VAMPConfig
 from .hvae import HVAE, HVAEConfig
 from .rhvae import RHVAE, RHVAEConfig
@@ -70,5 +71,7 @@ __all__ = [
     "SVAE", 
     "SVAEConfig",
     "DisentangledBetaVAE",
-    "DisentangledBetaVAEConfig"
+    "DisentangledBetaVAEConfig",
+    "FactorVAE",
+    "FactorVAEConfig"
 ]

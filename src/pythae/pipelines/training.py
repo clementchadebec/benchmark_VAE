@@ -57,7 +57,7 @@ class TrainingPipeline(Pipeline):
                         decoder_optim_decay=model.model_config.reg_weight
                     )
 
-                elif model.model_name == 'Adversarial_AE':
+                elif model.model_name == 'Adversarial_AE' or model.model_name == 'FactorVAE':
                     training_config = AdversarialTrainerConfig()
 
                 elif model.model_name == 'VAEGAN':
@@ -78,12 +78,12 @@ class TrainingPipeline(Pipeline):
                 training_config.encoder_optim_decay = 0.
                 training_config.decoder_optim_decay = model.model_config.reg_weight
 
-            elif model.model_name == 'Adversarial_AE':
+            elif model.model_name == 'Adversarial_AE'  or model.model_name == 'FactorVAE':
                 if not isinstance(
                     training_config, AdversarialTrainerConfig):
 
                     raise AssertionError("A 'AdversarialTrainer' "
-                        "is expected for training an Adversarial AE")
+                        f"is expected for training a {model.model_name}")
 
 
             elif model.model_name == 'VAEGAN':
