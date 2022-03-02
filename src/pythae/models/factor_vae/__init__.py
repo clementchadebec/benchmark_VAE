@@ -1,7 +1,7 @@
-"""This module is the implementation of the BetaVAE proposed in
-(https://openreview.net/pdf?id=Sy2fzU9gl).
+"""This module is the implementation of the FactorVAE proposed in
+(https://arxiv.org/abs/1802.05983).
 This model adds a new parameter to the VAE loss function balancing the weight of the 
-reconstruction term and KL term.
+reconstruction term and the Total Correlation.
 
 
 Available samplers
@@ -14,7 +14,7 @@ Available samplers
     :nosignatures:
 """
 
-from .beta_vae_config import BetaVAEConfig
-from .beta_vae_model import BetaVAE
+from .factor_vae_config import FactorVAEConfig
+from .factor_vae_model import FactorVAE
 
-__all__ = ["BetaVAE", "BetaVAEConfig"]
+__all__ = ["FactorVAE", "FactorVAEConfig"]

@@ -34,7 +34,7 @@ class VAEGAN(VAE):
             architectures if desired. If None is provided, a simple Multi Layer Preception
             (https://en.wikipedia.org/wiki/Multilayer_perceptron) is used. Default: None.
 
-        discriminator (BaseDiscriminator): An instance of BaseDecoder (inheriting from 
+        discriminator (BaseDiscriminator): An instance of BaseDiscriminator (inheriting from 
             `torch.nn.Module` which plays the role of discriminator. This argument allows you to use
             your own neural networks architectures if desired. If None is provided, a simple Multi 
             Layer Preception (https://en.wikipedia.org/wiki/Multilayer_perceptron) is used. Default:

@@ -355,20 +355,17 @@ class AdversarialTrainer(BaseTrainer):
                 )
 
                 inputs = self._set_inputs_to_device(inputs)
-                
-                self.autoencoder_optimizer.zero_grad()
-                self.discriminator_optimizer.zero_grad()
 
                 model_output = self.model(inputs)
-
-
                 autoencoder_loss = model_output.autoencoder_loss
-                autoencoder_loss.backward(retain_graph=True)
-                
                 discriminator_loss = model_output.discriminator_loss
+                
+                self.autoencoder_optimizer.zero_grad()
+                autoencoder_loss.backward(retain_graph=True)
+
+                self.discriminator_optimizer.zero_grad()
                 discriminator_loss.backward()
-
-
+                
                 self.autoencoder_optimizer.step()
                 self.discriminator_optimizer.step()
 
