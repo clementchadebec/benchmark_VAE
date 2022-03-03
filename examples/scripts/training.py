@@ -54,7 +54,8 @@ ap.add_argument(
         "msssim_vae",
         "svae",
         "disentangled_beta_vae",
-        "factor_vae"
+        "factor_vae",
+        "beta_tc_vae"
     ],
     required=True,
 )
@@ -434,6 +435,23 @@ def main(args):
         model_config.input_dim = data_input_dim
 
         model = FactorVAE(
+            model_config=model_config,
+            encoder=Encoder_VAE(model_config),
+            decoder=Decoder_AE(model_config),
+        )
+
+    elif args.model_name == "beta_tc_vae":
+        from pythae.models import BetaTCVAE, BetaTCVAEConfig
+
+        if args.model_config is not None:
+            model_config = BetaTCVAEConfig.from_json_file(args.model_config)
+
+        else:
+            model_config = BetaTCVAEConfig()
+
+        model_config.input_dim = data_input_dim
+
+        model = BetaTCVAE(
             model_config=model_config,
             encoder=Encoder_VAE(model_config),
             decoder=Decoder_AE(model_config),

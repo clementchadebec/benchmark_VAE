@@ -1,0 +1,7 @@
+{
+    "latent_dim": 64,
+    "reconstruction_loss": "mse",
+    "beta": 2,
+    "gamma": 1,
+    "alpha": 1
+}
