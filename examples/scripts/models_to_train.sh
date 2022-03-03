@@ -13,9 +13,9 @@
 #python training.py --dataset mnist --model_name rhvae --model_config 'configs/mnist/rhvae_config.json' --training_config 'configs/mnist/base_training_config.json'
 
 
-python training.py --dataset mnist --model_name beta_vae --model_config configs/mnist/beta_vae_config.json --training_config configs/mnist/base_training_config.json
-python training.py --dataset mnist --model_name aae --model_config configs/mnist/aae_config.json --training_config configs/mnist/base_training_config.json
-python training.py --dataset celeba --model_name aae --model_config configs/celeba/aae_config.json --training_config configs/celeba/base_training_config.json
+#python training.py --dataset mnist --model_name beta_vae --model_config configs/mnist/beta_vae_config.json --training_config configs/mnist/base_training_config.json
+#python training.py --dataset mnist --model_name aae --model_config configs/mnist/aae_config.json --training_config configs/mnist/base_training_config.json
+#python training.py --dataset celeba --model_name aae --model_config configs/celeba/aae_config.json --training_config configs/celeba/base_training_config.json
 
 #python training.py --dataset celeba --model_name ae --model_config 'configs/celeba/ae_config.json' --training_config 'configs/celeba/base_training_config.json'
 #python training.py --dataset celeba --model_name vae --model_config 'configs/celeba/vae_config.json' --training_config 'configs/celeba/base_training_config.json'

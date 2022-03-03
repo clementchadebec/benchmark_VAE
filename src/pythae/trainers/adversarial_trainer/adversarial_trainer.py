@@ -311,7 +311,9 @@ class AdversarialTrainer(BaseTrainer):
 
                 inputs = self._set_inputs_to_device(inputs)
 
-                model_output = self.model(inputs)
+                model_output = self.model(
+                    inputs, epoch=epoch, dataset_size=len(self.eval_loader.dataset)
+                )
 
                 autoencoder_loss = model_output.autoencoder_loss
                 discriminator_loss = model_output.discriminator_loss
@@ -356,7 +358,10 @@ class AdversarialTrainer(BaseTrainer):
 
                 inputs = self._set_inputs_to_device(inputs)
 
-                model_output = self.model(inputs)
+                model_output = self.model(
+                    inputs, epoch=epoch, dataset_size=len(self.train_loader.dataset)
+                )
+                
                 autoencoder_loss = model_output.autoencoder_loss
                 discriminator_loss = model_output.discriminator_loss
                 

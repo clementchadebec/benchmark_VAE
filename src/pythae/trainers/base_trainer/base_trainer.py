@@ -373,7 +373,9 @@ class BaseTrainer:
 
                 inputs = self._set_inputs_to_device(inputs)
 
-                model_output = self.model(inputs, epoch=epoch)
+                model_output = self.model(
+                    inputs, epoch=epoch, dataset_size=len(self.eval_loader.dataset)
+                )
 
                 loss = model_output.loss
 
@@ -411,7 +413,9 @@ class BaseTrainer:
 
                 self.optimizer.zero_grad()
 
-                model_output = self.model(inputs, epoch = epoch)
+                model_output = self.model(
+                    inputs, epoch=epoch, dataset_size=len(self.train_loader.dataset)
+                )
 
                 loss = model_output.loss
 

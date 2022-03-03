@@ -69,7 +69,7 @@ class DisentangledBetaVAE(VAE):
         x = inputs["data"]
 
 
-        epoch = kwargs.pop('epoch',self.warmup_epoch)
+        epoch = kwargs.pop('epoch', self.warmup_epoch)
 
         encoder_output = self.encoder(x)
 

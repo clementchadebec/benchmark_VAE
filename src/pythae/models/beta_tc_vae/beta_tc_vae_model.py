@@ -50,6 +50,7 @@ class BetaTCVAE(VAE):
         self.alpha = model_config.alpha 
         self.beta = model_config.beta
         self.gamma = model_config.gamma
+        self.use_mss = model_config.use_mss
 
 
     def forward(self, inputs: BaseDataset, **kwargs):
@@ -66,6 +67,8 @@ class BetaTCVAE(VAE):
 
         x = inputs["data"]
 
+        dataset_size = epoch = kwargs.pop('dataset_size', x.shape[0])
+
         encoder_output = self.encoder(x)
 
         mu, log_var = encoder_output.embedding, encoder_output.log_covariance
@@ -74,7 +77,7 @@ class BetaTCVAE(VAE):
         z, eps = self._sample_gauss(mu, std)
         recon_x = self.decoder(z)["reconstruction"]
 
-        loss, recon_loss, kld = self.loss_function(recon_x, x, mu, log_var, z)
+        loss, recon_loss, kld = self.loss_function(recon_x, x, mu, log_var, z, dataset_size)
 
         output = ModelOutput(
             reconstruction_loss=recon_loss,
@@ -86,7 +89,7 @@ class BetaTCVAE(VAE):
 
         return output
 
-    def loss_function(self, recon_x, x, mu, log_var, z):
+    def loss_function(self, recon_x, x, mu, log_var, z, dataset_size):
 
         if self.model_config.reconstruction_loss == "mse":
 
@@ -118,8 +121,22 @@ class BetaTCVAE(VAE):
             log_var.reshape(1, z.shape[0], -1)
         ) # [B x B x Latent_dim]
 
-        log_q_z = torch.logsumexp(log_q_batch_perm.sum(dim=-1), dim=-1) # MWS [B]
-        log_prod_q_z =  torch.logsumexp(log_q_batch_perm, dim=1).sum(dim=-1) # MWS [B]
+        if self.use_mss:
+            logiw_mat = self._log_importance_weight_matrix(z.shape[0], dataset_size).to(z.device)
+            log_q_z = torch.logsumexp(logiw_mat + log_q_batch_perm.sum(dim=-1), dim=-1) # MMS [B]
+            log_prod_q_z =  (
+                torch.logsumexp(
+                    logiw_mat.reshape(z.shape[0], z.shape[0], -1) + log_q_batch_perm, dim=1
+                )
+            ).sum(dim=-1) # MMS [B]
+
+        else:
+            log_q_z = torch.logsumexp(log_q_batch_perm.sum(dim=-1), dim=-1) - torch.log(
+                torch.tensor([z.shape[0]*dataset_size]).to(z.device)) # MWS [B]
+            log_prod_q_z =  (
+                torch.logsumexp(log_q_batch_perm, dim=1) - torch.log(
+                torch.tensor([z.shape[0]*dataset_size]).to(z.device))
+                ).sum(dim=-1) # MWS [B]
 
 
         mutual_info_loss = log_q_z_given_x - log_q_z
@@ -157,6 +174,20 @@ class BetaTCVAE(VAE):
                 + (z - mu)**2 * torch.exp(-log_var)
             )
         )
+
+    def _log_importance_weight_matrix(self, batch_size, dataset_size):
+        """Compute importance weigth matrix for MSS
+        Code from (https://github.com/rtqichen/beta-tcvae/blob/master/vae_quant.py)
+        """
+
+        N = dataset_size
+        M = batch_size - 1
+        strat_weight = (N - M) / (N * M)
+        W = torch.Tensor(batch_size, batch_size).fill_(1 / M)
+        W.view(-1)[::M+1] = 1 / N
+        W.view(-1)[1::M+1] = strat_weight
+        W[M-1, 0] = strat_weight
+        return W.log()
 
     @classmethod
     def _load_model_config_from_folder(cls, dir_path):

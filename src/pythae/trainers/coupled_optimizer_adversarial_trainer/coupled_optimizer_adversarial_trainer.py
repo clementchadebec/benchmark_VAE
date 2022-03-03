@@ -349,7 +349,9 @@ class CoupledOptimizerAdversarialTrainer(BaseTrainer):
 
                 inputs = self._set_inputs_to_device(inputs)
 
-                model_output = self.model(inputs)
+                model_output = self.model(
+                    inputs, epoch=epoch, dataset_size=len(self.eval_loader.dataset)
+                )
 
                 encoder_loss = model_output.encoder_loss
                 decoder_loss = model_output.decoder_loss
@@ -406,7 +408,10 @@ class CoupledOptimizerAdversarialTrainer(BaseTrainer):
 
                 inputs = self._set_inputs_to_device(inputs)
 
-                model_output = self.model(inputs)
+                model_output = self.model(
+                    inputs, epoch=epoch, dataset_size=len(self.train_loader.dataset)
+                )
+
                 encoder_loss = model_output.encoder_loss
                 decoder_loss = model_output.decoder_loss
                 discriminator_loss = model_output.discriminator_loss
