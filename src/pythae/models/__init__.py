@@ -31,6 +31,7 @@ from .vq_vae import VQVAE, VQVAEConfig
 from .adversarial_ae import Adversarial_AE, Adversarial_AE_Config
 from .vae_gan import VAEGAN, VAEGANConfig
 from .disentangled_beta_vae import DisentangledBetaVAE, DisentangledBetaVAEConfig
+from .beta_tc_vae import BetaTCVAE, BetaTCVAEConfig
 from .msssim_vae import MSSSIM_VAE, MSSSIM_VAEConfig
 from .svae import SVAE, SVAEConfig
 
@@ -73,5 +74,7 @@ __all__ = [
     "DisentangledBetaVAE",
     "DisentangledBetaVAEConfig",
     "FactorVAE",
-    "FactorVAEConfig"
+    "FactorVAEConfig",
+    "BetaTCVAE",
+    "BetaTCVAEConfig",
 ]
