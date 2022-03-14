@@ -1,5 +1,5 @@
 """ 
-This is the heart if of pythae! 
+This is the heart of pythae! 
 Here are implemented some of the most common (Variational) Autoencoders models.
 
 By convention, each implemented model is stored in a folder located in :class:`pythae.models`
@@ -34,6 +34,7 @@ from .disentangled_beta_vae import DisentangledBetaVAE, DisentangledBetaVAEConfi
 from .beta_tc_vae import BetaTCVAE, BetaTCVAEConfig
 from .msssim_vae import MSSSIM_VAE, MSSSIM_VAEConfig
 from .svae import SVAE, SVAEConfig
+from .vae_nf import VAE_NF, VAE_NF_Config
 
 
 __all__ = [
@@ -77,4 +78,5 @@ __all__ = [
     "FactorVAEConfig",
     "BetaTCVAE",
     "BetaTCVAEConfig",
+    "VAE_NF_Config"
 ]
