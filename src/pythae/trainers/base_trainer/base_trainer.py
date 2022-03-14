@@ -3,7 +3,7 @@ import logging
 import os
 import numpy as np
 from copy import deepcopy
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, List
 from tqdm import tqdm
 
 import torch
@@ -17,6 +17,7 @@ from ..trainer_utils import set_seed
 from .base_training_config import BaseTrainingConfig
 from ..training_callbacks import (
     TrainingCallback,
+    ProgressBarCallback, 
     CallbackHandler,
     WandbCallback
 )
@@ -38,7 +39,7 @@ class BaseTrainer:
         train_dataset (BaseDataset): The training dataset of type
             :class:`~pythae.data.dataset.BaseDataset`
 
-        training_args (BaseTrainingConfig): The training arguments summarizing the main parameters used
+        training_config: (BaseTrainingConfig): The training arguments summarizing the main parameters used
             for training. If None, a basic training instance of :class:`TrainingConfig` is used.
             Default: None.
 
@@ -121,10 +122,12 @@ class BaseTrainer:
         self.eval_loader = eval_loader
 
         if callbacks is None:
-            callbacks = TrainingCallback()
+            callbacks = [TrainingCallback()]
 
         self.callback_handler = CallbackHandler(
-            callbacks=callbacks, model=model, optimier=optimizer, scheduler=scheduler)
+            callbacks=callbacks, model=model, optimizer=optimizer, scheduler=scheduler)
+
+        self.callback_handler.add_callback(ProgressBarCallback())
 
     def get_train_dataloader(
         self, train_dataset: BaseDataset
@@ -288,6 +291,13 @@ class BaseTrainer:
 
         for epoch in range(1, self.training_config.num_epochs+1):
 
+            self.callback_handler.on_epoch_begin(
+                training_config=self.training_config,
+                epoch=epoch,
+                train_loader=self.train_loader,
+                eval_loader=self.eval_loader
+            )
+
             epoch_train_loss = self.train_step(epoch)
 
             if self.eval_dataset is not None:
@@ -352,6 +362,10 @@ class BaseTrainer:
                     "----------------------------------------------------------------"
                 )
 
+            self.callback_handler.on_epoch_end(
+                training_config=self.training_config
+            )
+
         final_dir = os.path.join(training_dir, "final_model")
 
         self.save_model(best_model, dir_path=final_dir)
@@ -373,30 +387,28 @@ class BaseTrainer:
 
         epoch_loss = 0
 
-        with tqdm(self.eval_loader, unit="batch") as tepoch:
-            for inputs in tepoch:
+        for batch_idx, inputs in enumerate(self.eval_loader):
 
-                tepoch.set_description(
-                    f"Eval of epoch {epoch}/{self.training_config.num_epochs}"
-                )
+            self.callback_handler.on_eval_step_begin(
+            training_config=self.training_config, train_loader=self.eval_loader, epoch=epoch)
 
-                #update epoch in model
-                self.model.epoch = epoch
+            inputs = self._set_inputs_to_device(inputs)
 
-                inputs = self._set_inputs_to_device(inputs)
+            model_output = self.model(
+                inputs, epoch=epoch, dataset_size=len(self.eval_loader.dataset)
+            )
 
-                model_output = self.model(
-                    inputs, epoch=epoch, dataset_size=len(self.eval_loader.dataset)
-                )
+            loss = model_output.loss
 
-                loss = model_output.loss
+            epoch_loss += loss.item()
 
-                epoch_loss += loss.item()
+            if epoch_loss != epoch_loss:
+                raise ArithmeticError("NaN detected in eval loss")
 
-                if epoch_loss != epoch_loss:
-                    raise ArithmeticError("NaN detected in eval loss")
+            self.callback_handler.on_eval_step_end(
+                training_config=self.training_config, batch_idx=batch_idx)
 
-            epoch_loss /= len(self.eval_loader)
+        epoch_loss /= len(self.eval_loader)
 
         return epoch_loss
 
@@ -414,35 +426,36 @@ class BaseTrainer:
 
         epoch_loss = 0
 
-        with tqdm(self.train_loader, unit="batch") as tepoch:
-            for inputs in tepoch:
+        for batch_idx, inputs in enumerate(self.train_loader):
 
-                tepoch.set_description(
-                    f"Training of epoch {epoch}/{self.training_config.num_epochs}"
-                )
+            self.callback_handler.on_train_step_begin(
+                training_config=self.training_config, train_loader=self.train_loader, epoch=epoch)
 
-                inputs = self._set_inputs_to_device(inputs)
+            inputs = self._set_inputs_to_device(inputs)
 
-                self.optimizer.zero_grad()
+            self.optimizer.zero_grad()
 
-                model_output = self.model(
-                    inputs, epoch=epoch, dataset_size=len(self.train_loader.dataset)
-                )
+            model_output = self.model(
+                inputs, epoch=epoch, dataset_size=len(self.train_loader.dataset)
+            )
 
-                loss = model_output.loss
+            loss = model_output.loss
 
-                loss.backward()
-                self.optimizer.step()
+            loss.backward()
+            self.optimizer.step()
 
-                epoch_loss += loss.item()
+            epoch_loss += loss.item()
 
-                if epoch_loss != epoch_loss:
-                    raise ArithmeticError("NaN detected in train loss")
+            if epoch_loss != epoch_loss:
+                raise ArithmeticError("NaN detected in train loss")
 
-            # Allows model updates if needed
-            self.model.update()
+            self.callback_handler.on_train_step_end(
+                training_config=self.training_config, batch_idx=batch_idx)
 
-            epoch_loss /= len(self.train_loader)
+        # Allows model updates if needed
+        self.model.update()
+
+        epoch_loss /= len(self.train_loader)
 
         return epoch_loss
 
