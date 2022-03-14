@@ -2,16 +2,13 @@ import torch
 import torch.nn as nn
 from ..base.base_utils import ModelOutput
 import torch.nn.functional as F
+import math
 
 from .vae_nf_config import VAE_NF_Config
 
 """Code from https://github.com/mrsalehi/stupid-simple-norm-flow.
 2 simple flow classes thant can be combined"""
 
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import math
 
 class PlanarFlow(nn.Module):
     def __init__(self, D, activation=torch.tanh):
