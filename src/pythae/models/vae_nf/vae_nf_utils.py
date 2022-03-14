@@ -11,7 +11,6 @@ from .vae_nf_config import VAE_NF_Config
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from utils import ACTIVATION_DERIVATIVES
 import math
 
 class PlanarFlow(nn.Module):
