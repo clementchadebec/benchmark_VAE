@@ -180,28 +180,32 @@ class ProgressBarCallback(TrainingCallback):
         eval_loader = kwargs.pop('eval_loader', None)
 
         if train_loader is not None:
-            self.train_progress_bar = tqdm(total=len(train_loader), unit='batch')
-            self.train_progress_bar.set_description(
-                f"Training of epoch {epoch}/{training_config.num_epochs}"
+            self.train_progress_bar = tqdm(
+                total=len(train_loader),
+                unit='batch',
+                desc=f"Training of epoch {epoch}/{training_config.num_epochs}"
             )
+            #self.train_progress_bar.set_description(
+            #    f"Training of epoch {epoch}/{training_config.num_epochs}"
+            #)
         
         if eval_loader is not None:
-            self.eval_progress_bar = tqdm(total=len(eval_loader), unit='batch')
-            self.train_progress_bar.set_description(
-                f"Eval of epoch {epoch}/{training_config.num_epochs}"
+            self.eval_progress_bar = tqdm(
+                total=len(eval_loader),
+                unit='batch',
+                desc=f"Eval of epoch {epoch}/{training_config.num_epochs}"
             )
-
+        
     def on_train_step_end(self, training_config, **kwargs):
         if self.train_progress_bar is not None:
             batch_idx = kwargs.pop('batch_idx', None)
             self.train_progress_bar.update(batch_idx+1)
 
-    def on_eval_step_begin(self, training_config, **kwargs):
-        if self.train_progress_bar is not None:
+    def on_eval_step_end(self, training_config, **kwargs):
+        if self.eval_progress_bar is not None:
             batch_idx = kwargs.pop('batch_idx', None)
-            self.train_progress_bar.update(batch_idx+1)
+            self.eval_progress_bar.update(batch_idx+1)
         
-
     def on_epoch_end(self, training_config, **kwags):
         if self.train_progress_bar is not None:
             self.train_progress_bar.close()

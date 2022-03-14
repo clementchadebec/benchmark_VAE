@@ -390,7 +390,7 @@ class BaseTrainer:
         for batch_idx, inputs in enumerate(self.eval_loader):
 
             self.callback_handler.on_eval_step_begin(
-            training_config=self.training_config, train_loader=self.eval_loader, epoch=epoch)
+                training_config=self.training_config, eval_loader=self.eval_loader, epoch=epoch)
 
             inputs = self._set_inputs_to_device(inputs)
 
