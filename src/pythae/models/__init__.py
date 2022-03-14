@@ -78,5 +78,6 @@ __all__ = [
     "FactorVAEConfig",
     "BetaTCVAE",
     "BetaTCVAEConfig",
+    "VAE_NF"
     "VAE_NF_Config"
 ]
