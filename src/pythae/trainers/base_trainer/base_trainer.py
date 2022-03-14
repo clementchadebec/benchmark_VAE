@@ -15,6 +15,11 @@ from ...data.datasets import BaseDataset
 from ...models import BaseAE
 from ..trainer_utils import set_seed
 from .base_training_config import BaseTrainingConfig
+from ..training_callbacks import (
+    TrainingCallback,
+    CallbackHandler,
+    WandbCallback
+)
 
 logger = logging.getLogger(__name__)
 
@@ -49,6 +54,7 @@ class BaseTrainer:
         training_config: Optional[BaseTrainingConfig] = None,
         optimizer: Optional[torch.optim.Optimizer] = None,
         scheduler: Optional = None,
+        callbacks: List[TrainingCallback] = None
     ):
 
         if training_config is None:
@@ -113,6 +119,12 @@ class BaseTrainer:
 
         self.train_loader = train_loader
         self.eval_loader = eval_loader
+
+        if callbacks is None:
+            callbacks = TrainingCallback()
+
+        self.callback_handler = CallbackHandler(
+            callbacks=callbacks, model=model, optimier=optimizer, scheduler=scheduler)
 
     def get_train_dataloader(
         self, train_dataset: BaseDataset
