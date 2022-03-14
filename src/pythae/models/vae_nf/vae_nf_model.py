@@ -4,10 +4,12 @@ import math
 
 from ..base import BaseAE
 from .vae_nf_config import VAE_NF_Config
+from .vae_nf_utils import PlanarFlow, RadialFlow
 from ...data.datasets import BaseDataset
 from ..base.base_utils import ModelOutput
 from ..nn import BaseEncoder, BaseDecoder
 from ..nn.default_architectures import Encoder_VAE_MLP
+
 
 from typing import Optional
 
