@@ -3,11 +3,30 @@ https://github.com/huggingface/transformers/blob/master/src/transformers/trainer
 
 from .base_trainer.base_training_config import BaseTrainingConfig
 import importlib
+import numpy as np
 import logging
 from tqdm import tqdm
 
+logger = logging.getLogger(__name__)
+
+
 def wandb_is_available():
     return importlib.util.find_spec("wandb") is not None
+
+def rename_logs(logs):
+    train_prefix = 'train_'
+    eval_prefix = 'eval_'
+
+    clean_logs = {}
+
+    for metric_name in logs.keys():
+        if metric_name.startswith(train_prefix):
+            clean_logs[metric_name.replace(train_prefix, 'train/')] = logs[metric_name]
+
+        if metric_name.startswith(eval_prefix):
+            clean_logs[metric_name.replace(eval_prefix, 'eval/')] = logs[metric_name]
+
+    return clean_logs
 
 class TrainingCallback:
     """
@@ -79,12 +98,11 @@ class TrainingCallback:
         """
         pass
 
-    def on_log(self, training_config: BaseTrainingConfig, **kwargs):
+    def on_log(self, training_config: BaseTrainingConfig, logs, **kwargs):
         """
         Event called after logging the last logs.
         """
         pass
-
 
 class CallbackHandler:
     """
@@ -144,16 +162,13 @@ class CallbackHandler:
         self.call_event("on_epoch_end", training_config)
 
     def on_evaluate(self, training_config: BaseTrainingConfig, **kwargs):
-        control.should_evaluate = False
         self.call_event("on_evaluate", **kwargs)
 
     def on_save(self, training_config: BaseTrainingConfig, **kwargs):
-        control.should_save = False
         self.call_event("on_save", training_config, **kwargs)
 
     def on_log(self, training_config: BaseTrainingConfig, logs, **kwargs):
-        control.should_log = False
-        self.call_event("on_log", training_config, **kwargs)
+        self.call_event("on_log", training_config, logs=logs, **kwargs)
 
     def on_prediction_step(self, training_config: BaseTrainingConfig, **kwargs):
         self.call_event("on_prediction_step", training_config, **kwargs)
@@ -167,6 +182,37 @@ class CallbackHandler:
                 scheduler=self.scheduler,
                 **kwargs,
             )
+
+class MetricConsolePrinterCallback(TrainingCallback):
+    def __init__(self):
+        self.logger = logging.getLogger(__name__)
+
+        # make it print to the console.
+        console = logging.StreamHandler()
+        self.logger.addHandler(console)
+        self.logger.setLevel(logging.INFO)
+
+    def on_log(self, training_config, logs, **kwargs):
+        logger = kwargs.pop('logger', self.logger)
+
+        if logger is not None:
+            epoch_train_loss = logs.get("train_epoch_loss", None)
+            epoch_eval_loss = logs.get("eval_epoch_loss", None)
+
+            logger.info(
+                        "--------------------------------------------------------------------------"
+                    )
+            if epoch_train_loss is not None:
+                logger.info(
+                        f"Train loss: {np.round(epoch_train_loss, 4)}"
+                    )
+            if epoch_eval_loss is not None:
+                logger.info(
+                        f"Eval loss: {np.round(epoch_eval_loss, 4)}"
+                    )
+            logger.info(
+                        "--------------------------------------------------------------------------"
+                    )
 
 class ProgressBarCallback(TrainingCallback):
 

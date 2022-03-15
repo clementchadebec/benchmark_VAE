@@ -2,7 +2,7 @@ import datetime
 import logging
 import os
 from copy import deepcopy
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, List
 from tqdm import tqdm
 import itertools
 import numpy as np
@@ -17,6 +17,7 @@ from ...models import BaseAE
 from ..trainer_utils import set_seed
 from ..base_trainer import BaseTrainer
 from .adversarial_trainer_config import AdversarialTrainerConfig
+from ..training_callbacks import TrainingCallback
 
 logger = logging.getLogger(__name__)
 
@@ -57,7 +58,8 @@ class AdversarialTrainer(BaseTrainer):
         autoencoder_optimizer: Optional[torch.optim.Optimizer] = None,
         discriminator_optimizer: Optional[torch.optim.Optimizer] = None,
         autoencoder_scheduler: Optional = None,
-        discriminator_scheduler: Optional = None
+        discriminator_scheduler: Optional = None,
+        callbacks: List[TrainingCallback] = None
     ):
 
         BaseTrainer.__init__(
@@ -66,7 +68,9 @@ class AdversarialTrainer(BaseTrainer):
             train_dataset=train_dataset,
             eval_dataset=eval_dataset,
             training_config=training_config,
-            optimizer=None)
+            optimizer=None,
+            callbacks=None
+        )
 
         # set autoencoder optimizer
         if autoencoder_optimizer is None:
@@ -196,6 +200,15 @@ class AdversarialTrainer(BaseTrainer):
 
         for epoch in range(1, self.training_config.num_epochs+1):
 
+            self.callback_handler.on_epoch_begin(
+                training_config=self.training_config,
+                epoch=epoch,
+                train_loader=self.train_loader,
+                eval_loader=self.eval_loader
+            )
+
+            metrics = {}
+
             train_losses = self.train_step(epoch)
 
             [
@@ -203,6 +216,9 @@ class AdversarialTrainer(BaseTrainer):
                 epoch_train_autoencoder_loss,
                 epoch_train_discriminator_loss
             ] = train_losses
+            metrics["train_epoch_loss"] = epoch_train_loss
+            metrics["train_autoencoder_loss"] = epoch_train_autoencoder_loss
+            metrics["train_discriminator_loss"] = epoch_train_discriminator_loss
 
             if self.eval_dataset is not None:
                 eval_losses = self.eval_step(epoch)
@@ -212,6 +228,9 @@ class AdversarialTrainer(BaseTrainer):
                     epoch_eval_autoencoder_loss,
                     epoch_eval_discriminator_loss
                 ] = eval_losses
+                metrics["eval_epoch_loss"] = epoch_eval_loss
+                metrics["eval_autoencoder_loss"] = epoch_eval_autoencoder_loss
+                metrics["eval_discriminator_loss"] = epoch_eval_discriminator_loss
 
                 self.autoencoder_scheduler.step(epoch_eval_autoencoder_loss)
                 self.discriminator_scheduler.step(epoch_eval_discriminator_loss)
@@ -239,6 +258,10 @@ class AdversarialTrainer(BaseTrainer):
                 best_model = deepcopy(self.model)
                 self._best_model = best_model
 
+            self.callback_handler.on_epoch_end(
+                training_config=self.training_config
+            )
+
             # save checkpoints
             if (
                 self.training_config.steps_saving is not None
@@ -250,34 +273,7 @@ class AdversarialTrainer(BaseTrainer):
                 if log_verbose:
                     file_logger.info(f"Saved checkpoint at epoch {epoch}\n")
 
-            if self.eval_dataset is not None:
-                logger.info(
-                    "----------------------------------------------------------------"
-                )
-                logger.info(
-                    f"Epoch {epoch}: Train loss: {np.round(epoch_train_loss, 10)}\t "
-                    f"Generator loss: {np.round(epoch_train_autoencoder_loss, 10)}\t "
-                    f"Discriminator loss: {np.round(epoch_train_discriminator_loss, 10)}"
-                )
-                logger.info(
-                    f"Epoch {epoch}: Eval loss: {np.round(epoch_eval_loss, 10)}\t "
-                    f"Generator loss: {np.round(epoch_eval_autoencoder_loss, 10)}\t "
-                    f"Discriminator loss: {np.round(epoch_eval_discriminator_loss, 10)}"
-                )
-                logger.info(
-                    "----------------------------------------------------------------"
-                )
-
-            else:
-                logger.info(
-                    "----------------------------------------------------------------"
-                )
-                logger.info(
-                    f"Epoch {epoch}: Train loss: {np.round(epoch_train_loss, 10)}"
-                )
-                logger.info(
-                    "----------------------------------------------------------------"
-                )
+            self.callback_handler.on_log(self.training_config, metrics, logger=logger)
 
         final_dir = os.path.join(training_dir, "final_model")
 
@@ -302,34 +298,35 @@ class AdversarialTrainer(BaseTrainer):
         epoch_discriminator_loss = 0
         epoch_loss = 0
 
-        with tqdm(self.eval_loader, unit="batch") as tepoch:
-            for inputs in tepoch:
+        for inputs in self.eval_loader:
 
-                tepoch.set_description(
-                    f"Eval of epoch {epoch}/{self.training_config.num_epochs}"
-                )
+            self.callback_handler.on_eval_step_begin(
+                training_config=self.training_config, eval_loader=self.eval_loader, epoch=epoch)
 
-                inputs = self._set_inputs_to_device(inputs)
+            inputs = self._set_inputs_to_device(inputs)
 
-                model_output = self.model(
-                    inputs, epoch=epoch, dataset_size=len(self.eval_loader.dataset)
-                )
+            model_output = self.model(
+                inputs, epoch=epoch, dataset_size=len(self.eval_loader.dataset)
+            )
 
-                autoencoder_loss = model_output.autoencoder_loss
-                discriminator_loss = model_output.discriminator_loss
+            autoencoder_loss = model_output.autoencoder_loss
+            discriminator_loss = model_output.discriminator_loss
 
-                loss = autoencoder_loss + discriminator_loss
+            loss = autoencoder_loss + discriminator_loss
 
-                epoch_autoencoder_loss += autoencoder_loss.item()
-                epoch_discriminator_loss += discriminator_loss.item()
-                epoch_loss += loss.item()
+            epoch_autoencoder_loss += autoencoder_loss.item()
+            epoch_discriminator_loss += discriminator_loss.item()
+            epoch_loss += loss.item()
 
-                if epoch_loss != epoch_loss:
-                    raise ArithmeticError("NaN detected in eval loss")
+            if epoch_loss != epoch_loss:
+                raise ArithmeticError("NaN detected in eval loss")
 
-            epoch_autoencoder_loss /= len(self.eval_loader)
-            epoch_discriminator_loss /= len(self.eval_loader) 
-            epoch_loss /= len(self.eval_loader)
+            self.callback_handler.on_eval_step_end(
+                training_config=self.training_config)
+
+        epoch_autoencoder_loss /= len(self.eval_loader)
+        epoch_discriminator_loss /= len(self.eval_loader) 
+        epoch_loss /= len(self.eval_loader)
 
         return epoch_loss, epoch_autoencoder_loss, epoch_discriminator_loss
 
@@ -349,43 +346,44 @@ class AdversarialTrainer(BaseTrainer):
         epoch_discriminator_loss = 0
         epoch_loss = 0
 
-        with tqdm(self.train_loader, unit="batch") as tepoch:
-            for inputs in tepoch:
+        for inputs in self.train_loader:
 
-                tepoch.set_description(
-                    f"Training of epoch {epoch}/{self.training_config.num_epochs}"
-                )
+            self.callback_handler.on_train_step_begin(
+                training_config=self.training_config, train_loader=self.train_loader, epoch=epoch)
 
-                inputs = self._set_inputs_to_device(inputs)
+            inputs = self._set_inputs_to_device(inputs)
 
-                model_output = self.model(
-                    inputs, epoch=epoch, dataset_size=len(self.train_loader.dataset)
-                )
-                
-                autoencoder_loss = model_output.autoencoder_loss
-                discriminator_loss = model_output.discriminator_loss
-                
-                self.autoencoder_optimizer.zero_grad()
-                autoencoder_loss.backward(retain_graph=True)
+            model_output = self.model(
+                inputs, epoch=epoch, dataset_size=len(self.train_loader.dataset)
+            )
+            
+            autoencoder_loss = model_output.autoencoder_loss
+            discriminator_loss = model_output.discriminator_loss
+            
+            self.autoencoder_optimizer.zero_grad()
+            autoencoder_loss.backward(retain_graph=True)
 
-                self.discriminator_optimizer.zero_grad()
-                discriminator_loss.backward()
-                
-                self.autoencoder_optimizer.step()
-                self.discriminator_optimizer.step()
+            self.discriminator_optimizer.zero_grad()
+            discriminator_loss.backward()
+            
+            self.autoencoder_optimizer.step()
+            self.discriminator_optimizer.step()
 
-                loss = autoencoder_loss + discriminator_loss
+            loss = autoencoder_loss + discriminator_loss
 
-                epoch_autoencoder_loss += autoencoder_loss.item()
-                epoch_discriminator_loss += discriminator_loss.item()
-                epoch_loss += loss.item()
+            epoch_autoencoder_loss += autoencoder_loss.item()
+            epoch_discriminator_loss += discriminator_loss.item()
+            epoch_loss += loss.item()
 
-            # Allows model updates if needed
-            self.model.update()
+            self.callback_handler.on_train_step_end(
+                training_config=self.training_config)
 
-            epoch_autoencoder_loss /= len(self.train_loader)
-            epoch_discriminator_loss /= len(self.train_loader) 
-            epoch_loss /= len(self.train_loader)
+        # Allows model updates if needed
+        self.model.update()
+
+        epoch_autoencoder_loss /= len(self.train_loader)
+        epoch_discriminator_loss /= len(self.train_loader) 
+        epoch_loss /= len(self.train_loader)
 
         return epoch_loss, epoch_autoencoder_loss, epoch_discriminator_loss
 

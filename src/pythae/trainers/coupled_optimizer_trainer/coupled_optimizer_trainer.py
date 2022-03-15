@@ -2,7 +2,7 @@ import datetime
 import logging
 import os
 from copy import deepcopy
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, List
 from tqdm import tqdm
 import numpy as np
 
@@ -16,6 +16,7 @@ from ...models import BaseAE
 from ..trainer_utils import set_seed
 from ..base_trainer import BaseTrainer
 from .coupled_optimizer_trainer_config import CoupledOptimizerTrainerConfig
+from ..training_callbacks import TrainingCallback
 
 logger = logging.getLogger(__name__)
 
@@ -56,7 +57,8 @@ class CoupledOptimizerTrainer(BaseTrainer):
         encoder_optimizer: Optional[torch.optim.Optimizer] = None,
         decoder_optimizer: Optional[torch.optim.Optimizer] = None,
         encoder_scheduler: Optional = None,
-        decoder_scheduler: Optional = None
+        decoder_scheduler: Optional = None,
+        callbacks: List[TrainingCallback] = None
     ):
 
         BaseTrainer.__init__(
@@ -65,7 +67,9 @@ class CoupledOptimizerTrainer(BaseTrainer):
             train_dataset=train_dataset,
             eval_dataset=eval_dataset,
             training_config=training_config,
-            optimizer=None)
+            optimizer=None,
+            callbacks=None
+        )
 
         # set encoder optimizer
         if encoder_optimizer is None:
@@ -191,10 +195,22 @@ class CoupledOptimizerTrainer(BaseTrainer):
 
         for epoch in range(1, self.training_config.num_epochs+1):
 
+            self.callback_handler.on_epoch_begin(
+                training_config=self.training_config,
+                epoch=epoch,
+                train_loader=self.train_loader,
+                eval_loader=self.eval_loader
+            )
+
+            metrics = {}
+
             epoch_train_loss = self.train_step(epoch)
+            metrics["train_epoch_loss"] = epoch_train_loss
+            
 
             if self.eval_dataset is not None:
                 epoch_eval_loss = self.eval_step(epoch)
+                metrics["eval_epoch_loss"] = epoch_eval_loss
                 self.encoder_scheduler.step(epoch_eval_loss)
                 self.decoder_scheduler.step(epoch_eval_loss)
 
@@ -221,6 +237,10 @@ class CoupledOptimizerTrainer(BaseTrainer):
                 best_model = deepcopy(self.model)
                 self._best_model = best_model
 
+            self.callback_handler.on_epoch_end(
+                training_config=self.training_config
+            )
+
             # save checkpoints
             if (
                 self.training_config.steps_saving is not None
@@ -232,35 +252,11 @@ class CoupledOptimizerTrainer(BaseTrainer):
                 if log_verbose:
                     file_logger.info(f"Saved checkpoint at epoch {epoch}\n")
 
-            if self.eval_dataset is not None:
-                logger.info(
-                    "----------------------------------------------------------------"
-                )
-                logger.info(
-                    f"Epoch {epoch}: Train loss: {np.round(epoch_train_loss, 10)}"
-                )
-                logger.info(
-                    f"Epoch {epoch}: Eval loss: {np.round(epoch_eval_loss, 10)}"
-                )
-                logger.info(
-                    "----------------------------------------------------------------"
-                )
-
-            else:
-                logger.info(
-                    "----------------------------------------------------------------"
-                )
-                logger.info(
-                    f"Epoch {epoch}: Train loss: {np.round(epoch_train_loss, 10)}"
-                )
-                logger.info(
-                    "----------------------------------------------------------------"
-                )
+            self.callback_handler.on_log(self.training_config, metrics, logger=logger)
 
         final_dir = os.path.join(training_dir, "final_model")
 
         self.save_model(best_model, dir_path=final_dir)
-        logger.info("----------------------------------")
         logger.info("Training ended!")
         logger.info(f"Saved final model in {final_dir}")
 
@@ -278,34 +274,38 @@ class CoupledOptimizerTrainer(BaseTrainer):
 
         epoch_loss = 0
 
-        with tqdm(self.train_loader, unit="batch") as tepoch:
-            for inputs in tepoch:
+        for inputs in self.train_loader:
 
-                tepoch.set_description(
-                    f"Training of epoch {epoch}/{self.training_config.num_epochs}"
-                )
+            self.callback_handler.on_train_step_begin(
+                training_config=self.training_config, train_loader=self.train_loader, epoch=epoch)
 
-                inputs = self._set_inputs_to_device(inputs)
+            inputs = self._set_inputs_to_device(inputs)
 
-                self.encoder_optimizer.zero_grad()
-                self.decoder_optimizer.zero_grad()
+            self.encoder_optimizer.zero_grad()
+            self.decoder_optimizer.zero_grad()
 
-                model_output = self.model(
-                    inputs, epoch=epoch, dataset_size=len(self.train_loader.dataset)
-                )
+            model_output = self.model(
+                inputs, epoch=epoch, dataset_size=len(self.train_loader.dataset)
+            )
 
-                loss = model_output.loss
+            loss = model_output.loss
 
-                loss.backward()
-                self.encoder_optimizer.step()
-                self.decoder_optimizer.step()
+            loss.backward()
+            self.encoder_optimizer.step()
+            self.decoder_optimizer.step()
 
-                epoch_loss += loss.item()
+            epoch_loss += loss.item()
 
-            # Allows model updates if needed
-            self.model.update()
+            if epoch_loss != epoch_loss:
+                raise ArithmeticError("NaN detected in train loss")
 
-            epoch_loss /= len(self.train_loader)
+            self.callback_handler.on_train_step_end(
+                training_config=self.training_config)
+
+        # Allows model updates if needed
+        self.model.update()
+
+        epoch_loss /= len(self.train_loader)
 
         return epoch_loss
 

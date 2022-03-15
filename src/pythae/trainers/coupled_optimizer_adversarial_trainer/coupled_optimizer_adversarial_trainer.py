@@ -2,7 +2,7 @@ import datetime
 import logging
 import os
 from copy import deepcopy
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, List
 from tqdm import tqdm
 import itertools
 import numpy as np
@@ -17,6 +17,7 @@ from ...models import BaseAE
 from ..trainer_utils import set_seed
 from ...trainers import AdversarialTrainer, CoupledOptimizerTrainer, BaseTrainer
 from .coupled_optimizer_adversarial_trainer_config import CoupledOptimizerAdversarialTrainerConfig
+from ..training_callbacks import TrainingCallback
 
 logger = logging.getLogger(__name__)
 
@@ -63,7 +64,8 @@ class CoupledOptimizerAdversarialTrainer(BaseTrainer):
         discriminator_optimizer: Optional[torch.optim.Optimizer] = None,
         encoder_scheduler: Optional = None,
         decoder_scheduler: Optional = None,
-        discriminator_scheduler: Optional = None
+        discriminator_scheduler: Optional = None,
+        callbacks: List[TrainingCallback] = None
     ):
 
         BaseTrainer.__init__(
@@ -72,7 +74,9 @@ class CoupledOptimizerAdversarialTrainer(BaseTrainer):
             train_dataset=train_dataset,
             eval_dataset=eval_dataset,
             training_config=training_config,
-            optimizer=None)
+            optimizer=None,
+            callbacks=callbacks
+        )
 
 
         # set encoder optimizer
@@ -227,6 +231,15 @@ class CoupledOptimizerAdversarialTrainer(BaseTrainer):
 
         for epoch in range(1, self.training_config.num_epochs+1):
 
+            self.callback_handler.on_epoch_begin(
+                training_config=self.training_config,
+                epoch=epoch,
+                train_loader=self.train_loader,
+                eval_loader=self.eval_loader
+            )
+
+            metrics = {}
+
             train_losses = self.train_step(epoch)
 
             [
@@ -235,6 +248,10 @@ class CoupledOptimizerAdversarialTrainer(BaseTrainer):
                 epoch_train_decoder_loss,
                 epoch_train_discriminator_loss
             ] = train_losses
+            metrics["train_epoch_loss"] = epoch_train_loss
+            metrics["train_encoder_loss"] = epoch_train_encoder_loss
+            metrics["train_decoder_loss"] = epoch_train_decoder_loss
+            metrics["train_discriminator_loss"] = epoch_train_discriminator_loss
 
             if self.eval_dataset is not None:
                 eval_losses = self.eval_step(epoch)
@@ -245,6 +262,10 @@ class CoupledOptimizerAdversarialTrainer(BaseTrainer):
                     epoch_eval_decoder_loss,
                     epoch_eval_discriminator_loss
                 ] = eval_losses
+                metrics["eval_epoch_loss"] = epoch_eval_loss
+                metrics["eval_encoder_loss"] = epoch_eval_encoder_loss
+                metrics["eval_decoder_loss"] = epoch_eval_decoder_loss
+                metrics["eval_discriminator_loss"] = epoch_eval_discriminator_loss
 
                 self.encoder_scheduler.step(epoch_eval_encoder_loss)
                 self.decoder_scheduler.step(epoch_eval_decoder_loss)
@@ -274,6 +295,10 @@ class CoupledOptimizerAdversarialTrainer(BaseTrainer):
                 best_model = deepcopy(self.model)
                 self._best_model = best_model
 
+            self.callback_handler.on_epoch_end(
+                training_config=self.training_config
+            )
+
             # save checkpoints
             if (
                 self.training_config.steps_saving is not None
@@ -285,36 +310,7 @@ class CoupledOptimizerAdversarialTrainer(BaseTrainer):
                 if log_verbose:
                     file_logger.info(f"Saved checkpoint at epoch {epoch}\n")
 
-            if self.eval_dataset is not None:
-                logger.info(
-                    "----------------------------------------------------------------"
-                )
-                logger.info(
-                    f"Epoch {epoch}: Train loss: {np.round(epoch_train_loss, 10)}\t "
-                    f"Encoder loss: {np.round(epoch_train_encoder_loss, 10)}\t "
-                    f"Decoder loss: {np.round(epoch_train_decoder_loss, 10)}\t "
-                    f"Discriminator loss: {np.round(epoch_train_discriminator_loss, 10)}"
-                )
-                logger.info(
-                    f"Epoch {epoch}: Eval loss: {np.round(epoch_eval_loss, 10)}\t "
-                    f"Encoder loss: {np.round(epoch_eval_encoder_loss, 10)}\t "
-                    f"Decoder loss: {np.round(epoch_eval_decoder_loss, 10)}\t "
-                    f"Discriminator loss: {np.round(epoch_eval_discriminator_loss, 10)}"
-                )
-                logger.info(
-                    "----------------------------------------------------------------"
-                )
-
-            else:
-                logger.info(
-                    "----------------------------------------------------------------"
-                )
-                logger.info(
-                    f"Epoch {epoch}: Train loss: {np.round(epoch_train_loss, 10)}"
-                )
-                logger.info(
-                    "----------------------------------------------------------------"
-                )
+            self.callback_handler.on_log(self.training_config, metrics, logger=logger)
 
         final_dir = os.path.join(training_dir, "final_model")
 
@@ -340,45 +336,46 @@ class CoupledOptimizerAdversarialTrainer(BaseTrainer):
         epoch_discriminator_loss = 0
         epoch_loss = 0
 
-        with tqdm(self.eval_loader, unit="batch") as tepoch:
-            for i, inputs in enumerate(tepoch):
+        for inputs in self.eval_loader:
 
-                tepoch.set_description(
-                    f"Eval of epoch {epoch}/{self.training_config.num_epochs}"
-                )
+            self.callback_handler.on_eval_step_begin(
+            training_config=self.training_config, eval_loader=self.eval_loader, epoch=epoch)
 
-                inputs = self._set_inputs_to_device(inputs)
+            inputs = self._set_inputs_to_device(inputs)
 
-                model_output = self.model(
-                    inputs, epoch=epoch, dataset_size=len(self.eval_loader.dataset)
-                )
+            model_output = self.model(
+                inputs, epoch=epoch, dataset_size=len(self.eval_loader.dataset)
+            )
 
-                encoder_loss = model_output.encoder_loss
-                decoder_loss = model_output.decoder_loss
-                discriminator_loss = model_output.discriminator_loss
+            encoder_loss = model_output.encoder_loss
+            decoder_loss = model_output.decoder_loss
+            discriminator_loss = model_output.discriminator_loss
 
-                loss = encoder_loss + decoder_loss + discriminator_loss
+            loss = encoder_loss + decoder_loss + discriminator_loss
 
-                epoch_encoder_loss += encoder_loss.item()
-                epoch_decoder_loss += decoder_loss.item()
-                epoch_discriminator_loss += discriminator_loss.item()
-                epoch_loss += loss.item()
+            epoch_encoder_loss += encoder_loss.item()
+            epoch_decoder_loss += decoder_loss.item()
+            epoch_discriminator_loss += discriminator_loss.item()
+            epoch_loss += loss.item()
 
-                if epoch_loss != epoch_loss:
-                    raise ArithmeticError("NaN detected in eval loss")
+            if epoch_loss != epoch_loss:
+                raise ArithmeticError("NaN detected in eval loss")
 
-                tepoch.set_postfix(
-                    {
-                        'encoder_loss': epoch_encoder_loss / (i+1),
-                        'decoder_loss': epoch_decoder_loss / (i+1),
-                        'discriminator_loss': epoch_discriminator_loss / (i+1)
-                    }
-                )
+            self.callback_handler.on_eval_step_end(
+                training_config=self.training_config)
 
-            epoch_encoder_loss /= len(self.eval_loader)
-            epoch_decoder_loss /= len(self.eval_loader)
-            epoch_discriminator_loss /= len(self.eval_loader) 
-            epoch_loss /= len(self.eval_loader)
+            #tepoch.set_postfix(
+            #    {
+            #        'encoder_loss': epoch_encoder_loss / (i+1),
+            #        'decoder_loss': epoch_decoder_loss / (i+1),
+            #        'discriminator_loss': epoch_discriminator_loss / (i+1)
+            #    }
+            #)
+
+        epoch_encoder_loss /= len(self.eval_loader)
+        epoch_decoder_loss /= len(self.eval_loader)
+        epoch_discriminator_loss /= len(self.eval_loader) 
+        epoch_loss /= len(self.eval_loader)
 
         return epoch_loss, epoch_encoder_loss, epoch_decoder_loss, epoch_discriminator_loss
 
@@ -399,68 +396,69 @@ class CoupledOptimizerAdversarialTrainer(BaseTrainer):
         epoch_discriminator_loss = 0
         epoch_loss = 0
 
-        with tqdm(self.train_loader, unit="batch") as tepoch:
-            for i, inputs in enumerate(tepoch):
+        for inputs in self.train_loader:
 
-                tepoch.set_description(
-                    f"Training of epoch {epoch}/{self.training_config.num_epochs}"
-                )
+            self.callback_handler.on_train_step_begin(
+            training_config=self.training_config, train_loader=self.train_loader, epoch=epoch)
 
-                inputs = self._set_inputs_to_device(inputs)
+            inputs = self._set_inputs_to_device(inputs)
 
-                model_output = self.model(
-                    inputs, epoch=epoch, dataset_size=len(self.train_loader.dataset)
-                )
+            model_output = self.model(
+                inputs, epoch=epoch, dataset_size=len(self.train_loader.dataset)
+            )
 
-                encoder_loss = model_output.encoder_loss
-                decoder_loss = model_output.decoder_loss
-                discriminator_loss = model_output.discriminator_loss
-                
-                # Reset optimizers
-                if model_output.update_encoder:
-                    self.encoder_optimizer.zero_grad()
-                    encoder_loss.backward(retain_graph=True)
-               
-                if model_output.update_decoder:
-                    self.decoder_optimizer.zero_grad()
-                    decoder_loss.backward(retain_graph=True)
-                
-                if model_output.update_discriminator:
-                    self.discriminator_optimizer.zero_grad()
-                    discriminator_loss.backward()
+            encoder_loss = model_output.encoder_loss
+            decoder_loss = model_output.decoder_loss
+            discriminator_loss = model_output.discriminator_loss
+            
+            # Reset optimizers
+            if model_output.update_encoder:
+                self.encoder_optimizer.zero_grad()
+                encoder_loss.backward(retain_graph=True)
+            
+            if model_output.update_decoder:
+                self.decoder_optimizer.zero_grad()
+                decoder_loss.backward(retain_graph=True)
+            
+            if model_output.update_discriminator:
+                self.discriminator_optimizer.zero_grad()
+                discriminator_loss.backward()
 
-                self.encoder_optimizer.step()
+            self.encoder_optimizer.step()
 
-                if model_output.update_decoder:
-                    #print('update dec')
-                    self.decoder_optimizer.step()
+            if model_output.update_decoder:
+                #print('update dec')
+                self.decoder_optimizer.step()
 
-                if model_output.update_discriminator:
-                    #print('update discr')
-                    self.discriminator_optimizer.step()
+            if model_output.update_discriminator:
+                #print('update discr')
+                self.discriminator_optimizer.step()
 
-                loss = encoder_loss + decoder_loss + discriminator_loss
+            loss = encoder_loss + decoder_loss + discriminator_loss
 
-                epoch_encoder_loss += encoder_loss.item()
-                epoch_decoder_loss += decoder_loss.item()
-                epoch_discriminator_loss += discriminator_loss.item()
-                epoch_loss += loss.item()
+            epoch_encoder_loss += encoder_loss.item()
+            epoch_decoder_loss += decoder_loss.item()
+            epoch_discriminator_loss += discriminator_loss.item()
+            epoch_loss += loss.item()
 
-                tepoch.set_postfix(
-                    {
-                        'encoder_loss': epoch_encoder_loss / (i+1),
-                        'decoder_loss': epoch_decoder_loss / (i+1),
-                        'discriminator_loss': epoch_discriminator_loss / (i+1)
-                    }
-                )
+            #tepoch.set_postfix(
+            #    {
+            #        'encoder_loss': epoch_encoder_loss / (i+1),
+            #        'decoder_loss': epoch_decoder_loss / (i+1),
+            #        'discriminator_loss': epoch_discriminator_loss / (i+1)
+            #    }
+            #)
 
-            # Allows model updates if needed
-            self.model.update()
+            self.callback_handler.on_train_step_end(
+                training_config=self.training_config)
 
-            epoch_encoder_loss /= len(self.train_loader)
-            epoch_decoder_loss /= len(self.train_loader)
-            epoch_discriminator_loss /= len(self.train_loader) 
-            epoch_loss /= len(self.train_loader)
+        # Allows model updates if needed
+        self.model.update()
+
+        epoch_encoder_loss /= len(self.train_loader)
+        epoch_decoder_loss /= len(self.train_loader)
+        epoch_discriminator_loss /= len(self.train_loader) 
+        epoch_loss /= len(self.train_loader)
 
         return epoch_loss, epoch_encoder_loss, epoch_decoder_loss, epoch_discriminator_loss
 

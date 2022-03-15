@@ -17,9 +17,9 @@ from ..trainer_utils import set_seed
 from .base_training_config import BaseTrainingConfig
 from ..training_callbacks import (
     TrainingCallback,
-    ProgressBarCallback, 
     CallbackHandler,
-    WandbCallback
+    MetricConsolePrinterCallback,
+    ProgressBarCallback
 )
 
 logger = logging.getLogger(__name__)
@@ -128,6 +128,7 @@ class BaseTrainer:
             callbacks=callbacks, model=model, optimizer=optimizer, scheduler=scheduler)
 
         self.callback_handler.add_callback(ProgressBarCallback())
+        self.callback_handler.add_callback(MetricConsolePrinterCallback())
 
     def get_train_dataloader(
         self, train_dataset: BaseDataset
@@ -298,10 +299,14 @@ class BaseTrainer:
                 eval_loader=self.eval_loader
             )
 
+            metrics = {}
+
             epoch_train_loss = self.train_step(epoch)
+            metrics["train_epoch_loss"] = epoch_train_loss
 
             if self.eval_dataset is not None:
                 epoch_eval_loss = self.eval_step(epoch)
+                metrics["eval_epoch_loss"] = epoch_eval_loss
                 self.scheduler.step(epoch_eval_loss)
 
             else:
@@ -341,35 +346,11 @@ class BaseTrainer:
                 if log_verbose:
                     file_logger.info(f"Saved checkpoint at epoch {epoch}\n")
 
-            if self.eval_dataset is not None:
-                logger.info(
-                    "----------------------------------------------------------------"
-                )
-                logger.info(
-                    f"Epoch {epoch}: Train loss: {np.round(epoch_train_loss, 10)}"
-                )
-                logger.info(
-                    f"Epoch {epoch}: Eval loss: {np.round(epoch_eval_loss, 10)}"
-                )
-                logger.info(
-                    "----------------------------------------------------------------"
-                )
-
-            else:
-                logger.info(
-                    "----------------------------------------------------------------"
-                )
-                logger.info(
-                    f"Epoch {epoch}: Train loss: {np.round(epoch_train_loss, 10)}"
-                )
-                logger.info(
-                    "----------------------------------------------------------------"
-                )
+            self.callback_handler.on_log(self.training_config, metrics, logger=logger)
 
         final_dir = os.path.join(training_dir, "final_model")
 
         self.save_model(best_model, dir_path=final_dir)
-        logger.info("----------------------------------")
         logger.info("Training ended!")
         logger.info(f"Saved final model in {final_dir}")
 
