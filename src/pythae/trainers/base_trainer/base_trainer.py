@@ -326,6 +326,10 @@ class BaseTrainer:
                 best_model = deepcopy(self.model)
                 self._best_model = best_model
 
+            self.callback_handler.on_epoch_end(
+                training_config=self.training_config
+            )
+
             # save checkpoints
             if (
                 self.training_config.steps_saving is not None
@@ -362,10 +366,6 @@ class BaseTrainer:
                     "----------------------------------------------------------------"
                 )
 
-            self.callback_handler.on_epoch_end(
-                training_config=self.training_config
-            )
-
         final_dir = os.path.join(training_dir, "final_model")
 
         self.save_model(best_model, dir_path=final_dir)
@@ -387,7 +387,7 @@ class BaseTrainer:
 
         epoch_loss = 0
 
-        for batch_idx, inputs in enumerate(self.eval_loader):
+        for inputs in self.eval_loader:
 
             self.callback_handler.on_eval_step_begin(
                 training_config=self.training_config, eval_loader=self.eval_loader, epoch=epoch)
@@ -406,7 +406,7 @@ class BaseTrainer:
                 raise ArithmeticError("NaN detected in eval loss")
 
             self.callback_handler.on_eval_step_end(
-                training_config=self.training_config, batch_idx=batch_idx)
+                training_config=self.training_config)
 
         epoch_loss /= len(self.eval_loader)
 
@@ -426,7 +426,7 @@ class BaseTrainer:
 
         epoch_loss = 0
 
-        for batch_idx, inputs in enumerate(self.train_loader):
+        for inputs in self.train_loader:
 
             self.callback_handler.on_train_step_begin(
                 training_config=self.training_config, train_loader=self.train_loader, epoch=epoch)
@@ -450,7 +450,7 @@ class BaseTrainer:
                 raise ArithmeticError("NaN detected in train loss")
 
             self.callback_handler.on_train_step_end(
-                training_config=self.training_config, batch_idx=batch_idx)
+                training_config=self.training_config)
 
         # Allows model updates if needed
         self.model.update()

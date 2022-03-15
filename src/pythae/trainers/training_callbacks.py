@@ -198,13 +198,11 @@ class ProgressBarCallback(TrainingCallback):
         
     def on_train_step_end(self, training_config, **kwargs):
         if self.train_progress_bar is not None:
-            batch_idx = kwargs.pop('batch_idx', None)
-            self.train_progress_bar.update(batch_idx+1)
+            self.train_progress_bar.update(1)
 
     def on_eval_step_end(self, training_config, **kwargs):
         if self.eval_progress_bar is not None:
-            batch_idx = kwargs.pop('batch_idx', None)
-            self.eval_progress_bar.update(batch_idx+1)
+            self.eval_progress_bar.update(1)
         
     def on_epoch_end(self, training_config, **kwags):
         if self.train_progress_bar is not None:
