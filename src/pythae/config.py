@@ -1,6 +1,6 @@
 import json
 import os
-from dataclasses import asdict
+from dataclasses import asdict, field
 from typing import Any, Dict, Union
 
 from pydantic import ValidationError
@@ -11,6 +11,11 @@ from pydantic.dataclasses import dataclass
 class BaseConfig:
     """This is the BaseConfig class which defines all the useful loading and saving methods
     of the configs"""
+
+    name: str = field(init=False)
+
+    def __post_init__(self):
+        self.name = self.__class__.__name__
 
     @classmethod
     def from_dict(cls, config_dict: Dict[str, Any]) -> "BaseConfig":
