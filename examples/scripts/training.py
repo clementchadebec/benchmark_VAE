@@ -69,6 +69,21 @@ ap.add_argument(
     help="path to training config_file (expected json file)",
     default=os.path.join(PATH, "configs/base_training_config.json"),
 )
+ap.add_argument(
+    "--use_wandb",
+    help="whether to log the metrics in wandb",
+    action="store_true",
+)
+ap.add_argument(
+    "--wandb_project",
+    help="wandb project name",
+    default="test-project",
+)
+ap.add_argument(
+    "--wandb_entity",
+    help="wandb entity name",
+    default="benchmark_team",
+)
 
 args = ap.parse_args()
 
@@ -501,9 +516,25 @@ def main(args):
 
     logger.info(f"Training config: {training_config}\n")
 
+    callbacks = []
+
+    if args.use_wandb:
+        from pythae.trainers.training_callbacks import WandbCallback
+
+        wandb_cb = WandbCallback()
+        wandb_cb.setup(
+            training_config,
+            model_config=model_config,
+            project_name=args.wandb_project,
+            entity_name=args.wandb_entity)
+
+        callbacks.append(wandb_cb)
+
+
+
     pipeline = TrainingPipeline(training_config=training_config, model=model)
 
-    pipeline(train_data=train_data, eval_data=eval_data)
+    pipeline(train_data=train_data, eval_data=eval_data, callbacks=callbacks)
 
 
 if __name__ == "__main__":

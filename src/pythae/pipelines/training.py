@@ -1,4 +1,4 @@
-from typing import Optional, Union
+from typing import Optional, Union, List
 
 import logging
 import numpy as np
@@ -9,6 +9,7 @@ from ..customexception import LoadError
 from ..data.preprocessors import DataProcessor
 from ..models import BaseAE, VAE, VAEConfig
 from ..trainers import *
+from..trainers.training_callbacks import TrainingCallback
 
 from .base_pipeline import Pipeline
 
@@ -46,7 +47,7 @@ class TrainingPipeline(Pipeline):
     def __init__(
         self,
         model: Optional[BaseAE]=None,
-        training_config: Optional[BaseTrainingConfig]=None,
+        training_config: Optional[BaseTrainingConfig]=None
     ):
 
         if model is not None:
@@ -117,7 +118,7 @@ class TrainingPipeline(Pipeline):
         self,
         train_data: Union[np.ndarray, torch.Tensor],
         eval_data: Union[np.ndarray, torch.Tensor] = None,
-        log_output_dir: str = None,
+        callbacks: List[TrainingCallback] = None
     ):
         """
         Launch the model training on the provided data.
@@ -130,6 +131,9 @@ class TrainingPipeline(Pipeline):
             eval_data (Optional[Union[~numpy.ndarray, ~torch.Tensor]]): The evaluation data as a 
                 :class:`numpy.ndarray` or :class:`torch.Tensor` of shape (mini_batch x 
                 n_channels x ...). If None, only uses train_fata for training. Default: None.
+
+            callbacks (List[~pythae.trainers.training_callbacks.TrainingCallbacks]):
+                A list of callbacks to use during training.
         """
 
         logger.info("Preprocessing train data...")
@@ -156,7 +160,8 @@ class TrainingPipeline(Pipeline):
                 model=self.model,
                 train_dataset=train_dataset,
                 eval_dataset=eval_dataset,
-                training_config=self.training_config
+                training_config=self.training_config,
+                callbacks=callbacks
             )
 
         elif isinstance(self.training_config, AdversarialTrainerConfig):
@@ -165,7 +170,8 @@ class TrainingPipeline(Pipeline):
                 model=self.model,
                 train_dataset=train_dataset,
                 eval_dataset=eval_dataset,
-                training_config=self.training_config
+                training_config=self.training_config,
+                callbacks=callbacks
             )
 
         elif isinstance(self.training_config, CoupledOptimizerAdversarialTrainerConfig):
@@ -174,7 +180,8 @@ class TrainingPipeline(Pipeline):
                 model=self.model,
                 train_dataset=train_dataset,
                 eval_dataset=eval_dataset,
-                training_config=self.training_config
+                training_config=self.training_config,
+                callbacks=callbacks
             )
 
         elif isinstance(self.training_config, BaseTrainingConfig):
@@ -183,9 +190,10 @@ class TrainingPipeline(Pipeline):
                 model=self.model,
                 train_dataset=train_dataset,
                 eval_dataset=eval_dataset,
-                training_config=self.training_config
+                training_config=self.training_config,
+                callbacks=callbacks
             )
 
         self.trainer = trainer
 
-        trainer.train(log_output_dir=log_output_dir)
+        trainer.train()

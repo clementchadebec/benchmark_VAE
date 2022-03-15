@@ -265,5 +265,43 @@ class WandbCallback(TrainingCallback):
             raise ModuleNotFoundError('`wandb` package must be installed. Run `pip install wandb`')
 
         else:
-            pass
+            import wandb
+            self._wandb = wandb
+
+    def setup(self, training_config, **kwargs):
+        self.is_initialized = True
+        
+        model_config = kwargs.pop("model_config", None)
+        project_name = kwargs.pop("project_name", 'pythae_benchmarking_vae')
+        entity_name = kwargs.pop("entity_name", None)
+    
+        training_config_dict = training_config.to_dict()
+
+        self._wandb.init(
+            project=project_name,
+            entity=entity_name
+        )
+
+        if model_config is not None:
+            model_config_dict = model_config.to_dict()
+            
+            self._wandb.config.update(
+                {
+                "training_config": training_config_dict, "model_config": model_config_dict
+                }
+            )
+
+        else:
+            self._wandb.config.update({**training_config_dict})
+
+    def on_train_begin(self, training_config, **kwargs):
+        model_config = kwargs.pop("model_config", None)
+        if not self.is_initialized:
+           self.setup(training_config, model_config=model_config)
+
+    def on_log(self, training_config, logs, **kwargs):
+        logs = rename_logs(logs)
+
+        self._wandb.log({**logs})
+
 
