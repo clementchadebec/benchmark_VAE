@@ -3,7 +3,7 @@ import torch
 import os
 
 from pythae.trainers.training_callbacks import *
-from pythae.trainers import BaseTrainer, BaseTrainingConfig
+from pythae.trainers import BaseTrainer, BaseTrainerConfig
 from pythae.models import AE, AEConfig
 
 PATH = os.path.dirname(os.path.abspath(__file__))
@@ -43,7 +43,7 @@ class Test_TrainerCallbacks():
         return torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))
     
     
-    @pytest.fixture(params=[BaseTrainingConfig(num_epochs=3)])
+    @pytest.fixture(params=[BaseTrainerConfig(num_epochs=3)])
     def training_configs(self, tmpdir, request):
         tmpdir.mkdir("dummy_folder")
         dir_path = os.path.join(tmpdir, "dummy_folder")

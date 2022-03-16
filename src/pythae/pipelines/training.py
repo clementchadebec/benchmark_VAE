@@ -25,7 +25,7 @@ class TrainingPipeline(Pipeline):
     """
     This Pipeline provides an end to end way to train your VAE model.
     The trained model will be saved in ``output_dir`` stated in the
-    :class:`~pythae.trainers.BaseTrainingConfig`. A folder
+    :class:`~pythae.trainers.BaseTrainerConfig`. A folder
     ``training_YYYY-MM-DD_hh-mm-ss`` is
     created where checkpoints and final model will be saved. Checkpoints are saved in
     ``checkpoint_epoch_{epoch}`` folder (optimizer and training config
@@ -38,16 +38,15 @@ class TrainingPipeline(Pipeline):
         model (Optional[BaseAE]): An instance of :class:`~pythae.models.BaseAE` you want to train.
             If None, a default :class:`~pythae.models.VAE` model is used. Default: None.
 
-        training_config (Optional[BaseTrainingConfig]=None): An instance of
-            :class:`~pythae.trainers.BaseTrainingConfig` stating the training
+        training_config (Optional[BaseTrainerConfig]=None): An instance of
+            :class:`~pythae.trainers.BaseTrainerConfig` stating the training
             parameters. If None, a default configuration is used.
-
     """
 
     def __init__(
         self,
         model: Optional[BaseAE]=None,
-        training_config: Optional[BaseTrainingConfig]=None
+        training_config: Optional[BaseTrainerConfig]=None
     ):
 
         if model is not None:
@@ -65,7 +64,7 @@ class TrainingPipeline(Pipeline):
                     training_config = CoupledOptimizerAdversarialTrainerConfig()
 
                 else:    
-                    training_config = BaseTrainingConfig()
+                    training_config = BaseTrainerConfig()
 
 
             elif model.model_name == 'RAE_L2':
@@ -96,12 +95,12 @@ class TrainingPipeline(Pipeline):
 
             
             if not isinstance(
-                training_config, BaseTrainingConfig):
-                raise AssertionError("A 'BaseTrainingConfig' "
+                training_config, BaseTrainerConfig):
+                raise AssertionError("A 'BaseTrainerConfig' "
                     "is expected for the pipeline")
 
         else:
-            training_config = BaseTrainingConfig()
+            training_config = BaseTrainerConfig()
             
 
 
@@ -184,7 +183,7 @@ class TrainingPipeline(Pipeline):
                 callbacks=callbacks
             )
 
-        elif isinstance(self.training_config, BaseTrainingConfig):
+        elif isinstance(self.training_config, BaseTrainerConfig):
             logger.info("Using Base Trainer\n")
             trainer = BaseTrainer(
                 model=self.model,

@@ -14,7 +14,7 @@ from ...customexception import ModelError
 from ...data.datasets import BaseDataset
 from ...models import BaseAE
 from ..trainer_utils import set_seed
-from .base_training_config import BaseTrainingConfig
+from .base_training_config import BaseTrainerConfig
 from ..training_callbacks import (
     TrainingCallback,
     CallbackHandler,
@@ -34,17 +34,26 @@ class BaseTrainer:
     """Base class to perform model training.
 
     Args:
-        model (BaseAE): The model to train
+        model (BaseAE): A instance of `~pythae.models.BaseAE` to train
 
         train_dataset (BaseDataset): The training dataset of type
             :class:`~pythae.data.dataset.BaseDataset`
 
-        training_config: (BaseTrainingConfig): The training arguments summarizing the main parameters used
-            for training. If None, a basic training instance of :class:`TrainingConfig` is used.
-            Default: None.
+        eval_dataset (BaseDataset): The evaluation dataset of type
+            :class:`~pythae.data.dataset.BaseDataset`
+
+        training_config: (BaseTrainerConfig): The training arguments summarizing the main 
+            parameters used for training. If None, a basic training instance of 
+            :class:`TrainingConfig` is used. Default: None.
 
         optimizer (~torch.optim.Optimizer): An instance of `torch.optim.Optimizer` used for
             training. If None, a :class:`~torch.optim.Adam` optimizer is used. Default: None.
+
+        scheduler (~torch.optim.lr_scheduler): An instance of `torch.optim.Optimizer` used for
+            training. If None, a :class:`~torch.optim.Adam` optimizer is used. Default: None.
+
+        callbacks (List[~pythae.trainers.training_callbacks.TrainingCallbacks]):
+            A list of callbacks to use during training.
     """
 
     def __init__(
@@ -52,14 +61,14 @@ class BaseTrainer:
         model: BaseAE,
         train_dataset: BaseDataset,
         eval_dataset: Optional[BaseDataset] = None,
-        training_config: Optional[BaseTrainingConfig] = None,
+        training_config: Optional[BaseTrainerConfig] = None,
         optimizer: Optional[torch.optim.Optimizer] = None,
         scheduler: Optional = None,
         callbacks: List[TrainingCallback] = None
     ):
 
         if training_config is None:
-            training_config = BaseTrainingConfig()
+            training_config = BaseTrainerConfig()
 
         if training_config.output_dir is None:
             output_dir = "dummy_output_dir"

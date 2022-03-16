@@ -5,6 +5,7 @@ from typing import Any, Dict, Union
 
 from pydantic import ValidationError
 from pydantic.dataclasses import dataclass
+import warnings
 
 
 @dataclass
@@ -62,8 +63,18 @@ class BaseConfig:
         Returns:
             :class:`BaseConfig`: The created instance
             """
-
         config_dict = cls._dict_from_json(json_path)
+
+        config_name = config_dict.pop('name')
+
+        if  cls.__name__ != config_name:
+            warnings.warn(UserWarning(
+                    f"You are trying to load a "
+                    f"`{ cls.__name__}` while a "
+                    f"`{config_name}` is given."
+                )
+            )
+
         return cls.from_dict(config_dict)
 
     def to_dict(self) -> dict:

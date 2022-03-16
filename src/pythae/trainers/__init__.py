@@ -1,7 +1,7 @@
 """ Here are implemented the trainers used to train the Autoencoder models
 """
 
-from .base_trainer import BaseTrainer, BaseTrainingConfig
+from .base_trainer import BaseTrainer, BaseTrainerConfig
 from .coupled_optimizer_trainer import CoupledOptimizerTrainer, CoupledOptimizerTrainerConfig
 from .adversarial_trainer import AdversarialTrainer, AdversarialTrainerConfig
 from .coupled_optimizer_adversarial_trainer import (
@@ -11,7 +11,7 @@ from .coupled_optimizer_adversarial_trainer import (
 
 __all__ = [
     "BaseTrainer",
-    "BaseTrainingConfig",
+    "BaseTrainerConfig",
     "CoupledOptimizerTrainer",
     "CoupledOptimizerTrainerConfig",
     "AdversarialTrainer",

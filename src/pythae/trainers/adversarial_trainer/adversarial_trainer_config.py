@@ -2,11 +2,11 @@ from typing import Union
 
 from pydantic.dataclasses import dataclass
 
-from ..base_trainer import BaseTrainingConfig
+from ..base_trainer import BaseTrainerConfig
 
 
 @dataclass
-class AdversarialTrainerConfig(BaseTrainingConfig):
+class AdversarialTrainerConfig(BaseTrainerConfig):
     """
     AdversarialTrainer config class.
 

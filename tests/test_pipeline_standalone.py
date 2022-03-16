@@ -4,7 +4,7 @@ import torch
 
 from pythae.pipelines import *
 from pythae.models import VAE, VAEConfig
-from pythae.trainers import BaseTrainingConfig
+from pythae.trainers import BaseTrainerConfig
 
 PATH = os.path.dirname(os.path.abspath(__file__))
 
@@ -29,7 +29,7 @@ class Test_Pipeline_Standalone:
 
 
         pipe = TrainingPipeline()
-        assert isinstance(pipe.training_config, BaseTrainingConfig)
+        assert isinstance(pipe.training_config, BaseTrainerConfig)
         
         tmpdir.mkdir("dummy_folder")
         dir_path = os.path.join(tmpdir, "dummy_folder")

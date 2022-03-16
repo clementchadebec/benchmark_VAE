@@ -14,7 +14,7 @@ from ...models.nn import BaseEncoder, BaseDecoder
 from ...models import RHVAE, RHVAEConfig
 from ...models import VAE, VAEConfig
 from .two_stage_sampler_config import TwoStageVAESamplerConfig
-from ...trainers import BaseTrainingConfig
+from ...trainers import BaseTrainerConfig
 from ...pipelines import TrainingPipeline
 
 class SecondEncoder(BaseEncoder):
@@ -137,7 +137,7 @@ class TwoStageVAESampler(BaseSampler):
         self.second_vae.to(self.device)
 
 
-    def fit(self, train_data, eval_data=None, training_config: BaseTrainingConfig=None):
+    def fit(self, train_data, eval_data=None, training_config: BaseTrainerConfig=None):
         """Method to fit the sampler from the training data
 
         Args:
@@ -147,7 +147,7 @@ class TwoStageVAESampler(BaseSampler):
             train_data (torch.Tensor): The train data needed to retreive the evaluation embeddings
                     and fit the mixture in the latent space. Must be of shape n_imgs x im_channels x 
                     ... and in range [0-1]
-            path_to_training_config (BaseTrainingConfig): path to the training config to use to fit 
+            path_to_training_config (BaseTrainerConfig): path to the training config to use to fit 
                 the second VAE. 
         """
 

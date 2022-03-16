@@ -7,7 +7,7 @@ from copy import deepcopy
 
 from pythae.models import VAE, VAEConfig, VAMP, VAMPConfig, AE, AEConfig
 from pythae.samplers import TwoStageVAESampler, TwoStageVAESamplerConfig
-from pythae.trainers import BaseTrainingConfig
+from pythae.trainers import BaseTrainerConfig
 PATH = os.path.dirname(os.path.abspath(__file__))
 
 
@@ -89,7 +89,7 @@ class Test_TwoStageVAESampler_Sampling:
     def training_config(self, tmpdir):
         tmpdir.mkdir("dummy_folder")
         dir_path = os.path.join(tmpdir, "dummy_folder")
-        return BaseTrainingConfig(
+        return BaseTrainerConfig(
             output_dir=dir_path,
             num_epochs=20)
 

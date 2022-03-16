@@ -9,7 +9,7 @@ from pythae.customexception import BadInheritanceError
 from pythae.models.base.base_utils import ModelOutput
 from pythae.models import RAE_L2, RAE_L2_Config
 
-from pythae.trainers import CoupledOptimizerTrainer,CoupledOptimizerTrainerConfig, BaseTrainingConfig
+from pythae.trainers import CoupledOptimizerTrainer,CoupledOptimizerTrainerConfig, BaseTrainerConfig
 from pythae.pipelines import TrainingPipeline
 from tests.data.custom_architectures import (
     Decoder_AE_Conv,
@@ -671,7 +671,7 @@ class Test_RAE_L2_Training:
 
         with pytest.raises(AssertionError):
             pipeline = TrainingPipeline(
-            model=rae, training_config=BaseTrainingConfig()
+            model=rae, training_config=BaseTrainerConfig()
         )
 
         dir_path = training_configs.output_dir

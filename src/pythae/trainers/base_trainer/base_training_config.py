@@ -6,7 +6,7 @@ from ...config import BaseConfig
 
 
 @dataclass
-class BaseTrainingConfig(BaseConfig):
+class BaseTrainerConfig(BaseConfig):
     """
     BaseTrainer config class stating the main training arguments.
 

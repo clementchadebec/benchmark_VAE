@@ -9,7 +9,7 @@ from torch.optim import SGD, Adadelta, Adagrad, Adam, RMSprop
 from pythae.customexception import BadInheritanceError
 from pythae.models.base.base_utils import ModelOutput
 from pythae.models import RHVAE, RHVAEConfig
-from pythae.trainers import BaseTrainer, BaseTrainingConfig
+from pythae.trainers import BaseTrainer, BaseTrainerConfig
 from pythae.pipelines import TrainingPipeline
 from pythae.models.nn.default_architectures import (
     Decoder_AE_MLP,
@@ -447,7 +447,7 @@ class Test_RHVAE_Training:
         return torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))
 
     @pytest.fixture(
-        params=[BaseTrainingConfig(num_epochs=3, steps_saving=2, learning_rate=1e-5)]
+        params=[BaseTrainerConfig(num_epochs=3, steps_saving=2, learning_rate=1e-5)]
     )
     def training_configs(self, tmpdir, request):
         tmpdir.mkdir("dummy_folder")

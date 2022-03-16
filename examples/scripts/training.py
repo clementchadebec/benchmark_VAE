@@ -10,7 +10,7 @@ from pythae.data.preprocessors import DataProcessor
 from pythae.models import RHVAE
 from pythae.models.rhvae import RHVAEConfig
 from pythae.pipelines import TrainingPipeline
-from pythae.trainers import BaseTrainingConfig, CoupledOptimizerTrainerConfig, AdversarialTrainerConfig
+from pythae.trainers import BaseTrainerConfig, CoupledOptimizerTrainerConfig, AdversarialTrainerConfig
 
 logger = logging.getLogger(__name__)
 console = logging.StreamHandler()
@@ -512,7 +512,7 @@ def main(args):
         )
 
     else:
-        training_config = BaseTrainingConfig.from_json_file(args.training_config)
+        training_config = BaseTrainerConfig.from_json_file(args.training_config)
 
     logger.info(f"Training config: {training_config}\n")
 

@@ -1,7 +1,7 @@
 """Training Callbacks for training monitoring (inspired from 
 https://github.com/huggingface/transformers/blob/master/src/transformers/trainer_callback.py)"""
 
-from .base_trainer.base_training_config import BaseTrainingConfig
+from .base_trainer.base_training_config import BaseTrainerConfig
 import importlib
 import numpy as np
 import logging
@@ -32,73 +32,73 @@ class TrainingCallback:
     """
     Base class for creating training callbacks"""
 
-    def on_init_end(self, training_config: BaseTrainingConfig, **kwargs):
+    def on_init_end(self, training_config: BaseTrainerConfig, **kwargs):
         """
         Event called at the end of the initialization of the [`Trainer`].
         """
         pass
 
-    def on_train_begin(self, training_config: BaseTrainingConfig, **kwargs):
+    def on_train_begin(self, training_config: BaseTrainerConfig, **kwargs):
         """
         Event called at the beginning of training.
         """
         pass
 
-    def on_train_end(self, training_config: BaseTrainingConfig, **kwargs):
+    def on_train_end(self, training_config: BaseTrainerConfig, **kwargs):
         """
         Event called at the end of training.
         """
         pass
 
-    def on_epoch_begin(self, training_config: BaseTrainingConfig, **kwargs):
+    def on_epoch_begin(self, training_config: BaseTrainerConfig, **kwargs):
         """
         Event called at the beginning of an epoch.
         """
         pass
 
-    def on_epoch_end(self, training_config: BaseTrainingConfig, **kwargs):
+    def on_epoch_end(self, training_config: BaseTrainerConfig, **kwargs):
         """
         Event called at the end of an epoch.
         """
         pass
 
-    def on_train_step_begin(self, training_config: BaseTrainingConfig, **kwargs):
+    def on_train_step_begin(self, training_config: BaseTrainerConfig, **kwargs):
         """
         Event called at the beginning of a training step.
         """
         pass
 
-    def on_train_step_end(self, training_config: BaseTrainingConfig, **kwargs):
+    def on_train_step_end(self, training_config: BaseTrainerConfig, **kwargs):
         """
         Event called at the end of a training step.
         """
         pass
 
-    def on_eval_step_begin(self, training_config: BaseTrainingConfig, **kwargs):
+    def on_eval_step_begin(self, training_config: BaseTrainerConfig, **kwargs):
         """
         Event called at the beginning of a evaluation step.
         """
         pass
 
-    def on_eval_step_end(self, training_config: BaseTrainingConfig, **kwargs):
+    def on_eval_step_end(self, training_config: BaseTrainerConfig, **kwargs):
         """
         Event called at the end of a evaluation step.
         """
         pass
 
-    def on_evaluate(self, training_config: BaseTrainingConfig, **kwargs):
+    def on_evaluate(self, training_config: BaseTrainerConfig, **kwargs):
         """
         Event called after an evaluation phase.
         """
         pass
 
-    def on_save(self, training_config: BaseTrainingConfig, **kwargs):
+    def on_save(self, training_config: BaseTrainerConfig, **kwargs):
         """
         Event called after a checkpoint save.
         """
         pass
 
-    def on_log(self, training_config: BaseTrainingConfig, logs, **kwargs):
+    def on_log(self, training_config: BaseTrainerConfig, logs, **kwargs):
         """
         Event called after logging the last logs.
         """
@@ -134,43 +134,43 @@ class CallbackHandler:
     def callback_list(self):
         return "\n".join(cb.__class__.__name__ for cb in self.callbacks)
 
-    def on_init_end(self, training_config: BaseTrainingConfig, **kwargs):
+    def on_init_end(self, training_config: BaseTrainerConfig, **kwargs):
         self.call_event("on_init_end", training_config, **kwargs)
 
-    def on_train_step_begin(self, training_config: BaseTrainingConfig, **kwargs):
+    def on_train_step_begin(self, training_config: BaseTrainerConfig, **kwargs):
         self.call_event("on_train_step_begin", training_config, **kwargs)
     
-    def on_train_step_end(self, training_config: BaseTrainingConfig, **kwargs):
+    def on_train_step_end(self, training_config: BaseTrainerConfig, **kwargs):
         self.call_event("on_train_step_end", training_config, **kwargs)
     
-    def on_eval_step_begin(self, training_config: BaseTrainingConfig, **kwargs):
+    def on_eval_step_begin(self, training_config: BaseTrainerConfig, **kwargs):
         self.call_event("on_eval_step_begin", training_config, **kwargs)
     
-    def on_eval_step_end(self, training_config: BaseTrainingConfig, **kwargs):
+    def on_eval_step_end(self, training_config: BaseTrainerConfig, **kwargs):
         self.call_event("on_eval_step_end", training_config, **kwargs)
 
-    def on_train_begin(self, training_config: BaseTrainingConfig, **kwargs):
+    def on_train_begin(self, training_config: BaseTrainerConfig, **kwargs):
         self.call_event("on_train_begin", training_config,**kwargs)
 
-    def on_train_end(self, training_config: BaseTrainingConfig, **kwargs):
+    def on_train_end(self, training_config: BaseTrainerConfig, **kwargs):
         self.call_event("on_train_end", training_config, **kwargs)
 
-    def on_epoch_begin(self, training_config: BaseTrainingConfig, **kwargs):
+    def on_epoch_begin(self, training_config: BaseTrainerConfig, **kwargs):
         self.call_event("on_epoch_begin", training_config,**kwargs)
 
-    def on_epoch_end(self, training_config: BaseTrainingConfig, **kwargs):
+    def on_epoch_end(self, training_config: BaseTrainerConfig, **kwargs):
         self.call_event("on_epoch_end", training_config)
 
-    def on_evaluate(self, training_config: BaseTrainingConfig, **kwargs):
+    def on_evaluate(self, training_config: BaseTrainerConfig, **kwargs):
         self.call_event("on_evaluate", **kwargs)
 
-    def on_save(self, training_config: BaseTrainingConfig, **kwargs):
+    def on_save(self, training_config: BaseTrainerConfig, **kwargs):
         self.call_event("on_save", training_config, **kwargs)
 
-    def on_log(self, training_config: BaseTrainingConfig, logs, **kwargs):
+    def on_log(self, training_config: BaseTrainerConfig, logs, **kwargs):
         self.call_event("on_log", training_config, logs=logs, **kwargs)
 
-    def on_prediction_step(self, training_config: BaseTrainingConfig, **kwargs):
+    def on_prediction_step(self, training_config: BaseTrainerConfig, **kwargs):
         self.call_event("on_prediction_step", training_config, **kwargs)
 
     def call_event(self, event, training_config, **kwargs):

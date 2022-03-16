@@ -10,7 +10,7 @@ from torch.optim import SGD, Adadelta, Adagrad, Adam, RMSprop
 from pythae.customexception import BadInheritanceError
 from pythae.models.base.base_utils import ModelOutput
 from pythae.models import VAEGAN, VAEGANConfig
-from pythae.trainers import CoupledOptimizerAdversarialTrainer, CoupledOptimizerAdversarialTrainerConfig, BaseTrainingConfig
+from pythae.trainers import CoupledOptimizerAdversarialTrainer, CoupledOptimizerAdversarialTrainerConfig, BaseTrainerConfig
 from pythae.pipelines import TrainingPipeline
 from pythae.models.nn.default_architectures import (
     Decoder_AE_MLP,
@@ -852,7 +852,7 @@ class Test_VAEGAN_Training:
 
         with pytest.raises(AssertionError):
             pipeline = TrainingPipeline(
-            model=adversarial_ae, training_config=BaseTrainingConfig()
+            model=adversarial_ae, training_config=BaseTrainerConfig()
         )
 
         dir_path = training_configs.output_dir
