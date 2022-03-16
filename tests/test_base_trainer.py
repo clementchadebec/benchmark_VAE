@@ -377,7 +377,7 @@ class Test_Sanity_Checks:
 
 @pytest.mark.slow
 class Test_Main_Training:
-    @pytest.fixture(params=[BaseTrainerConfig(num_epochs=3)])
+    @pytest.fixture(params=[BaseTrainerConfig(num_epochs=3, steps_saving=2, steps_predict=2)])
     def training_configs(self, tmpdir, request):
         tmpdir.mkdir("dummy_folder")
         dir_path = os.path.join(tmpdir, "dummy_folder")
@@ -483,13 +483,14 @@ class Test_Main_Training:
         )
 
 
-    def test_eval_step(self, ae, train_dataset, training_configs, optimizers):
+    def test_eval_step(self, ae, train_dataset, training_configs, optimizers, schedulers):
         trainer = BaseTrainer(
             model=ae,
             train_dataset=train_dataset,
             eval_dataset=train_dataset,
             training_config=training_configs,
             optimizer=optimizers,
+            scheduler=schedulers
         )
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
@@ -505,6 +506,23 @@ class Test_Main_Training:
                 for key in start_model_state_dict.keys()
             ]
         )
+
+    def test_predict_step(self, ae, train_dataset, training_configs, optimizers, schedulers):
+        trainer = BaseTrainer(
+            model=ae,
+            train_dataset=train_dataset,
+            eval_dataset=train_dataset,
+            training_config=training_configs,
+            optimizer=optimizers,
+            scheduler=schedulers
+        )
+
+        start_model_state_dict = deepcopy(trainer.model.state_dict())
+
+        true_data, recon, gene = trainer.predict(trainer.model, train_dataset.data)
+
+        assert true_data.reshape(3, -1).shape == recon.reshape(3, -1).shape
+        assert gene.reshape(10, -1).shape[1:] == true_data.reshape(3, -1).shape[1:]
 
     def test_main_train_loop(
         self, tmpdir, ae, train_dataset, training_configs, optimizers, schedulers

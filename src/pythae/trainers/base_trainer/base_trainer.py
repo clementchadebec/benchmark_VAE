@@ -340,6 +340,22 @@ class BaseTrainer:
                 best_model = deepcopy(self.model)
                 self._best_model = best_model
 
+            if (
+                self.training_config.steps_predict is not None
+                and epoch % self.training_config.steps_predict == 0
+            ):
+                
+                true_data, reconstructions, generations = self.predict(
+                    best_model, self.eval_loader.dataset.data[:10]
+                )
+                
+                self.callback_handler.on_prediction_step(
+                    self.training_config,
+                    true_data=true_data,
+                    reconstructions=reconstructions,
+                    generations=generations
+                )
+
             self.callback_handler.on_epoch_end(
                 training_config=self.training_config
             )
@@ -495,3 +511,20 @@ class BaseTrainer:
 
         # save training config
         self.training_config.save_json(checkpoint_dir, "training_config")
+
+
+    def predict(self, model: BaseAE, eval_data: torch.Tensor):
+
+        model.eval()
+
+        with torch.no_grad():
+            true_data = eval_data
+            z = torch.randn(10, model.latent_dim)
+            if self.device == 'cuda':
+                true_data = true_data.cuda()
+                z = z.cuda()
+
+            reconstructions = model.decoder(model.encoder(eval_data).embedding).reconstruction.cpu()
+            normal_generation = model.decoder(z).reconstruction.detach().cpu()
+
+        return true_data, reconstructions, normal_generation

@@ -92,6 +92,12 @@ class TrainingCallback:
         """
         pass
 
+    def on_prediction_step(self, training_config: BaseTrainerConfig, **kwargs):
+        """
+        Event called after a prediction phase.
+        """
+        pass
+
     def on_save(self, training_config: BaseTrainerConfig, **kwargs):
         """
         Event called after a checkpoint save.
@@ -304,4 +310,29 @@ class WandbCallback(TrainingCallback):
 
         self._wandb.log({**logs})
 
+    def on_prediction_step(self, training_config, **kwargs):
+
+        column_names = ['images_id', 'truth', 'recontruction', 'normal_generation']
+
+        true_data = kwargs.pop('true_data', None)
+        reconstructions = kwargs.pop('reconstructions', None)
+        generations = kwargs.pop('generations', None)
+
+        data_to_log = []
+
+        if true_data is not None and reconstructions is not None and generations is not None:
+            for i in range(len(true_data)):
+
+                data_to_log.append(
+                    [
+                        f'img_{i}',
+                        self._wandb.Image(true_data[i].cpu().detach().numpy()),
+                        self._wandb.Image(reconstructions[i].cpu().detach().numpy()),
+                        self._wandb.Image(generations[i].cpu().detach().numpy())
+                    ]
+                )
+
+            val_table = self._wandb.Table(data=data_to_log, columns=column_names)
+
+            self._wandb.log({'my_val_table': val_table})
 
