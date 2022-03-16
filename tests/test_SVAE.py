@@ -261,9 +261,7 @@ class Test_Model_forward:
         data = torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))[
             :
         ]
-        return (
-            data
-        )  # This is an extract of 3 data from MNIST (unnormalized) used to test custom architecture
+        return data  # This is an extract of 3 data from MNIST (unnormalized) used to test custom architecture
 
     @pytest.fixture
     def svae(self, model_configs, demo_data):
@@ -325,9 +323,7 @@ class Test_SVAE_Training:
             model = SVAE(model_configs, decoder=custom_decoder)
 
         else:
-            model = SVAE(
-                model_configs, encoder=custom_encoder, decoder=custom_decoder
-            )
+            model = SVAE(model_configs, encoder=custom_encoder, decoder=custom_decoder)
 
         return model
 
@@ -343,9 +339,7 @@ class Test_SVAE_Training:
 
         return optimizer
 
-    def test_svae_train_step(
-        self, svae, train_dataset, training_configs, optimizers
-    ):
+    def test_svae_train_step(self, svae, train_dataset, training_configs, optimizers):
         trainer = BaseTrainer(
             model=svae,
             train_dataset=train_dataset,
@@ -367,9 +361,7 @@ class Test_SVAE_Training:
             ]
         )
 
-    def test_svae_eval_step(
-        self, svae, train_dataset, training_configs, optimizers
-    ):
+    def test_svae_eval_step(self, svae, train_dataset, training_configs, optimizers):
         trainer = BaseTrainer(
             model=svae,
             train_dataset=train_dataset,
@@ -641,9 +633,7 @@ class Test_SVAE_Training:
         dir_path = training_configs.output_dir
 
         # build pipeline
-        pipeline = TrainingPipeline(
-            model=svae, training_config=training_configs
-        )
+        pipeline = TrainingPipeline(model=svae, training_config=training_configs)
 
         assert pipeline.training_config.__dict__ == training_configs.__dict__
 

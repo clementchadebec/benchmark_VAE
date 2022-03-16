@@ -14,27 +14,26 @@ and named likewise the model. The following modules can be found in this folder:
 - *modelname_utils.py* (optional): A module where utils methods are stored.
 """
 
-from .base import BaseAE, BaseAEConfig
-from .ae import AE, AEConfig
-from .wae_mmd import WAE_MMD, WAE_MMD_Config
-from .vae import VAE, VAEConfig
-from .beta_vae import BetaVAE, BetaVAEConfig
-from .factor_vae import FactorVAE, FactorVAEConfig
-from .vamp import VAMP, VAMPConfig
-from .hvae import HVAE, HVAEConfig
-from .rhvae import RHVAE, RHVAEConfig
-from .rae_l2 import RAE_L2, RAE_L2_Config
-from .rae_gp import RAE_GP, RAE_GP_Config
-from .iwae import IWAE, IWAEConfig
-from .info_vae import INFOVAE_MMD, INFOVAE_MMD_Config
-from .vq_vae import VQVAE, VQVAEConfig
 from .adversarial_ae import Adversarial_AE, Adversarial_AE_Config
-from .vae_gan import VAEGAN, VAEGANConfig
-from .disentangled_beta_vae import DisentangledBetaVAE, DisentangledBetaVAEConfig
+from .ae import AE, AEConfig
+from .base import BaseAE, BaseAEConfig
 from .beta_tc_vae import BetaTCVAE, BetaTCVAEConfig
+from .beta_vae import BetaVAE, BetaVAEConfig
+from .disentangled_beta_vae import DisentangledBetaVAE, DisentangledBetaVAEConfig
+from .factor_vae import FactorVAE, FactorVAEConfig
+from .hvae import HVAE, HVAEConfig
+from .info_vae import INFOVAE_MMD, INFOVAE_MMD_Config
+from .iwae import IWAE, IWAEConfig
 from .msssim_vae import MSSSIM_VAE, MSSSIM_VAEConfig
+from .rae_gp import RAE_GP, RAE_GP_Config
+from .rae_l2 import RAE_L2, RAE_L2_Config
+from .rhvae import RHVAE, RHVAEConfig
 from .svae import SVAE, SVAEConfig
-
+from .vae import VAE, VAEConfig
+from .vae_gan import VAEGAN, VAEGANConfig
+from .vamp import VAMP, VAMPConfig
+from .vq_vae import VQVAE, VQVAEConfig
+from .wae_mmd import WAE_MMD, WAE_MMD_Config
 
 __all__ = [
     "BaseAE",
@@ -59,7 +58,7 @@ __all__ = [
     "RAE_GP_Config",
     "IWAE",
     "IWAEConfig",
-    "INFOVAE_MMD", 
+    "INFOVAE_MMD",
     "INFOVAE_MMD_Config",
     "VQVAE",
     "VQVAEConfig",
@@ -69,7 +68,7 @@ __all__ = [
     "VAEGANConfig",
     "MSSSIM_VAE",
     "MSSSIM_VAEConfig",
-    "SVAE", 
+    "SVAE",
     "SVAEConfig",
     "DisentangledBetaVAE",
     "DisentangledBetaVAEConfig",

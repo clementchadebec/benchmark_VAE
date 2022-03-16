@@ -13,6 +13,11 @@ Available models:
 """
 
 from .coupled_optimizer_adversarial_trainer import CoupledOptimizerAdversarialTrainer
-from .coupled_optimizer_adversarial_trainer_config import CoupledOptimizerAdversarialTrainerConfig
+from .coupled_optimizer_adversarial_trainer_config import (
+    CoupledOptimizerAdversarialTrainerConfig,
+)
 
-__all__ = ["CoupledOptimizerAdversarialTrainer", "CoupledOptimizerAdversarialTrainerConfig"]
+__all__ = [
+    "CoupledOptimizerAdversarialTrainer",
+    "CoupledOptimizerAdversarialTrainerConfig",
+]

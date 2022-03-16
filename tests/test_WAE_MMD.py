@@ -263,9 +263,7 @@ class Test_Model_forward:
         data = torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))[
             :
         ]
-        return (
-            data
-        )  # This is an extract of 3 data from MNIST (unnormalized) used to test custom architecture
+        return data  # This is an extract of 3 data from MNIST (unnormalized) used to test custom architecture
 
     @pytest.fixture
     def wae(self, model_configs, demo_data):
@@ -632,16 +630,12 @@ class Test_WAE_MMD_Training:
         assert type(model_rec.encoder.cpu()) == type(model.encoder.cpu())
         assert type(model_rec.decoder.cpu()) == type(model.decoder.cpu())
 
-    def test_wae_training_pipeline(
-        self, tmpdir, wae, train_dataset, training_configs
-    ):
+    def test_wae_training_pipeline(self, tmpdir, wae, train_dataset, training_configs):
 
         dir_path = training_configs.output_dir
 
         # build pipeline
-        pipeline = TrainingPipeline(
-            model=wae, training_config=training_configs
-        )
+        pipeline = TrainingPipeline(model=wae, training_config=training_configs)
 
         assert pipeline.training_config.__dict__ == training_configs.__dict__
 

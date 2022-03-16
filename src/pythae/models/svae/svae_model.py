@@ -1,27 +1,26 @@
-import torch
-import torch.distributions as dist
 import os
-import numpy as np
-
-from ...models import VAE
-from .svae_config import SVAEConfig
-from .svae_utils import ive
-from ...data.datasets import BaseDataset
-from ..base.base_utils import ModelOutput
-from ..nn import BaseEncoder, BaseDecoder
-from ..nn.default_architectures import Encoder_SVAE_MLP
-
 from typing import Optional, Union
 
+import numpy as np
+import torch
+import torch.distributions as dist
 import torch.nn.functional as F
+
+from ...data.datasets import BaseDataset
+from ...models import VAE
+from ..base.base_utils import ModelOutput
+from ..nn import BaseDecoder, BaseEncoder
+from ..nn.default_architectures import Encoder_SVAE_MLP
+from .svae_config import SVAEConfig
+from .svae_utils import ive
 
 
 class SVAE(VAE):
     r"""
     :math:`\mathcal{S}`-VAE model.
-    
+
     Args:
-        model_config(SVAEConfig): The Variational Autoencoder configuration seting the main 
+        model_config(SVAEConfig): The Variational Autoencoder configuration seting the main
         parameters of the model
 
         encoder (BaseEncoder): An instance of BaseEncoder (inheriting from `torch.nn.Module` which
@@ -66,7 +65,7 @@ class SVAE(VAE):
             self.model_config.uses_default_encoder = False
 
         self.set_encoder(encoder)
-        
+
     def forward(self, inputs: BaseDataset, **kwargs):
         """
         The VAE model
@@ -83,7 +82,10 @@ class SVAE(VAE):
 
         encoder_output = self.encoder(x)
 
-        loc, log_concentration = encoder_output.embedding, encoder_output.log_concentration
+        loc, log_concentration = (
+            encoder_output.embedding,
+            encoder_output.log_concentration,
+        )
 
         # normalize mean
         loc = loc / loc.norm(dim=-1, keepdim=True)
@@ -111,7 +113,7 @@ class SVAE(VAE):
             recon_loss = F.mse_loss(
                 recon_x.reshape(x.shape[0], -1),
                 x.reshape(x.shape[0], -1),
-                reduction='none'
+                reduction="none",
             ).sum(dim=-1)
 
         elif self.model_config.reconstruction_loss == "bce":
@@ -119,8 +121,7 @@ class SVAE(VAE):
             recon_loss = F.binary_cross_entropy(
                 recon_x.reshape(x.shape[0], -1),
                 x.reshape(x.shape[0], -1),
-                reduction='none'
-
+                reduction="none",
             ).sum(dim=-1)
 
         KLD = self._compute_kl(m=loc.shape[-1], concentration=concentration)
@@ -129,19 +130,21 @@ class SVAE(VAE):
 
     def _compute_kl(self, m, concentration):
         term1 = concentration * (
-            ive(m /2, concentration) / (ive(m / 2 - 1, concentration))
-        ) # good
+            ive(m / 2, concentration) / (ive(m / 2 - 1, concentration))
+        )  # good
 
         term2 = (
-            (m / 2 - 1) * concentration.log() - torch.tensor([2 * np.pi]).to(
-                concentration.device
-                ).log() * \
-            (m / 2) - (ive(m / 2 - 1, concentration)).log() - concentration
-        )# good
+            (m / 2 - 1) * concentration.log()
+            - torch.tensor([2 * np.pi]).to(concentration.device).log() * (m / 2)
+            - (ive(m / 2 - 1, concentration)).log()
+            - concentration
+        )  # good
 
-        term3 = -torch.lgamma(torch.tensor([m / 2]).to(concentration.device)) + \
-            torch.tensor([2]).to(concentration.device).log() + \
-            torch.tensor([np.pi]).to(concentration.device).log() * (m / 2) # good
+        term3 = (
+            -torch.lgamma(torch.tensor([m / 2]).to(concentration.device))
+            + torch.tensor([2]).to(concentration.device).log()
+            + torch.tensor([np.pi]).to(concentration.device).log() * (m / 2)
+        )  # good
 
         return (term1 + term2 + term3).squeeze(-1)
 
@@ -154,17 +157,14 @@ class SVAE(VAE):
     def _sample_von_mises(self, loc, concentration):
 
         # Generate uniformly on sphere
-        v = torch.randn_like(
-            loc[:, 1:]
-        )
+        v = torch.randn_like(loc[:, 1:])
         v = v / v.norm(dim=-1, keepdim=True)
 
         w = self._acc_rej_steps(m=loc.shape[-1], k=concentration)
 
-        z = torch.cat((w, (1 - w ** 2).sqrt() * v), dim=-1)
+        z = torch.cat((w, (1 - w**2).sqrt() * v), dim=-1)
 
         return self._householder_rotation(loc, z)
-
 
     def _householder_rotation(self, loc, z):
         e1 = torch.zeros(z.shape[-1]).to(z.device)
@@ -174,17 +174,15 @@ class SVAE(VAE):
 
         return z - 2 * u * (u * z).sum(dim=-1, keepdim=True)
 
-
-    
-    def _acc_rej_steps(self, m: int, k: torch.Tensor, device:str='cpu'):
+    def _acc_rej_steps(self, m: int, k: torch.Tensor, device: str = "cpu"):
 
         batch_size = k.shape[0]
 
-        c =  torch.sqrt(4 * k ** 2 + (m - 1) ** 2)
+        c = torch.sqrt(4 * k**2 + (m - 1) ** 2)
 
         b = (-2 * k + c) / (m - 1)
         a = (m - 1 + 2 * k + c) / 4
-        d = (4 * a * b) /  (1 + b) - (m - 1) * np.log(m - 1)
+        d = (4 * a * b) / (1 + b) - (m - 1) * np.log(m - 1)
 
         d.to(k.device)
         b.to(k.device)
@@ -198,18 +196,22 @@ class SVAE(VAE):
         while stopping_mask.sum() > 0:
 
             i += 1
-            
-            eps = dist.Beta(
-                torch.tensor(0.5 * (m - 1)).type(torch.float),
-                torch.tensor(0.5 * (m - 1)).type(torch.float)
-            ).sample((batch_size,1)).to(k.device)
+
+            eps = (
+                dist.Beta(
+                    torch.tensor(0.5 * (m - 1)).type(torch.float),
+                    torch.tensor(0.5 * (m - 1)).type(torch.float),
+                )
+                .sample((batch_size, 1))
+                .to(k.device)
+            )
 
             w_ = (1 - (1 + b) * eps) / (1 - (1 - b) * eps)
 
-            t = 2 * a * b / (1 - (1 -b) * eps)
+            t = 2 * a * b / (1 - (1 - b) * eps)
 
-            u =   dist.Uniform(0, 1).sample((batch_size,1)).to(k.device)
-            
+            u = dist.Uniform(0, 1).sample((batch_size, 1)).to(k.device)
+
             acc = (m - 1) * t.log() - t + d > u.log()
             w[acc * stopping_mask] = w_[acc * stopping_mask]
 
@@ -245,7 +247,7 @@ class SVAE(VAE):
             - | a ``model_config.json`` and a ``model.pt`` if no custom architectures were provided
 
             **or**
-                
+
             - | a ``model_config.json``, a ``model.pt`` and a ``encoder.pkl`` (resp.
                 ``decoder.pkl``) if a custom encoder (resp. decoder) was provided
         """

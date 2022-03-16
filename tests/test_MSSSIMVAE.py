@@ -20,14 +20,18 @@ from tests.data.custom_architectures import (
 PATH = os.path.dirname(os.path.abspath(__file__))
 
 
-@pytest.fixture(params=[MSSSIM_VAEConfig(), MSSSIM_VAEConfig(latent_dim=5, beta=5.0, window_size=5)])
+@pytest.fixture(
+    params=[MSSSIM_VAEConfig(), MSSSIM_VAEConfig(latent_dim=5, beta=5.0, window_size=5)]
+)
 def model_configs_no_input_dim(request):
     return request.param
 
 
 @pytest.fixture(
     params=[
-        MSSSIM_VAEConfig(input_dim=(1, 28, 28), latent_dim=10, reconstruction_loss="bce"),
+        MSSSIM_VAEConfig(
+            input_dim=(1, 28, 28), latent_dim=10, reconstruction_loss="bce"
+        ),
         MSSSIM_VAEConfig(input_dim=(1, 28), latent_dim=5, beta=5.2),
     ]
 )
@@ -84,7 +88,9 @@ class Test_Model_Building:
 
     def test_build_custom_arch(self, model_configs, custom_encoder, custom_decoder):
 
-        model = MSSSIM_VAE(model_configs, encoder=custom_encoder, decoder=custom_decoder)
+        model = MSSSIM_VAE(
+            model_configs, encoder=custom_encoder, decoder=custom_decoder
+        )
 
         assert model.encoder == custom_encoder
         assert not model.model_config.uses_default_encoder
@@ -194,7 +200,9 @@ class Test_Model_Saving:
         tmpdir.mkdir("dummy_folder")
         dir_path = dir_path = os.path.join(tmpdir, "dummy_folder")
 
-        model = MSSSIM_VAE(model_configs, encoder=custom_encoder, decoder=custom_decoder)
+        model = MSSSIM_VAE(
+            model_configs, encoder=custom_encoder, decoder=custom_decoder
+        )
 
         model.state_dict()["encoder.layers.0.0.weight"][0] = 0
 
@@ -224,7 +232,9 @@ class Test_Model_Saving:
         tmpdir.mkdir("dummy_folder")
         dir_path = dir_path = os.path.join(tmpdir, "dummy_folder")
 
-        model = MSSSIM_VAE(model_configs, encoder=custom_encoder, decoder=custom_decoder)
+        model = MSSSIM_VAE(
+            model_configs, encoder=custom_encoder, decoder=custom_decoder
+        )
 
         model.state_dict()["encoder.layers.0.0.weight"][0] = 0
 
@@ -261,9 +271,7 @@ class Test_Model_forward:
         data = torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))[
             :
         ]
-        return (
-            data
-        )  # This is an extract of 3 data from MNIST (unnormalized) used to test custom architecture
+        return data  # This is an extract of 3 data from MNIST (unnormalized) used to test custom architecture
 
     @pytest.fixture
     def msssim_vae(self, model_configs, demo_data):
@@ -641,9 +649,7 @@ class Test_MSSSIM_VAE_Training:
         dir_path = training_configs.output_dir
 
         # build pipeline
-        pipeline = TrainingPipeline(
-            model=msssim_vae, training_config=training_configs
-        )
+        pipeline = TrainingPipeline(model=msssim_vae, training_config=training_configs)
 
         assert pipeline.training_config.__dict__ == training_configs.__dict__
 

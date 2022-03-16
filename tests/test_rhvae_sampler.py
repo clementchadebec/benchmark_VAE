@@ -29,7 +29,7 @@ def model(request):
 @pytest.fixture(
     params=[
         RHVAESamplerConfig(n_lf=1, mcmc_steps_nbr=2, eps_lf=0.00001),
-        RHVAESamplerConfig(n_lf=3, mcmc_steps_nbr=1, eps_lf=0.001)
+        RHVAESamplerConfig(n_lf=3, mcmc_steps_nbr=1, eps_lf=0.001),
     ]
 )
 def sampler_config(request):

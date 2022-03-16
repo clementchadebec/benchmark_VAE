@@ -26,7 +26,7 @@ from tests.data.custom_architectures import (
 
 PATH = os.path.dirname(os.path.abspath(__file__))
 
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
+device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
 @pytest.fixture(params=[RHVAEConfig(), RHVAEConfig(latent_dim=5)])
@@ -36,8 +36,10 @@ def model_configs_no_input_dim(request):
 
 @pytest.fixture(
     params=[
-        RHVAEConfig(input_dim=(1, 28, 28), latent_dim=1, n_lf=1, reconstruction_loss="bce"),
-        RHVAEConfig(input_dim=(1, 2, 18), latent_dim=2, n_lf=1)
+        RHVAEConfig(
+            input_dim=(1, 28, 28), latent_dim=1, n_lf=1, reconstruction_loss="bce"
+        ),
+        RHVAEConfig(input_dim=(1, 2, 18), latent_dim=2, n_lf=1),
     ]
 )
 def model_configs(request):
@@ -319,8 +321,16 @@ class Test_Model_Saving:
 
         z = torch.randn(2, model_configs.latent_dim).to(device)
 
-        assert model_rec.G(z).shape == (2, model_configs.latent_dim, model_configs.latent_dim)
-        assert model_rec.G_inv(z).shape == (2, model_configs.latent_dim, model_configs.latent_dim)
+        assert model_rec.G(z).shape == (
+            2,
+            model_configs.latent_dim,
+            model_configs.latent_dim,
+        )
+        assert model_rec.G_inv(z).shape == (
+            2,
+            model_configs.latent_dim,
+            model_configs.latent_dim,
+        )
 
     def test_raises_missing_files(
         self, tmpdir, model_configs, custom_encoder, custom_decoder, custom_metric
@@ -377,9 +387,7 @@ class Test_Model_forward:
         data = torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))[
             :
         ]
-        return (
-            data
-        )  # This is an extract of 3 data from MNIST (unnormalized) used to test custom architecture
+        return data  # This is an extract of 3 data from MNIST (unnormalized) used to test custom architecture
 
     @pytest.fixture
     def rhvae(self, model_configs, demo_data):
@@ -455,13 +463,7 @@ class Test_RHVAE_Training:
         request.param.output_dir = dir_path
         return request.param
 
-    @pytest.fixture(
-        params=[
-            torch.rand(1),
-            torch.rand(1),
-            torch.rand(1)
-        ]
-    )
+    @pytest.fixture(params=[torch.rand(1), torch.rand(1), torch.rand(1)])
     def rhvae(
         self, model_configs, custom_encoder, custom_decoder, custom_metric, request
     ):
@@ -837,9 +839,7 @@ class Test_RHVAE_Training:
         dir_path = training_configs.output_dir
 
         # build pipeline
-        pipeline = TrainingPipeline(
-            model=rhvae, training_config=training_configs
-        )
+        pipeline = TrainingPipeline(model=rhvae, training_config=training_configs)
 
         assert pipeline.training_config.__dict__ == training_configs.__dict__
 

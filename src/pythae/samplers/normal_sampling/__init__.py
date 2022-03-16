@@ -21,7 +21,7 @@ Available models:
     :nosignatures:
 """
 
-from .normal_sampler import NormalSampler
 from .normal_config import NormalSamplerConfig
+from .normal_sampler import NormalSampler
 
 __all__ = ["NormalSampler", "NormalSamplerConfig"]

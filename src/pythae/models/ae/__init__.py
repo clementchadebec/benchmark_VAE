@@ -10,7 +10,7 @@ Available samplers
 
 """
 
-from .ae_model import AE
 from .ae_config import AEConfig
+from .ae_model import AE
 
 __all__ = ["AE", "AEConfig"]

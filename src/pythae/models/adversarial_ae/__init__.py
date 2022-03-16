@@ -14,7 +14,7 @@ Available samplers
 
 """
 
-from .adversarial_ae_model import Adversarial_AE
 from .adversarial_ae_config import Adversarial_AE_Config
+from .adversarial_ae_model import Adversarial_AE
 
 __all__ = ["Adversarial_AE", "Adversarial_AE_Config"]

@@ -10,7 +10,7 @@ Available samplers
     :nosignatures:
 """
 
-from .rae_l2_model import RAE_L2
 from .rae_l2_config import RAE_L2_Config
+from .rae_l2_model import RAE_L2
 
 __all__ = ["RAE_L2", "RAE_L2_Config"]

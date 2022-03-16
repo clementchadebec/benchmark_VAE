@@ -1,98 +1,97 @@
 import datetime
 import logging
 import os
+import shutil
 
 import torch
 import torch.nn as nn
-import shutil
+from torch.utils.data import DataLoader
 
 from ...data.preprocessors import DataProcessor
-from torch.utils.data import DataLoader
-from ..base.base_sampler import BaseSampler
+from ...models import RHVAE, VAE, RHVAEConfig, VAEConfig
 from ...models.base.base_utils import ModelOutput
-from ...models.nn import BaseEncoder, BaseDecoder
-from ...models import RHVAE, RHVAEConfig
-from ...models import VAE, VAEConfig
-from .two_stage_sampler_config import TwoStageVAESamplerConfig
-from ...trainers import BaseTrainerConfig
+from ...models.nn import BaseDecoder, BaseEncoder
 from ...pipelines import TrainingPipeline
+from ...trainers import BaseTrainerConfig
+from ..base.base_sampler import BaseSampler
+from .two_stage_sampler_config import TwoStageVAESamplerConfig
+
 
 class SecondEncoder(BaseEncoder):
+    def __init__(self, model: VAE, sampler_config: TwoStageVAESamplerConfig):
 
-            def __init__(self, model: VAE, sampler_config: TwoStageVAESamplerConfig):
+        BaseEncoder.__init__(self)
 
-                BaseEncoder.__init__(self)
-            
-                layers = []
+        layers = []
 
-                layers.append(
-                    nn.Sequential(
-                        nn.Linear(model.latent_dim, sampler_config.second_layers_dim),
-                        nn.ReLU()
-                    )
+        layers.append(
+            nn.Sequential(
+                nn.Linear(model.latent_dim, sampler_config.second_layers_dim), nn.ReLU()
+            )
+        )
+
+        for i in range(sampler_config.second_stage_depth - 1):
+            layers.append(
+                nn.Sequential(
+                    nn.Linear(
+                        sampler_config.second_layers_dim,
+                        sampler_config.second_layers_dim,
+                    ),
+                    nn.ReLU(),
                 )
+            )
 
-                for i in range(sampler_config.second_stage_depth-1):
-                    layers.append(nn.Sequential(
-                        nn.Linear(
-                            sampler_config.second_layers_dim, sampler_config.second_layers_dim),
-                        nn.ReLU()
-                    )
-                    )
+        self.layers = nn.Sequential(*layers)
+        self.mu = nn.Linear(sampler_config.second_layers_dim, model.latent_dim)
+        self.std = nn.Linear(sampler_config.second_layers_dim, model.latent_dim)
 
-                self.layers = nn.Sequential(*layers)
-                self.mu = nn.Linear(sampler_config.second_layers_dim, model.latent_dim)
-                self.std = nn.Linear(sampler_config.second_layers_dim, model.latent_dim)
+    def forward(self, z: torch.Tensor):
+        out = self.layers(z)
 
-            def forward(self, z:torch.Tensor):
-                out = self.layers(z)
+        output = ModelOutput(embedding=self.mu(out), log_covariance=self.std(out))
 
-                output = ModelOutput(
-                    embedding=self.mu(out),
-                    log_covariance=self.std(out)
-                )
+        return output
 
-                return output
 
 class SecondDecoder(BaseDecoder):
+    def __init__(self, model: VAE, sampler_config: TwoStageVAESamplerConfig):
 
-            def __init__(self, model: VAE, sampler_config: TwoStageVAESamplerConfig):
+        BaseDecoder.__init__(self)
 
-                BaseDecoder.__init__(self)
+        self.gamma_z = nn.Parameter(torch.ones(1, 1), requires_grad=True)
 
-                self.gamma_z = nn.Parameter(torch.ones(1, 1), requires_grad=True)
-            
-                layers = []
+        layers = []
 
-                layers.append(
-                    nn.Sequential(
-                        nn.Linear(model.latent_dim, sampler_config.second_layers_dim),
-                        nn.ReLU()
-                    )
+        layers.append(
+            nn.Sequential(
+                nn.Linear(model.latent_dim, sampler_config.second_layers_dim), nn.ReLU()
+            )
+        )
+
+        for i in range(sampler_config.second_stage_depth - 1):
+            layers.append(
+                nn.Sequential(
+                    nn.Linear(
+                        sampler_config.second_layers_dim,
+                        sampler_config.second_layers_dim,
+                    ),
+                    nn.ReLU(),
                 )
+            )
 
-                for i in range(sampler_config.second_stage_depth-1):
-                    layers.append(nn.Sequential(
-                        nn.Linear(
-                            sampler_config.second_layers_dim, sampler_config.second_layers_dim),
-                        nn.ReLU())
-                    )
+        self.layers = nn.Sequential(*layers)
+        self.reconstruction = nn.Linear(
+            sampler_config.second_layers_dim, model.latent_dim
+        )
 
-                self.layers = nn.Sequential(*layers)
-                self.reconstruction = nn.Linear(sampler_config.second_layers_dim, model.latent_dim)
-                
+    def forward(self, u: torch.Tensor):
+        out = self.layers(u)
 
-            def forward(self, u:torch.Tensor):
-                out = self.layers(u)
+        z = self.reconstruction(out)
 
-                z = self.reconstruction(out)
+        output = ModelOutput(reconstruction=z + self.gamma_z * torch.randn_like(z))
 
-                output = ModelOutput(
-                    reconstruction= z + self.gamma_z * torch.randn_like(z)
-                )
-
-                return output
-
+        return output
 
 
 class TwoStageVAESampler(BaseSampler):
@@ -100,20 +99,22 @@ class TwoStageVAESampler(BaseSampler):
 
     Args:
         model (VAE): The VAE model to sample from
-        sampler_config (TwoStageVAESamplerConfig): A TwoStageVAESamplerConfig instance containing 
-            the main parameters of the sampler. If None, a pre-defined configuration is used. 
+        sampler_config (TwoStageVAESamplerConfig): A TwoStageVAESamplerConfig instance containing
+            the main parameters of the sampler. If None, a pre-defined configuration is used.
             Default: None
 
     .. note::
 
-        The method :class:`~pythae.samplers.TwoStageVAESampler.fit` must be called to fit the 
+        The method :class:`~pythae.samplers.TwoStageVAESampler.fit` must be called to fit the
         sampler before sampling.
     """
 
     def __init__(self, model: VAE, sampler_config: TwoStageVAESamplerConfig = None):
 
-        assert issubclass(model.__class__, VAE), ("The TwoStageVAESampler is only" 
-            f"applicable for VAE based models. Got {model.__class__}.")
+        assert issubclass(model.__class__, VAE), (
+            "The TwoStageVAESampler is only"
+            f"applicable for VAE based models. Got {model.__class__}."
+        )
 
         self.is_fitted = False
 
@@ -124,31 +125,33 @@ class TwoStageVAESampler(BaseSampler):
 
         second_vae_config = VAEConfig(
             latent_dim=model.model_config.latent_dim,
-            reconstruction_loss=sampler_config.reconstruction_loss
+            reconstruction_loss=sampler_config.reconstruction_loss,
         )
 
         self.second_vae = VAE(
             model_config=second_vae_config,
             encoder=SecondEncoder(model, sampler_config),
-            decoder=SecondDecoder(model, sampler_config))
+            decoder=SecondDecoder(model, sampler_config),
+        )
 
         self.second_vae.model_name = "Second_Stage_VAE"
 
         self.second_vae.to(self.device)
 
-
-    def fit(self, train_data, eval_data=None, training_config: BaseTrainerConfig=None):
+    def fit(
+        self, train_data, eval_data=None, training_config: BaseTrainerConfig = None
+    ):
         """Method to fit the sampler from the training data
 
         Args:
             train_data (torch.Tensor): The train data needed to retreive the training embeddings
-                    and fit the mixture in the latent space. Must be of shape n_imgs x im_channels x 
+                    and fit the mixture in the latent space. Must be of shape n_imgs x im_channels x
                     ... and in range [0-1]
             train_data (torch.Tensor): The train data needed to retreive the evaluation embeddings
-                    and fit the mixture in the latent space. Must be of shape n_imgs x im_channels x 
+                    and fit the mixture in the latent space. Must be of shape n_imgs x im_channels x
                     ... and in range [0-1]
-            path_to_training_config (BaseTrainerConfig): path to the training config to use to fit 
-                the second VAE. 
+            path_to_training_config (BaseTrainerConfig): path to the training config to use to fit
+                the second VAE.
         """
 
         assert (
@@ -165,7 +168,10 @@ class TwoStageVAESampler(BaseSampler):
         with torch.no_grad():
             for _, inputs in enumerate(train_loader):
                 encoder_output = self.model.encoder(inputs["data"].to(self.device))
-                mean_z, log_std_z = encoder_output.embedding, encoder_output.log_covariance
+                mean_z, log_std_z = (
+                    encoder_output.embedding,
+                    encoder_output.log_covariance,
+                )
                 z_data = mean_z + torch.randn_like(log_std_z) * log_std_z.exp()
                 z.append(z_data)
 
@@ -174,31 +180,36 @@ class TwoStageVAESampler(BaseSampler):
         if eval_data is not None:
 
             assert (
-            eval_data.max() >= 1 and eval_data.min() >= 0
-        ), "Eval data must in the range [0-1]"
+                eval_data.max() >= 1 and eval_data.min() >= 0
+            ), "Eval data must in the range [0-1]"
 
             eval_data = data_processor.process_data(eval_data.to(self.device))
             eval_dataset = data_processor.to_dataset(eval_data)
-            eval_loader = DataLoader(dataset=eval_dataset, batch_size=100, shuffle=False)
+            eval_loader = DataLoader(
+                dataset=eval_dataset, batch_size=100, shuffle=False
+            )
 
             z = []
 
             with torch.no_grad():
                 for _, inputs in enumerate(eval_loader):
                     encoder_output = self.model.encoder(inputs["data"].to(self.device))
-                    mean_z, log_std_z = encoder_output.embedding, encoder_output.log_covariance
+                    mean_z, log_std_z = (
+                        encoder_output.embedding,
+                        encoder_output.log_covariance,
+                    )
                     z_data = mean_z + torch.randn_like(log_std_z) * log_std_z.exp()
                     z.append(z_data)
 
             eval_data = torch.cat(z)
 
-        pipeline = TrainingPipeline(training_config=training_config, model=self.second_vae)
+        pipeline = TrainingPipeline(
+            training_config=training_config, model=self.second_vae
+        )
         pipeline(train_data=train_data, eval_data=eval_data)
         shutil.rmtree(pipeline.trainer.training_dir)
 
-
         self.is_fitted = True
-
 
     def sample(
         self,
@@ -213,13 +224,13 @@ class TwoStageVAESampler(BaseSampler):
         Args:
             num_samples (int): The number of samples to generate
             batch_size (int): The batch size to use during sampling
-            output_dir (str): The directory where the images will be saved. If does not exist the 
+            output_dir (str): The directory where the images will be saved. If does not exist the
                 folder is created. If None: the images are not saved. Defaults: None.
-            return_gen (bool): Whether the sampler should directly return a tensor of generated 
+            return_gen (bool): Whether the sampler should directly return a tensor of generated
                 data. Default: True.
-            save_sampler_config (bool): Whether to save the sampler config. It is saved in 
+            save_sampler_config (bool): Whether to save the sampler config. It is saved in
                 output_dir
-        
+
         Returns:
             ~torch.Tensor: The generated images
         """
@@ -239,8 +250,9 @@ class TwoStageVAESampler(BaseSampler):
 
             u = torch.randn(batch_size, self.model.latent_dim).to(self.device)
             z = self.second_vae.decoder(u).reconstruction
-            z = z + self.second_vae.decoder.gamma_z \
-                * torch.randn(batch_size, self.model.latent_dim).to(self.device)
+            z = z + self.second_vae.decoder.gamma_z * torch.randn(
+                batch_size, self.model.latent_dim
+            ).to(self.device)
             x_gen = self.model.decoder(z)["reconstruction"].detach()
 
             if output_dir is not None:
@@ -253,12 +265,12 @@ class TwoStageVAESampler(BaseSampler):
 
         if last_batch_samples_nbr > 0:
             u = torch.randn(last_batch_samples_nbr, self.model.latent_dim).to(
-                
                 self.device
             )
             z = self.second_vae.decoder(u).reconstruction
-            z = z + self.second_vae.decoder.gamma_z \
-                * torch.randn(last_batch_samples_nbr, self.model.latent_dim).to(self.device)
+            z = z + self.second_vae.decoder.gamma_z * torch.randn(
+                last_batch_samples_nbr, self.model.latent_dim
+            ).to(self.device)
             x_gen = self.model.decoder(z)["reconstruction"].detach()
 
             if output_dir is not None:

@@ -8,10 +8,11 @@ def create_metric(model):
                 model.M_tens.unsqueeze(0).to(z.device)
                 * torch.exp(
                     -torch.norm(
-                        model.centroids_tens.unsqueeze(0).to(z.device) - z.unsqueeze(1), dim=-1
+                        model.centroids_tens.unsqueeze(0).to(z.device) - z.unsqueeze(1),
+                        dim=-1,
                     )
                     ** 2
-                    / (model.temperature ** 2)
+                    / (model.temperature**2)
                 )
                 .unsqueeze(-1)
                 .unsqueeze(-1)
@@ -27,9 +28,12 @@ def create_inverse_metric(model):
         return (
             model.M_tens.unsqueeze(0).to(z.device)
             * torch.exp(
-                -torch.norm(model.centroids_tens.unsqueeze(0).to(z.device) - z.unsqueeze(1), dim=-1)
+                -torch.norm(
+                    model.centroids_tens.unsqueeze(0).to(z.device) - z.unsqueeze(1),
+                    dim=-1,
+                )
                 ** 2
-                / (model.temperature ** 2)
+                / (model.temperature**2)
             )
             .unsqueeze(-1)
             .unsqueeze(-1)

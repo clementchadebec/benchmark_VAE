@@ -9,7 +9,11 @@ from pythae.customexception import BadInheritanceError
 from pythae.models.base.base_utils import ModelOutput
 from pythae.models import RAE_L2, RAE_L2_Config
 
-from pythae.trainers import CoupledOptimizerTrainer,CoupledOptimizerTrainerConfig, BaseTrainerConfig
+from pythae.trainers import (
+    CoupledOptimizerTrainer,
+    CoupledOptimizerTrainerConfig,
+    BaseTrainerConfig,
+)
 from pythae.pipelines import TrainingPipeline
 from tests.data.custom_architectures import (
     Decoder_AE_Conv,
@@ -27,10 +31,10 @@ def model_configs_no_input_dim(request):
 
 @pytest.fixture(
     params=[
-        RAE_L2_Config(input_dim=(1, 28, 28), latent_dim=10, embedding_weight=1., reg_weight=1e-3),
         RAE_L2_Config(
-            input_dim=(1, 2, 18), latent_dim=5, reg_weight=1.0
+            input_dim=(1, 28, 28), latent_dim=10, embedding_weight=1.0, reg_weight=1e-3
         ),
+        RAE_L2_Config(input_dim=(1, 2, 18), latent_dim=5, reg_weight=1.0),
     ]
 )
 def model_configs(request):
@@ -263,9 +267,7 @@ class Test_Model_forward:
         data = torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))[
             :
         ]
-        return (
-            data
-        )  # This is an extract of 3 data from MNIST (unnormalized) used to test custom architecture
+        return data  # This is an extract of 3 data from MNIST (unnormalized) used to test custom architecture
 
     @pytest.fixture
     def rae(self, model_configs, demo_data):
@@ -297,7 +299,13 @@ class Test_RAE_L2_Training:
     @pytest.fixture(
         params=[
             CoupledOptimizerTrainerConfig(
-                num_epochs=3, steps_saving=2, learning_rate=1e-5, encoder_optim_decay=1e-3, decoder_optim_decay=1e-3,)]
+                num_epochs=3,
+                steps_saving=2,
+                learning_rate=1e-5,
+                encoder_optim_decay=1e-3,
+                decoder_optim_decay=1e-3,
+            )
+        ]
     )
     def training_configs(self, tmpdir, request):
         tmpdir.mkdir("dummy_folder")
@@ -357,7 +365,7 @@ class Test_RAE_L2_Training:
             train_dataset=train_dataset,
             training_config=training_configs,
             encoder_optimizer=optimizers[0],
-            decoder_optimizer=optimizers[1]
+            decoder_optimizer=optimizers[1],
         )
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
@@ -381,7 +389,7 @@ class Test_RAE_L2_Training:
             eval_dataset=train_dataset,
             training_config=training_configs,
             encoder_optimizer=optimizers[0],
-            decoder_optimizer=optimizers[1]
+            decoder_optimizer=optimizers[1],
         )
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
@@ -408,7 +416,7 @@ class Test_RAE_L2_Training:
             eval_dataset=train_dataset,
             training_config=training_configs,
             encoder_optimizer=optimizers[0],
-            decoder_optimizer=optimizers[1]
+            decoder_optimizer=optimizers[1],
         )
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
@@ -436,7 +444,7 @@ class Test_RAE_L2_Training:
             train_dataset=train_dataset,
             training_config=training_configs,
             encoder_optimizer=optimizers[0],
-            decoder_optimizer=optimizers[1]
+            decoder_optimizer=optimizers[1],
         )
 
         # Make a training step
@@ -454,9 +462,14 @@ class Test_RAE_L2_Training:
 
         files_list = os.listdir(checkpoint_dir)
 
-        assert set(["model.pt", "encoder_optimizer.pt", "decoder_optimizer.pt", "training_config.json"]).issubset(
-            set(files_list)
-        )
+        assert set(
+            [
+                "model.pt",
+                "encoder_optimizer.pt",
+                "decoder_optimizer.pt",
+                "training_config.json",
+            ]
+        ).issubset(set(files_list))
 
         # check pickled custom decoder
         if not rae.model_config.uses_default_decoder:
@@ -500,8 +513,12 @@ class Test_RAE_L2_Training:
         assert type(model_rec.encoder.cpu()) == type(model.encoder.cpu())
         assert type(model_rec.decoder.cpu()) == type(model.decoder.cpu())
 
-        encoder_optim_rec_state_dict = torch.load(os.path.join(checkpoint_dir, "encoder_optimizer.pt"))
-        decoder_optim_rec_state_dict = torch.load(os.path.join(checkpoint_dir, "decoder_optimizer.pt"))
+        encoder_optim_rec_state_dict = torch.load(
+            os.path.join(checkpoint_dir, "encoder_optimizer.pt")
+        )
+        decoder_optim_rec_state_dict = torch.load(
+            os.path.join(checkpoint_dir, "decoder_optimizer.pt")
+        )
 
         assert all(
             [
@@ -517,7 +534,8 @@ class Test_RAE_L2_Training:
             [
                 dict_rec == dict_optimizer
                 for (dict_rec, dict_optimizer) in zip(
-                    encoder_optim_rec_state_dict["state"], encoder_optimizer.state_dict()["state"]
+                    encoder_optim_rec_state_dict["state"],
+                    encoder_optimizer.state_dict()["state"],
                 )
             ]
         )
@@ -536,7 +554,8 @@ class Test_RAE_L2_Training:
             [
                 dict_rec == dict_optimizer
                 for (dict_rec, dict_optimizer) in zip(
-                    decoder_optim_rec_state_dict["state"], decoder_optimizer.state_dict()["state"]
+                    decoder_optim_rec_state_dict["state"],
+                    decoder_optimizer.state_dict()["state"],
                 )
             ]
         )
@@ -554,7 +573,7 @@ class Test_RAE_L2_Training:
             train_dataset=train_dataset,
             training_config=training_configs,
             encoder_optimizer=optimizers[0],
-            decoder_optimizer=optimizers[1]
+            decoder_optimizer=optimizers[1],
         )
 
         model = deepcopy(trainer.model)
@@ -575,9 +594,14 @@ class Test_RAE_L2_Training:
         files_list = os.listdir(checkpoint_dir)
 
         # check files
-        assert set(["model.pt", "encoder_optimizer.pt", "decoder_optimizer.pt", "training_config.json"]).issubset(
-            set(files_list)
-        )
+        assert set(
+            [
+                "model.pt",
+                "encoder_optimizer.pt",
+                "decoder_optimizer.pt",
+                "training_config.json",
+            ]
+        ).issubset(set(files_list))
 
         # check pickled custom decoder
         if not rae.model_config.uses_default_decoder:
@@ -615,7 +639,7 @@ class Test_RAE_L2_Training:
             train_dataset=train_dataset,
             training_config=training_configs,
             encoder_optimizer=optimizers[0],
-            decoder_optimizer=optimizers[1]
+            decoder_optimizer=optimizers[1],
         )
 
         trainer.train()
@@ -665,21 +689,15 @@ class Test_RAE_L2_Training:
         assert type(model_rec.encoder.cpu()) == type(model.encoder.cpu())
         assert type(model_rec.decoder.cpu()) == type(model.decoder.cpu())
 
-    def test_rae_training_pipeline(
-        self, tmpdir, rae, train_dataset, training_configs
-    ):
+    def test_rae_training_pipeline(self, tmpdir, rae, train_dataset, training_configs):
 
         with pytest.raises(AssertionError):
-            pipeline = TrainingPipeline(
-            model=rae, training_config=BaseTrainerConfig()
-        )
+            pipeline = TrainingPipeline(model=rae, training_config=BaseTrainerConfig())
 
         dir_path = training_configs.output_dir
 
         # build pipeline
-        pipeline = TrainingPipeline(
-            model=rae, training_config=training_configs
-        )
+        pipeline = TrainingPipeline(model=rae, training_config=training_configs)
 
         assert pipeline.training_config.__dict__ == training_configs.__dict__
 
@@ -690,8 +708,11 @@ class Test_RAE_L2_Training:
         )
 
         # check decays are set accordingly to model params
-        assert pipeline.trainer.encoder_optimizer.param_groups[0]['weight_decay'] == 0.
-        assert pipeline.trainer.decoder_optimizer.param_groups[0]['weight_decay'] == rae.model_config.reg_weight
+        assert pipeline.trainer.encoder_optimizer.param_groups[0]["weight_decay"] == 0.0
+        assert (
+            pipeline.trainer.decoder_optimizer.param_groups[0]["weight_decay"]
+            == rae.model_config.reg_weight
+        )
 
         model = deepcopy(pipeline.trainer._best_model)
 

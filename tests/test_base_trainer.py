@@ -105,8 +105,7 @@ class Test_Set_Training_config:
         # check if default config is set
         if training_configs is None:
             assert trainer.training_config == BaseTrainerConfig(
-                output_dir="dummy_output_dir",
-                keep_best_on_train=True
+                output_dir="dummy_output_dir", keep_best_on_train=True
             )
 
         else:
@@ -114,9 +113,7 @@ class Test_Set_Training_config:
 
 
 class Test_Build_Optimizer:
-    @pytest.fixture(
-        params=[BaseTrainerConfig(), BaseTrainerConfig(learning_rate=1e-5)]
-    )
+    @pytest.fixture(params=[BaseTrainerConfig(), BaseTrainerConfig(learning_rate=1e-5)])
     def training_configs_learning_rate(self, tmpdir, request):
         request.param.output_dir = tmpdir.mkdir("dummy_folder")
         return request.param
@@ -162,10 +159,9 @@ class Test_Build_Optimizer:
             == training_configs_learning_rate.learning_rate
         )
 
+
 class Test_Build_Scheduler:
-    @pytest.fixture(
-        params=[BaseTrainerConfig(), BaseTrainerConfig(learning_rate=1e-5)]
-    )
+    @pytest.fixture(params=[BaseTrainerConfig(), BaseTrainerConfig(learning_rate=1e-5)])
     def training_configs_learning_rate(self, tmpdir, request):
         request.param.output_dir = tmpdir.mkdir("dummy_folder")
         return request.param
@@ -178,16 +174,18 @@ class Test_Build_Scheduler:
         )
         return optimizer
 
-    @pytest.fixture(params=[
-        (StepLR, {'step_size': 1}),
-        (LinearLR, {'start_factor': 0.01}),
-        (ExponentialLR, {'gamma': 0.1})]
+    @pytest.fixture(
+        params=[
+            (StepLR, {"step_size": 1}),
+            (LinearLR, {"start_factor": 0.01}),
+            (ExponentialLR, {"gamma": 0.1}),
+        ]
     )
-    def schedulers(self, request, model_sample, training_configs_learning_rate, optimizers):
+    def schedulers(
+        self, request, model_sample, training_configs_learning_rate, optimizers
+    ):
         if request.param[0] is not None:
-            scheduler = request.param[0](
-                optimizers, **request.param[1]
-            )
+            scheduler = request.param[0](optimizers, **request.param[1])
 
         else:
             scheduler = None
@@ -205,17 +203,24 @@ class Test_Build_Scheduler:
             optimizer=None,
         )
 
-        assert issubclass(type(trainer.scheduler), torch.optim.lr_scheduler.ReduceLROnPlateau)
+        assert issubclass(
+            type(trainer.scheduler), torch.optim.lr_scheduler.ReduceLROnPlateau
+        )
 
     def test_set_custom_scheduler(
-        self, model_sample, train_dataset, training_configs_learning_rate, optimizers, schedulers
+        self,
+        model_sample,
+        train_dataset,
+        training_configs_learning_rate,
+        optimizers,
+        schedulers,
     ):
         trainer = BaseTrainer(
             model=model_sample,
             train_dataset=train_dataset,
             training_config=training_configs_learning_rate,
             optimizer=optimizers,
-            scheduler=schedulers
+            scheduler=schedulers,
         )
 
         assert issubclass(type(trainer.scheduler), type(schedulers))
@@ -375,9 +380,12 @@ class Test_Sanity_Checks:
         with pytest.raises(ModelError):
             trainer._run_model_sanity_check(rhvae, train_dataset)
 
+
 @pytest.mark.slow
 class Test_Main_Training:
-    @pytest.fixture(params=[BaseTrainerConfig(num_epochs=3, steps_saving=2, steps_predict=2)])
+    @pytest.fixture(
+        params=[BaseTrainerConfig(num_epochs=3, steps_saving=2, steps_predict=2)]
+    )
     def training_configs(self, tmpdir, request):
         tmpdir.mkdir("dummy_folder")
         dir_path = os.path.join(tmpdir, "dummy_folder")
@@ -441,31 +449,32 @@ class Test_Main_Training:
 
         return optimizer
 
-
-    @pytest.fixture(params=[
-        (None, None),
-        (StepLR, {'step_size': 1, 'gamma': 0.99}),
-        (LinearLR, {'start_factor': 0.99}),
-        (ExponentialLR, {'gamma': 0.99})]
+    @pytest.fixture(
+        params=[
+            (None, None),
+            (StepLR, {"step_size": 1, "gamma": 0.99}),
+            (LinearLR, {"start_factor": 0.99}),
+            (ExponentialLR, {"gamma": 0.99}),
+        ]
     )
     def schedulers(self, request, ae, training_configs, optimizers):
         if request.param[0] is not None and optimizers is not None:
-            scheduler = request.param[0](
-                optimizers, **request.param[1]
-            )
+            scheduler = request.param[0](optimizers, **request.param[1])
 
         else:
             scheduler = None
 
         return scheduler
 
-    def test_train_step(self, ae, train_dataset, training_configs, optimizers, schedulers):
+    def test_train_step(
+        self, ae, train_dataset, training_configs, optimizers, schedulers
+    ):
         trainer = BaseTrainer(
             model=ae,
             train_dataset=train_dataset,
             training_config=training_configs,
             optimizer=optimizers,
-            scheduler=schedulers
+            scheduler=schedulers,
         )
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
@@ -482,15 +491,16 @@ class Test_Main_Training:
             ]
         )
 
-
-    def test_eval_step(self, ae, train_dataset, training_configs, optimizers, schedulers):
+    def test_eval_step(
+        self, ae, train_dataset, training_configs, optimizers, schedulers
+    ):
         trainer = BaseTrainer(
             model=ae,
             train_dataset=train_dataset,
             eval_dataset=train_dataset,
             training_config=training_configs,
             optimizer=optimizers,
-            scheduler=schedulers
+            scheduler=schedulers,
         )
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
@@ -507,14 +517,16 @@ class Test_Main_Training:
             ]
         )
 
-    def test_predict_step(self, ae, train_dataset, training_configs, optimizers, schedulers):
+    def test_predict_step(
+        self, ae, train_dataset, training_configs, optimizers, schedulers
+    ):
         trainer = BaseTrainer(
             model=ae,
             train_dataset=train_dataset,
             eval_dataset=train_dataset,
             training_config=training_configs,
             optimizer=optimizers,
-            scheduler=schedulers
+            scheduler=schedulers,
         )
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
@@ -534,7 +546,7 @@ class Test_Main_Training:
             eval_dataset=train_dataset,
             training_config=training_configs,
             optimizer=optimizers,
-            scheduler=schedulers
+            scheduler=schedulers,
         )
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
@@ -552,7 +564,7 @@ class Test_Main_Training:
         )
 
         # check changed lr with custom schedulers
-        if type(trainer.scheduler) !=  torch.optim.lr_scheduler.ReduceLROnPlateau:
+        if type(trainer.scheduler) != torch.optim.lr_scheduler.ReduceLROnPlateau:
             assert training_configs.learning_rate != trainer.scheduler.get_last_lr()
 
 

@@ -83,7 +83,9 @@ class Test_Load_Config_from_JSON:
     def test_raises_user_warning(self, custom_config_path_with_true_config):
         config_path = custom_config_path_with_true_config[0]
         with pytest.warns(UserWarning):
-            if config_path == os.path.join(PATH, "data/baseAE/configs/model_config00.json"):
+            if config_path == os.path.join(
+                PATH, "data/baseAE/configs/model_config00.json"
+            ):
                 parsed_config = AEConfig.from_json_file(config_path)
 
             elif config_path == os.path.join(

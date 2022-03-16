@@ -1,6 +1,6 @@
-from pydantic.dataclasses import dataclass
+from typing import Tuple, Union
 
-from typing import Union, Tuple
+from pydantic.dataclasses import dataclass
 
 from ...models import VAEConfig
 
@@ -15,7 +15,8 @@ class VAEGANConfig(VAEConfig):
         reconstruction_loss (str): The reconstruction loss to use ['bce', 'mse']. Default: 'mse'
         adversarial_loss_scale (float): Parameter scaling the adversarial loss
         reconstruction_layer (int): The reconstruction layer depth used for reconstruction metric
-        """
+    """
+
     adversarial_loss_scale: float = 0.5
     reconstruction_layer: int = -1
     uses_default_discriminator: bool = True

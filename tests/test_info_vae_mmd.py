@@ -27,7 +27,12 @@ def model_configs_no_input_dim(request):
 
 @pytest.fixture(
     params=[
-        INFOVAE_MMD_Config(input_dim=(1, 28, 28), latent_dim=10, reconstruction_loss="bce", kernel_choice='rbf'),
+        INFOVAE_MMD_Config(
+            input_dim=(1, 28, 28),
+            latent_dim=10,
+            reconstruction_loss="bce",
+            kernel_choice="rbf",
+        ),
         INFOVAE_MMD_Config(input_dim=(1, 28), latent_dim=5, lbd=5.2, alpha=0.2),
     ]
 )
@@ -84,7 +89,9 @@ class Test_Model_Building:
 
     def test_build_custom_arch(self, model_configs, custom_encoder, custom_decoder):
 
-        model = INFOVAE_MMD(model_configs, encoder=custom_encoder, decoder=custom_decoder)
+        model = INFOVAE_MMD(
+            model_configs, encoder=custom_encoder, decoder=custom_decoder
+        )
 
         assert model.encoder == custom_encoder
         assert not model.model_config.uses_default_encoder
@@ -194,7 +201,9 @@ class Test_Model_Saving:
         tmpdir.mkdir("dummy_folder")
         dir_path = dir_path = os.path.join(tmpdir, "dummy_folder")
 
-        model = INFOVAE_MMD(model_configs, encoder=custom_encoder, decoder=custom_decoder)
+        model = INFOVAE_MMD(
+            model_configs, encoder=custom_encoder, decoder=custom_decoder
+        )
 
         model.state_dict()["encoder.layers.0.0.weight"][0] = 0
 
@@ -224,7 +233,9 @@ class Test_Model_Saving:
         tmpdir.mkdir("dummy_folder")
         dir_path = dir_path = os.path.join(tmpdir, "dummy_folder")
 
-        model = INFOVAE_MMD(model_configs, encoder=custom_encoder, decoder=custom_decoder)
+        model = INFOVAE_MMD(
+            model_configs, encoder=custom_encoder, decoder=custom_decoder
+        )
 
         model.state_dict()["encoder.layers.0.0.weight"][0] = 0
 
@@ -261,9 +272,7 @@ class Test_Model_forward:
         data = torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))[
             :
         ]
-        return (
-            data
-        )  # This is an extract of 3 data from MNIST (unnormalized) used to test custom architecture
+        return data  # This is an extract of 3 data from MNIST (unnormalized) used to test custom architecture
 
     @pytest.fixture
     def info_vae_mmd(self, model_configs, demo_data):
@@ -278,9 +287,9 @@ class Test_Model_forward:
 
         assert isinstance(out, ModelOutput)
 
-        assert set(["reconstruction_loss", "reg_loss", "loss", "mmd_loss", "recon_x", "z"]) == set(
-            out.keys()
-        )
+        assert set(
+            ["reconstruction_loss", "reg_loss", "loss", "mmd_loss", "recon_x", "z"]
+        ) == set(out.keys())
 
         assert out.z.shape[0] == demo_data["data"].shape[0]
         assert out.recon_x.shape == demo_data["data"].shape

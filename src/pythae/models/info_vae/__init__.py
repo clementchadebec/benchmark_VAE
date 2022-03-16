@@ -12,7 +12,7 @@ Available samplers
 
 """
 
-from .info_vae_model import INFOVAE_MMD
 from .info_vae_config import INFOVAE_MMD_Config
+from .info_vae_model import INFOVAE_MMD
 
 __all__ = ["INFOVAE_MMD", "INFOVAE_MMD_Config"]

@@ -23,14 +23,12 @@ class Test_Pipeline_Standalone:
 
         with pytest.raises(AssertionError):
             pipeline = TrainingPipeline(
-            model=VAE(VAEConfig(input_dim=(1, 2, 3))),
-            training_config=Pipeline()
-        )
-
+                model=VAE(VAEConfig(input_dim=(1, 2, 3))), training_config=Pipeline()
+            )
 
         pipe = TrainingPipeline()
         assert isinstance(pipe.training_config, BaseTrainerConfig)
-        
+
         tmpdir.mkdir("dummy_folder")
         dir_path = os.path.join(tmpdir, "dummy_folder")
         pipe = TrainingPipeline()
@@ -38,4 +36,3 @@ class Test_Pipeline_Standalone:
         pipe.training_config.num_epochs = 1
         pipe(train_dataset.data)
         assert isinstance(pipe.model, VAE)
-        

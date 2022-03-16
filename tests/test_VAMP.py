@@ -265,9 +265,7 @@ class Test_Model_forward:
         data = torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))[
             :
         ]
-        return (
-            data
-        )  # This is an extract of 3 data from MNIST (unnormalized) used to test custom architecture
+        return data  # This is an extract of 3 data from MNIST (unnormalized) used to test custom architecture
 
     @pytest.fixture
     def vamp(self, model_configs, demo_data):
@@ -616,9 +614,7 @@ class Test_VAMP_Training:
         dir_path = training_configs.output_dir
 
         # build pipeline
-        pipeline = TrainingPipeline(
-            model=vamp, training_config=training_configs
-        )
+        pipeline = TrainingPipeline(model=vamp, training_config=training_configs)
 
         assert pipeline.training_config.__dict__ == training_configs.__dict__
 

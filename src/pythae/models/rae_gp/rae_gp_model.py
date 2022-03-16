@@ -1,21 +1,19 @@
-import torch
 import os
-
-from ...models import AE
-from .rae_gp_config import RAE_GP_Config
-from ...data.datasets import BaseDataset
-from ..base.base_utils import ModelOutput
-
-from ..nn import BaseDecoder, BaseEncoder
-
 from typing import Optional
 
+import torch
 import torch.nn.functional as F
+
+from ...data.datasets import BaseDataset
+from ...models import AE
+from ..base.base_utils import ModelOutput
+from ..nn import BaseDecoder, BaseEncoder
+from .rae_gp_config import RAE_GP_Config
 
 
 class RAE_GP(AE):
     """Regularized Autoencoder with gradient penalty model.
-    
+
     Args:
         model_config(RAE_GP_Config): The Autoencoder configuration seting the main parameters of the
             model
@@ -46,13 +44,12 @@ class RAE_GP(AE):
 
         self.model_name = "RAE_GP"
 
-
     def forward(self, inputs: BaseDataset, **kwargs) -> ModelOutput:
         """The input data is encoded and decoded
-        
+
         Args:
             inputs (BaseDataset): An instance of pythae's datasets
-            
+
         Returns:
             ModelOutput: An instance of ModelOutput containing all the relevant parameters
         """
@@ -62,7 +59,9 @@ class RAE_GP(AE):
         z = self.encoder(x).embedding
         recon_x = self.decoder(z)["reconstruction"]
 
-        loss, recon_loss, gen_reg_loss, embedding_loss = self.loss_function(recon_x, x, z)
+        loss, recon_loss, gen_reg_loss, embedding_loss = self.loss_function(
+            recon_x, x, z
+        )
 
         output = ModelOutput(
             loss=loss,
@@ -70,7 +69,7 @@ class RAE_GP(AE):
             gen_reg_loss=gen_reg_loss,
             embedding_loss=embedding_loss,
             recon_x=recon_x,
-            z=z
+            z=z,
         )
 
         return output
@@ -83,14 +82,17 @@ class RAE_GP(AE):
 
         gen_reg_loss = self._compute_gp(recon_x, x)
 
-        embedding_loss = (0.5 * torch.linalg.norm(z, dim=-1) ** 2)
+        embedding_loss = 0.5 * torch.linalg.norm(z, dim=-1) ** 2
 
         return (
-            (recon_loss + self.model_config.embedding_weight * embedding_loss \
-                + self.model_config.reg_weight * gen_reg_loss).mean(dim=0),
+            (
+                recon_loss
+                + self.model_config.embedding_weight * embedding_loss
+                + self.model_config.reg_weight * gen_reg_loss
+            ).mean(dim=0),
             (recon_loss).mean(dim=0),
             (gen_reg_loss).mean(dim=0),
-            (embedding_loss).mean(dim=0)
+            (embedding_loss).mean(dim=0),
         )
 
     def _compute_gp(self, recon_x, x):
@@ -99,11 +101,10 @@ class RAE_GP(AE):
             inputs=x,
             grad_outputs=torch.ones_like(recon_x).to(self.device),
             create_graph=True,
-            retain_graph=True
+            retain_graph=True,
         )[0].reshape(recon_x.shape[0], -1)
 
-        return (grads.norm(dim=-1) ** 2)
-
+        return grads.norm(dim=-1) ** 2
 
     @classmethod
     def _load_model_config_from_folder(cls, dir_path):
@@ -133,7 +134,7 @@ class RAE_GP(AE):
             - | a ``model_config.json`` and a ``model.pt`` if no custom architectures were provided
 
             **or**
-                
+
             - | a ``model_config.json``, a ``model.pt`` and a ``encoder.pkl`` (resp.
                 ``decoder.pkl``) if a custom encoder (resp. decoder) was provided
 

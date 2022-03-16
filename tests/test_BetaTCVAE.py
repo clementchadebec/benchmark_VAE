@@ -20,15 +20,24 @@ from tests.data.custom_architectures import (
 PATH = os.path.dirname(os.path.abspath(__file__))
 
 
-@pytest.fixture(params=[BetaTCVAEConfig(), BetaTCVAEConfig(latent_dim=5, alpha=1, gamma=0.2, beta=5.0)])
+@pytest.fixture(
+    params=[
+        BetaTCVAEConfig(),
+        BetaTCVAEConfig(latent_dim=5, alpha=1, gamma=0.2, beta=5.0),
+    ]
+)
 def model_configs_no_input_dim(request):
     return request.param
 
 
 @pytest.fixture(
     params=[
-        BetaTCVAEConfig(input_dim=(1, 28, 28), latent_dim=10, reconstruction_loss="bce"),
-        BetaTCVAEConfig(input_dim=(1, 28), latent_dim=5, beta=5.2, alpha=10, gamma=2, use_mss=False),
+        BetaTCVAEConfig(
+            input_dim=(1, 28, 28), latent_dim=10, reconstruction_loss="bce"
+        ),
+        BetaTCVAEConfig(
+            input_dim=(1, 28), latent_dim=5, beta=5.2, alpha=10, gamma=2, use_mss=False
+        ),
     ]
 )
 def model_configs(request):
@@ -261,9 +270,7 @@ class Test_Model_forward:
         data = torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))[
             :
         ]
-        return (
-            data
-        )  # This is an extract of 3 data from MNIST (unnormalized) used to test custom architecture
+        return data  # This is an extract of 3 data from MNIST (unnormalized) used to test custom architecture
 
     @pytest.fixture
     def betavae(self, model_configs, demo_data):
@@ -641,9 +648,7 @@ class Test_BetaTCVAE_Training:
         dir_path = training_configs.output_dir
 
         # build pipeline
-        pipeline = TrainingPipeline(
-            model=betavae, training_config=training_configs
-        )
+        pipeline = TrainingPipeline(model=betavae, training_config=training_configs)
 
         assert pipeline.training_config.__dict__ == training_configs.__dict__
 

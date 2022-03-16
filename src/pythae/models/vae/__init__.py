@@ -11,7 +11,7 @@ Available samplers
     :nosignatures:
 """
 
-from .vae_model import VAE
 from .vae_config import VAEConfig
+from .vae_model import VAE
 
 __all__ = ["VAE", "VAEConfig"]

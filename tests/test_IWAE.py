@@ -27,7 +27,12 @@ def model_configs_no_input_dim(request):
 
 @pytest.fixture(
     params=[
-        IWAEConfig(input_dim=(1, 28, 28), latent_dim=10, reconstruction_loss="bce", number_samples=2),
+        IWAEConfig(
+            input_dim=(1, 28, 28),
+            latent_dim=10,
+            reconstruction_loss="bce",
+            number_samples=2,
+        ),
         IWAEConfig(input_dim=(1, 28), latent_dim=5, beta=5.2),
     ]
 )
@@ -261,9 +266,7 @@ class Test_Model_forward:
         data = torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))[
             :
         ]
-        return (
-            data
-        )  # This is an extract of 3 data from MNIST (unnormalized) used to test custom architecture
+        return data  # This is an extract of 3 data from MNIST (unnormalized) used to test custom architecture
 
     @pytest.fixture
     def iwae(self, model_configs, demo_data):
@@ -283,7 +286,11 @@ class Test_Model_forward:
         )
 
         assert out.z.shape[0] == demo_data["data"].shape[0]
-        assert out.recon_x.shape == (demo_data["data"].shape[0] * iwae.n_samples,) +  demo_data["data"].shape[1:]
+        assert (
+            out.recon_x.shape
+            == (demo_data["data"].shape[0] * iwae.n_samples,)
+            + demo_data["data"].shape[1:]
+        )
 
 
 @pytest.mark.slow
@@ -325,9 +332,7 @@ class Test_IWAE_Training:
             model = IWAE(model_configs, decoder=custom_decoder)
 
         else:
-            model = IWAE(
-                model_configs, encoder=custom_encoder, decoder=custom_decoder
-            )
+            model = IWAE(model_configs, encoder=custom_encoder, decoder=custom_decoder)
 
         return model
 
@@ -343,9 +348,7 @@ class Test_IWAE_Training:
 
         return optimizer
 
-    def test_iwae_train_step(
-        self, iwae, train_dataset, training_configs, optimizers
-    ):
+    def test_iwae_train_step(self, iwae, train_dataset, training_configs, optimizers):
         trainer = BaseTrainer(
             model=iwae,
             train_dataset=train_dataset,
@@ -367,9 +370,7 @@ class Test_IWAE_Training:
             ]
         )
 
-    def test_iwae_eval_step(
-        self, iwae, train_dataset, training_configs, optimizers
-    ):
+    def test_iwae_eval_step(self, iwae, train_dataset, training_configs, optimizers):
         trainer = BaseTrainer(
             model=iwae,
             train_dataset=train_dataset,
@@ -641,9 +642,7 @@ class Test_IWAE_Training:
         dir_path = training_configs.output_dir
 
         # build pipeline
-        pipeline = TrainingPipeline(
-            model=iwae, training_config=training_configs
-        )
+        pipeline = TrainingPipeline(model=iwae, training_config=training_configs)
 
         assert pipeline.training_config.__dict__ == training_configs.__dict__
 

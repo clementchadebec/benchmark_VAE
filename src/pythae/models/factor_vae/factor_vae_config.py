@@ -14,6 +14,6 @@ class FactorVAEConfig(VAEConfig):
         reconstruction_loss (str): The reconstruction loss to use ['bce', 'mse']. Default: 'mse'
         gamma (float): The balancing factor before the Total Correlation. Default: 0.5
     """
-    gamma: float = 2.
+    gamma: float = 2.0
     uses_default_discriminator: bool = True
     discriminator_input_dim: int = None

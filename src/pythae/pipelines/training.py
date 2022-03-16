@@ -1,16 +1,15 @@
-from typing import Optional, Union, List
-
 import logging
+from typing import List, Optional, Union
+
 import numpy as np
 import torch
 from torch.optim import Optimizer
 
 from ..customexception import LoadError
 from ..data.preprocessors import DataProcessor
-from ..models import BaseAE, VAE, VAEConfig
+from ..models import VAE, BaseAE, VAEConfig
 from ..trainers import *
-from..trainers.training_callbacks import TrainingCallback
-
+from ..trainers.training_callbacks import TrainingCallback
 from .base_pipeline import Pipeline
 
 logger = logging.getLogger(__name__)
@@ -45,64 +44,68 @@ class TrainingPipeline(Pipeline):
 
     def __init__(
         self,
-        model: Optional[BaseAE]=None,
-        training_config: Optional[BaseTrainerConfig]=None
+        model: Optional[BaseAE] = None,
+        training_config: Optional[BaseTrainerConfig] = None,
     ):
 
         if model is not None:
             if training_config is None:
-                if model.model_name == 'RAE_L2':
+                if model.model_name == "RAE_L2":
                     training_config = CoupledOptimizerTrainerConfig(
                         encoder_optim_decay=0,
-                        decoder_optim_decay=model.model_config.reg_weight
+                        decoder_optim_decay=model.model_config.reg_weight,
                     )
 
-                elif model.model_name == 'Adversarial_AE' or model.model_name == 'FactorVAE':
+                elif (
+                    model.model_name == "Adversarial_AE"
+                    or model.model_name == "FactorVAE"
+                ):
                     training_config = AdversarialTrainerConfig()
 
-                elif model.model_name == 'VAEGAN':
+                elif model.model_name == "VAEGAN":
                     training_config = CoupledOptimizerAdversarialTrainerConfig()
 
-                else:    
+                else:
                     training_config = BaseTrainerConfig()
 
+            elif model.model_name == "RAE_L2":
+                if not isinstance(training_config, CoupledOptimizerTrainerConfig):
 
-            elif model.model_name == 'RAE_L2':
-                if not isinstance(
-                    training_config, CoupledOptimizerTrainerConfig):
+                    raise AssertionError(
+                        "A 'CoupledOptimizerTrainerConfig' "
+                        "is expected for training a RAE_L2"
+                    )
 
-                    raise AssertionError("A 'CoupledOptimizerTrainerConfig' "
-                        "is expected for training a RAE_L2")
-
-
-                training_config.encoder_optim_decay = 0.
+                training_config.encoder_optim_decay = 0.0
                 training_config.decoder_optim_decay = model.model_config.reg_weight
 
-            elif model.model_name == 'Adversarial_AE'  or model.model_name == 'FactorVAE':
+            elif (
+                model.model_name == "Adversarial_AE" or model.model_name == "FactorVAE"
+            ):
+                if not isinstance(training_config, AdversarialTrainerConfig):
+
+                    raise AssertionError(
+                        "A 'AdversarialTrainer' "
+                        f"is expected for training a {model.model_name}"
+                    )
+
+            elif model.model_name == "VAEGAN":
                 if not isinstance(
-                    training_config, AdversarialTrainerConfig):
+                    training_config, CoupledOptimizerAdversarialTrainerConfig
+                ):
 
-                    raise AssertionError("A 'AdversarialTrainer' "
-                        f"is expected for training a {model.model_name}")
+                    raise AssertionError(
+                        "A 'CoupledOptimizerAdversarialTrainer' "
+                        "is expected for training a VAEGAN"
+                    )
 
-
-            elif model.model_name == 'VAEGAN':
-                if not isinstance(
-                    training_config, CoupledOptimizerAdversarialTrainerConfig):
-
-                    raise AssertionError("A 'CoupledOptimizerAdversarialTrainer' "
-                        "is expected for training a VAEGAN")
-
-            
-            if not isinstance(
-                training_config, BaseTrainerConfig):
-                raise AssertionError("A 'BaseTrainerConfig' "
-                    "is expected for the pipeline")
+            if not isinstance(training_config, BaseTrainerConfig):
+                raise AssertionError(
+                    "A 'BaseTrainerConfig' " "is expected for the pipeline"
+                )
 
         else:
             training_config = BaseTrainerConfig()
-            
-
 
         self.data_processor = DataProcessor()
         self.model = model
@@ -117,18 +120,18 @@ class TrainingPipeline(Pipeline):
         self,
         train_data: Union[np.ndarray, torch.Tensor],
         eval_data: Union[np.ndarray, torch.Tensor] = None,
-        callbacks: List[TrainingCallback] = None
+        callbacks: List[TrainingCallback] = None,
     ):
         """
         Launch the model training on the provided data.
 
         Args:
-            training_data (Union[~numpy.ndarray, ~torch.Tensor]): The training data as a 
-                :class:`numpy.ndarray` or :class:`torch.Tensor` of shape (mini_batch x 
+            training_data (Union[~numpy.ndarray, ~torch.Tensor]): The training data as a
+                :class:`numpy.ndarray` or :class:`torch.Tensor` of shape (mini_batch x
                 n_channels x ...)
 
-            eval_data (Optional[Union[~numpy.ndarray, ~torch.Tensor]]): The evaluation data as a 
-                :class:`numpy.ndarray` or :class:`torch.Tensor` of shape (mini_batch x 
+            eval_data (Optional[Union[~numpy.ndarray, ~torch.Tensor]]): The evaluation data as a
+                :class:`numpy.ndarray` or :class:`torch.Tensor` of shape (mini_batch x
                 n_channels x ...). If None, only uses train_fata for training. Default: None.
 
             callbacks (List[~pythae.trainers.training_callbacks.TrainingCallbacks]):
@@ -152,7 +155,6 @@ class TrainingPipeline(Pipeline):
         else:
             eval_dataset = None
 
-
         if isinstance(self.training_config, CoupledOptimizerTrainerConfig):
             logger.info("Using Coupled Optimizer Trainer\n")
             trainer = CoupledOptimizerTrainer(
@@ -160,7 +162,7 @@ class TrainingPipeline(Pipeline):
                 train_dataset=train_dataset,
                 eval_dataset=eval_dataset,
                 training_config=self.training_config,
-                callbacks=callbacks
+                callbacks=callbacks,
             )
 
         elif isinstance(self.training_config, AdversarialTrainerConfig):
@@ -170,7 +172,7 @@ class TrainingPipeline(Pipeline):
                 train_dataset=train_dataset,
                 eval_dataset=eval_dataset,
                 training_config=self.training_config,
-                callbacks=callbacks
+                callbacks=callbacks,
             )
 
         elif isinstance(self.training_config, CoupledOptimizerAdversarialTrainerConfig):
@@ -180,7 +182,7 @@ class TrainingPipeline(Pipeline):
                 train_dataset=train_dataset,
                 eval_dataset=eval_dataset,
                 training_config=self.training_config,
-                callbacks=callbacks
+                callbacks=callbacks,
             )
 
         elif isinstance(self.training_config, BaseTrainerConfig):
@@ -190,7 +192,7 @@ class TrainingPipeline(Pipeline):
                 train_dataset=train_dataset,
                 eval_dataset=eval_dataset,
                 training_config=self.training_config,
-                callbacks=callbacks
+                callbacks=callbacks,
             )
 
         self.trainer = trainer
