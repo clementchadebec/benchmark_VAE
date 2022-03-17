@@ -7,17 +7,14 @@ from pythae.models.nn.base_architectures import BaseEncoder, BaseDecoder
 from pythae.models.base.base_utils import ModelOutput
 from pythae.models import BaseAEConfig
 
-from pythae.models.nn import (
-    BaseEncoder,
-    BaseDecoder,
-    BaseDiscriminator
-)
+from pythae.models.nn import BaseEncoder, BaseDecoder, BaseDiscriminator
 
 
 class Fully_Conv_Encoder_AE_MNIST(BaseEncoder):
     """
     A proposed fully Convolutional encoder used for VQVAE.
     """
+
     def __init__(self, args: BaseAEConfig):
         BaseEncoder.__init__(self)
 
@@ -29,33 +26,33 @@ class Fully_Conv_Encoder_AE_MNIST(BaseEncoder):
         layers.append(
             nn.Sequential(
                 nn.Conv2d(self.n_channels, 1, 3, 2, padding=1),
-                #nn.BatchNorm2d(128),
-                #nn.ReLU()
+                # nn.BatchNorm2d(128),
+                # nn.ReLU()
             )
         )
 
         layers.append(
             nn.Sequential(
                 nn.Conv2d(1, 1, 3, 2, padding=1),
-                #nn.BatchNorm2d(256),
-                #nn.ReLU(),
+                # nn.BatchNorm2d(256),
+                # nn.ReLU(),
             )
         )
 
         layers.append(
             nn.Sequential(
                 nn.Conv2d(1, 1, 3, 2, padding=1),
-                #nn.BatchNorm2d(512),
-                #nn.ReLU(),
+                # nn.BatchNorm2d(512),
+                # nn.ReLU(),
             )
         )
 
         self.layers = layers
         self.depth = len(layers)
 
-    def forward(self, x: torch.Tensor, output_layer_levels:List[int]=None):
+    def forward(self, x: torch.Tensor, output_layer_levels: List[int] = None):
         """Forward method
-        
+
         Returns:
             ModelOutput: An instance of ModelOutput containing the embeddings of the input data under
             the key `embedding`"""
@@ -65,10 +62,13 @@ class Fully_Conv_Encoder_AE_MNIST(BaseEncoder):
 
         if output_layer_levels is not None:
 
-            assert all(self.depth >= levels > 0 or levels==-1 for levels in output_layer_levels), (
-                f'Cannot output layer deeper than depth ({self.depth}).'\
-                f'Got ({output_layer_levels}).'
-                )
+            assert all(
+                self.depth >= levels > 0 or levels == -1
+                for levels in output_layer_levels
+            ), (
+                f"Cannot output layer deeper than depth ({self.depth})."
+                f"Got ({output_layer_levels})."
+            )
 
             if -1 in output_layer_levels:
                 max_depth = self.depth
@@ -81,10 +81,10 @@ class Fully_Conv_Encoder_AE_MNIST(BaseEncoder):
             out = self.layers[i](out)
 
             if output_layer_levels is not None:
-                if i+1 in output_layer_levels:
-                    output[f'embedding_layer_{i+1}'] = out
-            if i+1 == self.depth:
-                output['embedding'] = out.reshape(x.shape[0], -1)
+                if i + 1 in output_layer_levels:
+                    output[f"embedding_layer_{i+1}"] = out
+            if i + 1 == self.depth:
+                output["embedding"] = out.reshape(x.shape[0], -1)
 
         return output
 
@@ -93,6 +93,7 @@ class Fully_Conv_Decoder_AE_MNIST(BaseDecoder):
     """
     A proposed fully Convolutional decoder for VQVAE.
     """
+
     def __init__(self, args: dict):
         BaseDecoder.__init__(self)
         self.input_dim = (1, 28, 28)
@@ -103,22 +104,24 @@ class Fully_Conv_Decoder_AE_MNIST(BaseDecoder):
         layers.append(
             nn.Sequential(
                 nn.ConvTranspose2d(1, 1, 3, 2, padding=1),
-                #nn.BatchNorm2d(512),
-                #nn.ReLU(),
+                # nn.BatchNorm2d(512),
+                # nn.ReLU(),
             )
         )
 
         layers.append(
             nn.Sequential(
                 nn.ConvTranspose2d(1, 1, 3, 2, padding=1, output_padding=1),
-                #nn.BatchNorm2d(256),
-                #nn.ReLU(),
+                # nn.BatchNorm2d(256),
+                # nn.ReLU(),
             )
         )
-        
+
         layers.append(
             nn.Sequential(
-                nn.ConvTranspose2d(1, self.n_channels, 3, 2, padding=1, output_padding=1),
+                nn.ConvTranspose2d(
+                    1, self.n_channels, 3, 2, padding=1, output_padding=1
+                ),
                 nn.Sigmoid(),
             )
         )
@@ -126,11 +129,11 @@ class Fully_Conv_Decoder_AE_MNIST(BaseDecoder):
         self.layers = layers
         self.depth = len(layers)
 
-    def forward(self, z: torch.Tensor, output_layer_levels:List[int]=None):
+    def forward(self, z: torch.Tensor, output_layer_levels: List[int] = None):
         """Forward method
-        
+
         Returns:
-            ModelOutput: An instance of ModelOutput containing the reconstruction of the latent code 
+            ModelOutput: An instance of ModelOutput containing the reconstruction of the latent code
             under the key `reconstruction`
         """
         output = ModelOutput()
@@ -141,10 +144,13 @@ class Fully_Conv_Decoder_AE_MNIST(BaseDecoder):
 
         if output_layer_levels is not None:
 
-            assert all(self.depth >= levels > 0 or levels==-1 for levels in output_layer_levels), (
-                f'Cannot output layer deeper than depth ({self.depth}).'\
-                f'Got ({output_layer_levels})'
-                )
+            assert all(
+                self.depth >= levels > 0 or levels == -1
+                for levels in output_layer_levels
+            ), (
+                f"Cannot output layer deeper than depth ({self.depth})."
+                f"Got ({output_layer_levels})"
+            )
 
             if -1 in output_layer_levels:
                 max_depth = self.depth
@@ -157,10 +163,10 @@ class Fully_Conv_Decoder_AE_MNIST(BaseDecoder):
             out = self.layers[i](out)
 
             if output_layer_levels is not None:
-                if i+1 in output_layer_levels:
-                    output[f'reconstruction_layer_{i+1}'] = out
+                if i + 1 in output_layer_levels:
+                    output[f"reconstruction_layer_{i+1}"] = out
 
-            if i+1 == self.depth:
-                output['reconstruction'] = out
+            if i + 1 == self.depth:
+                output["reconstruction"] = out
 
         return output

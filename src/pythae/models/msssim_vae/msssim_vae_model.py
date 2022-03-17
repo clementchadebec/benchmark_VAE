@@ -1,25 +1,24 @@
-import torch
 import os
-
-from ...models import VAE
-from .msssim_vae_config import MSSSIM_VAEConfig
-from .msssim_vae_utils import MSSSIM
-from ...data.datasets import BaseDataset
-from ..base.base_utils import ModelOutput
-from ..nn import BaseEncoder, BaseDecoder
-from ..nn.default_architectures import Encoder_VAE_MLP
-
 from typing import Optional
 
+import torch
 import torch.nn.functional as F
+
+from ...data.datasets import BaseDataset
+from ...models import VAE
+from ..base.base_utils import ModelOutput
+from ..nn import BaseDecoder, BaseEncoder
+from ..nn.default_architectures import Encoder_VAE_MLP
+from .msssim_vae_config import MSSSIM_VAEConfig
+from .msssim_vae_utils import MSSSIM
 
 
 class MSSSIM_VAE(VAE):
     r"""
     VAE using perseptual similarity metrics model.
-    
+
     Args:
-        model_config(MSSSIM_VAEConfig): The Variational Autoencoder configuration seting the main 
+        model_config(MSSSIM_VAEConfig): The Variational Autoencoder configuration seting the main
         parameters of the model
 
         encoder (BaseEncoder): An instance of BaseEncoder (inheriting from `torch.nn.Module` which
@@ -90,7 +89,11 @@ class MSSSIM_VAE(VAE):
 
         KLD = -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp(), dim=-1)
 
-        return (recon_loss + self.beta * KLD).mean(dim=0), recon_loss.mean(dim=0), KLD.mean(dim=0)
+        return (
+            (recon_loss + self.beta * KLD).mean(dim=0),
+            recon_loss.mean(dim=0),
+            KLD.mean(dim=0),
+        )
 
     def _sample_gauss(self, mu, std):
         # Reparametrization trick
@@ -126,7 +129,7 @@ class MSSSIM_VAE(VAE):
             - | a ``model_config.json`` and a ``model.pt`` if no custom architectures were provided
 
             **or**
-                
+
             - | a ``model_config.json``, a ``model.pt`` and a ``encoder.pkl`` (resp.
                 ``decoder.pkl``) if a custom encoder (resp. decoder) was provided
         """

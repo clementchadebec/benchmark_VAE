@@ -1,24 +1,23 @@
-import torch
 import os
-
-from ...models import VAE
-from .iwae_config import IWAEConfig
-from ...data.datasets import BaseDataset
-from ..base.base_utils import ModelOutput
-from ..nn import BaseEncoder, BaseDecoder
-from ..nn.default_architectures import Encoder_VAE_MLP
-
 from typing import Optional
 
+import torch
 import torch.nn.functional as F
+
+from ...data.datasets import BaseDataset
+from ...models import VAE
+from ..base.base_utils import ModelOutput
+from ..nn import BaseDecoder, BaseEncoder
+from ..nn.default_architectures import Encoder_VAE_MLP
+from .iwae_config import IWAEConfig
 
 
 class IWAE(VAE):
     """
     Importance Weighted Autoencoder model.
-    
+
     Args:
-        model_config(IWAEConfig): The IWAE configuration seting the main 
+        model_config(IWAEConfig): The IWAE configuration seting the main
         parameters of the model
 
         encoder (BaseEncoder): An instance of BaseEncoder (inheriting from `torch.nn.Module` which
@@ -90,21 +89,33 @@ class IWAE(VAE):
 
         if self.model_config.reconstruction_loss == "mse":
 
-            recon_loss = F.mse_loss(
-                recon_x.reshape(recon_x.shape[0], -1),
-                x.reshape(x.shape[0], -1).unsqueeze(1).repeat(
-                    1, self.n_samples, 1).reshape(recon_x.shape[0], -1),
-                reduction='none'
-            ).sum(dim=-1).reshape(x.shape[0], -1)
+            recon_loss = (
+                F.mse_loss(
+                    recon_x.reshape(recon_x.shape[0], -1),
+                    x.reshape(x.shape[0], -1)
+                    .unsqueeze(1)
+                    .repeat(1, self.n_samples, 1)
+                    .reshape(recon_x.shape[0], -1),
+                    reduction="none",
+                )
+                .sum(dim=-1)
+                .reshape(x.shape[0], -1)
+            )
 
         elif self.model_config.reconstruction_loss == "bce":
 
-            recon_loss = F.binary_cross_entropy(
-                recon_x.reshape(recon_x.shape[0], -1),
-                x.reshape(x.shape[0], -1).unsqueeze(1).repeat(
-                    1, self.n_samples, 1).reshape(recon_x.shape[0], -1),
-                reduction='none'
-            ).sum(dim=-1).reshape(x.shape[0], -1)
+            recon_loss = (
+                F.binary_cross_entropy(
+                    recon_x.reshape(recon_x.shape[0], -1),
+                    x.reshape(x.shape[0], -1)
+                    .unsqueeze(1)
+                    .repeat(1, self.n_samples, 1)
+                    .reshape(recon_x.shape[0], -1),
+                    reduction="none",
+                )
+                .sum(dim=-1)
+                .reshape(x.shape[0], -1)
+            )
 
         KLD = -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp(), dim=-1)
 
@@ -115,7 +126,7 @@ class IWAE(VAE):
         return (
             (w_tilde * log_w).sum(dim=-1).mean(dim=0),
             recon_loss.mean(),
-            KLD.mean()
+            KLD.mean(),
         )
 
     def _sample_gauss(self, mu, std):
@@ -152,7 +163,7 @@ class IWAE(VAE):
             - | a ``model_config.json`` and a ``model.pt`` if no custom architectures were provided
 
             **or**
-                
+
             - | a ``model_config.json``, a ``model.pt`` and a ``encoder.pkl`` (resp.
                 ``decoder.pkl``) if a custom encoder (resp. decoder) was provided
 

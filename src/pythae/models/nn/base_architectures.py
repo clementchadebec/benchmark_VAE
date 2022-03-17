@@ -5,15 +5,14 @@ from ..base.base_utils import ModelOutput
 
 
 class BaseEncoder(nn.Module):
-    """This is a base class for Encoders neural networks.
-    """
+    """This is a base class for Encoders neural networks."""
 
     def __init__(self):
         nn.Module.__init__(self)
 
     def forward(self, x):
         r"""This function must be implemented in a child class.
-        It takes the input data and returns an instance of 
+        It takes the input data and returns an instance of
         :class:`~pythae.models.base.base_utils.ModelOutput`.
         If you decide to provide your own encoder network, you must make sure your
         model inherit from this class by setting and then defining your forward function as
@@ -48,15 +47,14 @@ class BaseEncoder(nn.Module):
 
 
 class BaseDecoder(nn.Module):
-    """This is a base class for Decoders neural networks.
-    """
+    """This is a base class for Decoders neural networks."""
 
     def __init__(self):
         nn.Module.__init__(self)
 
     def forward(self, z: torch.Tensor):
         r"""This function must be implemented in a child class.
-        It takes the input data and returns an instance of 
+        It takes the input data and returns an instance of
          :class:`~pythae.models.base.base_utils.ModelOutput`.
         If you decide to provide your own decoder network, you must make sure your
         model inherit from this class by setting and then defining your forward function as
@@ -85,10 +83,10 @@ class BaseDecoder(nn.Module):
 
         Returns:
             output (~pythae.models.base.base_utils.ModelOutput): The output of the decoder
-           
+
         .. note::
 
-            By convention, the reconstruction tensors should be in [0, 1] and of shape 
+            By convention, the reconstruction tensors should be in [0, 1] and of shape
             BATCH x channels x ...
 
         """
@@ -105,7 +103,7 @@ class BaseMetric(nn.Module):
 
     def forward(self, x):
         r"""This function must be implemented in a child class.
-        It takes the input data and returns an instance of 
+        It takes the input data and returns an instance of
          :class:`~pythae.models.base.base_utils.ModelOutput`.
         If you decide to provide your own metric network, you must make sure your
         model inherit from this class by setting and then defining your forward function as
@@ -139,15 +137,14 @@ class BaseMetric(nn.Module):
 
 
 class BaseDiscriminator(nn.Module):
-    """This is a base class for Discriminator neural networks.
-    """
+    """This is a base class for Discriminator neural networks."""
 
     def __init__(self):
         nn.Module.__init__(self)
 
     def forward(self, x):
         r"""This function must be implemented in a child class.
-        It takes the input data and returns an instance of 
+        It takes the input data and returns an instance of
         :class:`~pythae.models.base.base_utils.ModelOutput`.
         If you decide to provide your own disctriminator network, you must make sure your
         model inherit from this class by setting and then defining your forward function as

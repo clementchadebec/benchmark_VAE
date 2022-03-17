@@ -1,24 +1,23 @@
-import torch
 import os
-
-from ...models import VAE
-from .beta_vae_config import BetaVAEConfig
-from ...data.datasets import BaseDataset
-from ..base.base_utils import ModelOutput
-from ..nn import BaseEncoder, BaseDecoder
-from ..nn.default_architectures import Encoder_VAE_MLP
-
 from typing import Optional
 
+import torch
 import torch.nn.functional as F
+
+from ...data.datasets import BaseDataset
+from ...models import VAE
+from ..base.base_utils import ModelOutput
+from ..nn import BaseDecoder, BaseEncoder
+from ..nn.default_architectures import Encoder_VAE_MLP
+from .beta_vae_config import BetaVAEConfig
 
 
 class BetaVAE(VAE):
     r"""
     :math:`\beta`-VAE model.
-    
+
     Args:
-        model_config(BetaVAEConfig): The Variational Autoencoder configuration seting the main 
+        model_config(BetaVAEConfig): The Variational Autoencoder configuration seting the main
         parameters of the model
 
         encoder (BaseEncoder): An instance of BaseEncoder (inheriting from `torch.nn.Module` which
@@ -89,7 +88,7 @@ class BetaVAE(VAE):
             recon_loss = F.mse_loss(
                 recon_x.reshape(x.shape[0], -1),
                 x.reshape(x.shape[0], -1),
-                reduction='none'
+                reduction="none",
             ).sum(dim=-1)
 
         elif self.model_config.reconstruction_loss == "bce":
@@ -97,12 +96,16 @@ class BetaVAE(VAE):
             recon_loss = F.binary_cross_entropy(
                 recon_x.reshape(x.shape[0], -1),
                 x.reshape(x.shape[0], -1),
-                reduction='none'
+                reduction="none",
             ).sum(dim=-1)
 
         KLD = -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp(), dim=-1)
 
-        return (recon_loss + self.beta * KLD).mean(dim=0), recon_loss.mean(dim=0), KLD.mean(dim=0)
+        return (
+            (recon_loss + self.beta * KLD).mean(dim=0),
+            recon_loss.mean(dim=0),
+            KLD.mean(dim=0),
+        )
 
     def _sample_gauss(self, mu, std):
         # Reparametrization trick
@@ -138,7 +141,7 @@ class BetaVAE(VAE):
             - | a ``model_config.json`` and a ``model.pt`` if no custom architectures were provided
 
             **or**
-                
+
             - | a ``model_config.json``, a ``model.pt`` and a ``encoder.pkl`` (resp.
                 ``decoder.pkl``) if a custom encoder (resp. decoder) was provided
         """

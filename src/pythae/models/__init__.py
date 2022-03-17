@@ -35,7 +35,6 @@ from .beta_tc_vae import BetaTCVAE, BetaTCVAEConfig
 from .msssim_vae import MSSSIM_VAE, MSSSIM_VAEConfig
 from .svae import SVAE, SVAEConfig
 
-
 __all__ = [
     "BaseAE",
     "BaseAEConfig",
@@ -59,7 +58,7 @@ __all__ = [
     "RAE_GP_Config",
     "IWAE",
     "IWAEConfig",
-    "INFOVAE_MMD", 
+    "INFOVAE_MMD",
     "INFOVAE_MMD_Config",
     "VQVAE",
     "VQVAEConfig",
@@ -69,7 +68,7 @@ __all__ = [
     "VAEGANConfig",
     "MSSSIM_VAE",
     "MSSSIM_VAEConfig",
-    "SVAE", 
+    "SVAE",
     "SVAEConfig",
     "DisentangledBetaVAE",
     "DisentangledBetaVAEConfig",

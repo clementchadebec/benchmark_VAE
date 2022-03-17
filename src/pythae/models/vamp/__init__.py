@@ -12,7 +12,7 @@ Available samplers
     :nosignatures:
 """
 
-from .vamp_model import VAMP
 from .vamp_config import VAMPConfig
+from .vamp_model import VAMP
 
 __all__ = ["VAMP", "VAMPConfig"]

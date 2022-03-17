@@ -14,5 +14,6 @@ class IWAEConfig(VAEConfig):
         beta (float): The balancing factor between reconstruction and KL. Default: 1
         number_samples (int): Number of samples to use on the Monte-Carlo estimation
     """
+
     beta: float = 1
     number_samples: int = 10

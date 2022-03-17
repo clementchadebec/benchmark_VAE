@@ -1,12 +1,12 @@
 import logging
 import os
-import numpy as np
 
+import numpy as np
 import torch
 from imageio import imwrite
 
-from .base_sampler_config import BaseSamplerConfig
 from ...models import BaseAE
+from .base_sampler_config import BaseSamplerConfig
 
 logger = logging.getLogger(__name__)
 
@@ -39,8 +39,7 @@ class BaseSampler:
         self.model.to(self.device)
 
     def fit(self, *args, **kwargs):
-        """Function to be called to fit the sampler before sampling
-        """
+        """Function to be called to fit the sampler before sampling"""
         pass
 
     def sample(
@@ -55,11 +54,11 @@ class BaseSampler:
         Args:
             num_samples (int): The number of samples to generate
             batch_size (int): The batch size to use during sampling
-            output_dir (str): The directory where the images will be saved. If does not exist the 
+            output_dir (str): The directory where the images will be saved. If does not exist the
                 folder is created. If None: the images are not saved. Defaults: None.
-            return_gen (bool): Whether the sampler should directly return a tensor of generated 
+            return_gen (bool): Whether the sampler should directly return a tensor of generated
                 data. Default: True.
-        
+
         Returns:
             ~torch.Tensor: The generated images
         """

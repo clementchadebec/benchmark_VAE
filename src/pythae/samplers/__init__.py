@@ -13,12 +13,15 @@ this folder:
 """
 
 from .base import BaseSampler, BaseSamplerConfig
-from .normal_sampling import NormalSampler, NormalSamplerConfig
 from .gaussian_mixture import GaussianMixtureSampler, GaussianMixtureSamplerConfig
-from .vamp_sampler import VAMPSampler, VAMPSamplerConfig
+from .hypersphere_uniform_sampler import (
+    HypersphereUniformSampler,
+    HypersphereUniformSamplerConfig,
+)
 from .manifold_sampler import RHVAESampler, RHVAESamplerConfig
+from .normal_sampling import NormalSampler, NormalSamplerConfig
 from .two_stage_vae_sampler import TwoStageVAESampler, TwoStageVAESamplerConfig
-from .hypersphere_uniform_sampler import HypersphereUniformSampler, HypersphereUniformSamplerConfig
+from .vamp_sampler import VAMPSampler, VAMPSamplerConfig
 
 __all__ = [
     "BaseSampler",
@@ -34,5 +37,5 @@ __all__ = [
     "TwoStageVAESampler",
     "TwoStageVAESamplerConfig",
     "HypersphereUniformSampler",
-    "HypersphereUniformSamplerConfig"
+    "HypersphereUniformSamplerConfig",
 ]

@@ -1,6 +1,7 @@
 import json
 import os
-from dataclasses import asdict
+import warnings
+from dataclasses import asdict, field
 from typing import Any, Dict, Union
 
 from pydantic import ValidationError
@@ -11,6 +12,11 @@ from pydantic.dataclasses import dataclass
 class BaseConfig:
     """This is the BaseConfig class which defines all the useful loading and saving methods
     of the configs"""
+
+    name: str = field(init=False)
+
+    def __post_init__(self):
+        self.name = self.__class__.__name__
 
     @classmethod
     def from_dict(cls, config_dict: Dict[str, Any]) -> "BaseConfig":
@@ -56,9 +62,18 @@ class BaseConfig:
 
         Returns:
             :class:`BaseConfig`: The created instance
-            """
-
+        """
         config_dict = cls._dict_from_json(json_path)
+
+        config_name = config_dict.pop("name")
+
+        if cls.__name__ != config_name:
+            warnings.warn(
+                f"You are trying to load a "
+                f"`{ cls.__name__}` while a "
+                f"`{config_name}` is given."
+            )
+
         return cls.from_dict(config_dict)
 
     def to_dict(self) -> dict:

@@ -4,13 +4,13 @@ import os
 
 import torch
 
-from ..base.base_sampler import BaseSampler
 from ...models import RHVAE, RHVAEConfig
+from ..base.base_sampler import BaseSampler
 from .rhvae_sampler_config import RHVAESamplerConfig
 
 
 class RHVAESampler(BaseSampler):
-    """Sampling form the inverse of the metric volume element of a :class:`~pythae.models.RHVAE` 
+    """Sampling form the inverse of the metric volume element of a :class:`~pythae.models.RHVAE`
     model.
 
     Args:
@@ -52,13 +52,13 @@ class RHVAESampler(BaseSampler):
         Args:
             num_samples (int): The number of samples to generate
             batch_size (int): The batch size to use during sampling
-            output_dir (str): The directory where the images will be saved. If does not exist the 
+            output_dir (str): The directory where the images will be saved. If does not exist the
                 folder is created. If None: the images are not saved. Defaults: None.
-            return_gen (bool): Whether the sampler should directly return a tensor of generated 
+            return_gen (bool): Whether the sampler should directly return a tensor of generated
                 data. Default: True.
-            save_sampler_config (bool): Whether to save the sampler config. It is saved in 
+            save_sampler_config (bool): Whether to save the sampler config. It is saved in
                 output_dir
-        
+
         Returns:
             ~torch.Tensor: The generated images
         """
@@ -175,7 +175,7 @@ class RHVAESampler(BaseSampler):
             @ torch.transpose(
                 (
                     -2
-                    / (model.temperature ** 2)
+                    / (model.temperature**2)
                     * (model.centroids_tens.unsqueeze(0) - z.unsqueeze(1)).unsqueeze(2)
                     @ (
                         model.M_tens.unsqueeze(0)
@@ -185,7 +185,7 @@ class RHVAESampler(BaseSampler):
                                 dim=-1,
                             )
                             ** 2
-                            / (model.temperature ** 2)
+                            / (model.temperature**2)
                         )
                         .unsqueeze(-1)
                         .unsqueeze(-1)

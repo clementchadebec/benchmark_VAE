@@ -1,17 +1,17 @@
 import os
+from typing import Optional
+
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd import grad
-import numpy as np
 
-from ...models import VAE
 from ...data.datasets import BaseDataset
+from ...models import VAE
 from ..base.base_utils import ModelOutput
-from ..nn import BaseEncoder, BaseDecoder
+from ..nn import BaseDecoder, BaseEncoder
 from .hvae_config import HVAEConfig
-
-from typing import Optional
 
 
 class HVAE(VAE):
@@ -60,7 +60,7 @@ class HVAE(VAE):
     def forward(self, inputs: BaseDataset, **kwargs) -> ModelOutput:
         r"""
         The input data is first encoded. The reparametrization is used to produce a sample
-        :math:`z_0` from the approximate posterior :math:`q_{\phi}(z|x)`. Then 
+        :math:`z_0` from the approximate posterior :math:`q_{\phi}(z|x)`. Then
         Hamiltonian equations are solved using the leapfrog integrator.
 
         Args:
@@ -161,8 +161,8 @@ class HVAE(VAE):
                 recon_x.reshape(x.shape[0], -1),
                 x.reshape(x.shape[0], -1),
                 reduction="none",
-            ).sum(dim=-1) 
-            #- torch.log(torch.tensor([2 * np.pi]).to(x.device)) \
+            ).sum(dim=-1)
+            # - torch.log(torch.tensor([2 * np.pi]).to(x.device)) \
             #    * np.prod(self.input_dim) / 2
 
         elif self.model_config.reconstruction_loss == "bce":

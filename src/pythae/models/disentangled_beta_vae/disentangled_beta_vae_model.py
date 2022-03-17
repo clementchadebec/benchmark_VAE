@@ -1,24 +1,23 @@
-import torch
 import os
-
-from ...models import VAE
-from .disentangled_beta_vae_config import DisentangledBetaVAEConfig
-from ...data.datasets import BaseDataset
-from ..base.base_utils import ModelOutput
-from ..nn import BaseEncoder, BaseDecoder
-from ..nn.default_architectures import Encoder_VAE_MLP
-
 from typing import Optional
 
+import torch
 import torch.nn.functional as F
+
+from ...data.datasets import BaseDataset
+from ...models import VAE
+from ..base.base_utils import ModelOutput
+from ..nn import BaseDecoder, BaseEncoder
+from ..nn.default_architectures import Encoder_VAE_MLP
+from .disentangled_beta_vae_config import DisentangledBetaVAEConfig
 
 
 class DisentangledBetaVAE(VAE):
     r"""
     Disentangled :math:`\beta`-VAE model.
-    
+
     Args:
-        model_config(DisentangledBetaVAEConfig): The Variational Autoencoder configuration setting 
+        model_config(DisentangledBetaVAEConfig): The Variational Autoencoder configuration setting
         the main parameters of the model
 
         encoder (BaseEncoder): An instance of BaseEncoder (inheriting from `torch.nn.Module` which
@@ -45,9 +44,9 @@ class DisentangledBetaVAE(VAE):
 
         VAE.__init__(self, model_config=model_config, encoder=encoder, decoder=decoder)
 
-        assert model_config.warmup_epoch >= 0, (
-            f"Provide a value of warmup epoch >= 0, got {model_config.warmup_epoch}"
-        )
+        assert (
+            model_config.warmup_epoch >= 0
+        ), f"Provide a value of warmup epoch >= 0, got {model_config.warmup_epoch}"
 
         self.model_name = "DisentangledBetaVAE"
         self.beta = model_config.beta
@@ -68,8 +67,7 @@ class DisentangledBetaVAE(VAE):
 
         x = inputs["data"]
 
-
-        epoch = kwargs.pop('epoch', self.warmup_epoch)
+        epoch = kwargs.pop("epoch", self.warmup_epoch)
 
         encoder_output = self.encoder(x)
 
@@ -98,7 +96,7 @@ class DisentangledBetaVAE(VAE):
             recon_loss = F.mse_loss(
                 recon_x.reshape(x.shape[0], -1),
                 x.reshape(x.shape[0], -1),
-                reduction='none'
+                reduction="none",
             ).sum(dim=-1)
 
         elif self.model_config.reconstruction_loss == "bce":
@@ -106,7 +104,7 @@ class DisentangledBetaVAE(VAE):
             recon_loss = F.binary_cross_entropy(
                 recon_x.reshape(x.shape[0], -1),
                 x.reshape(x.shape[0], -1),
-                reduction='none'
+                reduction="none",
             ).sum(dim=-1)
 
         KLD = -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp(), dim=-1)
@@ -116,9 +114,9 @@ class DisentangledBetaVAE(VAE):
         return (
             (recon_loss + self.beta * KLD_diff).mean(dim=0),
             recon_loss.mean(dim=0),
-            KLD.mean(dim=0)
+            KLD.mean(dim=0),
         )
-    
+
     def _sample_gauss(self, mu, std):
         # Reparametrization trick
         # Sample N(0, I)
@@ -153,7 +151,7 @@ class DisentangledBetaVAE(VAE):
             - | a ``model_config.json`` and a ``model.pt`` if no custom architectures were provided
 
             **or**
-                
+
             - | a ``model_config.json``, a ``model.pt`` and a ``encoder.pkl`` (resp.
                 ``decoder.pkl``) if a custom encoder (resp. decoder) was provided
         """

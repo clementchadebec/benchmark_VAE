@@ -1,5 +1,4 @@
 from pydantic.dataclasses import dataclass
-
 from typing_extensions import Literal
 
 from ...models import AEConfig
@@ -15,6 +14,7 @@ class RAE_L2_Config(AEConfig):
         embedding_weight (float): The factor before the L2 regularization term in the loss.
             Default: 1e-4
         reg_weight (float): The weight decay to apply.
-        """
+    """
+
     embedding_weight: float = 1e-4
     reg_weight: float = 1e-7

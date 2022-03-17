@@ -15,7 +15,7 @@ class RHVAEConfig(VAEConfig):
             Default: 0.3
         temperature (float): The metric temperature :math:`T`. Default: 1.5
         regularization (float): The metric regularization factor :math:`\lambda`
-        """
+    """
     n_lf: int = 3
     eps_lf: float = 0.001
     beta_zero: float = 0.3

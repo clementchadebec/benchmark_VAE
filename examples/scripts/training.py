@@ -10,7 +10,11 @@ from pythae.data.preprocessors import DataProcessor
 from pythae.models import RHVAE
 from pythae.models.rhvae import RHVAEConfig
 from pythae.pipelines import TrainingPipeline
-from pythae.trainers import BaseTrainingConfig, CoupledOptimizerTrainerConfig, AdversarialTrainerConfig
+from pythae.trainers import (
+    BaseTrainerConfig,
+    CoupledOptimizerTrainerConfig,
+    AdversarialTrainerConfig,
+)
 
 logger = logging.getLogger(__name__)
 console = logging.StreamHandler()
@@ -55,7 +59,7 @@ ap.add_argument(
         "svae",
         "disentangled_beta_vae",
         "factor_vae",
-        "beta_tc_vae"
+        "beta_tc_vae",
     ],
     required=True,
 )
@@ -69,6 +73,21 @@ ap.add_argument(
     help="path to training config_file (expected json file)",
     default=os.path.join(PATH, "configs/base_training_config.json"),
 )
+ap.add_argument(
+    "--use_wandb",
+    help="whether to log the metrics in wandb",
+    action="store_true",
+)
+ap.add_argument(
+    "--wandb_project",
+    help="wandb project name",
+    default="test-project",
+)
+ap.add_argument(
+    "--wandb_entity",
+    help="wandb entity name",
+    default="benchmark_team",
+)
 
 args = ap.parse_args()
 
@@ -81,7 +100,9 @@ def main(args):
         from pythae.models.nn.benchmarks.mnist import Encoder_VAE_MNIST as Encoder_VAE
         from pythae.models.nn.benchmarks.mnist import Encoder_SVAE_MNIST as Encoder_SVAE
         from pythae.models.nn.benchmarks.mnist import Decoder_AE_MNIST as Decoder_AE
-        from pythae.models.nn.benchmarks.mnist import Discriminator_MNIST as Discriminator
+        from pythae.models.nn.benchmarks.mnist import (
+            Discriminator_MNIST as Discriminator,
+        )
 
     elif args.dataset == "cifar10":
 
@@ -93,9 +114,13 @@ def main(args):
 
         from pythae.models.nn.benchmarks.celeba import Encoder_AE_CELEBA as Encoder_AE
         from pythae.models.nn.benchmarks.celeba import Encoder_VAE_CELEBA as Encoder_VAE
-        from pythae.models.nn.benchmarks.celeba import Encoder_SVAE_CELEBA as Encoder_SVAE
+        from pythae.models.nn.benchmarks.celeba import (
+            Encoder_SVAE_CELEBA as Encoder_SVAE,
+        )
         from pythae.models.nn.benchmarks.celeba import Decoder_AE_CELEBA as Decoder_AE
-        from pythae.models.nn.benchmarks.celeba import Discriminator_CELEBA as Discriminator
+        from pythae.models.nn.benchmarks.celeba import (
+            Discriminator_CELEBA as Discriminator,
+        )
 
     try:
         logger.info(f"\nLoading {args.dataset} data...\n")
@@ -106,7 +131,7 @@ def main(args):
             / 255.0
         )
         eval_data = (
-                np.load(os.path.join(PATH, f"data/{args.dataset}", "eval_data.npz"))["data"]
+            np.load(os.path.join(PATH, f"data/{args.dataset}", "eval_data.npz"))["data"]
             / 255.0
         )
     except Exception as e:
@@ -215,7 +240,7 @@ def main(args):
             encoder=Encoder_AE(model_config),
             decoder=Decoder_AE(model_config),
         )
-    
+
     elif args.model_name == "rae_l2":
         from pythae.models import RAE_L2, RAE_L2_Config
 
@@ -339,9 +364,7 @@ def main(args):
         from pythae.models import VAEGAN, VAEGANConfig
 
         if args.model_config is not None:
-            model_config = VAEGANConfig.from_json_file(
-                args.model_config
-            )
+            model_config = VAEGANConfig.from_json_file(args.model_config)
 
         else:
             model_config = VAEGANConfig()
@@ -352,7 +375,7 @@ def main(args):
             model_config=model_config,
             encoder=Encoder_VAE(model_config),
             decoder=Decoder_AE(model_config),
-            discriminator=Discriminator(model_config)
+            discriminator=Discriminator(model_config),
         )
 
     elif args.model_name == "vqvae":
@@ -456,7 +479,6 @@ def main(args):
             encoder=Encoder_VAE(model_config),
             decoder=Decoder_AE(model_config),
         )
-    
 
     logger.info(f"Successfully build {args.model_name.upper()} model !\n")
 
@@ -481,29 +503,47 @@ def main(args):
 
     logger.info(f"Model config of {args.model_name.upper()}: {model_config}\n")
 
-    if model.model_name == 'RAE_L2':
-        training_config = CoupledOptimizerTrainerConfig.from_json_file(args.training_config)
+    if model.model_name == "RAE_L2":
+        training_config = CoupledOptimizerTrainerConfig.from_json_file(
+            args.training_config
+        )
 
-    elif model.model_name == 'Adversarial_AE' or model.model_name == 'FactorVAE':
+    elif model.model_name == "Adversarial_AE" or model.model_name == "FactorVAE":
         training_config = AdversarialTrainerConfig.from_json_file(args.training_config)
 
-    elif model.model_name == 'VAEGAN':
+    elif model.model_name == "VAEGAN":
         from pythae.trainers import (
             CoupledOptimizerAdversarialTrainer,
-            CoupledOptimizerAdversarialTrainerConfig
+            CoupledOptimizerAdversarialTrainerConfig,
         )
+
         training_config = CoupledOptimizerAdversarialTrainerConfig.from_json_file(
             args.training_config
         )
 
     else:
-        training_config = BaseTrainingConfig.from_json_file(args.training_config)
+        training_config = BaseTrainerConfig.from_json_file(args.training_config)
 
     logger.info(f"Training config: {training_config}\n")
 
+    callbacks = []
+
+    if args.use_wandb:
+        from pythae.trainers.training_callbacks import WandbCallback
+
+        wandb_cb = WandbCallback()
+        wandb_cb.setup(
+            training_config,
+            model_config=model_config,
+            project_name=args.wandb_project,
+            entity_name=args.wandb_entity,
+        )
+
+        callbacks.append(wandb_cb)
+
     pipeline = TrainingPipeline(training_config=training_config, model=model)
 
-    pipeline(train_data=train_data, eval_data=eval_data)
+    pipeline(train_data=train_data, eval_data=eval_data, callbacks=callbacks)
 
 
 if __name__ == "__main__":

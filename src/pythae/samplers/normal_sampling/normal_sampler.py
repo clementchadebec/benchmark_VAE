@@ -31,13 +31,13 @@ class NormalSampler(BaseSampler):
         Args:
             num_samples (int): The number of samples to generate
             batch_size (int): The batch size to use during sampling
-            output_dir (str): The directory where the images will be saved. If does not exist the 
+            output_dir (str): The directory where the images will be saved. If does not exist the
                 folder is created. If None: the images are not saved. Defaults: None.
-            return_gen (bool): Whether the sampler should directly return a tensor of generated 
+            return_gen (bool): Whether the sampler should directly return a tensor of generated
                 data. Default: True.
-            save_sampler_config (bool): Whether to save the sampler config. It is saved in 
+            save_sampler_config (bool): Whether to save the sampler config. It is saved in
                 output_dir.
-        
+
         Returns:
             ~torch.Tensor: The generated images
         """
