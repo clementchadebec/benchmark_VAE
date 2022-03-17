@@ -7,13 +7,12 @@ import torch
 import torch.nn as nn
 
 from ...customexception import BadInheritanceError
-from ..nn import BaseDecoder, BaseEncoder
 from ...data.datasets import BaseDataset
-from ..nn.default_architectures import Encoder_AE_MLP, Decoder_AE_MLP
-
+from ..nn import BaseDecoder, BaseEncoder
+from ..nn.default_architectures import Decoder_AE_MLP, Encoder_AE_MLP
 from .base_config import BaseAEConfig
+from .base_utils import CPU_Unpickler, ModelOutput
 
-from .base_utils import ModelOutput, CPU_Unpickler
 
 class BaseAE(nn.Module):
     """Base class for Autoencoder based models.
@@ -74,7 +73,7 @@ class BaseAE(nn.Module):
 
     def forward(self, inputs: BaseDataset, **kwargs) -> ModelOutput:
         """Main forward pass outputing the VAE outputs
-        This function should output a :class:`~pythae.models.base.base_utils.ModelOutput` instance 
+        This function should output a :class:`~pythae.models.base.base_utils.ModelOutput` instance
         gathering all the model outputs
 
         Args:
@@ -85,7 +84,7 @@ class BaseAE(nn.Module):
 
         .. note::
             The loss must be computed in this forward pass and accessed through
-            ``loss = model_output.loss`` """
+            ``loss = model_output.loss``"""
         raise NotImplementedError()
 
     def update(self):
@@ -225,7 +224,7 @@ class BaseAE(nn.Module):
             - | a ``model_config.json`` and a ``model.pt`` if no custom architectures were provided
 
             **or**
-                
+
             - | a ``model_config.json``, a ``model.pt`` and a ``encoder.pkl`` (resp.
                 ``decoder.pkl``) if a custom encoder (resp. decoder) was provided
         """

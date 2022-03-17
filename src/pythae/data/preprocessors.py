@@ -37,15 +37,17 @@ class DataProcessor:
     def __init__(self):
         pass
 
-    def process_data(self, data: Union[np.ndarray, torch.Tensor], batch_size: int=100) -> torch.tensor:
-        """ This function detects potential check the data type, detects nan in input data and
+    def process_data(
+        self, data: Union[np.ndarray, torch.Tensor], batch_size: int = 100
+    ) -> torch.tensor:
+        """This function detects potential check the data type, detects nan in input data and
         preprocessed the data so it can be handled by the models.
 
         Args:
             data (Union[np.ndarray, torch.Tensor]): The data that need to be
                 checked. Expected:
 
-                    - | np.ndarray of shape `num_data x n_channels x [optional depth] x 
+                    - | np.ndarray of shape `num_data x n_channels x [optional depth] x
                       | [optional height] x width x ...`
                     - | torch.Tensor of shape `num_data x n_channels x [optional depth] x
                       | [optional height] x width x ...`
@@ -89,7 +91,7 @@ class DataProcessor:
 
         return dataset
 
-    def _process_data_array(self, data: np.ndarray, batch_size: int=100):
+    def _process_data_array(self, data: np.ndarray, batch_size: int = 100):
 
         num_samples = data.shape[0]
         samples_shape = data.shape
@@ -102,14 +104,16 @@ class DataProcessor:
         for i in range(num_complete_batch):
 
             # Detect potential nan
-            if DataProcessor.has_nan(data[i*batch_size:(i+1)*batch_size]):
+            if DataProcessor.has_nan(data[i * batch_size : (i + 1) * batch_size]):
                 raise ValueError("Nan detected in input data!")
 
-            processed_data = DataProcessor.to_tensor(data[i*batch_size:(i+1)*batch_size])
+            processed_data = DataProcessor.to_tensor(
+                data[i * batch_size : (i + 1) * batch_size]
+            )
             full_data.append(processed_data)
 
         if num_in_last > 0:
-             # Detect potential nan
+            # Detect potential nan
             if DataProcessor.has_nan(data[-num_in_last:]):
                 raise ValueError("Nan detected in input data!")
 

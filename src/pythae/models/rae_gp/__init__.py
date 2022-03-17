@@ -10,7 +10,7 @@ Available samplers
     :nosignatures:
 """
 
-from .rae_gp_model import RAE_GP
 from .rae_gp_config import RAE_GP_Config
+from .rae_gp_model import RAE_GP
 
 __all__ = ["RAE_GP", "RAE_GP_Config"]

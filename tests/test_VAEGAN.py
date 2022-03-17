@@ -10,12 +10,16 @@ from torch.optim import SGD, Adadelta, Adagrad, Adam, RMSprop
 from pythae.customexception import BadInheritanceError
 from pythae.models.base.base_utils import ModelOutput
 from pythae.models import VAEGAN, VAEGANConfig
-from pythae.trainers import CoupledOptimizerAdversarialTrainer, CoupledOptimizerAdversarialTrainerConfig, BaseTrainingConfig
+from pythae.trainers import (
+    CoupledOptimizerAdversarialTrainer,
+    CoupledOptimizerAdversarialTrainerConfig,
+    BaseTrainerConfig,
+)
 from pythae.pipelines import TrainingPipeline
 from pythae.models.nn.default_architectures import (
     Decoder_AE_MLP,
     Encoder_VAE_MLP,
-    Discriminator_MLP
+    Discriminator_MLP,
 )
 from tests.data.custom_architectures import (
     Decoder_AE_Conv,
@@ -26,7 +30,7 @@ from tests.data.custom_architectures import (
 
 PATH = os.path.dirname(os.path.abspath(__file__))
 
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
+device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
 @pytest.fixture(params=[VAEGANConfig(), VAEGANConfig(latent_dim=5)])
@@ -75,21 +79,27 @@ class Test_Model_Building:
 
         # check raises error with adv scale > 1
         conf = VAEGANConfig(
-            input_dim=(1, 2, 18), latent_dim=5, adversarial_loss_scale=2 + np.random.rand()
-            )
+            input_dim=(1, 2, 18),
+            latent_dim=5,
+            adversarial_loss_scale=2 + np.random.rand(),
+        )
         with pytest.raises(AssertionError):
             VAEGAN(conf)
-        
+
         # check raises error with adv scale < 0
         conf = VAEGANConfig(
-            input_dim=(1, 2, 18), latent_dim=5, adversarial_loss_scale=2 + np.random.rand()
-            )
+            input_dim=(1, 2, 18),
+            latent_dim=5,
+            adversarial_loss_scale=2 + np.random.rand(),
+        )
         with pytest.raises(AssertionError):
             a = VAEGAN(conf)
 
         conf = VAEGANConfig(
-            input_dim=(1, 2, 18), latent_dim=5, reconstruction_layer=5 + np.random.rand()
-            )
+            input_dim=(1, 2, 18),
+            latent_dim=5,
+            reconstruction_layer=5 + np.random.rand(),
+        )
         with pytest.raises(AssertionError):
             a = VAEGAN(conf)
 
@@ -104,7 +114,11 @@ class Test_Model_Building:
             adversarial_ae = VAEGAN(model_configs, discriminator=bad_net)
 
     def test_raises_no_input_dim(
-        self, model_configs_no_input_dim, custom_encoder, custom_decoder, custom_discriminator
+        self,
+        model_configs_no_input_dim,
+        custom_encoder,
+        custom_decoder,
+        custom_discriminator,
     ):
         with pytest.raises(AttributeError):
             adversarial_ae = VAEGAN(model_configs_no_input_dim)
@@ -116,7 +130,9 @@ class Test_Model_Building:
             adversarial_ae = VAEGAN(model_configs_no_input_dim, decoder=custom_decoder)
 
         with pytest.raises(AttributeError):
-            adversarial_ae = VAEGAN(model_configs_no_input_dim, discriminator=custom_discriminator)
+            adversarial_ae = VAEGAN(
+                model_configs_no_input_dim, discriminator=custom_discriminator
+            )
 
         adversarial_ae = VAEGAN(
             model_configs_no_input_dim,
@@ -129,7 +145,9 @@ class Test_Model_Building:
         self, model_configs, custom_encoder, custom_decoder, custom_discriminator
     ):
 
-        adversarial_ae = VAEGAN(model_configs, encoder=custom_encoder, decoder=custom_decoder)
+        adversarial_ae = VAEGAN(
+            model_configs, encoder=custom_encoder, decoder=custom_decoder
+        )
 
         assert adversarial_ae.encoder == custom_encoder
         assert not adversarial_ae.model_config.uses_default_encoder
@@ -146,6 +164,7 @@ class Test_Model_Building:
 
         assert adversarial_ae.discriminator == custom_discriminator
         assert not adversarial_ae.model_config.uses_default_discriminator
+
 
 class Test_Model_Saving:
     def test_default_model_saving(self, tmpdir, model_configs):
@@ -173,7 +192,6 @@ class Test_Model_Saving:
                 for key in model.state_dict().keys()
             ]
         )
-
 
     def test_custom_encoder_model_saving(self, tmpdir, model_configs, custom_encoder):
 
@@ -231,7 +249,9 @@ class Test_Model_Saving:
             ]
         )
 
-    def test_custom_discriminator_model_saving(self, tmpdir, model_configs, custom_discriminator):
+    def test_custom_discriminator_model_saving(
+        self, tmpdir, model_configs, custom_discriminator
+    ):
 
         tmpdir.mkdir("dummy_folder")
         dir_path = dir_path = os.path.join(tmpdir, "dummy_folder")
@@ -259,9 +279,13 @@ class Test_Model_Saving:
             ]
         )
 
-
     def test_full_custom_model_saving(
-        self, tmpdir, model_configs, custom_encoder, custom_decoder, custom_discriminator
+        self,
+        tmpdir,
+        model_configs,
+        custom_encoder,
+        custom_decoder,
+        custom_discriminator,
     ):
 
         tmpdir.mkdir("dummy_folder")
@@ -301,9 +325,13 @@ class Test_Model_Saving:
             ]
         )
 
-
     def test_raises_missing_files(
-        self, tmpdir, model_configs, custom_encoder, custom_decoder, custom_discriminator
+        self,
+        tmpdir,
+        model_configs,
+        custom_encoder,
+        custom_decoder,
+        custom_discriminator,
     ):
 
         tmpdir.mkdir("dummy_folder")
@@ -357,9 +385,7 @@ class Test_Model_forward:
         data = torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))[
             :
         ]
-        return (
-            data
-        )  # This is an extract of 3 data from MNIST (unnormalized) used to test custom architecture
+        return data  # This is an extract of 3 data from MNIST (unnormalized) used to test custom architecture
 
     @pytest.fixture
     def adversarial_ae(self, model_configs, demo_data):
@@ -379,20 +405,19 @@ class Test_Model_forward:
         assert isinstance(out, ModelOutput)
 
         assert set(
-            ["loss",
-            "recon_loss",
-            "encoder_loss",
-            "decoder_loss",
-            "discriminator_loss",
-            "recon_x",
-            "z",
-            "update_discriminator",
-            "update_encoder",
-            "update_decoder"
+            [
+                "loss",
+                "recon_loss",
+                "encoder_loss",
+                "decoder_loss",
+                "discriminator_loss",
+                "recon_x",
+                "z",
+                "update_discriminator",
+                "update_encoder",
+                "update_decoder",
             ]
-        ) == set(
-            out.keys()
-        )
+        ) == set(out.keys())
 
         assert out.z.shape[0] == demo_data["data"].shape[0]
         assert out.recon_x.shape == demo_data["data"].shape
@@ -405,7 +430,11 @@ class Test_VAEGAN_Training:
         return torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))
 
     @pytest.fixture(
-        params=[CoupledOptimizerAdversarialTrainerConfig(num_epochs=3, steps_saving=2, learning_rate=1e-4)]
+        params=[
+            CoupledOptimizerAdversarialTrainerConfig(
+                num_epochs=3, steps_saving=2, learning_rate=1e-4
+            )
+        ]
     )
     def training_configs(self, tmpdir, request):
         tmpdir.mkdir("dummy_folder")
@@ -423,7 +452,12 @@ class Test_VAEGAN_Training:
         ]
     )
     def adversarial_ae(
-        self, model_configs, custom_encoder, custom_decoder, custom_discriminator, request
+        self,
+        model_configs,
+        custom_encoder,
+        custom_decoder,
+        custom_discriminator,
+        request,
     ):
         # randomized
 
@@ -442,13 +476,23 @@ class Test_VAEGAN_Training:
             model = VAEGAN(model_configs, discriminator=custom_discriminator)
 
         elif 0.5 <= alpha < 0.625:
-            model = VAEGAN(model_configs, encoder=custom_encoder, decoder=custom_decoder)
+            model = VAEGAN(
+                model_configs, encoder=custom_encoder, decoder=custom_decoder
+            )
 
         elif 0.625 <= alpha < 0:
-            model = VAEGAN(model_configs, encoder=custom_encoder, discriminator=custom_discriminator)
+            model = VAEGAN(
+                model_configs,
+                encoder=custom_encoder,
+                discriminator=custom_discriminator,
+            )
 
         elif 0.750 <= alpha < 0.875:
-            model = VAEGAN(model_configs, decoder=custom_decoder, discriminator=custom_discriminator)
+            model = VAEGAN(
+                model_configs,
+                decoder=custom_decoder,
+                discriminator=custom_discriminator,
+            )
 
         else:
             model = VAEGAN(
@@ -470,7 +514,8 @@ class Test_VAEGAN_Training:
                 adversarial_ae.decoder.parameters(), lr=training_configs.learning_rate
             )
             discriminator_optimizer = request.param(
-                adversarial_ae.discriminator.parameters(), lr=training_configs.learning_rate
+                adversarial_ae.discriminator.parameters(),
+                lr=training_configs.learning_rate,
             )
 
         else:
@@ -480,14 +525,16 @@ class Test_VAEGAN_Training:
 
         return (encoder_optimizer, decoder_optimizer, discriminator_optimizer)
 
-    def test_adversarial_ae_train_step(self, adversarial_ae, train_dataset, training_configs, optimizers):
+    def test_adversarial_ae_train_step(
+        self, adversarial_ae, train_dataset, training_configs, optimizers
+    ):
         trainer = CoupledOptimizerAdversarialTrainer(
             model=adversarial_ae,
             train_dataset=train_dataset,
             training_config=training_configs,
             encoder_optimizer=optimizers[0],
             decoder_optimizer=optimizers[1],
-            discriminator_optimizer=optimizers[1]
+            discriminator_optimizer=optimizers[1],
         )
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
@@ -504,7 +551,9 @@ class Test_VAEGAN_Training:
             ]
         )
 
-    def test_adversarial_ae_eval_step(self, adversarial_ae, train_dataset, training_configs, optimizers):
+    def test_adversarial_ae_eval_step(
+        self, adversarial_ae, train_dataset, training_configs, optimizers
+    ):
         trainer = CoupledOptimizerAdversarialTrainer(
             model=adversarial_ae,
             train_dataset=train_dataset,
@@ -512,7 +561,7 @@ class Test_VAEGAN_Training:
             training_config=training_configs,
             encoder_optimizer=optimizers[0],
             decoder_optimizer=optimizers[1],
-            discriminator_optimizer=optimizers[1]
+            discriminator_optimizer=optimizers[1],
         )
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
@@ -540,7 +589,7 @@ class Test_VAEGAN_Training:
             training_config=training_configs,
             encoder_optimizer=optimizers[0],
             decoder_optimizer=optimizers[1],
-            discriminator_optimizer=optimizers[1]
+            discriminator_optimizer=optimizers[1],
         )
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
@@ -569,7 +618,7 @@ class Test_VAEGAN_Training:
             training_config=training_configs,
             encoder_optimizer=optimizers[0],
             decoder_optimizer=optimizers[1],
-            discriminator_optimizer=optimizers[1]
+            discriminator_optimizer=optimizers[1],
         )
 
         # Make a training step
@@ -588,9 +637,15 @@ class Test_VAEGAN_Training:
 
         files_list = os.listdir(checkpoint_dir)
 
-        assert set(["model.pt", "encoder_optimizer.pt", "decoder_optimizer.pt", "discriminator_optimizer.pt", "training_config.json"]).issubset(
-            set(files_list)
-        )
+        assert set(
+            [
+                "model.pt",
+                "encoder_optimizer.pt",
+                "decoder_optimizer.pt",
+                "discriminator_optimizer.pt",
+                "training_config.json",
+            ]
+        ).issubset(set(files_list))
 
         # check pickled custom decoder
         if not adversarial_ae.model_config.uses_default_decoder:
@@ -646,9 +701,15 @@ class Test_VAEGAN_Training:
         assert type(model_rec.decoder.cpu()) == type(model.decoder.cpu())
         assert type(model_rec.discriminator.cpu()) == type(model.discriminator.cpu())
 
-        encoder_optim_rec_state_dict = torch.load(os.path.join(checkpoint_dir, "encoder_optimizer.pt"))
-        decoder_optim_rec_state_dict = torch.load(os.path.join(checkpoint_dir, "decoder_optimizer.pt"))
-        discriminator_optim_rec_state_dict = torch.load(os.path.join(checkpoint_dir, "discriminator_optimizer.pt"))
+        encoder_optim_rec_state_dict = torch.load(
+            os.path.join(checkpoint_dir, "encoder_optimizer.pt")
+        )
+        decoder_optim_rec_state_dict = torch.load(
+            os.path.join(checkpoint_dir, "decoder_optimizer.pt")
+        )
+        discriminator_optim_rec_state_dict = torch.load(
+            os.path.join(checkpoint_dir, "discriminator_optimizer.pt")
+        )
 
         assert all(
             [
@@ -664,7 +725,8 @@ class Test_VAEGAN_Training:
             [
                 dict_rec == dict_optimizer
                 for (dict_rec, dict_optimizer) in zip(
-                    encoder_optim_rec_state_dict["state"], encoder_optimizer.state_dict()["state"]
+                    encoder_optim_rec_state_dict["state"],
+                    encoder_optimizer.state_dict()["state"],
                 )
             ]
         )
@@ -683,7 +745,8 @@ class Test_VAEGAN_Training:
             [
                 dict_rec == dict_optimizer
                 for (dict_rec, dict_optimizer) in zip(
-                    decoder_optim_rec_state_dict["state"], decoder_optimizer.state_dict()["state"]
+                    decoder_optim_rec_state_dict["state"],
+                    decoder_optimizer.state_dict()["state"],
                 )
             ]
         )
@@ -702,7 +765,8 @@ class Test_VAEGAN_Training:
             [
                 dict_rec == dict_optimizer
                 for (dict_rec, dict_optimizer) in zip(
-                    discriminator_optim_rec_state_dict["state"], discriminator_optimizer.state_dict()["state"]
+                    discriminator_optim_rec_state_dict["state"],
+                    discriminator_optimizer.state_dict()["state"],
                 )
             ]
         )
@@ -720,7 +784,7 @@ class Test_VAEGAN_Training:
             train_dataset=train_dataset,
             training_config=training_configs,
             encoder_optimizer=optimizers[0],
-            discriminator_optimizer=optimizers[1]
+            discriminator_optimizer=optimizers[1],
         )
 
         model = deepcopy(trainer.model)
@@ -741,9 +805,15 @@ class Test_VAEGAN_Training:
         files_list = os.listdir(checkpoint_dir)
 
         # check files
-        assert set(["model.pt", "encoder_optimizer.pt", "decoder_optimizer.pt", "discriminator_optimizer.pt", "training_config.json"]).issubset(
-            set(files_list)
-        )
+        assert set(
+            [
+                "model.pt",
+                "encoder_optimizer.pt",
+                "decoder_optimizer.pt",
+                "discriminator_optimizer.pt",
+                "training_config.json",
+            ]
+        ).issubset(set(files_list))
 
         # check pickled custom decoder
         if not adversarial_ae.model_config.uses_default_decoder:
@@ -788,7 +858,7 @@ class Test_VAEGAN_Training:
             train_dataset=train_dataset,
             training_config=training_configs,
             encoder_optimizer=optimizers[0],
-            discriminator_optimizer=optimizers[1]
+            discriminator_optimizer=optimizers[1],
         )
 
         trainer.train()
@@ -852,8 +922,8 @@ class Test_VAEGAN_Training:
 
         with pytest.raises(AssertionError):
             pipeline = TrainingPipeline(
-            model=adversarial_ae, training_config=BaseTrainingConfig()
-        )
+                model=adversarial_ae, training_config=BaseTrainerConfig()
+            )
 
         dir_path = training_configs.output_dir
 

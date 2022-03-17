@@ -1,25 +1,24 @@
-import torch
 import os
-
-from ...models import AE
-from .vq_vae_config import VQVAEConfig
-from .vq_vae_utils import Quantizer
-from ...data.datasets import BaseDataset
-from ..base.base_utils import ModelOutput
-from ..nn import BaseEncoder, BaseDecoder
-from ..nn.default_architectures import Encoder_VAE_MLP
-
 from typing import Optional
 
+import torch
 import torch.nn.functional as F
+
+from ...data.datasets import BaseDataset
+from ...models import AE
+from ..base.base_utils import ModelOutput
+from ..nn import BaseDecoder, BaseEncoder
+from ..nn.default_architectures import Encoder_VAE_MLP
+from .vq_vae_config import VQVAEConfig
+from .vq_vae_utils import Quantizer
 
 
 class VQVAE(AE):
     r"""
     Vector Quantized-VAE model.
-    
+
     Args:
-        model_config(VQVAEConfig): The Variational Autoencoder configuration seting the main 
+        model_config(VQVAEConfig): The Variational Autoencoder configuration seting the main
         parameters of the model
 
         encoder (BaseEncoder): An instance of BaseEncoder (inheriting from `torch.nn.Module` which
@@ -63,10 +62,11 @@ class VQVAE(AE):
         x = torch.randn((2,) + self.model_config.input_dim)
         z = self.encoder(x).embedding
         if len(z.shape) == 2:
-            z = z.reshape(z.shape[0], 1, int(z.shape[-1]**0.5), int(z.shape[-1]**0.5))
+            z = z.reshape(
+                z.shape[0], 1, int(z.shape[-1] ** 0.5), int(z.shape[-1] ** 0.5)
+            )
 
         z = z.permute(0, 2, 3, 1)
-
 
         self.model_config.embedding_dim = z.shape[-1]
         self.quantizer = Quantizer(model_config=model_config)
@@ -95,8 +95,8 @@ class VQVAE(AE):
             embeddings = embeddings.reshape(
                 embeddings.shape[0],
                 1,
-                int(embeddings.shape[-1]**0.5),
-                int(embeddings.shape[-1]**0.5)
+                int(embeddings.shape[-1] ** 0.5),
+                int(embeddings.shape[-1] ** 0.5),
             )
 
             reshape_for_decoding = True
@@ -126,19 +126,21 @@ class VQVAE(AE):
 
     def loss_function(self, recon_x, x, quantizer_output):
 
-       
         recon_loss = F.mse_loss(
-            recon_x.reshape(x.shape[0], -1),
-            x.reshape(x.shape[0], -1),
-            reduction='none'
+            recon_x.reshape(x.shape[0], -1), x.reshape(x.shape[0], -1), reduction="none"
         ).sum(dim=-1)
 
         vq_loss = (
-            self.model_config.beta * quantizer_output.commitment_loss + \
-            self.model_config.quantization_loss_factor * quantizer_output.embedding_loss
+            self.model_config.beta * quantizer_output.commitment_loss
+            + self.model_config.quantization_loss_factor
+            * quantizer_output.embedding_loss
         )
 
-        return (recon_loss + vq_loss).mean(dim=0), recon_loss.mean(dim=0), vq_loss.mean(dim=0)
+        return (
+            (recon_loss + vq_loss).mean(dim=0),
+            recon_loss.mean(dim=0),
+            vq_loss.mean(dim=0),
+        )
 
     def _sample_gauss(self, mu, std):
         # Reparametrization trick
@@ -174,7 +176,7 @@ class VQVAE(AE):
             - | a ``model_config.json`` and a ``model.pt`` if no custom architectures were provided
 
             **or**
-                
+
             - | a ``model_config.json``, a ``model.pt`` and a ``encoder.pkl`` (resp.
                 ``decoder.pkl``) if a custom encoder (resp. decoder) was provided
         """

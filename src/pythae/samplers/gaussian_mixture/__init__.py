@@ -7,6 +7,7 @@ Available models:
     ~pythae.models.AE
     ~pythae.models.VAE
     ~pythae.models.BetaVAE
+    ~pythae.models.DisentangledBetaVAE
     ~pythae.models.IWAE
     ~pythae.models.WAE_MMD
     ~pythae.models.INFOVAE_MMD
@@ -20,7 +21,7 @@ Available models:
     :nosignatures:
 """
 
-from .gaussian_mixture_sampler import GaussianMixtureSampler
 from .gaussian_mixture_config import GaussianMixtureSamplerConfig
+from .gaussian_mixture_sampler import GaussianMixtureSampler
 
 __all__ = ["GaussianMixtureSampler", "GaussianMixtureSamplerConfig"]

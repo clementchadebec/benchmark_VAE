@@ -6,7 +6,7 @@ import torch
 from torch.optim import SGD, Adadelta, Adagrad, Adam, RMSprop
 
 from pythae.customexception import ModelError
-from pythae.models import Adversarial_AE, Adversarial_AE_Config 
+from pythae.models import Adversarial_AE, Adversarial_AE_Config
 from pythae.trainers import AdversarialTrainer, AdversarialTrainerConfig
 from tests.data.custom_architectures import *
 
@@ -35,7 +35,11 @@ class Test_DataLoader:
         params=[
             AdversarialTrainerConfig(autoencoder_optim_decay=0),
             AdversarialTrainerConfig(batch_size=100, autoencoder_optim_decay=1e-7),
-            AdversarialTrainerConfig(batch_size=10, autoencoder_optim_decay=1e-7, discriminator_optim_decay=1e-7),
+            AdversarialTrainerConfig(
+                batch_size=10,
+                autoencoder_optim_decay=1e-7,
+                discriminator_optim_decay=1e-7,
+            ),
         ]
     )
     def training_config_batch_size(self, request, tmpdir):
@@ -81,7 +85,9 @@ class Test_Set_Training_config:
     @pytest.fixture(
         params=[
             AdversarialTrainerConfig(autoencoder_optim_decay=0),
-            AdversarialTrainerConfig(batch_size=10, learning_rate=1e-5, autoencoder_optim_decay=0),
+            AdversarialTrainerConfig(
+                batch_size=10, learning_rate=1e-5, autoencoder_optim_decay=0
+            ),
         ]
     )
     def training_configs(self, request, tmpdir):
@@ -111,7 +117,8 @@ class Test_Build_Optimizer:
     @pytest.fixture(
         params=[
             AdversarialTrainerConfig(learning_rate=1e-6),
-            AdversarialTrainerConfig()]
+            AdversarialTrainerConfig(),
+        ]
     )
     def training_configs_learning_rate(self, tmpdir, request):
         request.param.output_dir = tmpdir.mkdir("dummy_folder")
@@ -121,10 +128,12 @@ class Test_Build_Optimizer:
     def optimizers(self, request, model_sample, training_configs_learning_rate):
 
         autoencoder_optimizer = request.param(
-            model_sample.encoder.parameters(), lr=training_configs_learning_rate.learning_rate
+            model_sample.encoder.parameters(),
+            lr=training_configs_learning_rate.learning_rate,
         )
         discriminator_optimizer = request.param(
-            model_sample.decoder.parameters(), lr=training_configs_learning_rate.learning_rate
+            model_sample.decoder.parameters(),
+            lr=training_configs_learning_rate.learning_rate,
         )
         return (autoencoder_optimizer, discriminator_optimizer)
 
@@ -137,7 +146,7 @@ class Test_Build_Optimizer:
             train_dataset=train_dataset,
             training_config=training_configs_learning_rate,
             autoencoder_optimizer=None,
-            discriminator_optimizer=None
+            discriminator_optimizer=None,
         )
 
         assert issubclass(type(trainer.autoencoder_optimizer), torch.optim.Adam)
@@ -207,13 +216,15 @@ class Test_Main_Training:
         ae_config.discriminator_input_dim = ae_config.latent_dim
         return Discriminator_MLP_Custom(ae_config)
 
-    @pytest.fixture(params=[
+    @pytest.fixture(
+        params=[
             torch.rand(1),
             torch.rand(1),
             torch.rand(1),
             torch.rand(1),
             torch.rand(1),
-        ])
+        ]
+    )
     def ae(
         self,
         ae_config,

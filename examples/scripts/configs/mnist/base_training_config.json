@@ -1,8 +1,10 @@
 {
+  "name": "BaseTrainerConfig",
   "output_dir": "my_models_on_mnist",
   "batch_size": 100,
   "num_epochs": 100,
-  "learning_rate": 1e-4,
-  "steps_saving": 2,
+  "learning_rate": 1e-3,
+  "steps_saving": 5,
+  "steps_predict": 1,
   "no_cuda": false
 }

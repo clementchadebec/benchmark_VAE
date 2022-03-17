@@ -35,7 +35,9 @@ class Test_DataLoader:
         params=[
             CoupledOptimizerTrainerConfig(decoder_optim_decay=0),
             CoupledOptimizerTrainerConfig(batch_size=100, encoder_optim_decay=1e-7),
-            CoupledOptimizerTrainerConfig(batch_size=10, encoder_optim_decay=1e-7, decoder_optim_decay=1e-7),
+            CoupledOptimizerTrainerConfig(
+                batch_size=10, encoder_optim_decay=1e-7, decoder_optim_decay=1e-7
+            ),
         ]
     )
     def training_config_batch_size(self, request, tmpdir):
@@ -81,7 +83,9 @@ class Test_Set_Training_config:
     @pytest.fixture(
         params=[
             CoupledOptimizerTrainerConfig(decoder_optim_decay=0),
-            CoupledOptimizerTrainerConfig(batch_size=10, learning_rate=1e-5, encoder_optim_decay=0),
+            CoupledOptimizerTrainerConfig(
+                batch_size=10, learning_rate=1e-5, encoder_optim_decay=0
+            ),
         ]
     )
     def training_configs(self, request, tmpdir):
@@ -111,7 +115,8 @@ class Test_Build_Optimizer:
     @pytest.fixture(
         params=[
             CoupledOptimizerTrainerConfig(learning_rate=1e-6),
-            CoupledOptimizerTrainerConfig()]
+            CoupledOptimizerTrainerConfig(),
+        ]
     )
     def training_configs_learning_rate(self, tmpdir, request):
         request.param.output_dir = tmpdir.mkdir("dummy_folder")
@@ -121,10 +126,12 @@ class Test_Build_Optimizer:
     def optimizers(self, request, model_sample, training_configs_learning_rate):
 
         encoder_optimizer = request.param(
-            model_sample.encoder.parameters(), lr=training_configs_learning_rate.learning_rate
+            model_sample.encoder.parameters(),
+            lr=training_configs_learning_rate.learning_rate,
         )
         decoder_optimizer = request.param(
-            model_sample.decoder.parameters(), lr=training_configs_learning_rate.learning_rate
+            model_sample.decoder.parameters(),
+            lr=training_configs_learning_rate.learning_rate,
         )
         return (encoder_optimizer, decoder_optimizer)
 
@@ -137,7 +144,7 @@ class Test_Build_Optimizer:
             train_dataset=train_dataset,
             training_config=training_configs_learning_rate,
             encoder_optimizer=None,
-            decoder_optimizer=None
+            decoder_optimizer=None,
         )
 
         assert issubclass(type(trainer.encoder_optimizer), torch.optim.Adam)

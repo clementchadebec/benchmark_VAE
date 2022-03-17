@@ -32,11 +32,10 @@ def model(request):
 def sampler_config(request):
     return request.param
 
+
 @pytest.fixture()
 def sampler(model, sampler_config):
-    return GaussianMixtureSampler(
-        model=model, sampler_config=sampler_config
-    )
+    return GaussianMixtureSampler(model=model, sampler_config=sampler_config)
 
 
 @pytest.fixture(params=[(4, 2), (5, 5), (2, 3)])

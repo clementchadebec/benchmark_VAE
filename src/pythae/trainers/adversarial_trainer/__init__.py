@@ -7,6 +7,7 @@ Available models:
 
 .. autosummary::
     ~pythae.models.Adversarial_AE
+    ~pythae.models.FactorVAE
     :nosignatures:
 """
 

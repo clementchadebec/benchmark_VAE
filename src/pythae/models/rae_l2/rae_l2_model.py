@@ -1,21 +1,19 @@
-import torch
 import os
-
-from ...models import AE
-from .rae_l2_config import RAE_L2_Config
-from ...data.datasets import BaseDataset
-from ..base.base_utils import ModelOutput
-
-from ..nn import BaseDecoder, BaseEncoder
-
 from typing import Optional
 
+import torch
 import torch.nn.functional as F
+
+from ...data.datasets import BaseDataset
+from ...models import AE
+from ..base.base_utils import ModelOutput
+from ..nn import BaseDecoder, BaseEncoder
+from .rae_l2_config import RAE_L2_Config
 
 
 class RAE_L2(AE):
     """Regularized Autoencoder with L2 decoder params regularization model.
-    
+
     Args:
         model_config(RAE_L2_Config): The Autoencoder configuration seting the main parameters of the
             model
@@ -46,13 +44,12 @@ class RAE_L2(AE):
 
         self.model_name = "RAE_L2"
 
-
     def forward(self, inputs: BaseDataset, **kwargs) -> ModelOutput:
         """The input data is encoded and decoded
-        
+
         Args:
             inputs (BaseDataset): An instance of pythae's datasets
-            
+
         Returns:
             ModelOutput: An instance of ModelOutput containing all the relevant parameters
         """
@@ -65,7 +62,11 @@ class RAE_L2(AE):
         loss, recon_loss, embedding_loss = self.loss_function(recon_x, x, z)
 
         output = ModelOutput(
-            loss=loss, recon_loss=recon_loss, embedding_loss=embedding_loss, recon_x=recon_x, z=z
+            loss=loss,
+            recon_loss=recon_loss,
+            embedding_loss=embedding_loss,
+            recon_x=recon_x,
+            z=z,
         )
 
         return output
@@ -76,15 +77,15 @@ class RAE_L2(AE):
             recon_x.reshape(x.shape[0], -1), x.reshape(x.shape[0], -1), reduction="none"
         ).sum(dim=-1)
 
-        embedding_loss = (0.5 * torch.linalg.norm(z, dim=-1) ** 2)
-
+        embedding_loss = 0.5 * torch.linalg.norm(z, dim=-1) ** 2
 
         return (
-            (recon_loss + self.model_config.embedding_weight * embedding_loss).mean(dim=0),
+            (recon_loss + self.model_config.embedding_weight * embedding_loss).mean(
+                dim=0
+            ),
             (recon_loss).mean(dim=0),
-            (embedding_loss).mean(dim=0)
+            (embedding_loss).mean(dim=0),
         )
-
 
     @classmethod
     def _load_model_config_from_folder(cls, dir_path):
@@ -114,7 +115,7 @@ class RAE_L2(AE):
             - | a ``model_config.json`` and a ``model.pt`` if no custom architectures were provided
 
             **or**
-                
+
             - | a ``model_config.json``, a ``model.pt`` and a ``encoder.pkl`` (resp.
                 ``decoder.pkl``) if a custom encoder (resp. decoder) was provided
 

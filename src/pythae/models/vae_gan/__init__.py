@@ -12,7 +12,7 @@ Available samplers
 
 """
 
-from .vae_gan_model import VAEGAN
 from .vae_gan_config import VAEGANConfig
+from .vae_gan_model import VAEGAN
 
 __all__ = ["VAEGAN", "VAEGANConfig"]

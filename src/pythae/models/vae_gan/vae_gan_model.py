@@ -1,27 +1,25 @@
-import torch
 import os
-import dill
-
 from copy import deepcopy
-from ...customexception import BadInheritanceError
-from ...models import VAE
-from .vae_gan_config import VAEGANConfig
-from ...data.datasets import BaseDataset
-from ..base.base_utils import ModelOutput, CPU_Unpickler
-
-from ..nn import BaseDecoder, BaseEncoder, BaseDiscriminator
-from ..nn.default_architectures import Discriminator_MLP
-
 from typing import Optional
 
+import dill
+import torch
 import torch.nn.functional as F
+
+from ...customexception import BadInheritanceError
+from ...data.datasets import BaseDataset
+from ...models import VAE
+from ..base.base_utils import CPU_Unpickler, ModelOutput
+from ..nn import BaseDecoder, BaseDiscriminator, BaseEncoder
+from ..nn.default_architectures import Discriminator_MLP
+from .vae_gan_config import VAEGANConfig
 
 
 class VAEGAN(VAE):
     """Variational Autoencoder using Adversarial reconstruction loss model.
-    
+
     Args:
-        model_config(VAEGANConfig): The Autoencoder configuration seting the main 
+        model_config(VAEGANConfig): The Autoencoder configuration seting the main
             parameters of the model
 
         encoder (BaseEncoder): An instance of BaseEncoder (inheriting from `torch.nn.Module` which
@@ -34,9 +32,9 @@ class VAEGAN(VAE):
             architectures if desired. If None is provided, a simple Multi Layer Preception
             (https://en.wikipedia.org/wiki/Multilayer_perceptron) is used. Default: None.
 
-        discriminator (BaseDiscriminator): An instance of BaseDecoder (inheriting from 
+        discriminator (BaseDiscriminator): An instance of BaseDiscriminator (inheriting from
             `torch.nn.Module` which plays the role of discriminator. This argument allows you to use
-            your own neural networks architectures if desired. If None is provided, a simple Multi 
+            your own neural networks architectures if desired. If None is provided, a simple Multi
             Layer Preception (https://en.wikipedia.org/wiki/Multilayer_perceptron) is used. Default:
             None.
 
@@ -50,7 +48,7 @@ class VAEGAN(VAE):
         model_config: VAEGANConfig,
         encoder: Optional[BaseEncoder] = None,
         decoder: Optional[BaseDecoder] = None,
-        discriminator: Optional[BaseDiscriminator]=None
+        discriminator: Optional[BaseDiscriminator] = None,
     ):
 
         VAE.__init__(self, model_config=model_config, encoder=encoder, decoder=decoder)
@@ -79,21 +77,22 @@ class VAEGAN(VAE):
             self.model_config.reconstruction_layer = discriminator.depth
 
         assert self.model_config.reconstruction_layer <= discriminator.depth, (
-                "Ensure that the targeted reconstruction layer ("
-                f"{model_config.reconstruction_layer}) is not deeper than the "
-                f"discriminator ({discriminator.depth})"
-            )
+            "Ensure that the targeted reconstruction layer ("
+            f"{model_config.reconstruction_layer}) is not deeper than the "
+            f"discriminator ({discriminator.depth})"
+        )
 
         self.model_name = "VAEGAN"
 
-        assert 0 <= self.model_config.adversarial_loss_scale <= 1, \
-            'adversarial_loss_scale must be in [0, 1]'
+        assert (
+            0 <= self.model_config.adversarial_loss_scale <= 1
+        ), "adversarial_loss_scale must be in [0, 1]"
 
         assert 0 <= self.model_config.reconstruction_layer <= discriminator.depth, (
-            'Cannot use reconstruction layer deeper than discriminator depth '\
-            f'({discriminator.depth}). Got ({output_layer_levels})'
+            "Cannot use reconstruction layer deeper than discriminator depth "
+            f"({discriminator.depth}). Got ({output_layer_levels})"
         )
-        
+
         self.adversarial_loss_scale = self.model_config.adversarial_loss_scale
         self.reconstruction_layer = self.model_config.reconstruction_layer
         self.margin = self.model_config.margin
@@ -120,10 +119,10 @@ class VAEGAN(VAE):
 
     def forward(self, inputs: BaseDataset, **kwargs) -> ModelOutput:
         """The input data is encoded and decoded
-        
+
         Args:
             inputs (BaseDataset): An instance of pythae's datasets
-            
+
         Returns:
             ModelOutput: An instance of ModelOutput containing all the relevant parameters
         """
@@ -140,9 +139,15 @@ class VAEGAN(VAE):
 
         z_prior = torch.randn_like(z, device=x.device).requires_grad_(True)
 
-        recon_loss, encoder_loss, decoder_loss, discriminator_loss, update_encoder, update_decoder, update_discriminator = self.loss_function(
-            recon_x, x, z, z_prior, mu, log_var
-        )
+        (
+            recon_loss,
+            encoder_loss,
+            decoder_loss,
+            discriminator_loss,
+            update_encoder,
+            update_decoder,
+            update_discriminator,
+        ) = self.loss_function(recon_x, x, z, z_prior, mu, log_var)
 
         loss = encoder_loss + decoder_loss + discriminator_loss
 
@@ -156,7 +161,7 @@ class VAEGAN(VAE):
             update_decoder=update_decoder,
             update_discriminator=update_discriminator,
             recon_x=recon_x,
-            z=z
+            z=z,
         )
 
         return output
@@ -165,39 +170,35 @@ class VAEGAN(VAE):
 
         N = z.shape[0]  # batch size
 
-
         # KL between prior and posterior
         KLD = -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp(), dim=-1)
 
-
         # feature maps of true data
         true_discr_layer = self.discriminator(
-            x, output_layer_levels=[self.reconstruction_layer])[
-                f'embedding_layer_{self.reconstruction_layer}'
-            ]
+            x, output_layer_levels=[self.reconstruction_layer]
+        )[f"embedding_layer_{self.reconstruction_layer}"]
 
         # feature maps of recon data
         recon_discr_layer = self.discriminator(
-            recon_x, output_layer_levels=[self.reconstruction_layer])[
-                f'embedding_layer_{self.reconstruction_layer}'
-            ]
+            recon_x, output_layer_levels=[self.reconstruction_layer]
+        )[f"embedding_layer_{self.reconstruction_layer}"]
 
         # MSE in feature space
         recon_loss = F.mse_loss(
             true_discr_layer.reshape(N, -1),
             recon_discr_layer.reshape(N, -1),
-            reduction='none'
+            reduction="none",
         ).sum(dim=-1)
 
         encoder_loss = KLD + recon_loss
 
         gen_prior = self.decoder(z_prior).reconstruction
 
-        #x_ = x.clone().detach().requires_grad_(True)
-        #recon_x_ = recon_x.clone().detach().requires_grad_(True)
-        #gen_prior_ = gen_prior.clone().detach().requires_grad_(True)
+        # x_ = x.clone().detach().requires_grad_(True)
+        # recon_x_ = recon_x.clone().detach().requires_grad_(True)
+        # gen_prior_ = gen_prior.clone().detach().requires_grad_(True)
 
-        true_adversarial_score = self.discriminator(x).embedding.flatten() 
+        true_adversarial_score = self.discriminator(x).embedding.flatten()
         gen_adversarial_score = self.discriminator(recon_x).embedding.flatten()
         prior_adversarial_score = self.discriminator(gen_prior).embedding.flatten()
 
@@ -205,38 +206,40 @@ class VAEGAN(VAE):
         fake_labels = torch.zeros(N, requires_grad=False).to(self.device)
 
         original_dis_cost = F.binary_cross_entropy(
-            true_adversarial_score, true_labels) # original are true
+            true_adversarial_score, true_labels
+        )  # original are true
         prior_dis_cost = F.binary_cross_entropy(
-            prior_adversarial_score, fake_labels)  # prior is false
+            prior_adversarial_score, fake_labels
+        )  # prior is false
 
         discriminator_loss = (
-            (
-                original_dis_cost
-            )
-            +
-            (
-                prior_dis_cost
-            )
-            #+
-            #(
+            (original_dis_cost)
+            + (prior_dis_cost)
+            # +
+            # (
             #    F.binary_cross_entropy(gen_adversarial_score, fake_labels) # generated are false
-            #)
+            # )
         )
 
-        decoder_loss = (1 - self.adversarial_loss_scale) * recon_loss \
-            - self.adversarial_loss_scale * discriminator_loss
+        decoder_loss = (
+            1 - self.adversarial_loss_scale
+        ) * recon_loss - self.adversarial_loss_scale * discriminator_loss
 
         update_encoder = True
         update_discriminator = True
         update_decoder = True
 
         # margins for training stability
-        if original_dis_cost.mean() < self.equilibrium - self.margin or  prior_dis_cost.mean() \
-            < self.equilibrium - self.margin:
+        if (
+            original_dis_cost.mean() < self.equilibrium - self.margin
+            or prior_dis_cost.mean() < self.equilibrium - self.margin
+        ):
             update_discriminator = False
 
-        if original_dis_cost.mean() > self.equilibrium + self.margin or prior_dis_cost.mean() \
-            > self.equilibrium + self.margin:
+        if (
+            original_dis_cost.mean() > self.equilibrium + self.margin
+            or prior_dis_cost.mean() > self.equilibrium + self.margin
+        ):
             update_decoder = False
 
         if not update_decoder and not update_discriminator:
@@ -250,7 +253,7 @@ class VAEGAN(VAE):
             (discriminator_loss).mean(dim=0),
             update_encoder,
             update_decoder,
-            update_discriminator
+            update_discriminator,
         )
 
     def _sample_gauss(self, mu, std):
@@ -258,7 +261,6 @@ class VAEGAN(VAE):
         # Sample N(0, I)
         eps = torch.randn_like(std)
         return mu + eps * std, eps
-
 
     def save(self, dir_path: str):
         """Method to save the model at a specific location
@@ -282,7 +284,6 @@ class VAEGAN(VAE):
                 dill.dump(self.discriminator, fp)
 
         torch.save(model_dict, os.path.join(model_path, "model.pt"))
-
 
     @classmethod
     def _load_model_config_from_folder(cls, dir_path):
@@ -330,7 +331,7 @@ class VAEGAN(VAE):
             - | a ``model_config.json`` and a ``model.pt`` if no custom architectures were provided
 
             **or**
-                
+
             - | a ``model_config.json``, a ``model.pt`` and a ``encoder.pkl`` (resp.
                 ``decoder.pkl``) if a custom encoder (resp. decoder) was provided
 
@@ -357,7 +358,9 @@ class VAEGAN(VAE):
         else:
             discriminator = None
 
-        model = cls(model_config, encoder=encoder, decoder=decoder, discriminator=discriminator)
+        model = cls(
+            model_config, encoder=encoder, decoder=decoder, discriminator=discriminator
+        )
         model.load_state_dict(model_weights)
 
         return model

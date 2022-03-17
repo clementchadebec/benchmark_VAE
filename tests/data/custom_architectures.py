@@ -23,7 +23,7 @@ class Encoder_AE_Conv(BaseEncoder):
                     self.n_channels, out_channels=32, kernel_size=3, stride=2, padding=1
                 ),
                 nn.BatchNorm2d(32),
-                nn.ReLU()
+                nn.ReLU(),
             )
         )
 
@@ -39,27 +39,29 @@ class Encoder_AE_Conv(BaseEncoder):
             nn.Sequential(
                 nn.Conv2d(32, out_channels=32, kernel_size=3, stride=2, padding=1),
                 nn.BatchNorm2d(32),
-                nn.ReLU()
+                nn.ReLU(),
             )
         )
-
 
         self.layers = layers
         self.depth = len(layers)
 
         self.embedding = nn.Linear(512, self.latent_dim)
 
-    def forward(self, x: torch.Tensor, output_layer_levels:List[int]=None):
+    def forward(self, x: torch.Tensor, output_layer_levels: List[int] = None):
         output = ModelOutput()
 
         max_depth = self.depth
 
         if output_layer_levels is not None:
 
-            assert all(self.depth >= levels > 0 or levels==-1 for levels in output_layer_levels), (
-                f'Cannot output layer deeper than depth ({self.depth}) '\
-                f'indice. Got ({output_layer_levels})'
-                )
+            assert all(
+                self.depth >= levels > 0 or levels == -1
+                for levels in output_layer_levels
+            ), (
+                f"Cannot output layer deeper than depth ({self.depth}) "
+                f"indice. Got ({output_layer_levels})"
+            )
 
             if -1 in output_layer_levels:
                 max_depth = self.depth
@@ -72,10 +74,10 @@ class Encoder_AE_Conv(BaseEncoder):
             out = self.layers[i](out)
 
             if output_layer_levels is not None:
-                if i+1 in output_layer_levels:
-                    output[f'embedding_layer_{i+1}'] = out
-            if i+1 == self.depth:
-                output['embedding'] = self.embedding(out.reshape(x.shape[0], -1))
+                if i + 1 in output_layer_levels:
+                    output[f"embedding_layer_{i+1}"] = out
+            if i + 1 == self.depth:
+                output["embedding"] = self.embedding(out.reshape(x.shape[0], -1))
 
         return output
 
@@ -95,7 +97,7 @@ class Encoder_VAE_Conv(BaseEncoder):
                     self.n_channels, out_channels=32, kernel_size=3, stride=2, padding=1
                 ),
                 nn.BatchNorm2d(32),
-                nn.ReLU()
+                nn.ReLU(),
             )
         )
 
@@ -111,7 +113,7 @@ class Encoder_VAE_Conv(BaseEncoder):
             nn.Sequential(
                 nn.Conv2d(32, out_channels=32, kernel_size=3, stride=2, padding=1),
                 nn.BatchNorm2d(32),
-                nn.ReLU()
+                nn.ReLU(),
             )
         )
 
@@ -121,17 +123,20 @@ class Encoder_VAE_Conv(BaseEncoder):
         self.embedding = nn.Linear(512, self.latent_dim)
         self.log_var = nn.Linear(512, self.latent_dim)
 
-    def forward(self, x: torch.Tensor, output_layer_levels:List[int]=None):
+    def forward(self, x: torch.Tensor, output_layer_levels: List[int] = None):
         output = ModelOutput()
 
         max_depth = self.depth
 
         if output_layer_levels is not None:
 
-            assert all(self.depth >= levels > 0 or levels==-1 for levels in output_layer_levels), (
-                f'Cannot output layer deeper than depth ({self.depth}) '\
-                f'indice. Got ({output_layer_levels})'
-                )
+            assert all(
+                self.depth >= levels > 0 or levels == -1
+                for levels in output_layer_levels
+            ), (
+                f"Cannot output layer deeper than depth ({self.depth}) "
+                f"indice. Got ({output_layer_levels})"
+            )
 
             if -1 in output_layer_levels:
                 max_depth = self.depth
@@ -144,12 +149,91 @@ class Encoder_VAE_Conv(BaseEncoder):
             out = self.layers[i](out)
 
             if output_layer_levels is not None:
-                if i+1 in output_layer_levels:
-                    output[f'embedding_layer_{i+1}'] = out
-        
-            if i+1 == self.depth:
-                output['embedding'] = self.embedding(out.reshape(x.shape[0], -1))
-                output['log_covariance'] = self.log_var(out.reshape(x.shape[0], -1))
+                if i + 1 in output_layer_levels:
+                    output[f"embedding_layer_{i+1}"] = out
+
+            if i + 1 == self.depth:
+                output["embedding"] = self.embedding(out.reshape(x.shape[0], -1))
+                output["log_covariance"] = self.log_var(out.reshape(x.shape[0], -1))
+
+        return output
+
+
+class Encoder_SVAE_Conv(BaseEncoder):
+    def __init__(self, args):
+        BaseEncoder.__init__(self)
+        self.input_dim = args.input_dim
+        self.latent_dim = args.latent_dim
+        self.n_channels = 1
+
+        layers = nn.ModuleList()
+
+        layers.append(
+            nn.Sequential(
+                nn.Conv2d(
+                    self.n_channels, out_channels=32, kernel_size=3, stride=2, padding=1
+                ),
+                nn.BatchNorm2d(32),
+                nn.ReLU(),
+            )
+        )
+
+        layers.append(
+            nn.Sequential(
+                nn.Conv2d(32, out_channels=32, kernel_size=3, stride=2, padding=1),
+                nn.BatchNorm2d(32),
+                nn.ReLU(),
+            )
+        )
+
+        layers.append(
+            nn.Sequential(
+                nn.Conv2d(32, out_channels=32, kernel_size=3, stride=2, padding=1),
+                nn.BatchNorm2d(32),
+                nn.ReLU(),
+            )
+        )
+
+        self.layers = layers
+        self.depth = len(layers)
+
+        self.embedding = nn.Linear(512, self.latent_dim)
+        self.log_concentration = nn.Linear(512, 1)
+
+    def forward(self, x: torch.Tensor, output_layer_levels: List[int] = None):
+        output = ModelOutput()
+
+        max_depth = self.depth
+
+        if output_layer_levels is not None:
+
+            assert all(
+                self.depth >= levels > 0 or levels == -1
+                for levels in output_layer_levels
+            ), (
+                f"Cannot output layer deeper than depth ({self.depth}) "
+                f"indice. Got ({output_layer_levels})"
+            )
+
+            if -1 in output_layer_levels:
+                max_depth = self.depth
+            else:
+                max_depth = max(output_layer_levels)
+
+        out = x
+
+        for i in range(max_depth):
+            out = self.layers[i](out)
+
+            if output_layer_levels is not None:
+                if i + 1 in output_layer_levels:
+                    output[f"embedding_layer_{i+1}"] = out
+
+            if i + 1 == self.depth:
+                output["embedding"] = self.embedding(out.reshape(x.shape[0], -1))
+                output["log_concentration"] = self.log_concentration(
+                    out.reshape(x.shape[0], -1)
+                )
 
         return output
 
@@ -168,13 +252,15 @@ class Decoder_AE_Conv(BaseDecoder):
                 nn.Linear(self.latent_dim, 256),
                 nn.ReLU(),
                 nn.Linear(256, 512),
-                nn.ReLU()
+                nn.ReLU(),
             )
         )
 
         layers.append(
             nn.Sequential(
-                nn.ConvTranspose2d(32, out_channels=32, kernel_size=3, stride=2, padding=1),
+                nn.ConvTranspose2d(
+                    32, out_channels=32, kernel_size=3, stride=2, padding=1
+                ),
                 nn.BatchNorm2d(32),
                 nn.ReLU(),
             )
@@ -194,7 +280,7 @@ class Decoder_AE_Conv(BaseDecoder):
                 nn.ReLU(),
             )
         )
-        
+
         layers.append(
             nn.Sequential(
                 nn.ConvTranspose2d(
@@ -213,18 +299,20 @@ class Decoder_AE_Conv(BaseDecoder):
         self.layers = layers
         self.depth = len(layers)
 
-
-    def forward(self, z: torch.Tensor, output_layer_levels:List[int]=None):
+    def forward(self, z: torch.Tensor, output_layer_levels: List[int] = None):
         output = ModelOutput()
 
         max_depth = self.depth
 
         if output_layer_levels is not None:
 
-            assert all(self.depth >= levels > 0 or levels==-1 for levels in output_layer_levels), (
-                f'Cannot output layer deeper than depth ({self.depth}) '\
-                f'indice. Got ({output_layer_levels})'
-                )
+            assert all(
+                self.depth >= levels > 0 or levels == -1
+                for levels in output_layer_levels
+            ), (
+                f"Cannot output layer deeper than depth ({self.depth}) "
+                f"indice. Got ({output_layer_levels})"
+            )
 
             if -1 in output_layer_levels:
                 max_depth = self.depth
@@ -237,14 +325,14 @@ class Decoder_AE_Conv(BaseDecoder):
             out = self.layers[i](out)
 
             if output_layer_levels is not None:
-                if i+1 in output_layer_levels:
-                    output[f'reconstruction_layer_{i+1}'] = out
+                if i + 1 in output_layer_levels:
+                    output[f"reconstruction_layer_{i+1}"] = out
 
             if i == 0:
                 out = out.reshape(z.shape[0], 32, 4, 4)
 
-            if i+1 == self.depth:
-                output['reconstruction'] = out
+            if i + 1 == self.depth:
+                output["reconstruction"] = out
 
         return output
 
@@ -535,6 +623,7 @@ class Metric_MLP_Custom(BaseMetric):
 
         return output
 
+
 class Discriminator_MLP_Custom(BaseDiscriminator):
     def __init__(self, args: dict):
         BaseDiscriminator.__init__(self)
@@ -545,7 +634,7 @@ class Discriminator_MLP_Custom(BaseDiscriminator):
         layers.append(
             nn.Sequential(
                 nn.Linear(np.prod(args.discriminator_input_dim), 10),
-                nn.ReLU(inplace=True)
+                nn.ReLU(inplace=True),
             )
         )
 
@@ -553,28 +642,25 @@ class Discriminator_MLP_Custom(BaseDiscriminator):
             nn.Linear(10, 5),
         )
 
-        layers.append(
-            nn.Sequential(
-                nn.Linear(5, 1),
-                nn.Sigmoid()
-            )
-        )
+        layers.append(nn.Sequential(nn.Linear(5, 1), nn.Sigmoid()))
 
         self.layers = layers
         self.depth = len(layers)
 
-        
-    def forward(self, z: torch.Tensor, output_layer_levels:List[int]=None):
+    def forward(self, z: torch.Tensor, output_layer_levels: List[int] = None):
         output = ModelOutput()
 
         max_depth = self.depth
 
         if output_layer_levels is not None:
 
-            assert all(self.depth >= levels > 0 or levels==-1 for levels in output_layer_levels), (
-                f'Cannot output layer deeper than depth ({self.depth}) '\
-                f'indice. Got ({output_layer_levels})'
-                )
+            assert all(
+                self.depth >= levels > 0 or levels == -1
+                for levels in output_layer_levels
+            ), (
+                f"Cannot output layer deeper than depth ({self.depth}) "
+                f"indice. Got ({output_layer_levels})"
+            )
 
             if -1 in output_layer_levels:
                 max_depth = self.depth
@@ -587,13 +673,14 @@ class Discriminator_MLP_Custom(BaseDiscriminator):
             out = self.layers[i](out)
 
             if output_layer_levels is not None:
-                if i+1 in output_layer_levels:
-                    output[f'embedding_layer_{i+1}'] = out
+                if i + 1 in output_layer_levels:
+                    output[f"embedding_layer_{i+1}"] = out
 
-            if i+1 == self.depth:
-                output['embedding'] = out
+            if i + 1 == self.depth:
+                output["embedding"] = out
 
         return output
+
 
 class EncoderWrongInputDim(BaseEncoder):
     def __init__(self, args):

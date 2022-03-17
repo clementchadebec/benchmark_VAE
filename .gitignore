@@ -25,6 +25,8 @@ examples/showcases copy/*
 examples/notebooks/models_training/generate.py
 dummy_output_dir/*
 examples/notebooks/models_training/my_model/*
+examples/notebooks/test.ipynb
+wandb
 
 
 # Byte-compiled / optimized / DLL files

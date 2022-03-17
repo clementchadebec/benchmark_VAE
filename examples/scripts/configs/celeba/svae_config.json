@@ -1,0 +1,4 @@
+{
+    "latent_dim": 32,
+    "reconstruction_loss": "mse"
+}

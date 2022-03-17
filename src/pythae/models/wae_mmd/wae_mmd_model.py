@@ -1,22 +1,20 @@
-import torch
 import os
-
-from ...models import AE
-from .wae_mmd_config import WAE_MMD_Config
-from ...data.datasets import BaseDataset
-from ..base.base_utils import ModelOutput
-
-from ..nn import BaseDecoder, BaseEncoder
-from ..nn.default_architectures import Encoder_AE_MLP
-
 from typing import Optional
 
+import torch
 import torch.nn.functional as F
+
+from ...data.datasets import BaseDataset
+from ...models import AE
+from ..base.base_utils import ModelOutput
+from ..nn import BaseDecoder, BaseEncoder
+from ..nn.default_architectures import Encoder_AE_MLP
+from .wae_mmd_config import WAE_MMD_Config
 
 
 class WAE_MMD(AE):
     """Wasserstein Autoencoder model.
-    
+
     Args:
         model_config(WAE_MMD_Config): The Autoencoder configuration seting the main parameters of the
             model
@@ -51,10 +49,10 @@ class WAE_MMD(AE):
 
     def forward(self, inputs: BaseDataset, **kwargs) -> ModelOutput:
         """The input data is encoded and decoded
-        
+
         Args:
             inputs (BaseDataset): An instance of pythae's datasets
-            
+
         Returns:
             ModelOutput: An instance of ModelOutput containing all the relevant parameters
         """
@@ -79,8 +77,8 @@ class WAE_MMD(AE):
         N = z.shape[0]  # batch size
 
         recon_loss = F.mse_loss(
-            recon_x.reshape(x.shape[0], -1), x.reshape(x.shape[0], -1),
-            reduction='none').sum(dim=-1)
+            recon_x.reshape(x.shape[0], -1), x.reshape(x.shape[0], -1), reduction="none"
+        ).sum(dim=-1)
 
         if self.kernel_choice == "rbf":
             k_z = self.rbf_kernel(z, z)
@@ -96,7 +94,7 @@ class WAE_MMD(AE):
         mmd_z_prior = (k_z_prior - k_z_prior.diag()).sum() / (N - 1)
         mmd_cross = k_cross.sum() / N
 
-        mmd_loss = (mmd_z + mmd_z_prior - 2 * mmd_cross)
+        mmd_loss = mmd_z + mmd_z_prior - 2 * mmd_cross
 
         return (
             (recon_loss + self.model_config.reg_weight * mmd_loss).mean(dim=0),
@@ -107,7 +105,7 @@ class WAE_MMD(AE):
     def imq_kernel(self, z1, z2):
         """Returns a matrix of shape batch X batch containing the pairwise kernel computation"""
 
-        C = 2.0 * self.model_config.latent_dim * self.model_config.kernel_bandwidth ** 2
+        C = 2.0 * self.model_config.latent_dim * self.model_config.kernel_bandwidth**2
 
         k = C / (C + torch.norm(z1.unsqueeze(1) - z2.unsqueeze(0), dim=-1) ** 2)
 
@@ -116,7 +114,7 @@ class WAE_MMD(AE):
     def rbf_kernel(self, z1, z2):
         """Returns a matrix of shape batch X batch containing the pairwise kernel computation"""
 
-        C = 2.0 * self.model_config.latent_dim * self.model_config.kernel_bandwidth ** 2
+        C = 2.0 * self.model_config.latent_dim * self.model_config.kernel_bandwidth**2
 
         k = torch.exp(-torch.norm(z1.unsqueeze(1) - z2.unsqueeze(0), dim=-1) ** 2 / C)
 
@@ -150,7 +148,7 @@ class WAE_MMD(AE):
             - | a ``model_config.json`` and a ``model.pt`` if no custom architectures were provided
 
             **or**
-                
+
             - | a ``model_config.json``, a ``model.pt`` and a ``encoder.pkl`` (resp.
                 ``decoder.pkl``) if a custom encoder (resp. decoder) was provided
 

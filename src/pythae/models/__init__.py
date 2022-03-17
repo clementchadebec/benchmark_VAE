@@ -20,6 +20,7 @@ from .ae import AE, AEConfig
 from .wae_mmd import WAE_MMD, WAE_MMD_Config
 from .vae import VAE, VAEConfig
 from .beta_vae import BetaVAE, BetaVAEConfig
+from .factor_vae import FactorVAE, FactorVAEConfig
 from .vamp import VAMP, VAMPConfig
 from .hvae import HVAE, HVAEConfig
 from .rhvae import RHVAE, RHVAEConfig
@@ -31,6 +32,10 @@ from .vq_vae import VQVAE, VQVAEConfig
 from .adversarial_ae import Adversarial_AE, Adversarial_AE_Config
 from .vae_gan import VAEGAN, VAEGANConfig
 from .ladder_vae import LadderVAE, LadderVAEConfig
+from .disentangled_beta_vae import DisentangledBetaVAE, DisentangledBetaVAEConfig
+from .beta_tc_vae import BetaTCVAE, BetaTCVAEConfig
+from .msssim_vae import MSSSIM_VAE, MSSSIM_VAEConfig
+from .svae import SVAE, SVAEConfig
 
 __all__ = [
     "ModelOutput",
@@ -56,7 +61,7 @@ __all__ = [
     "RAE_GP_Config",
     "IWAE",
     "IWAEConfig",
-    "INFOVAE_MMD", 
+    "INFOVAE_MMD",
     "INFOVAE_MMD_Config",
     "VQVAE",
     "VQVAEConfig",
@@ -66,4 +71,14 @@ __all__ = [
     "VAEGANConfig",
     "LadderVAE",
     "LadderVAEConfig"
+    "MSSSIM_VAE",
+    "MSSSIM_VAEConfig",
+    "SVAE",
+    "SVAEConfig",
+    "DisentangledBetaVAE",
+    "DisentangledBetaVAEConfig",
+    "FactorVAE",
+    "FactorVAEConfig",
+    "BetaTCVAE",
+    "BetaTCVAEConfig",
 ]

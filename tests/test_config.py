@@ -5,9 +5,9 @@ import pytest
 from pydantic import ValidationError
 
 from pythae.config import BaseConfig
-from pythae.models import BaseAEConfig
-from pythae.samplers import BaseSamplerConfig
-from pythae.trainers import BaseTrainingConfig
+from pythae.models import BaseAEConfig, AEConfig
+from pythae.samplers import BaseSamplerConfig, NormalSamplerConfig
+from pythae.trainers import BaseTrainerConfig, AdversarialTrainerConfig
 
 PATH = os.path.dirname(os.path.abspath(__file__))
 
@@ -35,7 +35,7 @@ class Test_Load_Config_from_JSON:
             ],
             [
                 os.path.join(PATH, "data/baseAE/configs/training_config00.json"),
-                BaseTrainingConfig(batch_size=13, num_epochs=2, learning_rate=1e-5),
+                BaseTrainerConfig(batch_size=13, num_epochs=2, learning_rate=1e-5),
             ],
             [
                 os.path.join(PATH, "data/baseAE/configs/generation_config00.json"),
@@ -61,7 +61,7 @@ class Test_Load_Config_from_JSON:
         elif config_path == os.path.join(
             PATH, "data/baseAE/configs/training_config00.json"
         ):
-            parsed_config = BaseTrainingConfig.from_json_file(config_path)
+            parsed_config = BaseTrainerConfig.from_json_file(config_path)
 
         else:
             parsed_config = BaseSamplerConfig.from_json_file(config_path)
@@ -79,6 +79,22 @@ class Test_Load_Config_from_JSON:
     def test_raise_not_json_file(self, not_json_config_path):
         with pytest.raises(TypeError):
             _ = BaseConfig._dict_from_json(not_json_config_path)
+
+    def test_raises_user_warning(self, custom_config_path_with_true_config):
+        config_path = custom_config_path_with_true_config[0]
+        with pytest.warns(UserWarning):
+            if config_path == os.path.join(
+                PATH, "data/baseAE/configs/model_config00.json"
+            ):
+                parsed_config = AEConfig.from_json_file(config_path)
+
+            elif config_path == os.path.join(
+                PATH, "data/baseAE/configs/training_config00.json"
+            ):
+                parsed_config = AdversarialTrainerConfig.from_json_file(config_path)
+
+            else:
+                parsed_config = NormalSamplerConfig.from_json_file(config_path)
 
 
 class Test_Save_Model_JSON_from_Config:
@@ -104,8 +120,8 @@ class Test_Save_Model_JSON_from_Config:
 
     @pytest.fixture(
         params=[
-            BaseTrainingConfig(),
-            BaseTrainingConfig(learning_rate=100, batch_size=15),
+            BaseTrainerConfig(),
+            BaseTrainerConfig(learning_rate=100, batch_size=15),
         ]
     )
     def training_configs(self, request):
@@ -119,7 +135,7 @@ class Test_Save_Model_JSON_from_Config:
 
         assert "dummy_json.json" in os.listdir(dir_path)
 
-        rec_training_config = BaseTrainingConfig.from_json_file(
+        rec_training_config = BaseTrainerConfig.from_json_file(
             os.path.join(dir_path, "dummy_json.json")
         )
 
