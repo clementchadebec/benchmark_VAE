@@ -130,8 +130,7 @@ class CoupledOptimizerTrainer(BaseTrainer):
         """
 
         self.callback_handler.on_train_begin(
-            training_config=self.training_config,
-            model_config=self.model.model_config
+            training_config=self.training_config, model_config=self.model.model_config
         )
 
         # run sanity check on the model
