@@ -136,6 +136,11 @@ class AdversarialTrainer(BaseTrainer):
             log_output_dir (str): The path in which the log will be stored
         """
 
+        self.callback_handler.on_train_begin(
+            training_config=self.training_config,
+            model_config=self.model.model_config
+        )
+
         # run sanity check on the model
         self._run_model_sanity_check(self.model, self.train_dataset)
 
@@ -308,6 +313,8 @@ class AdversarialTrainer(BaseTrainer):
         logger.info("----------------------------------")
         logger.info("Training ended!")
         logger.info(f"Saved final model in {final_dir}")
+
+        self.callback_handler.on_train_end(self.training_config)
 
     def eval_step(self, epoch: int):
         """Perform an evaluation step

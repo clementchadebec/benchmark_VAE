@@ -233,6 +233,11 @@ class BaseTrainer:
             log_output_dir (str): The path in which the log will be stored
         """
 
+        self.callback_handler.on_train_begin(
+            training_config=self.training_config,
+            model_config=self.model.model_config
+        )
+
         # run sanity check on the model
         self._run_model_sanity_check(self.model, self.train_dataset)
 
@@ -345,7 +350,6 @@ class BaseTrainer:
                 self.training_config.steps_predict is not None
                 and epoch % self.training_config.steps_predict == 0
             ):
-
                 true_data, reconstructions, generations = self.predict(
                     best_model,
                     self.eval_loader.dataset.data[
@@ -385,6 +389,8 @@ class BaseTrainer:
         self.save_model(best_model, dir_path=final_dir)
         logger.info("Training ended!")
         logger.info(f"Saved final model in {final_dir}")
+
+        self.callback_handler.on_train_end(self.training_config)
 
     def eval_step(self, epoch: int):
         """Perform an evaluation step
@@ -494,6 +500,8 @@ class BaseTrainer:
 
         # save training config
         self.training_config.save_json(dir_path, "training_config")
+
+        self.callback_handler.on_save(self.training_config)
 
     def save_checkpoint(self, model: BaseAE, dir_path, epoch: int):
         """Saves a checkpoint alowing to restart training from here

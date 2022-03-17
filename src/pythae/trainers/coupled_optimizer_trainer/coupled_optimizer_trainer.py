@@ -129,6 +129,11 @@ class CoupledOptimizerTrainer(BaseTrainer):
             log_output_dir (str): The path in which the log will be stored
         """
 
+        self.callback_handler.on_train_begin(
+            training_config=self.training_config,
+            model_config=self.model.model_config
+        )
+
         # run sanity check on the model
         self._run_model_sanity_check(self.model, self.train_dataset)
 
@@ -283,6 +288,8 @@ class CoupledOptimizerTrainer(BaseTrainer):
         self.save_model(best_model, dir_path=final_dir)
         logger.info("Training ended!")
         logger.info(f"Saved final model in {final_dir}")
+
+        self.callback_handler.on_train_end(self.training_config)
 
     def train_step(self, epoch: int):
         """The trainer performs training loop over the train_loader.
