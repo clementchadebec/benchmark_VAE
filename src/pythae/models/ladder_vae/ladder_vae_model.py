@@ -55,8 +55,8 @@ class LadderVAE(VAE):
             if model_config.input_dim is None:
                 raise AttributeError(
                     "No input dimension provided !"
-                    "'input_dim' parameter of BaseAEConfig instance must be set to 'data_shape' where "
-                    "the shape of the data is (C, H, W ..). Unable to build encoder "
+                    "'input_dim' parameter of BaseAEConfig instance must be set to 'data_shape' "
+                    "where the shape of the data is (C, H, W ..). Unable to build encoder "
                     "automatically"
                 )
 
@@ -72,8 +72,8 @@ class LadderVAE(VAE):
             if model_config.input_dim is None:
                 raise AttributeError(
                     "No input dimension provided !"
-                    "'input_dim' parameter of BaseAEConfig instance must be set to 'data_shape' where "
-                    "the shape of the data is (C, H, W ..)]. Unable to build decoder"
+                    "'input_dim' parameter of BaseAEConfig instance must be set to 'data_shape' "
+                    "where the shape of the data is (C, H, W ..)]. Unable to build decoder"
                     "automatically"
                 )
 
@@ -123,8 +123,6 @@ class LadderVAE(VAE):
             log_var_p.append(encoder_output[f"log_covariance_layer_{i+1}"])
 
         mu, log_var = encoder_output.embedding, encoder_output.log_covariance
-
-        #print(mu.max())
 
         std = torch.exp(0.5 * log_var)
         z, eps = self._sample_gauss(mu, std)
@@ -202,10 +200,6 @@ class LadderVAE(VAE):
 
         beta = min(self.beta, self.beta * epoch / (self.warmup_epoch + 1))
         #beta = 1
-
-        #print(recon_loss.mean(), llh_loss.mean())
-
-        print(recon_loss.mean(), llh_loss.mean())
 
         return (
             (recon_loss + beta * llh_loss).mean(dim=0),

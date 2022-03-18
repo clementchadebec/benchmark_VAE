@@ -28,5 +28,5 @@ class LadderVAEConfig(VAEConfig):
 
     """
     latent_dimensions: List[int] = field(default_factory=lambda: [64, 32])
-    beta: int = 1
+    beta: float = 1
     warmup_epoch: int = 1

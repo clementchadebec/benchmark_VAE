@@ -55,7 +55,7 @@ ap.add_argument(
         "aae",
         "vaegan",
         "vqvae",
-        "ladder_vae"
+        "ladder_vae",
         "msssim_vae",
         "svae",
         "disentangled_beta_vae",
