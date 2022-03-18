@@ -19,6 +19,7 @@ examples/models_training/my_model/*
 examples/notebooks/models_training/model_generation.ipynb
 examples/notebooks/models_training/generated/*
 examples/scripts/my_models*
+examples/scripts/reproducibility
 examples/notebooks/models_training/my_model/
 examples/showcases copy/*
 examples/notebooks/models_training/generate.py
