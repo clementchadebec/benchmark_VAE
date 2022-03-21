@@ -9,7 +9,7 @@ Available models:
     :nosignatures:
 """
 
-from .hypersphere_uniform_sampler import HypersphereUniformSampler
 from .hypersphere_uniform_config import HypersphereUniformSamplerConfig
+from .hypersphere_uniform_sampler import HypersphereUniformSampler
 
 __all__ = ["HypersphereUniformSampler", "HypersphereUniformSamplerConfig"]

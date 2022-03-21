@@ -1,25 +1,24 @@
-import torch
-import torch.nn as nn
-import numpy as np
 import os
-
-from ...models import VAE
-from .vamp_config import VAMPConfig
-from ...data.datasets import BaseDataset
-from ..base.base_utils import ModelOutput
-from ..nn import BaseEncoder, BaseDecoder
-from ..nn.default_architectures import Encoder_VAE_MLP
-
 from typing import Optional
 
+import numpy as np
+import torch
+import torch.nn as nn
 import torch.nn.functional as F
+
+from ...data.datasets import BaseDataset
+from ...models import VAE
+from ..base.base_utils import ModelOutput
+from ..nn import BaseDecoder, BaseEncoder
+from ..nn.default_architectures import Encoder_VAE_MLP
+from .vamp_config import VAMPConfig
 
 
 class VAMP(VAE):
     """Variational Mixture of Posteriors (VAMP) VAE model
-    
+
     Args:
-        model_config(VAEConfig): The Variational Autoencoder configuration seting the main 
+        model_config(VAEConfig): The Variational Autoencoder configuration seting the main
         parameters of the model
 
         encoder (BaseEncoder): An instance of BaseEncoder (inheriting from `torch.nn.Module` which
@@ -54,8 +53,8 @@ class VAMP(VAE):
             raise AttributeError("Provide input dim to build pseudo input network")
 
         linear_layer = nn.Linear(
-                model_config.number_components, int(np.prod(model_config.input_dim))
-            )
+            model_config.number_components, int(np.prod(model_config.input_dim))
+        )
 
         self.pseudo_inputs = nn.Sequential(
             linear_layer,
@@ -63,7 +62,7 @@ class VAMP(VAE):
         )
 
         # init weights
-        #linear_layer.weight.data.normal_(0, 0.0)
+        # linear_layer.weight.data.normal_(0, 0.0)
 
         self.idle_input = torch.eye(
             model_config.number_components, requires_grad=False
@@ -81,7 +80,7 @@ class VAMP(VAE):
 
         """
 
-        # need to put model in train mode to make it work. If you have a solution to this issue 
+        # need to put model in train mode to make it work. If you have a solution to this issue
         # please open a pull request at (https://github.com/clementchadebec/benchmark_VAE/pulls)
         self.train()
         x = inputs["data"]
@@ -89,7 +88,9 @@ class VAMP(VAE):
         encoder_output = self.encoder(x)
 
         # we bound log_var to avoid unbounded optim
-        mu, log_var = encoder_output.embedding, torch.tanh(encoder_output.log_covariance)
+        mu, log_var = encoder_output.embedding, torch.tanh(
+            encoder_output.log_covariance
+        )
 
         std = torch.exp(0.5 * log_var)
         z, eps = self._sample_gauss(mu, std)
@@ -198,7 +199,7 @@ class VAMP(VAE):
             - | a ``model_config.json`` and a ``model.pt`` if no custom architectures were provided
 
             **or**
-                
+
             - | a ``model_config.json``, a ``model.pt`` and a ``encoder.pkl`` (resp.
                 ``decoder.pkl``) if a custom encoder (resp. decoder) was provided
 

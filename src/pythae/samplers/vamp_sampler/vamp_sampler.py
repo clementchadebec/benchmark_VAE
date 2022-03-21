@@ -33,13 +33,13 @@ class VAMPSampler(BaseSampler):
         Args:
             num_samples (int): The number of samples to generate
             batch_size (int): The batch size to use during sampling
-            output_dir (str): The directory where the images will be saved. If does not exist the 
+            output_dir (str): The directory where the images will be saved. If does not exist the
                 folder is created. If None: the images are not saved. Defaults: None.
-            return_gen (bool): Whether the sampler should directly return a tensor of generated 
+            return_gen (bool): Whether the sampler should directly return a tensor of generated
                 data. Default: True.
-            save_sampler_config (bool): Whether to save the sampler config. It is saved in 
+            save_sampler_config (bool): Whether to save the sampler config. It is saved in
                 output_dir
-        
+
         Returns:
             ~torch.Tensor: The generated images
         """
@@ -54,11 +54,12 @@ class VAMPSampler(BaseSampler):
         for i in range(full_batch_nbr):
             means = self.model.pseudo_inputs(self.model.idle_input.to(self.device))[
                 :batch_size
-            ].reshape(
-                (batch_size,) + self.model.model_config.input_dim)
+            ].reshape((batch_size,) + self.model.model_config.input_dim)
 
             encoder_output = self.model.encoder(means)
-            mu, log_var = encoder_output.embedding, torch.tanh(encoder_output.log_covariance)
+            mu, log_var = encoder_output.embedding, torch.tanh(
+                encoder_output.log_covariance
+            )
             std = torch.exp(0.5 * log_var)
             eps = torch.randn_like(std)
             z = mu + eps * std
@@ -76,12 +77,12 @@ class VAMPSampler(BaseSampler):
         if last_batch_samples_nbr > 0:
             means = self.model.pseudo_inputs(self.model.idle_input.to(self.device))[
                 :last_batch_samples_nbr
-            ].reshape(
-                (last_batch_samples_nbr,) + self.model.model_config.input_dim)
-
+            ].reshape((last_batch_samples_nbr,) + self.model.model_config.input_dim)
 
             encoder_output = self.model.encoder(means)
-            mu, log_var = encoder_output.embedding, torch.tanh(encoder_output.log_covariance)
+            mu, log_var = encoder_output.embedding, torch.tanh(
+                encoder_output.log_covariance
+            )
             std = torch.exp(0.5 * log_var)
             eps = torch.randn_like(std)
             z = mu + eps * std

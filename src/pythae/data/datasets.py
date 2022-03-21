@@ -37,7 +37,7 @@ class BaseDataset(Dataset):
         Returns:
             (dict): A dictionnary with the keys 'data' and 'labels' and corresponding
             torch.Tensor
-            """
+        """
         # Select sample
         X = self.data[index]
 

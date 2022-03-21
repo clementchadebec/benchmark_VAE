@@ -6,3 +6,6 @@ coverage:
         # project coverage decrease by more than 1%:
         target: 0%
         threshold: 1%
+    patch:
+      default:
+        enabled: no

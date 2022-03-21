@@ -9,7 +9,7 @@ from pythae.customexception import BadInheritanceError
 from pythae.models.base.base_utils import ModelOutput
 from pythae.models import DisentangledBetaVAE, DisentangledBetaVAEConfig
 
-from pythae.trainers import BaseTrainer, BaseTrainingConfig
+from pythae.trainers import BaseTrainer, BaseTrainerConfig
 from pythae.pipelines import TrainingPipeline
 from tests.data.custom_architectures import (
     Decoder_AE_Conv,
@@ -20,15 +20,24 @@ from tests.data.custom_architectures import (
 PATH = os.path.dirname(os.path.abspath(__file__))
 
 
-@pytest.fixture(params=[DisentangledBetaVAEConfig(), DisentangledBetaVAEConfig(latent_dim=5, beta=5.0, C=12, warmup_epoch=13)])
+@pytest.fixture(
+    params=[
+        DisentangledBetaVAEConfig(),
+        DisentangledBetaVAEConfig(latent_dim=5, beta=5.0, C=12, warmup_epoch=13),
+    ]
+)
 def model_configs_no_input_dim(request):
     return request.param
 
 
 @pytest.fixture(
     params=[
-        DisentangledBetaVAEConfig(input_dim=(1, 28, 28), latent_dim=10, reconstruction_loss="bce"),
-        DisentangledBetaVAEConfig(input_dim=(1, 28), latent_dim=5, beta=5.2, warmup_epoch=0),
+        DisentangledBetaVAEConfig(
+            input_dim=(1, 28, 28), latent_dim=10, reconstruction_loss="bce"
+        ),
+        DisentangledBetaVAEConfig(
+            input_dim=(1, 28), latent_dim=5, beta=5.2, warmup_epoch=0
+        ),
     ]
 )
 def model_configs(request):
@@ -73,10 +82,14 @@ class Test_Model_Building:
             model = DisentangledBetaVAE(model_configs_no_input_dim)
 
         with pytest.raises(AttributeError):
-            model = DisentangledBetaVAE(model_configs_no_input_dim, encoder=custom_encoder)
+            model = DisentangledBetaVAE(
+                model_configs_no_input_dim, encoder=custom_encoder
+            )
 
         with pytest.raises(AttributeError):
-            model = DisentangledBetaVAE(model_configs_no_input_dim, decoder=custom_decoder)
+            model = DisentangledBetaVAE(
+                model_configs_no_input_dim, decoder=custom_decoder
+            )
 
         model = DisentangledBetaVAE(
             model_configs_no_input_dim, encoder=custom_encoder, decoder=custom_decoder
@@ -84,7 +97,9 @@ class Test_Model_Building:
 
     def test_build_custom_arch(self, model_configs, custom_encoder, custom_decoder):
 
-        model = DisentangledBetaVAE(model_configs, encoder=custom_encoder, decoder=custom_decoder)
+        model = DisentangledBetaVAE(
+            model_configs, encoder=custom_encoder, decoder=custom_decoder
+        )
 
         assert model.encoder == custom_encoder
         assert not model.model_config.uses_default_encoder
@@ -194,7 +209,9 @@ class Test_Model_Saving:
         tmpdir.mkdir("dummy_folder")
         dir_path = dir_path = os.path.join(tmpdir, "dummy_folder")
 
-        model = DisentangledBetaVAE(model_configs, encoder=custom_encoder, decoder=custom_decoder)
+        model = DisentangledBetaVAE(
+            model_configs, encoder=custom_encoder, decoder=custom_decoder
+        )
 
         model.state_dict()["encoder.layers.0.0.weight"][0] = 0
 
@@ -224,7 +241,9 @@ class Test_Model_Saving:
         tmpdir.mkdir("dummy_folder")
         dir_path = dir_path = os.path.join(tmpdir, "dummy_folder")
 
-        model = DisentangledBetaVAE(model_configs, encoder=custom_encoder, decoder=custom_decoder)
+        model = DisentangledBetaVAE(
+            model_configs, encoder=custom_encoder, decoder=custom_decoder
+        )
 
         model.state_dict()["encoder.layers.0.0.weight"][0] = 0
 
@@ -261,9 +280,7 @@ class Test_Model_forward:
         data = torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))[
             :
         ]
-        return (
-            data
-        )  # This is an extract of 3 data from MNIST (unnormalized) used to test custom architecture
+        return data  # This is an extract of 3 data from MNIST (unnormalized) used to test custom architecture
 
     @pytest.fixture
     def betavae(self, model_configs, demo_data):
@@ -293,7 +310,7 @@ class Test_DisentangledBetaVAE_Training:
         return torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))
 
     @pytest.fixture(
-        params=[BaseTrainingConfig(num_epochs=3, steps_saving=2, learning_rate=1e-5)]
+        params=[BaseTrainerConfig(num_epochs=3, steps_saving=2, learning_rate=1e-5)]
     )
     def training_configs(self, tmpdir, request):
         tmpdir.mkdir("dummy_folder")
@@ -641,9 +658,7 @@ class Test_DisentangledBetaVAE_Training:
         dir_path = training_configs.output_dir
 
         # build pipeline
-        pipeline = TrainingPipeline(
-            model=betavae, training_config=training_configs
-        )
+        pipeline = TrainingPipeline(model=betavae, training_config=training_configs)
 
         assert pipeline.training_config.__dict__ == training_configs.__dict__
 
@@ -656,7 +671,8 @@ class Test_DisentangledBetaVAE_Training:
         model = deepcopy(pipeline.trainer._best_model)
 
         training_dir = os.path.join(
-            dir_path, f"DisentangledBetaVAE_training_{pipeline.trainer._training_signature}"
+            dir_path,
+            f"DisentangledBetaVAE_training_{pipeline.trainer._training_signature}",
         )
         assert os.path.isdir(training_dir)
 

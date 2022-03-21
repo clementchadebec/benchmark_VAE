@@ -1,7 +1,7 @@
 import os
+from collections import deque
 from copy import deepcopy
 from typing import Optional
-from collections import deque
 
 import dill
 import numpy as np
@@ -9,16 +9,14 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd import grad
-import numpy as np
 
 from ...customexception import BadInheritanceError
 from ...data.datasets import BaseDataset
-from ..base.base_utils import ModelOutput, CPU_Unpickler
 from ...models import VAE
-from ..nn import BaseEncoder, BaseDecoder, BaseMetric
+from ..base.base_utils import CPU_Unpickler, ModelOutput
+from ..nn import BaseDecoder, BaseEncoder, BaseMetric
 from ..nn.default_architectures import Metric_MLP
 from .rhvae_config import RHVAEConfig
-
 from .rhvae_utils import create_inverse_metric, create_metric
 
 
@@ -176,7 +174,7 @@ class RHVAE(VAE):
                 M.unsqueeze(0)
                 * torch.exp(
                     -torch.norm(mu.unsqueeze(0) - z.unsqueeze(1), dim=-1) ** 2
-                    / (self.temperature ** 2)
+                    / (self.temperature**2)
                 )
                 .unsqueeze(-1)
                 .unsqueeze(-1)
@@ -216,7 +214,7 @@ class RHVAE(VAE):
                     M.unsqueeze(0)
                     * torch.exp(
                         -torch.norm(mu.unsqueeze(0) - z.unsqueeze(1), dim=-1) ** 2
-                        / (self.temperature ** 2)
+                        / (self.temperature**2)
                     )
                     .unsqueeze(-1)
                     .unsqueeze(-1)
@@ -352,11 +350,11 @@ class RHVAE(VAE):
 
         .. note::
             This function requires the folder to contain:
-            
+
             - | a ``model_config.json`` and a ``model.pt`` if no custom architectures were provided
-                
+
             **or**
-                
+
             - | a ``model_config.json``, a ``model.pt`` and a ``encoder.pkl`` (resp.
                 ``decoder.pkl`` or/and ``metric.pkl``) if a custom encoder (resp. decoder or/and
                 metric) was provided
@@ -466,7 +464,7 @@ class RHVAE(VAE):
                             self.centroids_tens.unsqueeze(0) - z.unsqueeze(1), dim=-1
                         )
                         ** 2
-                        / (self.temperature ** 2)
+                        / (self.temperature**2)
                     )
                     .unsqueeze(-1)
                     .unsqueeze(-1)
@@ -482,7 +480,7 @@ class RHVAE(VAE):
                         self.centroids_tens.unsqueeze(0) - z.unsqueeze(1), dim=-1
                     )
                     ** 2
-                    / (self.temperature ** 2)
+                    / (self.temperature**2)
                 )
                 .unsqueeze(-1)
                 .unsqueeze(-1)
@@ -499,18 +497,12 @@ class RHVAE(VAE):
 
         logpxz = self._log_p_xz(recon_x, x, zK)  # log p(x, z_K)
         logrhoK = (
-            (
-                -0.5
-                * (
-                    torch.transpose(rhoK.unsqueeze(-1), 1, 2)
-                    @ G_inv
-                    @ rhoK.unsqueeze(-1)
-                )
-                .squeeze()
-                .squeeze()
-                - 0.5 * G_log_det
-            )
-            #- torch.log(torch.tensor([2 * np.pi]).to(x.device)) * self.latent_dim / 2
+            -0.5
+            * (torch.transpose(rhoK.unsqueeze(-1), 1, 2) @ G_inv @ rhoK.unsqueeze(-1))
+            .squeeze()
+            .squeeze()
+            - 0.5 * G_log_det
+            # - torch.log(torch.tensor([2 * np.pi]).to(x.device)) * self.latent_dim / 2
         )  # log p(\rho_K)
 
         logp = logpxz + logrhoK
@@ -548,9 +540,10 @@ class RHVAE(VAE):
                 recon_x.reshape(x.shape[0], -1),
                 x.reshape(x.shape[0], -1),
                 reduction="none",
-            ).sum(dim=-1) 
-            - torch.log(torch.tensor([2 * np.pi]).to(x.device)) \
-                * np.prod(self.input_dim) / 2
+            ).sum(dim=-1)
+            -torch.log(torch.tensor([2 * np.pi]).to(x.device)) * np.prod(
+                self.input_dim
+            ) / 2
 
         elif self.model_config.reconstruction_loss == "bce":
 

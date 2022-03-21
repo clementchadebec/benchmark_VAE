@@ -1,20 +1,26 @@
 import datetime
 import logging
 import os
-import numpy as np
 from copy import deepcopy
-from typing import Any, Dict, Optional
-from tqdm import tqdm
+from typing import Any, Dict, List, Optional
 
+import numpy as np
 import torch
 import torch.optim as optim
 from torch.utils.data import DataLoader
+from tqdm import tqdm
 
 from ...customexception import ModelError
 from ...data.datasets import BaseDataset
 from ...models import BaseAE
 from ..trainer_utils import set_seed
-from .base_training_config import BaseTrainingConfig
+from ..training_callbacks import (
+    CallbackHandler,
+    MetricConsolePrinterCallback,
+    ProgressBarCallback,
+    TrainingCallback,
+)
+from .base_training_config import BaseTrainerConfig
 
 logger = logging.getLogger(__name__)
 
@@ -28,17 +34,26 @@ class BaseTrainer:
     """Base class to perform model training.
 
     Args:
-        model (BaseAE): The model to train
+        model (BaseAE): A instance of `~pythae.models.BaseAE` to train
 
         train_dataset (BaseDataset): The training dataset of type
             :class:`~pythae.data.dataset.BaseDataset`
 
-        training_args (BaseTrainingConfig): The training arguments summarizing the main parameters used
-            for training. If None, a basic training instance of :class:`TrainingConfig` is used.
-            Default: None.
+        eval_dataset (BaseDataset): The evaluation dataset of type
+            :class:`~pythae.data.dataset.BaseDataset`
+
+        training_config: (BaseTrainerConfig): The training arguments summarizing the main
+            parameters used for training. If None, a basic training instance of
+            :class:`TrainingConfig` is used. Default: None.
 
         optimizer (~torch.optim.Optimizer): An instance of `torch.optim.Optimizer` used for
             training. If None, a :class:`~torch.optim.Adam` optimizer is used. Default: None.
+
+        scheduler (~torch.optim.lr_scheduler): An instance of `torch.optim.Optimizer` used for
+            training. If None, a :class:`~torch.optim.Adam` optimizer is used. Default: None.
+
+        callbacks (List[~pythae.trainers.training_callbacks.TrainingCallbacks]):
+            A list of callbacks to use during training.
     """
 
     def __init__(
@@ -46,13 +61,14 @@ class BaseTrainer:
         model: BaseAE,
         train_dataset: BaseDataset,
         eval_dataset: Optional[BaseDataset] = None,
-        training_config: Optional[BaseTrainingConfig] = None,
+        training_config: Optional[BaseTrainerConfig] = None,
         optimizer: Optional[torch.optim.Optimizer] = None,
         scheduler: Optional = None,
+        callbacks: List[TrainingCallback] = None,
     ):
 
         if training_config is None:
-            training_config = BaseTrainingConfig()
+            training_config = BaseTrainerConfig()
 
         if training_config.output_dir is None:
             output_dir = "dummy_output_dir"
@@ -113,6 +129,16 @@ class BaseTrainer:
 
         self.train_loader = train_loader
         self.eval_loader = eval_loader
+
+        if callbacks is None:
+            callbacks = [TrainingCallback()]
+
+        self.callback_handler = CallbackHandler(
+            callbacks=callbacks, model=model, optimizer=optimizer, scheduler=scheduler
+        )
+
+        self.callback_handler.add_callback(ProgressBarCallback())
+        self.callback_handler.add_callback(MetricConsolePrinterCallback())
 
     def get_train_dataloader(
         self, train_dataset: BaseDataset
@@ -207,6 +233,10 @@ class BaseTrainer:
             log_output_dir (str): The path in which the log will be stored
         """
 
+        self.callback_handler.on_train_begin(
+            training_config=self.training_config, model_config=self.model.model_config
+        )
+
         # run sanity check on the model
         self._run_model_sanity_check(self.model, self.train_dataset)
 
@@ -274,12 +304,23 @@ class BaseTrainer:
         best_train_loss = 1e10
         best_eval_loss = 1e10
 
-        for epoch in range(1, self.training_config.num_epochs+1):
+        for epoch in range(1, self.training_config.num_epochs + 1):
+
+            self.callback_handler.on_epoch_begin(
+                training_config=self.training_config,
+                epoch=epoch,
+                train_loader=self.train_loader,
+                eval_loader=self.eval_loader,
+            )
+
+            metrics = {}
 
             epoch_train_loss = self.train_step(epoch)
+            metrics["train_epoch_loss"] = epoch_train_loss
 
             if self.eval_dataset is not None:
                 epoch_eval_loss = self.eval_step(epoch)
+                metrics["eval_epoch_loss"] = epoch_eval_loss
                 self.scheduler.step(epoch_eval_loss)
 
             else:
@@ -304,48 +345,51 @@ class BaseTrainer:
                 best_model = deepcopy(self.model)
                 self._best_model = best_model
 
+            if (
+                self.training_config.steps_predict is not None
+                and epoch % self.training_config.steps_predict == 0
+            ):
+                true_data, reconstructions, generations = self.predict(
+                    best_model,
+                    self.eval_loader.dataset.data[
+                        : min(self.eval_loader.dataset.data.shape[0], 10)
+                    ],
+                )
+
+                self.callback_handler.on_prediction_step(
+                    self.training_config,
+                    true_data=true_data,
+                    reconstructions=reconstructions,
+                    generations=generations,
+                    global_step=epoch,
+                )
+
+            self.callback_handler.on_epoch_end(training_config=self.training_config)
+
             # save checkpoints
             if (
                 self.training_config.steps_saving is not None
                 and epoch % self.training_config.steps_saving == 0
             ):
-                self.save_checkpoint(model=best_model, dir_path=training_dir, epoch=epoch)
+                self.save_checkpoint(
+                    model=best_model, dir_path=training_dir, epoch=epoch
+                )
                 logger.info(f"Saved checkpoint at epoch {epoch}\n")
 
                 if log_verbose:
                     file_logger.info(f"Saved checkpoint at epoch {epoch}\n")
 
-            if self.eval_dataset is not None:
-                logger.info(
-                    "----------------------------------------------------------------"
-                )
-                logger.info(
-                    f"Epoch {epoch}: Train loss: {np.round(epoch_train_loss, 10)}"
-                )
-                logger.info(
-                    f"Epoch {epoch}: Eval loss: {np.round(epoch_eval_loss, 10)}"
-                )
-                logger.info(
-                    "----------------------------------------------------------------"
-                )
-
-            else:
-                logger.info(
-                    "----------------------------------------------------------------"
-                )
-                logger.info(
-                    f"Epoch {epoch}: Train loss: {np.round(epoch_train_loss, 10)}"
-                )
-                logger.info(
-                    "----------------------------------------------------------------"
-                )
+            self.callback_handler.on_log(
+                self.training_config, metrics, logger=logger, global_step=epoch
+            )
 
         final_dir = os.path.join(training_dir, "final_model")
 
         self.save_model(best_model, dir_path=final_dir)
-        logger.info("----------------------------------")
         logger.info("Training ended!")
         logger.info(f"Saved final model in {final_dir}")
+
+        self.callback_handler.on_train_end(self.training_config)
 
     def eval_step(self, epoch: int):
         """Perform an evaluation step
@@ -361,30 +405,30 @@ class BaseTrainer:
 
         epoch_loss = 0
 
-        with tqdm(self.eval_loader, unit="batch") as tepoch:
-            for inputs in tepoch:
+        for inputs in self.eval_loader:
 
-                tepoch.set_description(
-                    f"Eval of epoch {epoch}/{self.training_config.num_epochs}"
-                )
+            self.callback_handler.on_eval_step_begin(
+                training_config=self.training_config,
+                eval_loader=self.eval_loader,
+                epoch=epoch,
+            )
 
-                #update epoch in model
-                self.model.epoch = epoch
+            inputs = self._set_inputs_to_device(inputs)
 
-                inputs = self._set_inputs_to_device(inputs)
+            model_output = self.model(
+                inputs, epoch=epoch, dataset_size=len(self.eval_loader.dataset)
+            )
 
-                model_output = self.model(
-                    inputs, epoch=epoch, dataset_size=len(self.eval_loader.dataset)
-                )
+            loss = model_output.loss
 
-                loss = model_output.loss
+            epoch_loss += loss.item()
 
-                epoch_loss += loss.item()
+            if epoch_loss != epoch_loss:
+                raise ArithmeticError("NaN detected in eval loss")
 
-                if epoch_loss != epoch_loss:
-                    raise ArithmeticError("NaN detected in eval loss")
+            self.callback_handler.on_eval_step_end(training_config=self.training_config)
 
-            epoch_loss /= len(self.eval_loader)
+        epoch_loss /= len(self.eval_loader)
 
         return epoch_loss
 
@@ -402,35 +446,40 @@ class BaseTrainer:
 
         epoch_loss = 0
 
-        with tqdm(self.train_loader, unit="batch") as tepoch:
-            for inputs in tepoch:
+        for inputs in self.train_loader:
 
-                tepoch.set_description(
-                    f"Training of epoch {epoch}/{self.training_config.num_epochs}"
-                )
+            self.callback_handler.on_train_step_begin(
+                training_config=self.training_config,
+                train_loader=self.train_loader,
+                epoch=epoch,
+            )
 
-                inputs = self._set_inputs_to_device(inputs)
+            inputs = self._set_inputs_to_device(inputs)
 
-                self.optimizer.zero_grad()
+            self.optimizer.zero_grad()
 
-                model_output = self.model(
-                    inputs, epoch=epoch, dataset_size=len(self.train_loader.dataset)
-                )
+            model_output = self.model(
+                inputs, epoch=epoch, dataset_size=len(self.train_loader.dataset)
+            )
 
-                loss = model_output.loss
+            loss = model_output.loss
 
-                loss.backward()
-                self.optimizer.step()
+            loss.backward()
+            self.optimizer.step()
 
-                epoch_loss += loss.item()
+            epoch_loss += loss.item()
 
-                if epoch_loss != epoch_loss:
-                    raise ArithmeticError("NaN detected in train loss")
+            if epoch_loss != epoch_loss:
+                raise ArithmeticError("NaN detected in train loss")
 
-            # Allows model updates if needed
-            self.model.update()
+            self.callback_handler.on_train_step_end(
+                training_config=self.training_config
+            )
 
-            epoch_loss /= len(self.train_loader)
+        # Allows model updates if needed
+        self.model.update()
+
+        epoch_loss /= len(self.train_loader)
 
         return epoch_loss
 
@@ -450,6 +499,8 @@ class BaseTrainer:
 
         # save training config
         self.training_config.save_json(dir_path, "training_config")
+
+        self.callback_handler.on_save(self.training_config)
 
     def save_checkpoint(self, model: BaseAE, dir_path, epoch: int):
         """Saves a checkpoint alowing to restart training from here
@@ -480,3 +531,21 @@ class BaseTrainer:
 
         # save training config
         self.training_config.save_json(checkpoint_dir, "training_config")
+
+    def predict(self, model: BaseAE, eval_data: torch.Tensor):
+
+        model.eval()
+
+        with torch.no_grad():
+            true_data = eval_data
+            z = torch.randn(10, model.latent_dim)
+            if self.device == "cuda":
+                true_data = true_data.cuda()
+                z = z.cuda()
+
+            reconstructions = model.decoder(
+                model.encoder(true_data).embedding
+            ).reconstruction.cpu()
+            normal_generation = model.decoder(z).reconstruction.detach().cpu()
+
+        return true_data, reconstructions, normal_generation

@@ -1,6 +1,6 @@
-from pydantic.dataclasses import dataclass
+from typing import Tuple, Union
 
-from typing import Union, Tuple
+from pydantic.dataclasses import dataclass
 
 from pythae.config import BaseConfig
 

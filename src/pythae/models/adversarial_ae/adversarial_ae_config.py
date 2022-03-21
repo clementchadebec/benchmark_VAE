@@ -1,5 +1,4 @@
 from pydantic.dataclasses import dataclass
-
 from typing_extensions import Literal
 
 from ...models import VAEConfig
@@ -14,7 +13,8 @@ class Adversarial_AE_Config(VAEConfig):
         latent_dim (int): The latent space dimension. Default: None.
         reconstruction_loss (str): The reconstruction loss to use ['bce', 'mse']. Default: 'mse'
         adversarial_loss_scale (float): Parameter scaling the adversarial loss
-        """
+    """
+
     adversarial_loss_scale: float = 0.5
     uses_default_discriminator: bool = True
     discriminator_input_dim: int = None

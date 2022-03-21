@@ -1,27 +1,26 @@
-import torch
 import os
-import dill
-
 from copy import deepcopy
-from ...customexception import BadInheritanceError
-from ...models import VAE
-from .factor_vae_config import FactorVAEConfig
-from ...data.datasets import BaseDataset
-from ..base.base_utils import ModelOutput, CPU_Unpickler
-from ..nn import BaseEncoder, BaseDecoder, BaseDiscriminator
-from ..nn.default_architectures import Encoder_VAE_MLP, Discriminator_MLP
-
 from typing import Optional
 
+import dill
+import torch
 import torch.nn.functional as F
+
+from ...customexception import BadInheritanceError
+from ...data.datasets import BaseDataset
+from ...models import VAE
+from ..base.base_utils import CPU_Unpickler, ModelOutput
+from ..nn import BaseDecoder, BaseDiscriminator, BaseEncoder
+from ..nn.default_architectures import Discriminator_MLP, Encoder_VAE_MLP
+from .factor_vae_config import FactorVAEConfig
 
 
 class FactorVAE(VAE):
     r"""
     FactorVAE model.
-    
+
     Args:
-        model_config(FactorVAEConfig): The Variational Autoencoder configuration seting the main 
+        model_config(FactorVAEConfig): The Variational Autoencoder configuration seting the main
         parameters of the model
 
         encoder (BaseEncoder): An instance of BaseEncoder (inheriting from `torch.nn.Module` which
@@ -34,10 +33,10 @@ class FactorVAE(VAE):
             architectures if desired. If None is provided, a simple Multi Layer Preception
             (https://en.wikipedia.org/wiki/Multilayer_perceptron) is used. Default: None.
 
-        discriminator (BaseDiscriminator): An instance of BaseDiscriminator (inheriting from 
-            `torch.nn.Module` which plays the role of discriminator. This argument allows you to 
-            use your own neural networks architectures if desired. If None is provided, a simple 
-            Multi Layer Preception (https://en.wikipedia.org/wiki/Multilayer_perceptron) is used. 
+        discriminator (BaseDiscriminator): An instance of BaseDiscriminator (inheriting from
+            `torch.nn.Module` which plays the role of discriminator. This argument allows you to
+            use your own neural networks architectures if desired. If None is provided, a simple
+            Multi Layer Preception (https://en.wikipedia.org/wiki/Multilayer_perceptron) is used.
             Default: None.
 
     .. note::
@@ -50,7 +49,7 @@ class FactorVAE(VAE):
         model_config: FactorVAEConfig,
         encoder: Optional[BaseEncoder] = None,
         decoder: Optional[BaseDecoder] = None,
-        discriminator: Optional[BaseDiscriminator]=None
+        discriminator: Optional[BaseDiscriminator] = None,
     ):
 
         VAE.__init__(self, model_config=model_config, encoder=encoder, decoder=decoder)
@@ -78,7 +77,7 @@ class FactorVAE(VAE):
 
     def set_discriminator(self, discriminator: BaseDiscriminator) -> None:
         r"""This method is called to set the discriminator network
-        
+
         Args:
             discriminator (BaseDiscriminator): The discriminator module that needs to be set to the model.
 
@@ -127,7 +126,7 @@ class FactorVAE(VAE):
             autoencoder_loss=autoencoder_loss,
             discriminator_loss=discriminator_loss,
             recon_x=recon_x,
-            z=z
+            z=z,
         )
 
         return output
@@ -141,7 +140,7 @@ class FactorVAE(VAE):
             recon_loss = F.mse_loss(
                 recon_x.reshape(x.shape[0], -1),
                 x.reshape(x.shape[0], -1),
-                reduction='none'
+                reduction="none",
             ).sum(dim=-1)
 
         elif self.model_config.reconstruction_loss == "bce":
@@ -149,35 +148,33 @@ class FactorVAE(VAE):
             recon_loss = F.binary_cross_entropy(
                 recon_x.reshape(x.shape[0], -1),
                 x.reshape(x.shape[0], -1),
-                reduction='none'
+                reduction="none",
             ).sum(dim=-1)
 
         KLD = -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp(), dim=-1)
 
-        z_permuted = self._permute_dims(z)#.clone().detach().requires_grad_(True)
+        z_permuted = self._permute_dims(z)  # .clone().detach().requires_grad_(True)
 
         latent_adversarial_score = self.discriminator(z).embedding.flatten()
-        permuted_latent_adversarial_score = self.discriminator(z_permuted).embedding.flatten()
+        permuted_latent_adversarial_score = self.discriminator(
+            z_permuted
+        ).embedding.flatten()
 
         true_labels = torch.ones(N, requires_grad=False).to(z.device)
         fake_labels = torch.zeros(N, requires_grad=False).to(z.device)
 
         TC = F.binary_cross_entropy(
-                latent_adversarial_score, fake_labels
-            ) + F.binary_cross_entropy(
-                permuted_latent_adversarial_score, true_labels
-            )
+            latent_adversarial_score, fake_labels
+        ) + F.binary_cross_entropy(permuted_latent_adversarial_score, true_labels)
 
-        autoencoder_loss = (
-            recon_loss + KLD - self.gamma * TC
-        )
+        autoencoder_loss = recon_loss + KLD - self.gamma * TC
 
         discriminator_loss = 0.5 * TC
 
         return (
             (recon_loss).mean(dim=0),
             (autoencoder_loss).mean(dim=0),
-            (discriminator_loss).mean(dim=0)
+            (discriminator_loss).mean(dim=0),
         )
 
     def _sample_gauss(self, mu, std):
@@ -263,7 +260,7 @@ class FactorVAE(VAE):
             - | a ``model_config.json`` and a ``model.pt`` if no custom architectures were provided
 
             **or**
-                
+
             - | a ``model_config.json``, a ``model.pt`` and a ``encoder.pkl`` (resp.
                 ``decoder.pkl``) if a custom encoder (resp. decoder) was provided
 
@@ -290,7 +287,9 @@ class FactorVAE(VAE):
         else:
             discriminator = None
 
-        model = cls(model_config, encoder=encoder, decoder=decoder, discriminator=discriminator)
+        model = cls(
+            model_config, encoder=encoder, decoder=decoder, discriminator=discriminator
+        )
         model.load_state_dict(model_weights)
 
         return model

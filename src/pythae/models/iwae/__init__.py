@@ -12,7 +12,7 @@ Available samplers
 
 """
 
-from .iwae_model import IWAE
 from .iwae_config import IWAEConfig
+from .iwae_model import IWAE
 
 __all__ = ["IWAE", "IWAEConfig"]

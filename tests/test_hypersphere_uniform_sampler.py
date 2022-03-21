@@ -25,7 +25,9 @@ def model(request):
 
 @pytest.fixture()
 def sampler(model):
-    return HypersphereUniformSampler(model=model, sampler_config=HypersphereUniformSamplerConfig())
+    return HypersphereUniformSampler(
+        model=model, sampler_config=HypersphereUniformSamplerConfig()
+    )
 
 
 @pytest.fixture(params=[(4, 2), (5, 5), (2, 3)])
@@ -45,7 +47,9 @@ class Test_HypersphereUniformSampler_saving:
 
         assert os.path.isfile(sampler_config_file)
 
-        generation_config_rec = HypersphereUniformSamplerConfig.from_json_file(sampler_config_file)
+        generation_config_rec = HypersphereUniformSamplerConfig.from_json_file(
+            sampler_config_file
+        )
 
         assert generation_config_rec.__dict__ == sampler.sampler_config.__dict__
 

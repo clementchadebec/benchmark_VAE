@@ -1,24 +1,22 @@
-import torch
 import os
-
-from ...models import VAE
-from .info_vae_config import INFOVAE_MMD_Config
-from ...data.datasets import BaseDataset
-from ..base.base_utils import ModelOutput
-
-from ..nn import BaseDecoder, BaseEncoder
-from ..nn.default_architectures import Encoder_AE_MLP
-
 from typing import Optional
 
+import torch
 import torch.nn.functional as F
+
+from ...data.datasets import BaseDataset
+from ...models import VAE
+from ..base.base_utils import ModelOutput
+from ..nn import BaseDecoder, BaseEncoder
+from ..nn.default_architectures import Encoder_AE_MLP
+from .info_vae_config import INFOVAE_MMD_Config
 
 
 class INFOVAE_MMD(VAE):
     """Info Variational Autoencoder model.
-    
+
     Args:
-        model_config(INFOVAE_MMD_Config): The Autoencoder configuration seting the main 
+        model_config(INFOVAE_MMD_Config): The Autoencoder configuration seting the main
             parameters of the model
 
         encoder (BaseEncoder): An instance of BaseEncoder (inheriting from `torch.nn.Module` which
@@ -46,17 +44,17 @@ class INFOVAE_MMD(VAE):
         VAE.__init__(self, model_config=model_config, encoder=encoder, decoder=decoder)
 
         self.model_name = "INFOVAE_MMD"
-        
+
         self.alpha = self.model_config.alpha
         self.lbd = self.model_config.lbd
         self.kernel_choice = model_config.kernel_choice
 
     def forward(self, inputs: BaseDataset, **kwargs) -> ModelOutput:
         """The input data is encoded and decoded
-        
+
         Args:
             inputs (BaseDataset): An instance of pythae's datasets
-            
+
         Returns:
             ModelOutput: An instance of ModelOutput containing all the relevant parameters
         """
@@ -83,7 +81,7 @@ class INFOVAE_MMD(VAE):
             reg_loss=kld_loss,
             mmd_loss=mmd_loss,
             recon_x=recon_x,
-            z=z
+            z=z,
         )
 
         return output
@@ -97,7 +95,7 @@ class INFOVAE_MMD(VAE):
             recon_loss = F.mse_loss(
                 recon_x.reshape(x.shape[0], -1),
                 x.reshape(x.shape[0], -1),
-                reduction='none'
+                reduction="none",
             ).sum(dim=-1)
 
         elif self.model_config.reconstruction_loss == "bce":
@@ -105,9 +103,8 @@ class INFOVAE_MMD(VAE):
             recon_loss = F.binary_cross_entropy(
                 recon_x.reshape(x.shape[0], -1),
                 x.reshape(x.shape[0], -1),
-                reduction='none'
+                reduction="none",
             ).sum(dim=-1)
-
 
         KLD = -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp(), dim=-1)
 
@@ -125,10 +122,11 @@ class INFOVAE_MMD(VAE):
         mmd_z_prior = (k_z_prior - k_z_prior.diag()).sum() / (N - 1)
         mmd_cross = k_cross.sum() / N
 
-        mmd_loss = (mmd_z + mmd_z_prior - 2 * mmd_cross)
+        mmd_loss = mmd_z + mmd_z_prior - 2 * mmd_cross
 
-        loss = recon_loss + (1 - self.alpha) * KLD + (self.alpha + self.lbd - 1) * mmd_loss
-
+        loss = (
+            recon_loss + (1 - self.alpha) * KLD + (self.alpha + self.lbd - 1) * mmd_loss
+        )
 
         return (
             (loss).mean(dim=0),
@@ -143,11 +141,10 @@ class INFOVAE_MMD(VAE):
         eps = torch.randn_like(std)
         return mu + eps * std, eps
 
-
     def imq_kernel(self, z1, z2):
         """Returns a matrix of shape batch X batch containing the pairwise kernel computation"""
 
-        C = 2.0 * self.model_config.latent_dim * self.model_config.kernel_bandwidth ** 2
+        C = 2.0 * self.model_config.latent_dim * self.model_config.kernel_bandwidth**2
 
         k = C / (C + torch.norm(z1.unsqueeze(1) - z2.unsqueeze(0), dim=-1) ** 2)
 
@@ -156,7 +153,7 @@ class INFOVAE_MMD(VAE):
     def rbf_kernel(self, z1, z2):
         """Returns a matrix of shape batch X batch containing the pairwise kernel computation"""
 
-        C = 2.0 * self.model_config.latent_dim * self.model_config.kernel_bandwidth ** 2
+        C = 2.0 * self.model_config.latent_dim * self.model_config.kernel_bandwidth**2
 
         k = torch.exp(-torch.norm(z1.unsqueeze(1) - z2.unsqueeze(0), dim=-1) ** 2 / C)
 
@@ -190,7 +187,7 @@ class INFOVAE_MMD(VAE):
             - | a ``model_config.json`` and a ``model.pt`` if no custom architectures were provided
 
             **or**
-                
+
             - | a ``model_config.json``, a ``model.pt`` and a ``encoder.pkl`` (resp.
                 ``decoder.pkl``) if a custom encoder (resp. decoder) was provided
 

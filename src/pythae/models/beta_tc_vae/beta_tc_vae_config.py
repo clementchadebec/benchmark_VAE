@@ -15,7 +15,7 @@ class BetaTCVAEConfig(VAEConfig):
         alpha (float): The balancing factor before the Index code Mutual Info. Default: 1
         beta (float): The balancing factor before the Total Correlation. Default: 1
         gamma (float): The balancing factor before the dimension-wise KL. Default: 1
-        use_mss (bool): Use Minibatch Stratified Sampling. If False: uses Minibatch Weighted 
+        use_mss (bool): Use Minibatch Stratified Sampling. If False: uses Minibatch Weighted
             Sampling. Default: True
     """
     alpha: float = 1.0

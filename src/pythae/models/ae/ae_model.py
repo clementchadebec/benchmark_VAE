@@ -1,20 +1,19 @@
-from ..base import BaseAE
-from .ae_config import AEConfig
-from ...data.datasets import BaseDataset
-from ..base.base_utils import ModelOutput
-
-from ..nn import BaseDecoder, BaseEncoder
-from ..nn.default_architectures import Encoder_AE_MLP
-
+import os
 from typing import Optional
 
 import torch.nn.functional as F
-import os
+
+from ...data.datasets import BaseDataset
+from ..base import BaseAE
+from ..base.base_utils import ModelOutput
+from ..nn import BaseDecoder, BaseEncoder
+from ..nn.default_architectures import Encoder_AE_MLP
+from .ae_config import AEConfig
 
 
 class AE(BaseAE):
     """Vanilla Autoencoder model.
-    
+
     Args:
         model_config(AEConfig): The Autoencoder configuration seting the main parameters of the
             model
@@ -64,10 +63,10 @@ class AE(BaseAE):
 
     def forward(self, inputs: BaseDataset, **kwargs) -> ModelOutput:
         """The input data is encoded and decoded
-        
+
         Args:
             inputs (BaseDataset): An instance of pythae's datasets
-            
+
         Returns:
             ModelOutput: An instance of ModelOutput containing all the relevant parameters
         """
@@ -86,7 +85,7 @@ class AE(BaseAE):
     def loss_function(self, recon_x, x):
 
         MSE = F.mse_loss(
-            recon_x.reshape(x.shape[0], -1), x.reshape(x.shape[0], -1),reduction="none"
+            recon_x.reshape(x.shape[0], -1), x.reshape(x.shape[0], -1), reduction="none"
         ).sum(dim=-1)
         return MSE.mean(dim=0)
 

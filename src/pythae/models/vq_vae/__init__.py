@@ -10,7 +10,7 @@ Normalizing flows sampler to come.
 
 """
 
-from .vq_vae_model import VQVAE
 from .vq_vae_config import VQVAEConfig
+from .vq_vae_model import VQVAE
 
 __all__ = ["VQVAE", "VQVAEConfig"]

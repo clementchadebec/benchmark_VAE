@@ -10,12 +10,16 @@ from torch.optim import SGD, Adadelta, Adagrad, Adam, RMSprop
 from pythae.customexception import BadInheritanceError
 from pythae.models.base.base_utils import ModelOutput
 from pythae.models import Adversarial_AE, Adversarial_AE_Config
-from pythae.trainers import AdversarialTrainer, AdversarialTrainerConfig, BaseTrainingConfig
+from pythae.trainers import (
+    AdversarialTrainer,
+    AdversarialTrainerConfig,
+    BaseTrainerConfig,
+)
 from pythae.pipelines import TrainingPipeline
 from pythae.models.nn.default_architectures import (
     Decoder_AE_MLP,
     Encoder_VAE_MLP,
-    Discriminator_MLP
+    Discriminator_MLP,
 )
 from tests.data.custom_architectures import (
     Decoder_AE_Conv,
@@ -26,7 +30,7 @@ from tests.data.custom_architectures import (
 
 PATH = os.path.dirname(os.path.abspath(__file__))
 
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
+device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
 @pytest.fixture(params=[Adversarial_AE_Config(), Adversarial_AE_Config(latent_dim=5)])
@@ -36,7 +40,9 @@ def model_configs_no_input_dim(request):
 
 @pytest.fixture(
     params=[
-        Adversarial_AE_Config(input_dim=(1, 28, 28), latent_dim=10, reconstruction_loss="bce"),
+        Adversarial_AE_Config(
+            input_dim=(1, 28, 28), latent_dim=10, reconstruction_loss="bce"
+        ),
         Adversarial_AE_Config(input_dim=(1, 2, 18), latent_dim=5),
     ]
 )
@@ -75,15 +81,19 @@ class Test_Model_Building:
 
         # check raises error with adv scale > 1
         conf = Adversarial_AE_Config(
-            input_dim=(1, 2, 18), latent_dim=5, adversarial_loss_scale=2 + np.random.rand()
-            )
+            input_dim=(1, 2, 18),
+            latent_dim=5,
+            adversarial_loss_scale=2 + np.random.rand(),
+        )
         with pytest.raises(AssertionError):
             Adversarial_AE(conf)
-        
+
         # check raises error with adv scale < 0
         conf = Adversarial_AE_Config(
-            input_dim=(1, 2, 18), latent_dim=5, adversarial_loss_scale=2 + np.random.rand()
-            )
+            input_dim=(1, 2, 18),
+            latent_dim=5,
+            adversarial_loss_scale=2 + np.random.rand(),
+        )
         with pytest.raises(AssertionError):
             a = Adversarial_AE(conf)
 
@@ -98,19 +108,29 @@ class Test_Model_Building:
             adversarial_ae = Adversarial_AE(model_configs, discriminator=bad_net)
 
     def test_raises_no_input_dim(
-        self, model_configs_no_input_dim, custom_encoder, custom_decoder, custom_discriminator
+        self,
+        model_configs_no_input_dim,
+        custom_encoder,
+        custom_decoder,
+        custom_discriminator,
     ):
         with pytest.raises(AttributeError):
             adversarial_ae = Adversarial_AE(model_configs_no_input_dim)
 
         with pytest.raises(AttributeError):
-            adversarial_ae = Adversarial_AE(model_configs_no_input_dim, encoder=custom_encoder)
+            adversarial_ae = Adversarial_AE(
+                model_configs_no_input_dim, encoder=custom_encoder
+            )
 
         with pytest.raises(AttributeError):
-            adversarial_ae = Adversarial_AE(model_configs_no_input_dim, decoder=custom_decoder)
+            adversarial_ae = Adversarial_AE(
+                model_configs_no_input_dim, decoder=custom_decoder
+            )
 
         with pytest.raises(AttributeError):
-            adversarial_ae = Adversarial_AE(model_configs_no_input_dim, discriminator=custom_discriminator)
+            adversarial_ae = Adversarial_AE(
+                model_configs_no_input_dim, discriminator=custom_discriminator
+            )
 
         adversarial_ae = Adversarial_AE(
             model_configs_no_input_dim,
@@ -123,7 +143,9 @@ class Test_Model_Building:
         self, model_configs, custom_encoder, custom_decoder, custom_discriminator
     ):
 
-        adversarial_ae = Adversarial_AE(model_configs, encoder=custom_encoder, decoder=custom_decoder)
+        adversarial_ae = Adversarial_AE(
+            model_configs, encoder=custom_encoder, decoder=custom_decoder
+        )
 
         assert adversarial_ae.encoder == custom_encoder
         assert not adversarial_ae.model_config.uses_default_encoder
@@ -133,7 +155,9 @@ class Test_Model_Building:
 
         assert adversarial_ae.model_config.uses_default_discriminator
 
-        adversarial_ae = Adversarial_AE(model_configs, discriminator=custom_discriminator)
+        adversarial_ae = Adversarial_AE(
+            model_configs, discriminator=custom_discriminator
+        )
 
         assert adversarial_ae.model_config.uses_default_encoder
         assert adversarial_ae.model_config.uses_default_encoder
@@ -168,7 +192,6 @@ class Test_Model_Saving:
                 for key in model.state_dict().keys()
             ]
         )
-
 
     def test_custom_encoder_model_saving(self, tmpdir, model_configs, custom_encoder):
 
@@ -226,7 +249,9 @@ class Test_Model_Saving:
             ]
         )
 
-    def test_custom_discriminator_model_saving(self, tmpdir, model_configs, custom_discriminator):
+    def test_custom_discriminator_model_saving(
+        self, tmpdir, model_configs, custom_discriminator
+    ):
 
         tmpdir.mkdir("dummy_folder")
         dir_path = dir_path = os.path.join(tmpdir, "dummy_folder")
@@ -254,9 +279,13 @@ class Test_Model_Saving:
             ]
         )
 
-
     def test_full_custom_model_saving(
-        self, tmpdir, model_configs, custom_encoder, custom_decoder, custom_discriminator
+        self,
+        tmpdir,
+        model_configs,
+        custom_encoder,
+        custom_decoder,
+        custom_discriminator,
     ):
 
         tmpdir.mkdir("dummy_folder")
@@ -296,9 +325,13 @@ class Test_Model_Saving:
             ]
         )
 
-
     def test_raises_missing_files(
-        self, tmpdir, model_configs, custom_encoder, custom_decoder, custom_discriminator
+        self,
+        tmpdir,
+        model_configs,
+        custom_encoder,
+        custom_decoder,
+        custom_discriminator,
     ):
 
         tmpdir.mkdir("dummy_folder")
@@ -352,9 +385,7 @@ class Test_Model_forward:
         data = torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))[
             :
         ]
-        return (
-            data
-        )  # This is an extract of 3 data from MNIST (unnormalized) used to test custom architecture
+        return data  # This is an extract of 3 data from MNIST (unnormalized) used to test custom architecture
 
     @pytest.fixture
     def adversarial_ae(self, model_configs, demo_data):
@@ -374,15 +405,15 @@ class Test_Model_forward:
         assert isinstance(out, ModelOutput)
 
         assert set(
-            ["loss",
-            "recon_loss",
-            "autoencoder_loss",
-            "discriminator_loss",
-            "recon_x",
-            "z"]
-        ) == set(
-            out.keys()
-        )
+            [
+                "loss",
+                "recon_loss",
+                "autoencoder_loss",
+                "discriminator_loss",
+                "recon_x",
+                "z",
+            ]
+        ) == set(out.keys())
 
         assert out.z.shape[0] == demo_data["data"].shape[0]
         assert out.recon_x.shape == demo_data["data"].shape
@@ -395,7 +426,9 @@ class Test_Adversarial_AE_Training:
         return torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))
 
     @pytest.fixture(
-        params=[AdversarialTrainerConfig(num_epochs=3, steps_saving=2, learning_rate=1e-5)]
+        params=[
+            AdversarialTrainerConfig(num_epochs=3, steps_saving=2, learning_rate=1e-5)
+        ]
     )
     def training_configs(self, tmpdir, request):
         tmpdir.mkdir("dummy_folder")
@@ -413,7 +446,12 @@ class Test_Adversarial_AE_Training:
         ]
     )
     def adversarial_ae(
-        self, model_configs, custom_encoder, custom_decoder, custom_discriminator, request
+        self,
+        model_configs,
+        custom_encoder,
+        custom_decoder,
+        custom_discriminator,
+        request,
     ):
         # randomized
 
@@ -432,13 +470,23 @@ class Test_Adversarial_AE_Training:
             model = Adversarial_AE(model_configs, discriminator=custom_discriminator)
 
         elif 0.5 <= alpha < 0.625:
-            model = Adversarial_AE(model_configs, encoder=custom_encoder, decoder=custom_decoder)
+            model = Adversarial_AE(
+                model_configs, encoder=custom_encoder, decoder=custom_decoder
+            )
 
         elif 0.625 <= alpha < 0:
-            model = Adversarial_AE(model_configs, encoder=custom_encoder, discriminator=custom_discriminator)
+            model = Adversarial_AE(
+                model_configs,
+                encoder=custom_encoder,
+                discriminator=custom_discriminator,
+            )
 
         elif 0.750 <= alpha < 0.875:
-            model = Adversarial_AE(model_configs, decoder=custom_decoder, discriminator=custom_discriminator)
+            model = Adversarial_AE(
+                model_configs,
+                decoder=custom_decoder,
+                discriminator=custom_discriminator,
+            )
 
         else:
             model = Adversarial_AE(
@@ -457,7 +505,8 @@ class Test_Adversarial_AE_Training:
                 adversarial_ae.encoder.parameters(), lr=training_configs.learning_rate
             )
             decoder_optimizer = request.param(
-                adversarial_ae.discriminator.parameters(), lr=training_configs.learning_rate
+                adversarial_ae.discriminator.parameters(),
+                lr=training_configs.learning_rate,
             )
 
         else:
@@ -466,13 +515,15 @@ class Test_Adversarial_AE_Training:
 
         return (encoder_optimizer, decoder_optimizer)
 
-    def test_adversarial_ae_train_step(self, adversarial_ae, train_dataset, training_configs, optimizers):
+    def test_adversarial_ae_train_step(
+        self, adversarial_ae, train_dataset, training_configs, optimizers
+    ):
         trainer = AdversarialTrainer(
             model=adversarial_ae,
             train_dataset=train_dataset,
             training_config=training_configs,
             autoencoder_optimizer=optimizers[0],
-            discriminator_optimizer=optimizers[1]
+            discriminator_optimizer=optimizers[1],
         )
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
@@ -489,14 +540,16 @@ class Test_Adversarial_AE_Training:
             ]
         )
 
-    def test_adversarial_ae_eval_step(self, adversarial_ae, train_dataset, training_configs, optimizers):
+    def test_adversarial_ae_eval_step(
+        self, adversarial_ae, train_dataset, training_configs, optimizers
+    ):
         trainer = AdversarialTrainer(
             model=adversarial_ae,
             train_dataset=train_dataset,
             eval_dataset=train_dataset,
             training_config=training_configs,
-             autoencoder_optimizer=optimizers[0],
-            discriminator_optimizer=optimizers[1]
+            autoencoder_optimizer=optimizers[0],
+            discriminator_optimizer=optimizers[1],
         )
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
@@ -523,7 +576,7 @@ class Test_Adversarial_AE_Training:
             eval_dataset=train_dataset,
             training_config=training_configs,
             autoencoder_optimizer=optimizers[0],
-            discriminator_optimizer=optimizers[1]
+            discriminator_optimizer=optimizers[1],
         )
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
@@ -551,7 +604,7 @@ class Test_Adversarial_AE_Training:
             train_dataset=train_dataset,
             training_config=training_configs,
             autoencoder_optimizer=optimizers[0],
-            discriminator_optimizer=optimizers[1]
+            discriminator_optimizer=optimizers[1],
         )
 
         # Make a training step
@@ -569,9 +622,14 @@ class Test_Adversarial_AE_Training:
 
         files_list = os.listdir(checkpoint_dir)
 
-        assert set(["model.pt", "autoencoder_optimizer.pt", "discriminator_optimizer.pt", "training_config.json"]).issubset(
-            set(files_list)
-        )
+        assert set(
+            [
+                "model.pt",
+                "autoencoder_optimizer.pt",
+                "discriminator_optimizer.pt",
+                "training_config.json",
+            ]
+        ).issubset(set(files_list))
 
         # check pickled custom decoder
         if not adversarial_ae.model_config.uses_default_decoder:
@@ -627,8 +685,12 @@ class Test_Adversarial_AE_Training:
         assert type(model_rec.decoder.cpu()) == type(model.decoder.cpu())
         assert type(model_rec.discriminator.cpu()) == type(model.discriminator.cpu())
 
-        autoencoder_optim_rec_state_dict = torch.load(os.path.join(checkpoint_dir, "autoencoder_optimizer.pt"))
-        discriminator_optim_rec_state_dict = torch.load(os.path.join(checkpoint_dir, "discriminator_optimizer.pt"))
+        autoencoder_optim_rec_state_dict = torch.load(
+            os.path.join(checkpoint_dir, "autoencoder_optimizer.pt")
+        )
+        discriminator_optim_rec_state_dict = torch.load(
+            os.path.join(checkpoint_dir, "discriminator_optimizer.pt")
+        )
 
         assert all(
             [
@@ -644,7 +706,8 @@ class Test_Adversarial_AE_Training:
             [
                 dict_rec == dict_optimizer
                 for (dict_rec, dict_optimizer) in zip(
-                    autoencoder_optim_rec_state_dict["state"], autoencoder_optimizer.state_dict()["state"]
+                    autoencoder_optim_rec_state_dict["state"],
+                    autoencoder_optimizer.state_dict()["state"],
                 )
             ]
         )
@@ -663,7 +726,8 @@ class Test_Adversarial_AE_Training:
             [
                 dict_rec == dict_optimizer
                 for (dict_rec, dict_optimizer) in zip(
-                    discriminator_optim_rec_state_dict["state"], discriminator_optimizer.state_dict()["state"]
+                    discriminator_optim_rec_state_dict["state"],
+                    discriminator_optimizer.state_dict()["state"],
                 )
             ]
         )
@@ -681,7 +745,7 @@ class Test_Adversarial_AE_Training:
             train_dataset=train_dataset,
             training_config=training_configs,
             autoencoder_optimizer=optimizers[0],
-            discriminator_optimizer=optimizers[1]
+            discriminator_optimizer=optimizers[1],
         )
 
         model = deepcopy(trainer.model)
@@ -702,9 +766,14 @@ class Test_Adversarial_AE_Training:
         files_list = os.listdir(checkpoint_dir)
 
         # check files
-        assert set(["model.pt", "autoencoder_optimizer.pt", "discriminator_optimizer.pt", "training_config.json"]).issubset(
-            set(files_list)
-        )
+        assert set(
+            [
+                "model.pt",
+                "autoencoder_optimizer.pt",
+                "discriminator_optimizer.pt",
+                "training_config.json",
+            ]
+        ).issubset(set(files_list))
 
         # check pickled custom decoder
         if not adversarial_ae.model_config.uses_default_decoder:
@@ -749,7 +818,7 @@ class Test_Adversarial_AE_Training:
             train_dataset=train_dataset,
             training_config=training_configs,
             autoencoder_optimizer=optimizers[0],
-            discriminator_optimizer=optimizers[1]
+            discriminator_optimizer=optimizers[1],
         )
 
         trainer.train()
@@ -813,8 +882,8 @@ class Test_Adversarial_AE_Training:
 
         with pytest.raises(AssertionError):
             pipeline = TrainingPipeline(
-            model=adversarial_ae, training_config=BaseTrainingConfig()
-        )
+                model=adversarial_ae, training_config=BaseTrainerConfig()
+            )
 
         dir_path = training_configs.output_dir
 

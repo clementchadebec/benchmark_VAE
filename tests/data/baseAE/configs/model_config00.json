@@ -1,3 +1,4 @@
 {
+    "name": "BaseAEConfig",
     "latent_dim": 11
   }
