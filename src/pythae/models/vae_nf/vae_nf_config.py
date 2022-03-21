@@ -2,11 +2,10 @@ from pydantic.dataclasses import dataclass
 
 from typing_extensions import Literal
 
-from ..base.base_config import BaseAEConfig
-
+from ..vae import VAEConfig
 
 @dataclass
-class VAE_NF_Config(BaseAEConfig):
+class VAE_NF_Config(VAEConfig):
     """VAE Normalizing Flow config class.
 
     Parameters:
@@ -14,5 +13,4 @@ class VAE_NF_Config(BaseAEConfig):
         latent_dim (int): The latent space dimension. Default: None.
         reconstruction_loss (str): The reconstruction loss to use ['bce', 'mse']. Default: 'mse'
         """
-
-    reconstruction_loss: Literal["bce", "mse"] = "mse"
+    pass

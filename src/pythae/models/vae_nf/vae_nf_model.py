@@ -57,8 +57,8 @@ class VAE_NF(BaseAE):
             if model_config.input_dim is None:
                 raise AttributeError(
                     "No input dimension provided !"
-                    "'input_dim' parameter of BaseAEConfig instance must be set to 'data_shape' where "
-                    "the shape of the data is (C, H, W ..). Unable to build encoder "
+                    "'input_dim' parameter of BaseAEConfig instance must be set to 'data_shape' "
+                    "where the shape of the data is (C, H, W ..). Unable to build encoder "
                     "automatically"
                 )
 
@@ -76,15 +76,15 @@ class VAE_NF(BaseAE):
             else:
                 if flow not in ['PlanarFlow','RadialFlow']:
                     raise NameError(
-                        f"Flow name number {i}: {flow} doesn't correspond to ones of the classes. Available flow classes are [PlanarFlow, RadialFlow]"
+                        f"Flow name number {i}: {flow} doesn't correspond to ones of the classes. "
+                        "Available flow classes are [PlanarFlow, RadialFlow]"
                     )
 
         self.set_encoder(encoder)
         self.net = []
-        D = self.decoder.input_dim
         for flow in flows:
             layer_class = eval(flow)
-            self.net.append(layer_class(D, torch.tanh))
+            self.net.append(layer_class(self.latent_dim))
 
     def forward(self, inputs: BaseDataset, **kwargs):
         """
@@ -109,17 +109,20 @@ class VAE_NF(BaseAE):
 
         z0 = z.clone().detach()
 
+        # starting gaussian log-density
         log_prob_z0 = torch.sum(
             -0.5 * torch.log(torch.tensor(2 * math.pi)) - 
             -0.5 * log_var - 0.5 * ((z0 - mu) / std) ** 2, 
             axis=-1)
         
-        log_det = torch.zeros((z0.shape[0],))
+        log_det = torch.zeros((z0.shape[0],)).to(z.device)
         
         for layer in self.net:
-            z, ld = layer(z)
-            log_det += ld
+            layer_output = layer(z)
+            z = layer_output.z
+            log_det += layer_output.log_det
 
+        # prior log-density
         log_prob_zk = torch.sum(
             -0.5 * (torch.log(torch.tensor(2 * math.pi)) + z ** 2), 
             axis=-1)

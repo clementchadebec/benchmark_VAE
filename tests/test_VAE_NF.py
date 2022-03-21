@@ -8,8 +8,9 @@ from torch.optim import SGD, Adadelta, Adagrad, Adam, RMSprop
 from pythae.customexception import BadInheritanceError
 from pythae.models.base.base_utils import ModelOutput
 from pythae.models import VAE_NF, VAE_NF_Config
+from pythae.models.vae_nf.vae_nf_utils import *
 
-from pythae.trainers import BaseTrainer, BaseTrainingConfig
+from pythae.trainers import BaseTrainer, BaseTrainerConfig
 from pythae.pipelines import TrainingPipeline
 from tests.data.custom_architectures import (
     Decoder_AE_Conv,
@@ -62,6 +63,41 @@ def custom_flows(request):
 def bad_flows(request):
     return request.param
 
+class Test_Flows:
+    @pytest.fixture()
+    def bad_activation(self):
+        return 'activation_not_handled'
+
+    @pytest.fixture(params=[
+        PlanarFlow,
+        RadialFlow
+    ])
+    def flow_class(self, request):
+        return request.param
+
+    @pytest.fixture(
+        params=[
+            torch.rand(3, 2),
+            torch.randn(3, 1),
+            torch.randn(2, 4)
+        ]
+    )
+    def dummy_data(self, request):
+        return request.param
+
+    def test_raises_activation_not_handled(self, flow_class, bad_activation):
+        with pytest.raises(AssertionError):
+            flow_class(dim=2, activation=bad_activation)
+
+    def test_flow_forward(self, flow_class, dummy_data):
+        flow = flow_class(dim=dummy_data.shape[-1])
+
+        flow_out = flow(dummy_data)
+
+        assert set(['z', 'log_det']).issubset(set(flow_out.keys()))
+        assert flow_out.z.shape == dummy_data.shape  
+
+
 class Test_Model_Building:
     @pytest.fixture()
     def bad_net(self):
@@ -75,6 +111,10 @@ class Test_Model_Building:
                 model.latent_dim == model_configs.latent_dim,
             ]
         )
+
+    def test_set_custom_flows(self, model_configs, custom_flows):
+        model = VAE_NF(model_configs, flows=custom_flows)
+        assert all([model_flow.__class__.__name__ == custom_flow for model_flow, custom_flow in zip(model.net, custom_flows)])
 
     def test_raises_bad_inheritance(self, model_configs, bad_net):
         with pytest.raises(BadInheritanceError):
@@ -328,7 +368,7 @@ class Test_VAE_NF_Training:
         return torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))
 
     @pytest.fixture(
-        params=[BaseTrainingConfig(num_epochs=3, steps_saving=2, learning_rate=1e-5)]
+        params=[BaseTrainerConfig(num_epochs=3, steps_saving=2, learning_rate=1e-5)]
     )
     def training_configs(self, tmpdir, request):
         tmpdir.mkdir("dummy_folder")
