@@ -13,7 +13,7 @@ from pythae.trainers import BaseTrainer, BaseTrainingConfig
 from pythae.pipelines import TrainingPipeline
 from tests.data.custom_architectures import (
     Decoder_AE_Conv,
-    Encoder_VAE_NF_Conv,
+    Encoder_VAE_Conv,
     NetBadInheritance,
 )
 
@@ -37,7 +37,7 @@ def model_configs(request):
 
 @pytest.fixture
 def custom_encoder(model_configs):
-    return Encoder_VAE_NF_Conv(model_configs)
+    return Encoder_VAE_Conv(model_configs)
 
 
 @pytest.fixture
@@ -55,7 +55,7 @@ def custom_flows(request):
 @pytest.fixture(
     params=[
         ['BadFlowName'],
-        [1]
+        list(range(5)),
         ['PlanarFlow','PlanarFowl']
     ]
 )
@@ -107,7 +107,6 @@ class Test_Model_Building:
         assert not model.model_config.uses_default_encoder
         assert model.decoder == custom_decoder
         assert not model.model_config.uses_default_decoder
-        assert model.flows == custom_flows
 
         model = VAE_NF(model_configs, encoder=custom_encoder, decoder=custom_decoder)
 
@@ -620,7 +619,6 @@ class Test_VAE_NF_Training:
         trainer.train()
 
         model = deepcopy(trainer._best_model)
-
         training_dir = os.path.join(
             dir_path, f"VAE_NF_training_{trainer._training_signature}"
         )
