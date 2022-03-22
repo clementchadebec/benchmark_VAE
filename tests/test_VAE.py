@@ -308,7 +308,6 @@ class Test_NLL_Compute:
 
         assert isinstance(nll, float)
         assert nll < 0
-   
 
 
 @pytest.mark.slow

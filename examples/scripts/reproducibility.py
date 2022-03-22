@@ -158,8 +158,8 @@ def main(args):
 
         model = IWAE(
             model_config=model_config,
-            encoder=Encoder_VAE(model_config),
-            decoder=Decoder_AE(model_config),
+            encoder=None,
+            decoder=None,
         )
 
     elif args.model_name == "info_vae":
@@ -175,8 +175,8 @@ def main(args):
 
         model = INFOVAE_MMD(
             model_config=model_config,
-            encoder=Encoder_VAE(model_config),
-            decoder=Decoder_AE(model_config),
+            encoder=None,
+            decoder=None,
         )
 
     elif args.model_name == "wae":
@@ -192,8 +192,8 @@ def main(args):
 
         model = WAE_MMD(
             model_config=model_config,
-            encoder=Encoder_AE(model_config),
-            decoder=Decoder_AE(model_config),
+            encoder=None,
+            decoder=None,
         )
 
     elif args.model_name == "rae_l2":
@@ -243,8 +243,8 @@ def main(args):
 
         model = VAMP(
             model_config=model_config,
-            encoder=Encoder_VAE(model_config),
-            decoder=Decoder_AE(model_config),
+            encoder=None,
+            decoder=None,
         )
 
     elif args.model_name == "beta_vae":

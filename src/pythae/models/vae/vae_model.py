@@ -50,8 +50,8 @@ class VAE(BaseAE):
             if model_config.input_dim is None:
                 raise AttributeError(
                     "No input dimension provided !"
-                    "'input_dim' parameter of BaseAEConfig instance must be set to 'data_shape' where "
-                    "the shape of the data is (C, H, W ..). Unable to build encoder "
+                    "'input_dim' parameter of BaseAEConfig instance must be set to 'data_shape' "
+                    "where the shape of the data is (C, H, W ..). Unable to build encoder "
                     "automatically"
                 )
 
@@ -127,7 +127,7 @@ class VAE(BaseAE):
 
     def get_nll(self, data, n_samples=1, batch_size=100):
         """
-        Function computed the estimate negative log-likelihood of the model. It uses importance 
+        Function computed the estimate negative log-likelihood of the model. It uses importance
         sampling method with the approximate posterior disctribution. This may take a while.
 
         Args:
@@ -147,14 +147,12 @@ class VAE(BaseAE):
 
         for i in range(len(data)):
             x = data[i].unsqueeze(0)
-            encoder_output = self.encoder(x)
-            mu, log_var = encoder_output.embedding, encoder_output.log_covariance
-
+            
             log_p_x = []
 
             for j in range(n_full_batch):
-                
-                x_rep = torch.cat(batch_size*[x])
+
+                x_rep = torch.cat(batch_size * [x])
 
                 encoder_output = self.encoder(x_rep)
                 mu, log_var = encoder_output.embedding, encoder_output.log_covariance
@@ -162,7 +160,9 @@ class VAE(BaseAE):
                 std = torch.exp(0.5 * log_var)
                 z, eps = self._sample_gauss(mu, std)
 
-                log_q_z_given_x = -0.5 * (log_var + (z - mu)**2 / torch.exp( log_var )).sum(dim=-1)
+                log_q_z_given_x = -0.5 * (
+                    log_var + (z - mu) ** 2 / torch.exp(log_var)
+                ).sum(dim=-1)
                 log_p_z = -0.5 * (z**2).sum(dim=-1)
 
                 recon_x = self.decoder(z)["reconstruction"]
@@ -173,29 +173,28 @@ class VAE(BaseAE):
                         recon_x.reshape(x_rep.shape[0], -1),
                         x_rep.reshape(x_rep.shape[0], -1),
                         reduction="none",
-                    ).sum(dim=-1)
+                    ).sum(dim=-1) - torch.tensor(
+                        [np.prod(self.input_dim) / 2 * np.log(np.pi * 2)]
+                    ).to(
+                        data.device
+                    )  # decoding distribution is assumed unit variance  N(mu, I)
 
                 elif self.model_config.reconstruction_loss == "bce":
-                
+
                     log_p_x_given_z = -F.binary_cross_entropy(
                         recon_x.reshape(x_rep.shape[0], -1),
                         x_rep.reshape(x_rep.shape[0], -1),
                         reduction="none",
                     ).sum(dim=-1)
 
-                log_p_x.append(log_p_x_given_z + log_p_z - log_q_z_given_x)
-            
+                log_p_x.append(
+                    log_p_x_given_z + log_p_z - log_q_z_given_x
+                )  # log(2*pi) simplifies
+
             log_p_x = torch.cat(log_p_x)
 
             log_p.append((torch.logsumexp(log_p_x, 0) - np.log(len(log_p_x))).item())
         return np.mean(log_p)
-
-
-
-
-
-
-
 
     @classmethod
     def _load_model_config_from_folder(cls, dir_path):
