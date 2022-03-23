@@ -380,8 +380,8 @@ def main(args):
 
         model = SVAE(
             model_config=model_config,
-            encoder=Encoder_SVAE(model_config),
-            decoder=Decoder_AE(model_config),
+            encoder=None,
+            decoder=None,
         )
 
     elif args.model_name == "disentangled_beta_vae":

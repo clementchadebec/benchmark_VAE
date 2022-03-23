@@ -242,6 +242,9 @@ class VAMP(VAE):
             log_p_x = torch.cat(log_p_x)
 
             log_p.append((torch.logsumexp(log_p_x, 0) - np.log(len(log_p_x))).item())
+
+            if i % 1000 == 0:
+                print(f"Current nll at {i}: {np.mean(log_p)}")
         return np.mean(log_p)
 
     @classmethod
