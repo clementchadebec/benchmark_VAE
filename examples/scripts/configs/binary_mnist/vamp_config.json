@@ -1,6 +1,6 @@
 {
     "name": "VAMPConfig",
     "latent_dim": 16,
-    "reconstruction_loss": "mse",
+    "reconstruction_loss": "bce",
     "number_components": 50
 }

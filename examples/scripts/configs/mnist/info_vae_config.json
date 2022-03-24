@@ -1,4 +1,5 @@
 {
+    "name": "INFOVAE_MMD_Config",
     "latent_dim": 16,
     "reconstruction_loss": "mse",
     "kernel_choice": "imq",

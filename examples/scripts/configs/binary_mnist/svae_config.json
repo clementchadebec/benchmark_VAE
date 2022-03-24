@@ -1,5 +1,5 @@
 {
     "name": "SVAEConfig",
     "latent_dim": 16,
-    "reconstruction_loss": "mse"
+    "reconstruction_loss": "bce"
 }
