@@ -154,18 +154,18 @@ To launch the data generation process from a trained model, you only need to bui
 >>> # Retrieve the trained model
 >>> my_trained_vae = VAE.load_from_folder(
 ...	'path/to/your/trained/model'
-...	)
+... )
 >>> # Define your sampler
 >>> my_samper = NormalSampler(
 ...	model=my_trained_vae
-...	)
+... )
 >>> # Generate samples
 >>> gen_data = normal_samper.sample(
 ...	num_samples=50,
 ...	batch_size=10,
 ...	output_dir=None,
 ...	return_gen=True
-...	)
+... )
 ```
 If you set `output_dir` to a specific path, the generated images will be saved as `.png` files named `00000000.png`, `00000001.png` ...
 The samplers can be used with any model as long as it is suited. For instance, a `GMMSampler` instance can be used to generate from any model but a `VAMPSampler` will only be usable with a `VAMP` model. Check [here](#available-samplers) to see which ones apply to your model.
