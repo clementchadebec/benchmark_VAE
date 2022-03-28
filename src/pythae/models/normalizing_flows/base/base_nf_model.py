@@ -46,6 +46,14 @@ class BaseNF(nn.Module):
         """
         raise NotImplementedError()
 
+    def update(self):
+        """Method that allows model update during the training (at the end of a training epoch)
+
+        If needed, this method must be implemented in a child class.
+
+        By default, it does nothing.
+        """
+        pass
         
     def save(self, dir_path):
         """Method to save the model at a specific location. It saves, the model weights as a
@@ -119,3 +127,52 @@ class BaseNF(nn.Module):
         model.load_state_dict(model_weights)
 
         return model
+
+class NFModel(nn.Module):
+    """Class wrapping the normalizing flows so it can articulate with 
+        :class:`~pythae.trainers.BaseTrainer`
+    """
+
+    def __init__(self, prior: torch.distributions, flow: BaseNF):
+        nn.Module.__init__(self)
+        self.prior = prior
+        self.flow = flow
+
+    @property
+    def model_config(self):
+        return self.flow.model_config
+
+    @property
+    def model_name(self):
+        return self.flow.model_name
+
+    def forward(self, x: BaseDataset, **kwargs):
+        x = x['data']
+
+        flow_output = self.flow(x, **kwargs)
+
+        y = flow_output.out
+        log_abs_det_jac = flow_output.log_abs_det_jac
+
+        log_prob_prior = self.prior.log_prob(y)
+
+        print(log_abs_det_jac.shape, log_prob_prior.shape)
+
+        output = ModelOutput(
+            loss=-(log_prob_prior + log_abs_det_jac).sum()
+        )
+
+        return output
+    
+    def update(self):
+        self.flow.update()
+
+    def save(self, dir_path):
+        """Method to save the model at a specific location. It saves, the model weights as a
+        ``models.pt`` file along with the model config as a ``model_config.json`` file. 
+        Args:
+            dir_path (str): The path where the model should be saved. If the path
+                path does not exist a folder will be created at the provided location.
+        """
+
+        self.flow.save(dir_path=dir_path)

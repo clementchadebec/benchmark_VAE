@@ -58,7 +58,7 @@ class MAF(BaseNF):
 
         self.net = nn.ModuleList(self.net)
 
-    def forward(self, x: torch.Tensor) -> ModelOutput:
+    def forward(self, x: torch.Tensor, **kwargs) -> ModelOutput:
         """The input data is transformed toward the prior
 
         Args:
@@ -72,7 +72,7 @@ class MAF(BaseNF):
 
         for layer in self.net:
             layer_out = layer(x)
-            x = layer_out.out
+            x = layer_out.out.flip(dim=-1)
             sum_log_abs_det_jac += layer_out.log_abs_det_jac
 
         return ModelOutput(
@@ -80,7 +80,7 @@ class MAF(BaseNF):
             log_abs_det_jac=sum_log_abs_det_jac
         )
 
-    def inverse(self, y: torch.Tensor) -> ModelOutput:
+    def inverse(self, y: torch.Tensor, **kwargs) -> ModelOutput:
         """The prior is transformed toward the input data
 
         Args:

@@ -32,6 +32,7 @@ class MADE(BaseNF):
         self.input_dim = np.prod(model_config.input_dim)
         self.output_dim = np.prod(model_config.output_dim)
         self.hidden_sizes = model_config.hidden_sizes
+        self.model_name = "MADE"
 
         if model_config.input_dim is None:
             raise AttributeError(
@@ -94,7 +95,7 @@ class MADE(BaseNF):
 
         return masks
 
-    def forward(self, x: torch.tensor) -> ModelOutput:
+    def forward(self, x: torch.tensor, **kwargs) -> ModelOutput:
         """The input data is transformed toward the prior
 
         Args:
@@ -116,7 +117,7 @@ class MADE(BaseNF):
             log_abs_det_jac=log_abs_det_jac
         )
 
-    def inverse(self, y):
+    def inverse(self, y, **kwarg):
         x = torch.zeros_like(y)
 
         for i in range(self.input_dim):
