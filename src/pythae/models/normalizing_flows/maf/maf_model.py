@@ -72,7 +72,7 @@ class MAF(BaseNF):
 
         for layer in self.net:
             layer_out = layer(x)
-            x = layer_out.out.flip(dim=-1)
+            x = layer_out.out.flip(-1)
             sum_log_abs_det_jac += layer_out.log_abs_det_jac
 
         return ModelOutput(
