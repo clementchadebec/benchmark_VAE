@@ -16,8 +16,8 @@ class INFOVAE_MMD(VAE):
     """Info Variational Autoencoder model.
 
     Args:
-        model_config(INFOVAE_MMD_Config): The Autoencoder configuration seting the main
-            parameters of the model
+        model_config (INFOVAE_MMD_Config): The Autoencoder configuration setting the main
+            parameters of the model.
 
         encoder (BaseEncoder): An instance of BaseEncoder (inheriting from `torch.nn.Module` which
             plays the role of encoder. This argument allows you to use your own neural networks
@@ -173,42 +173,3 @@ class INFOVAE_MMD(VAE):
         model_config = INFOVAE_MMD_Config.from_json_file(path_to_model_config)
 
         return model_config
-
-    @classmethod
-    def load_from_folder(cls, dir_path):
-        """Class method to be used to load the model from a specific folder
-
-        Args:
-            dir_path (str): The path where the model should have been be saved.
-
-        .. note::
-            This function requires the folder to contain:
-
-            - | a ``model_config.json`` and a ``model.pt`` if no custom architectures were provided
-
-            **or**
-
-            - | a ``model_config.json``, a ``model.pt`` and a ``encoder.pkl`` (resp.
-                ``decoder.pkl``) if a custom encoder (resp. decoder) was provided
-
-        """
-
-        model_config = cls._load_model_config_from_folder(dir_path)
-        model_weights = cls._load_model_weights_from_folder(dir_path)
-
-        if not model_config.uses_default_encoder:
-            encoder = cls._load_custom_encoder_from_folder(dir_path)
-
-        else:
-            encoder = None
-
-        if not model_config.uses_default_decoder:
-            decoder = cls._load_custom_decoder_from_folder(dir_path)
-
-        else:
-            decoder = None
-
-        model = cls(model_config, encoder=encoder, decoder=decoder)
-        model.load_state_dict(model_weights)
-
-        return model

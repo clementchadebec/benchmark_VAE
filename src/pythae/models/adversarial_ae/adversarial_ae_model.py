@@ -19,8 +19,8 @@ class Adversarial_AE(VAE):
     """Adversarial Autoencoder model.
 
     Args:
-        model_config(Adversarial_AE_Config): The Autoencoder configuration seting the main
-            parameters of the model
+        model_config (Adversarial_AE_Config): The Autoencoder configuration setting the main
+            parameters of the model.
 
         encoder (BaseEncoder): An instance of BaseEncoder (inheriting from `torch.nn.Module` which
             plays the role of encoder. This argument allows you to use your own neural networks

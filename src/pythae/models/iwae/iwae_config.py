@@ -8,7 +8,7 @@ class IWAEConfig(VAEConfig):
     """IWAE model config class.
 
     Parameters:
-        input_dim (int): The input_data dimension
+        input_dim (tuple): The input_data dimension.
         latent_dim (int): The latent space dimension. Default: None.
         reconstruction_loss (str): The reconstruction loss to use ['bce', 'mse']. Default: 'mse'
         beta (float): The balancing factor between reconstruction and KL. Default: 1

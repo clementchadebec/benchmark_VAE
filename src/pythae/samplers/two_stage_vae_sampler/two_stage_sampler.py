@@ -237,7 +237,7 @@ class TwoStageVAESampler(BaseSampler):
 
         if not self.is_fitted:
             raise ArithmeticError(
-                "The sampler needs to be fitted by calling smapler.fit() method"
+                "The sampler needs to be fitted by calling sampler.fit() method"
                 "before sampling."
             )
 
