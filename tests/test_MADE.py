@@ -142,9 +142,8 @@ class Test_Model_forward:
         assert set(["out", "log_abs_det_jac"]) == set(out.keys())
 
         assert out.out.shape[0] == demo_data["data"].shape[0]
-        assert out.log_abs_det_jac.shape[0] == demo_data["data"].shape[0]
+        assert out.log_abs_det_jac.shape == (demo_data["data"].shape[0],)
         assert out.out.shape[1:] == np.prod(made.model_config.output_dim)
-        assert out.log_abs_det_jac.shape[1:] == np.prod(made.model_config.output_dim)
 
         out = made.inverse(out.out)
 
@@ -153,10 +152,9 @@ class Test_Model_forward:
         assert set(["out", "log_abs_det_jac"]) == set(out.keys())
 
         assert out.out.shape[0] == demo_data["data"].shape[0]
-        assert out.log_abs_det_jac.shape[0] == demo_data["data"].shape[0]
-        assert out.out.shape[1:] == np.prod(made.model_config.output_dim)
-        assert out.log_abs_det_jac.shape[1:] == np.prod(made.model_config.output_dim)
-
+        assert out.log_abs_det_jac.shape == (demo_data["data"].shape[0],)
+        assert out.out.shape[1:] == np.prod(made.model_config.input_dim)
+    
 
 
 @pytest.mark.slow
@@ -192,9 +190,9 @@ class Test_MADE_Training:
 
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
-        return  torch.distributions.Normal(
+        return  torch.distributions.MultivariateNormal(
             torch.zeros(np.prod(model_configs.input_dim)).to(device),
-            torch.ones(np.prod(model_configs.input_dim)).to(device)
+            torch.eye(np.prod(model_configs.input_dim)).to(device)
             )
 
     @pytest.fixture(params=[Adam])

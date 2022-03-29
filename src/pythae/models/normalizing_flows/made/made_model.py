@@ -110,7 +110,7 @@ class MADE(BaseNF):
         alpha = net_output[:, self.input_dim:]
 
         u = (x.reshape(x.shape[0], - 1) - mu) * (- alpha).exp()
-        log_abs_det_jac = - alpha
+        log_abs_det_jac = -alpha.sum(dim=-1) #- alpha
 
         return ModelOutput(
             out=u,
@@ -120,13 +120,16 @@ class MADE(BaseNF):
     def inverse(self, y, **kwarg):
         x = torch.zeros_like(y)
 
+        log_abs_det_jac = torch.zeros(y.shape[0]).to(y.device)
+        y = y.flip(dims=(1,))
         for i in range(self.input_dim):
             net_output = self.net(x.clone())
             mu = net_output[:, :self.input_dim]
             alpha = net_output[:, self.input_dim:]
             x[:, i] = y[:, i] * (alpha[:, i]).exp() + mu[:, i]
 
-        log_abs_det_jac = alpha
+            log_abs_det_jac += alpha[:, i]
+        
 
         return ModelOutput(
             out=x,

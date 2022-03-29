@@ -32,6 +32,8 @@ class MAF(BaseNF):
         self.input_dim = np.prod(model_config.input_dim)
         self.hidden_size = model_config.hidden_size
 
+        self.model_name = "MAF"
+
         if model_config.input_dim is None:
             raise AttributeError(
                     "No input dimension provided !"
@@ -50,11 +52,9 @@ class MAF(BaseNF):
             )
 
         for i in range(model_config.n_made_blocks):
-            self.net.extend([
-                MADE(made_config),
-                BatchNorm(self.input_dim)
-                ]
-            )
+            self.net.extend([MADE(made_config)])
+            if self.model_config.include_batch_norm:
+                self.net.extend([BatchNorm(self.input_dim)])
 
         self.net = nn.ModuleList(self.net)
 
@@ -68,13 +68,13 @@ class MAF(BaseNF):
             ModelOutput: An instance of ModelOutput containing all the relevant parameters
         """
 
-        sum_log_abs_det_jac = 0
+        sum_log_abs_det_jac = torch.zeros(x.shape[0]).to(x.device)
 
         for layer in self.net:
             layer_out = layer(x)
-            x = layer_out.out.flip(-1)
+            x = layer_out.out.flip(dims=(1,))
             sum_log_abs_det_jac += layer_out.log_abs_det_jac
-
+            
         return ModelOutput(
             out=x,
             log_abs_det_jac=sum_log_abs_det_jac
@@ -90,7 +90,7 @@ class MAF(BaseNF):
             ModelOutput: An instance of ModelOutput containing all the relevant parameters
         """
 
-        sum_log_abs_det_jac = 0
+        sum_log_abs_det_jac = torch.zeros(y.shape[0]).to(y.device)
 
         for layer in self.net[::-1]:
             layer_out = layer.inverse(y)

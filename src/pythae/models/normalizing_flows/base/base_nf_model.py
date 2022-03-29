@@ -154,9 +154,7 @@ class NFModel(nn.Module):
         y = flow_output.out
         log_abs_det_jac = flow_output.log_abs_det_jac
 
-        log_prob_prior = self.prior.log_prob(y)
-
-        print(log_abs_det_jac.shape, log_prob_prior.shape)
+        log_prob_prior = self.prior.log_prob(y).reshape(y.shape[0])
 
         output = ModelOutput(
             loss=-(log_prob_prior + log_abs_det_jac).sum()

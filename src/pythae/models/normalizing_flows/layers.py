@@ -33,19 +33,21 @@ class BatchNorm(nn.Module):
         self.eps = eps
         self.momentum = momentum
 
-        self.log_gamma = nn.Parameter(torch.empty(num_features))
-        self.beta = nn.Parameter(torch.empty(num_features))
+        self.log_gamma = nn.Parameter(torch.zeros(num_features))
+        self.beta = nn.Parameter(torch.zeros(num_features))
 
         self.register_buffer('running_mean', torch.zeros(num_features))
         self.register_buffer('running_var', torch.ones(num_features))
 
     def forward(self, x):
         if self.training:
-            self.batch_mean = x.mean(0)
-            self.batch_var = x.var(0)
+            self.batch_mean = x.mean(0).data
+            self.batch_var = x.var(0).data
 
-            self.running_mean.mul_(1 - self.momentum).add_(self.batch_mean.data * self.momentum)
-            self.running_var.mul_(1 - self.momentum).add_(self.batch_var.data *  self.momentum)
+            assert self.batch_var.is_leaf
+
+            self.running_mean.mul_(1 - self.momentum).add_(self.batch_mean * self.momentum)
+            self.running_var.mul_(1 - self.momentum).add_(self.batch_var *  self.momentum)
 
             mean = self.batch_mean
             var = self.batch_var
@@ -62,7 +64,7 @@ class BatchNorm(nn.Module):
 
         output = ModelOutput(
             out=y,
-            log_abs_det_jac = log_abs_det_jac.expand_as(x)
+            log_abs_det_jac = log_abs_det_jac.expand_as(x).sum(dim=-1)
         )
 
         return output
@@ -82,7 +84,7 @@ class BatchNorm(nn.Module):
 
         output = ModelOutput(
             out=x,
-            log_abs_det_jac = log_abs_det_jac.expand_as(x)
+            log_abs_det_jac = log_abs_det_jac.expand_as(x).sum(dim=-1)
         )
 
         return output
