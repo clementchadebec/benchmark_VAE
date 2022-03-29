@@ -44,8 +44,6 @@ class BatchNorm(nn.Module):
             self.batch_mean = x.mean(0).data
             self.batch_var = x.var(0).data
 
-            assert self.batch_var.is_leaf
-
             self.running_mean.mul_(1 - self.momentum).add_(self.batch_mean * self.momentum)
             self.running_var.mul_(1 - self.momentum).add_(self.batch_var *  self.momentum)
 

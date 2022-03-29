@@ -10,53 +10,24 @@ from ....data.datasets import BaseDataset
 from ..layers import BatchNorm
 from ..base import BaseNF
 from ..made import MADE, MADEConfig
-from .maf_config import MAFConfig
+from ..maf.maf_model import MAF
+from .iaf_config import IAFConfig
 
-class MAF(BaseNF):
-    """Masked Autoregressive Flow
+class IAF(MAF):
+    """Inverse Autoregressive Flow
     
     Args:
-        model_config (MAFConfig): The MAF model configuration setting the main parameters of the 
+        model_config (IAFConfig): The IAF model configuration setting the main parameters of the 
             model
     """
 
     def __init__(
         self,
-        model_config: MAFConfig):
+        model_config: IAFConfig):
 
-        BaseNF.__init__(self, model_config=model_config)
-        
-        self.net = []
-        self.m = {}
-        self.model_config = model_config
-        self.input_dim = np.prod(model_config.input_dim)
-        self.hidden_size = model_config.hidden_size
+        MAF.__init__(self, model_config=model_config)
 
-        self.model_name = "MAF"
-
-        if model_config.input_dim is None:
-            raise AttributeError(
-                    "No input dimension provided !"
-                    "'input_dim' parameter of MADEConfig instance must be set to 'data_shape' "
-                    "where the shape of the data is (C, H, W ..)]. Unable to build network"
-                    "automatically"
-                )
-
-        self.net = []
-
-        made_config = MADEConfig(
-                input_dim=(self.input_dim, ),
-                output_dim=(self.input_dim, ),
-                hidden_sizes=[self.hidden_size]*self.model_config.n_hidden_in_made,
-                degrees_ordering="sequential"
-            )
-
-        for i in range(model_config.n_made_blocks):
-            self.net.extend([MADE(made_config)])
-            if self.model_config.include_batch_norm:
-                self.net.extend([BatchNorm(self.input_dim)])
-
-        self.net = nn.ModuleList(self.net)
+        self.model_name = "IAF"
 
     def forward(self, x: torch.Tensor, **kwargs) -> ModelOutput:
         """The input data is transformed toward the prior
@@ -71,8 +42,10 @@ class MAF(BaseNF):
         sum_log_abs_det_jac = torch.zeros(x.shape[0]).to(x.device)
 
         for layer in self.net:
-            layer_out = layer(x)
-            #if layer.__class__.__name__ == 'MADE':
+            if layer.__class__.__name__ == 'MADE':
+                layer_out = layer.inverse(x)
+            else:
+                layer_out = layer(x)
             x = layer_out.out.flip(dims=(1,))
             sum_log_abs_det_jac += layer_out.log_abs_det_jac
             
@@ -94,9 +67,11 @@ class MAF(BaseNF):
         sum_log_abs_det_jac = torch.zeros(y.shape[0]).to(y.device)
 
         for layer in self.net[::-1]:
-            #if layer.__class__.__name__ == 'MADE':
             y = y.flip(dims=(1,))
-            layer_out = layer.inverse(y)
+            if layer.__class__.__name__ == 'MADE':
+                layer_out = layer(y)
+            else:
+                layer_out = layer.inverse(y)
             y = layer_out.out
             sum_log_abs_det_jac += layer_out.log_abs_det_jac
 
@@ -116,6 +91,6 @@ class MAF(BaseNF):
             )
 
         path_to_model_config = os.path.join(dir_path, "model_config.json")
-        model_config = MAFConfig.from_json_file(path_to_model_config)
+        model_config = IAFConfig.from_json_file(path_to_model_config)
 
         return model_config

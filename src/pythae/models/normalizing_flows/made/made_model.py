@@ -118,15 +118,14 @@ class MADE(BaseNF):
         )
 
     def inverse(self, y, **kwarg):
-        x = torch.zeros_like(y)
+        x = torch.zeros_like(y.reshape(y.shape[0], -1))
 
         log_abs_det_jac = torch.zeros(y.shape[0]).to(y.device)
-        y = y.flip(dims=(1,))
         for i in range(self.input_dim):
             net_output = self.net(x.clone())
             mu = net_output[:, :self.input_dim]
             alpha = net_output[:, self.input_dim:]
-            x[:, i] = y[:, i] * (alpha[:, i]).exp() + mu[:, i]
+            x[:, i] = y.reshape(y.shape[0], -1)[:, i] * (alpha[:, i]).exp() + mu[:, i]
 
             log_abs_det_jac += alpha[:, i]
         
