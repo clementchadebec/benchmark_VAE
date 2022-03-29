@@ -1,9 +1,9 @@
 import os
 from typing import Optional
 
+import numpy as np
 import torch
 import torch.nn.functional as F
-import numpy as np
 
 from ...data.datasets import BaseDataset
 from ..base import BaseAE
@@ -147,7 +147,7 @@ class VAE(BaseAE):
 
         for i in range(len(data)):
             x = data[i].unsqueeze(0)
-            
+
             log_p_x = []
 
             for j in range(n_full_batch):
@@ -163,7 +163,7 @@ class VAE(BaseAE):
                 log_q_z_given_x = -0.5 * (
                     log_var + (z - mu) ** 2 / torch.exp(log_var)
                 ).sum(dim=-1)
-                log_p_z = -0.5 * (z**2).sum(dim=-1)
+                log_p_z = -0.5 * (z ** 2).sum(dim=-1)
 
                 recon_x = self.decoder(z)["reconstruction"]
 

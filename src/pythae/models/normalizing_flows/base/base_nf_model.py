@@ -1,11 +1,13 @@
+import os
+from copy import deepcopy
+
 import torch
 import torch.nn as nn
-from copy import deepcopy
-import os
 
+from ....data.datasets import BaseDataset
 from ...base.base_utils import ModelOutput
 from .base_nf_config import BaseNFConfig
-from ....data.datasets import BaseDataset
+
 
 class BaseNF(nn.Module):
     """Base Class of Normalizing flows
@@ -16,7 +18,7 @@ class BaseNF(nn.Module):
     """
 
     def __init__(self, model_config: BaseNFConfig):
-        
+
         nn.Module.__init__(self)
         self.model_config = model_config
 
@@ -54,7 +56,7 @@ class BaseNF(nn.Module):
         By default, it does nothing.
         """
         pass
-        
+
     def save(self, dir_path):
         """Method to save the model at a specific location. It saves, the model weights as a
         ``models.pt`` file along with the model config as a ``model_config.json`` file. 
@@ -128,6 +130,7 @@ class BaseNF(nn.Module):
 
         return model
 
+
 class NFModel(nn.Module):
     """Class wrapping the normalizing flows so it can articulate with 
         :class:`~pythae.trainers.BaseTrainer`
@@ -147,7 +150,7 @@ class NFModel(nn.Module):
         return self.flow.model_name
 
     def forward(self, x: BaseDataset, **kwargs):
-        x = x['data']
+        x = x["data"]
 
         flow_output = self.flow(x, **kwargs)
 
@@ -156,12 +159,10 @@ class NFModel(nn.Module):
 
         log_prob_prior = self.prior.log_prob(y).reshape(y.shape[0])
 
-        output = ModelOutput(
-            loss=-(log_prob_prior + log_abs_det_jac).sum()
-        )
+        output = ModelOutput(loss=-(log_prob_prior + log_abs_det_jac).sum())
 
         return output
-    
+
     def update(self):
         self.flow.update()
 

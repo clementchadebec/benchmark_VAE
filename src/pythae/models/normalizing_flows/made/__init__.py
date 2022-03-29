@@ -11,7 +11,4 @@ All the codes are inspired from
 from .made_config import MADEConfig
 from .made_model import MADE
 
-__all__ = [
-    "MADE",
-    "MADEConfig"
-]
+__all__ = ["MADE", "MADEConfig"]

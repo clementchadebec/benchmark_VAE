@@ -1,6 +1,6 @@
 from pydantic.dataclasses import dataclass
 
-from ...models import VAEConfig
+from ..vae import VAEConfig
 
 
 @dataclass

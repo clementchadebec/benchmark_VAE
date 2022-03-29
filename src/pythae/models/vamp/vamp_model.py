@@ -7,10 +7,10 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from ...data.datasets import BaseDataset
-from ...models import VAE
 from ..base.base_utils import ModelOutput
 from ..nn import BaseDecoder, BaseEncoder
 from ..nn.default_architectures import Encoder_VAE_MLP
+from ..vae import VAE
 from .vamp_config import VAMPConfig
 
 
@@ -56,10 +56,7 @@ class VAMP(VAE):
             model_config.number_components, int(np.prod(model_config.input_dim))
         )
 
-        self.pseudo_inputs = nn.Sequential(
-            linear_layer,
-            nn.Hardtanh(0.0, 1.0),
-        )
+        self.pseudo_inputs = nn.Sequential(linear_layer, nn.Hardtanh(0.0, 1.0))
 
         # init weights
         # linear_layer.weight.data.normal_(0, 0.0)
@@ -88,8 +85,9 @@ class VAMP(VAE):
         encoder_output = self.encoder(x)
 
         # we bound log_var to avoid unbounded optim
-        mu, log_var = encoder_output.embedding, torch.tanh(
-            encoder_output.log_covariance
+        mu, log_var = (
+            encoder_output.embedding,
+            torch.tanh(encoder_output.log_covariance),
         )
 
         std = torch.exp(0.5 * log_var)

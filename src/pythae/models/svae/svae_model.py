@@ -7,10 +7,10 @@ import torch.distributions as dist
 import torch.nn.functional as F
 
 from ...data.datasets import BaseDataset
-from ...models import VAE
 from ..base.base_utils import ModelOutput
 from ..nn import BaseDecoder, BaseEncoder
 from ..nn.default_architectures import Encoder_SVAE_MLP
+from ..vae import VAE
 from .svae_config import SVAEConfig
 from .svae_utils import ive
 
@@ -162,7 +162,7 @@ class SVAE(VAE):
 
         w = self._acc_rej_steps(m=loc.shape[-1], k=concentration)
 
-        z = torch.cat((w, (1 - w**2).sqrt() * v), dim=-1)
+        z = torch.cat((w, (1 - w ** 2).sqrt() * v), dim=-1)
 
         return self._householder_rotation(loc, z)
 
@@ -178,7 +178,7 @@ class SVAE(VAE):
 
         batch_size = k.shape[0]
 
-        c = torch.sqrt(4 * k**2 + (m - 1) ** 2)
+        c = torch.sqrt(4 * k ** 2 + (m - 1) ** 2)
 
         b = (-2 * k + c) / (m - 1)
         a = (m - 1 + 2 * k + c) / 4
@@ -241,7 +241,7 @@ class SVAE(VAE):
 
         for i in range(len(data)):
             x = data[i].unsqueeze(0)
-            
+
             log_p_x = []
 
             for j in range(n_full_batch):
@@ -270,9 +270,9 @@ class SVAE(VAE):
                     - concentration
                 )
 
-                log_q_z_given_x = (term1 + term2).reshape(-1) # VMF log-density
+                log_q_z_given_x = (term1 + term2).reshape(-1)  # VMF log-density
 
-                log_p_z = -torch.ones_like(log_q_z_given_x)*(
+                log_p_z = -torch.ones_like(log_q_z_given_x) * (
                     -torch.lgamma(torch.tensor([m / 2]).to(concentration.device))
                     + torch.tensor([2]).to(concentration.device).log()
                     + torch.tensor([np.pi]).to(concentration.device).log() * (m / 2)
@@ -300,7 +300,7 @@ class SVAE(VAE):
                         reduction="none",
                     ).sum(dim=-1)
 
-                #assert 0, (log_p_x_given_z.shape, log_p_z.shape, log_q_z_given_x.shape)
+                # assert 0, (log_p_x_given_z.shape, log_p_z.shape, log_q_z_given_x.shape)
 
                 log_p_x.append(
                     log_p_x_given_z + log_p_z - log_q_z_given_x

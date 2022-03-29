@@ -12,10 +12,10 @@ from torch.autograd import grad
 
 from ...customexception import BadInheritanceError
 from ...data.datasets import BaseDataset
-from ...models import VAE
 from ..base.base_utils import CPU_Unpickler, ModelOutput
 from ..nn import BaseDecoder, BaseEncoder, BaseMetric
 from ..nn.default_architectures import Metric_MLP
+from ..vae import VAE
 from .rhvae_config import RHVAEConfig
 from .rhvae_utils import create_inverse_metric, create_metric
 
@@ -174,7 +174,7 @@ class RHVAE(VAE):
                 M.unsqueeze(0)
                 * torch.exp(
                     -torch.norm(mu.unsqueeze(0) - z.unsqueeze(1), dim=-1) ** 2
-                    / (self.temperature**2)
+                    / (self.temperature ** 2)
                 )
                 .unsqueeze(-1)
                 .unsqueeze(-1)
@@ -214,7 +214,7 @@ class RHVAE(VAE):
                     M.unsqueeze(0)
                     * torch.exp(
                         -torch.norm(mu.unsqueeze(0) - z.unsqueeze(1), dim=-1) ** 2
-                        / (self.temperature**2)
+                        / (self.temperature ** 2)
                     )
                     .unsqueeze(-1)
                     .unsqueeze(-1)
@@ -324,7 +324,7 @@ class RHVAE(VAE):
                             self.centroids_tens.unsqueeze(0) - z.unsqueeze(1), dim=-1
                         )
                         ** 2
-                        / (self.temperature**2)
+                        / (self.temperature ** 2)
                     )
                     .unsqueeze(-1)
                     .unsqueeze(-1)
@@ -340,7 +340,7 @@ class RHVAE(VAE):
                         self.centroids_tens.unsqueeze(0) - z.unsqueeze(1), dim=-1
                     )
                     ** 2
-                    / (self.temperature**2)
+                    / (self.temperature ** 2)
                 )
                 .unsqueeze(-1)
                 .unsqueeze(-1)
@@ -483,7 +483,7 @@ class RHVAE(VAE):
                 G_inv = self.G_inv(z0)
                 G_log_det = -torch.logdet(G_inv)
                 L = torch.linalg.cholesky(G)
-                
+
                 G_inv_0 = G_inv
                 G_log_det_0 = G_log_det
 
@@ -526,12 +526,13 @@ class RHVAE(VAE):
                 log_q_z0_given_x = -0.5 * (
                     log_var + (z0 - mu) ** 2 / torch.exp(log_var)
                 ).sum(dim=-1)
-                log_p_z = -0.5 * (z**2).sum(dim=-1)
+                log_p_z = -0.5 * (z ** 2).sum(dim=-1)
 
-                log_p_rho0 =  normal.log_prob(gamma) - torch.logdet(
-                    L / self.beta_zero_sqrt) # rho0 ~ N(0, 1/beta_0 * G(z0))
+                log_p_rho0 = normal.log_prob(gamma) - torch.logdet(
+                    L / self.beta_zero_sqrt
+                )  # rho0 ~ N(0, 1/beta_0 * G(z0))
 
-                log_p_rho =  (
+                log_p_rho = (
                     (
                         -0.5
                         * (
@@ -543,8 +544,10 @@ class RHVAE(VAE):
                         .squeeze()
                         - 0.5 * G_log_det
                     )
-                    - torch.log(torch.tensor([2 * np.pi]).to(z.device)) * self.latent_dim / 2
-                ) # rho0 ~ N(0, G(z))
+                    - torch.log(torch.tensor([2 * np.pi]).to(z.device))
+                    * self.latent_dim
+                    / 2
+                )  # rho0 ~ N(0, G(z))
 
                 if self.model_config.reconstruction_loss == "mse":
 
@@ -567,15 +570,18 @@ class RHVAE(VAE):
                     ).sum(dim=-1)
 
                 log_p_x.append(
-                    log_p_x_given_z + log_p_z + log_p_rho - log_p_rho0 - log_q_z0_given_x
-                ) # N*log(2*pi) simplifies in prior and posterior
+                    log_p_x_given_z
+                    + log_p_z
+                    + log_p_rho
+                    - log_p_rho0
+                    - log_q_z0_given_x
+                )  # N*log(2*pi) simplifies in prior and posterior
 
             log_p_x = torch.cat(log_p_x)
 
             log_p.append((torch.logsumexp(log_p_x, 0) - np.log(len(log_p_x))).item())
-            
-        return np.mean(log_p)   
 
+        return np.mean(log_p)
 
     def save(self, dir_path: str):
         """Method to save the model at a specific location

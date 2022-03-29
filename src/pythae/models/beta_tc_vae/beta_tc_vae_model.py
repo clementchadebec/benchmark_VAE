@@ -6,10 +6,10 @@ import torch
 import torch.nn.functional as F
 
 from ...data.datasets import BaseDataset
-from ...models import VAE
 from ..base.base_utils import ModelOutput
 from ..nn import BaseDecoder, BaseEncoder
 from ..nn.default_architectures import Encoder_VAE_MLP
+from ..vae import VAE
 from .beta_tc_vae_config import BetaTCVAEConfig
 
 

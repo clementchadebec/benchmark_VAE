@@ -120,4 +120,3 @@ class RAE_GP(AE):
         model_config = RAE_GP_Config.from_json_file(path_to_model_config)
 
         return model_config
-

@@ -8,9 +8,9 @@ import torch.nn.functional as F
 from torch.autograd import grad
 
 from ...data.datasets import BaseDataset
-from ...models import VAE
 from ..base.base_utils import ModelOutput
 from ..nn import BaseDecoder, BaseEncoder
+from ..vae import VAE
 from .hvae_config import HVAEConfig
 
 
@@ -280,10 +280,11 @@ class HVAE(VAE):
                 log_q_z0_given_x = -0.5 * (
                     log_var + (z0 - mu) ** 2 / torch.exp(log_var)
                 ).sum(dim=-1)
-                log_p_z = -0.5 * (z**2).sum(dim=-1)
+                log_p_z = -0.5 * (z ** 2).sum(dim=-1)
 
                 log_p_rho0 = normal.log_prob(gamma) - 0.5 * self.latent_dim * torch.log(
-                    1 / self.beta_zero_sqrt) # rho0 ~ N(0, 1/beta_0*I)
+                    1 / self.beta_zero_sqrt
+                )  # rho0 ~ N(0, 1/beta_0*I)
                 log_p_rho = normal.log_prob(rho)
 
                 if self.model_config.reconstruction_loss == "mse":
@@ -307,14 +308,18 @@ class HVAE(VAE):
                     ).sum(dim=-1)
 
                 log_p_x.append(
-                    log_p_x_given_z + log_p_z + log_p_rho - log_p_rho0 - log_q_z0_given_x
-                ) # N*log(2*pi) simplifies in prior and posterior
+                    log_p_x_given_z
+                    + log_p_z
+                    + log_p_rho
+                    - log_p_rho0
+                    - log_q_z0_given_x
+                )  # N*log(2*pi) simplifies in prior and posterior
 
             log_p_x = torch.cat(log_p_x)
 
             log_p.append((torch.logsumexp(log_p_x, 0) - np.log(len(log_p_x))).item())
-            
-        return np.mean(log_p)   
+
+        return np.mean(log_p)
 
     @classmethod
     def _load_model_config_from_folder(cls, dir_path):

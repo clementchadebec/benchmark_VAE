@@ -1,15 +1,16 @@
+import os
+from copy import deepcopy
+
+import numpy as np
 import torch
 import torch.nn as nn
-import numpy as np
-import os
 
-from copy import deepcopy
 from pythae.models.base.base_utils import ModelOutput
 
 from ....data.datasets import BaseDataset
+from ..base import BaseNF
 from ..layers import MaskedLinear
 from .made_config import MADEConfig
-from ..base import BaseNF
 
 
 class MADE(BaseNF):
@@ -20,12 +21,10 @@ class MADE(BaseNF):
             model
     """
 
-    def __init__(
-        self,
-        model_config: MADEConfig):
+    def __init__(self, model_config: MADEConfig):
 
         BaseNF.__init__(self, model_config=model_config)
-        
+
         self.net = []
         self.m = {}
         self.model_config = model_config
@@ -36,62 +35,65 @@ class MADE(BaseNF):
 
         if model_config.input_dim is None:
             raise AttributeError(
-                    "No input dimension provided !"
-                    "'input_dim' parameter of MADEConfig instance must be set to 'data_shape' "
-                    "where the shape of the data is (C, H, W ..)]. Unable to build network"
-                    "automatically"
-                )
+                "No input dimension provided !"
+                "'input_dim' parameter of MADEConfig instance must be set to 'data_shape' "
+                "where the shape of the data is (C, H, W ..)]. Unable to build network"
+                "automatically"
+            )
 
         if model_config.output_dim is None:
             raise AttributeError(
-                    "No input dimension provided !"
-                    "'output_dim' parameter of MADEConfig instance must be set to 'data_shape' "
-                    "where the shape of the data is (C, H, W ..)]. Unable to build network"
-                    "automatically"
-                )
+                "No input dimension provided !"
+                "'output_dim' parameter of MADEConfig instance must be set to 'data_shape' "
+                "where the shape of the data is (C, H, W ..)]. Unable to build network"
+                "automatically"
+            )
 
-        hidden_sizes = [
-            self.input_dim
-            ] + model_config.hidden_sizes + [self.output_dim]
-        
+        hidden_sizes = [self.input_dim] + model_config.hidden_sizes + [self.output_dim]
+
         masks = self._make_mask(ordering=self.model_config.degrees_ordering)
 
         for inp, out, mask in zip(hidden_sizes[:-1], hidden_sizes[1:-1], masks[:-1]):
 
-            self.net.extend([
-                MaskedLinear(inp, out, mask),
-                nn.ReLU()
-            ])
+            self.net.extend([MaskedLinear(inp, out, mask), nn.ReLU()])
 
         # outputs mean and logvar
-        self.net.extend([
-            MaskedLinear(self.hidden_sizes[-1], 2*self.output_dim, masks[-1].repeat(2, 1))
-        ])
+        self.net.extend(
+            [
+                MaskedLinear(
+                    self.hidden_sizes[-1], 2 * self.output_dim, masks[-1].repeat(2, 1)
+                )
+            ]
+        )
 
         self.net = nn.Sequential(*self.net)
-
 
     def _make_mask(self, ordering="sequential"):
 
         # Get degrees for mask creation
 
-        if ordering ==  "sequential":
+        if ordering == "sequential":
             self.m[-1] = torch.arange(self.input_dim)
             for i in range(len(self.hidden_sizes)):
                 self.m[i] = torch.arange(self.hidden_sizes[i]) % (self.input_dim - 1)
-                        
+
         else:
             self.m[-1] = torch.randperm(self.input_dim)
             for i in range(len(self.hidden_sizes)):
-                self.m[i] = (
-                    torch.randint(self.m[-1].min(), self.input_dim - 1 , (self.hidden_sizes[i],)))
-                
+                self.m[i] = torch.randint(
+                    self.m[-1].min(), self.input_dim - 1, (self.hidden_sizes[i],)
+                )
+
         masks = []
         for i in range(len(self.hidden_sizes)):
-            masks += [(self.m[i].unsqueeze(-1) >= self.m[i-1].unsqueeze(0)).float()]
-        
+            masks += [(self.m[i].unsqueeze(-1) >= self.m[i - 1].unsqueeze(0)).float()]
+
         masks.append(
-            (self.m[len(self.hidden_sizes) - 1].unsqueeze(0) < self.m[-1].unsqueeze(-1)).float())
+            (
+                self.m[len(self.hidden_sizes) - 1].unsqueeze(0)
+                < self.m[-1].unsqueeze(-1)
+            ).float()
+        )
 
         return masks
 
@@ -106,16 +108,13 @@ class MADE(BaseNF):
         """
         net_output = self.net(x.reshape(x.shape[0], -1))
 
-        mu = net_output[:, :self.input_dim]
-        alpha = net_output[:, self.input_dim:]
+        mu = net_output[:, : self.input_dim]
+        alpha = net_output[:, self.input_dim :]
 
-        u = (x.reshape(x.shape[0], - 1) - mu) * (- alpha).exp()
-        log_abs_det_jac = -alpha.sum(dim=-1) #- alpha
+        u = (x.reshape(x.shape[0], -1) - mu) * (-alpha).exp()
+        log_abs_det_jac = -alpha.sum(dim=-1)  # - alpha
 
-        return ModelOutput(
-            out=u,
-            log_abs_det_jac=log_abs_det_jac
-        )
+        return ModelOutput(out=u, log_abs_det_jac=log_abs_det_jac)
 
     def inverse(self, y, **kwarg):
         x = torch.zeros_like(y.reshape(y.shape[0], -1))
@@ -123,17 +122,13 @@ class MADE(BaseNF):
         log_abs_det_jac = torch.zeros(y.shape[0]).to(y.device)
         for i in range(self.input_dim):
             net_output = self.net(x.clone())
-            mu = net_output[:, :self.input_dim]
-            alpha = net_output[:, self.input_dim:]
+            mu = net_output[:, : self.input_dim]
+            alpha = net_output[:, self.input_dim :]
             x[:, i] = y.reshape(y.shape[0], -1)[:, i] * (alpha[:, i]).exp() + mu[:, i]
 
             log_abs_det_jac += alpha[:, i]
-        
 
-        return ModelOutput(
-            out=x,
-            log_abs_det_jac=log_abs_det_jac
-        )
+        return ModelOutput(out=x, log_abs_det_jac=log_abs_det_jac)
 
     @classmethod
     def _load_model_config_from_folder(cls, dir_path):

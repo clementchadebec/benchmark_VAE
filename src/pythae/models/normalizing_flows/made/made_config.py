@@ -1,12 +1,12 @@
-from typing import Tuple, Union, List
+from dataclasses import field
+from typing import List, Tuple, Union
+
+from pydantic import validator
+from pydantic.dataclasses import dataclass
 from typing_extensions import Literal
 
-from dataclasses import field
-
-from pydantic.dataclasses import dataclass
-from pydantic import validator
-
 from pythae.config import BaseConfig
+
 
 @dataclass
 class MADEConfig(BaseConfig):
@@ -20,8 +20,8 @@ class MADEConfig(BaseConfig):
         degrees_ordering (str): The ordering to use for the mask creation. Can be either 
             `sequential` or `random`. Default: `sequential`.
     """
+
     input_dim: Union[Tuple[int, ...], None] = None
     output_dim: Union[Tuple[int, ...], None] = None
     hidden_sizes: List[int] = field(default_factory=lambda: [128])
     degrees_ordering: Literal["sequential", "random"] = "sequential"
-

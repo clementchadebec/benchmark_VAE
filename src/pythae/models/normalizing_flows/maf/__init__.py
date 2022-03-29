@@ -11,7 +11,4 @@ All the codes are inspired from
 from .maf_config import MAFConfig
 from .maf_model import MAF
 
-__all__ = [
-    "MAF",
-    "MAFConfig"
-]
+__all__ = ["MAF", "MAFConfig"]

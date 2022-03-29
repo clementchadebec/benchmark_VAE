@@ -1,16 +1,18 @@
+import os
+from copy import deepcopy
+
+import numpy as np
 import torch
 import torch.nn as nn
-import numpy as np
-import os
 
-from copy import deepcopy
 from pythae.models.base.base_utils import ModelOutput
 
 from ....data.datasets import BaseDataset
-from ..layers import BatchNorm
 from ..base import BaseNF
+from ..layers import BatchNorm
 from ..made import MADE, MADEConfig
 from .maf_config import MAFConfig
+
 
 class MAF(BaseNF):
     """Masked Autoregressive Flow
@@ -20,12 +22,10 @@ class MAF(BaseNF):
             model
     """
 
-    def __init__(
-        self,
-        model_config: MAFConfig):
+    def __init__(self, model_config: MAFConfig):
 
         BaseNF.__init__(self, model_config=model_config)
-        
+
         self.net = []
         self.m = {}
         self.model_config = model_config
@@ -36,20 +36,20 @@ class MAF(BaseNF):
 
         if model_config.input_dim is None:
             raise AttributeError(
-                    "No input dimension provided !"
-                    "'input_dim' parameter of MADEConfig instance must be set to 'data_shape' "
-                    "where the shape of the data is (C, H, W ..)]. Unable to build network"
-                    "automatically"
-                )
+                "No input dimension provided !"
+                "'input_dim' parameter of MADEConfig instance must be set to 'data_shape' "
+                "where the shape of the data is (C, H, W ..)]. Unable to build network"
+                "automatically"
+            )
 
         self.net = []
 
         made_config = MADEConfig(
-                input_dim=(self.input_dim, ),
-                output_dim=(self.input_dim, ),
-                hidden_sizes=[self.hidden_size]*self.model_config.n_hidden_in_made,
-                degrees_ordering="sequential"
-            )
+            input_dim=(self.input_dim,),
+            output_dim=(self.input_dim,),
+            hidden_sizes=[self.hidden_size] * self.model_config.n_hidden_in_made,
+            degrees_ordering="sequential",
+        )
 
         for i in range(model_config.n_made_blocks):
             self.net.extend([MADE(made_config)])
@@ -72,14 +72,11 @@ class MAF(BaseNF):
 
         for layer in self.net:
             layer_out = layer(x)
-            #if layer.__class__.__name__ == 'MADE':
+            # if layer.__class__.__name__ == 'MADE':
             x = layer_out.out.flip(dims=(1,))
             sum_log_abs_det_jac += layer_out.log_abs_det_jac
-            
-        return ModelOutput(
-            out=x,
-            log_abs_det_jac=sum_log_abs_det_jac
-        )
+
+        return ModelOutput(out=x, log_abs_det_jac=sum_log_abs_det_jac)
 
     def inverse(self, y: torch.Tensor, **kwargs) -> ModelOutput:
         """The prior is transformed toward the input data
@@ -94,16 +91,13 @@ class MAF(BaseNF):
         sum_log_abs_det_jac = torch.zeros(y.shape[0]).to(y.device)
 
         for layer in self.net[::-1]:
-            #if layer.__class__.__name__ == 'MADE':
+            # if layer.__class__.__name__ == 'MADE':
             y = y.flip(dims=(1,))
             layer_out = layer.inverse(y)
             y = layer_out.out
             sum_log_abs_det_jac += layer_out.log_abs_det_jac
 
-        return ModelOutput(
-            out=y,
-            log_abs_det_jac=sum_log_abs_det_jac
-        )
+        return ModelOutput(out=y, log_abs_det_jac=sum_log_abs_det_jac)
 
     @classmethod
     def _load_model_config_from_folder(cls, dir_path):

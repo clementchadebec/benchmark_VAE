@@ -11,7 +11,4 @@ All the codes are inspired from
 from .iaf_config import IAFConfig
 from .iaf_model import IAF
 
-__all__ = [
-    "IAF",
-    "IAFConfig"
-]
+__all__ = ["IAF", "IAFConfig"]

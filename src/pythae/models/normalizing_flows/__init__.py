@@ -4,9 +4,9 @@ sampling.
 """
 
 from .base import BaseNF, BaseNFConfig, NFModel
+from .iaf import IAF, IAFConfig
 from .made import MADE, MADEConfig
 from .maf import MAF, MAFConfig
-from .iaf import IAF, IAFConfig
 
 __all__ = [
     "BaseNF",
@@ -17,5 +17,5 @@ __all__ = [
     "MAF",
     "MAFConfig",
     "IAF",
-    "IAFConfig"
+    "IAFConfig",
 ]
