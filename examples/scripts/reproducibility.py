@@ -60,6 +60,7 @@ ap.add_argument(
         "disentangled_beta_vae",
         "factor_vae",
         "beta_tc_vae",
+        "vae_iaf"
     ],
     required=True,
 )
@@ -433,6 +434,23 @@ def main(args):
             model_config=model_config,
             encoder=Encoder_VAE(model_config),
             decoder=Decoder_AE(model_config),
+        )
+
+    elif args.model_name == "vae_iaf":
+        from pythae.models import VAE_IAF, VAE_IAF_Config
+
+        if args.model_config is not None:
+            model_config = VAE_IAF_Config.from_json_file(args.model_config)
+
+        else:
+            model_config = VAE_IAF_Config()
+
+        model_config.input_dim = data_input_dim
+
+        model = VAE_IAF(
+            model_config=model_config,
+            encoder=None,
+            decoder=None,
         )
 
     logger.info(f"Successfully build {args.model_name.upper()} model !\n")

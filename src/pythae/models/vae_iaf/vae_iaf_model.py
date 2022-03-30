@@ -80,7 +80,7 @@ class VAE_IAF(VAE):
         std = torch.exp(0.5 * log_var)
         z, eps = self._sample_gauss(mu, std)
 
-        z0 = z.clone().detach()
+        z0 = z
 
         # Pass it through the Normalizing flows
         flow_output = self.iaf_flow(z)
@@ -137,7 +137,7 @@ class VAE_IAF(VAE):
             dim=1
         )
 
-        KLD = (log_prob_z0 - log_prob_zk - log_abs_det_jac).sum(dim=-1)
+        KLD = log_prob_z0 - log_prob_zk - log_abs_det_jac
 
         return (recon_loss + KLD).mean(dim=0), recon_loss.mean(dim=0), KLD.mean(dim=0)
 
