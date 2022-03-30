@@ -113,7 +113,7 @@ class MAF(BaseNF):
 
                 y = x
             else:
-                layer_out = layer(y)
+                layer_out = layer.inverse(y)
                 y = layer_out.out
                 sum_log_abs_det_jac += layer_out.log_abs_det_jac
 

@@ -54,7 +54,7 @@ class VAE_IAF(VAE):
             n_made_blocks=model_config.n_made_blocks,
             n_hidden_in_made=model_config.n_hidden_in_made,
             hidden_size=model_config.hidden_size,
-            include_batch_norm=model_config.include_batch_norm
+            include_batch_norm=False
         )
 
         self.iaf_flow = IAF(iaf_config)
@@ -83,7 +83,7 @@ class VAE_IAF(VAE):
         z0 = z
 
         # Pass it through the Normalizing flows
-        flow_output = self.iaf_flow(z)
+        flow_output = self.iaf_flow.inverse(z) # sampling
 
         z = flow_output.out
         log_abs_det_jac = flow_output.log_abs_det_jac

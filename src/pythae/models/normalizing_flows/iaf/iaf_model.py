@@ -59,7 +59,7 @@ class IAF(BaseNF):
         self.net = nn.ModuleList(self.net)
 
     def forward(self, x: torch.Tensor, **kwargs) -> ModelOutput:
-        """The input data is transformed toward the prior
+        """The input data is transformed toward the prior (f^{-1})
 
         Args:
             inputs (torch.Tensor): An input tensor
@@ -93,7 +93,7 @@ class IAF(BaseNF):
         return ModelOutput(out=x, log_abs_det_jac=sum_log_abs_det_jac)
 
     def inverse(self, y: torch.Tensor, **kwargs) -> ModelOutput:
-        """The prior is transformed toward the input data
+        """The prior is transformed toward the input data (f)
 
         Args:
             inputs (torch.Tensor): An input tensor
@@ -106,14 +106,14 @@ class IAF(BaseNF):
 
         for layer in self.net[::-1]:
             y = y.flip(dims=(1,))
-            layer_out = layer(y.reshape(y.shape[0], -1))
             if layer.__class__.__name__ == 'MADE':
+                layer_out = layer(y.reshape(y.shape[0], -1))
                 mu, log_var = layer_out.mu, layer_out.log_var
-
                 y = y.reshape(y.shape[0], -1) * (log_var).exp() + mu
-                sum_log_abs_det_jac += log_var.sum(dim=-1)  # - alpha
+                sum_log_abs_det_jac += log_var.sum(dim=-1)
 
             else:
+                layer_out = layer.inverse(y.reshape(y.shape[0], -1))
                 y = layer_out.out
                 sum_log_abs_det_jac += layer_out.log_abs_det_jac
 
