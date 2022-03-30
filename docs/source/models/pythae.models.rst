@@ -1,41 +1,23 @@
 .. _pythae_models:
 
-
 **********************************
 Models
 **********************************
+
+This is the heart of Pythae. In here you will find implementations of **Autoencoder**-based models 
+along with some **Normalizing Flows** used from improving Variational Inference in the VAE os 
+sampling and **Neural Nets** to perform benchmark comparison.
 
 .. toctree::
     :hidden:
     :maxdepth: 1
 
-    pythae.models.baseAE
-    pythae.models.ae
-    pythae.models.vae
-    pythae.models.betavae
-    pythae.models.disentangled_betavae
-    pythae.models.factorvae
-    pythae.models.betatcvae
-    pythae.models.iwae
-    pythae.models.msssimvae
-    pythae.models.wae
-    pythae.models.infovae
-    pythae.models.vamp
-    pythae.models.svae
-    pythae.models.aae
-    pythae.models.vaegan
-    pythae.models.vqvae
-    pythae.models.hvae
-    pythae.models.rae_gp
-    pythae.models.rae_l2
-    pythae.models.rhvae
+    autoencoders/models
+    normalizing_flows/normalizing_flows
+    nn/nn
     :nosignatures:
 
-
-.. automodule::
-    pythae.models
-
-Available Models
+Available Autoencoders
 -----------------
 
 .. autosummary::
@@ -59,4 +41,14 @@ Available Models
     ~pythae.models.RAE_GP
     ~pythae.models.RAE_L2
     ~pythae.models.RHVAE
+    :nosignatures:
+
+Available Normalizing Flows
+-----------------
+
+.. autosummary::
+    ~pythae.models.normalizing_flows.BaseNF
+    ~pythae.models.normalizing_flows.MADE
+    ~pythae.models.normalizing_flows.MAF
+    ~pythae.models.normalizing_flows.IAF
     :nosignatures:

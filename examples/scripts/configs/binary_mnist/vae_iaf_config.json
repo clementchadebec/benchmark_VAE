@@ -1,0 +1,9 @@
+{
+    "name": "VAE_IAF_Config",
+    "latent_dim": 16,
+    "reconstruction_loss": "bce",
+    "n_made_blocks": 2,
+    "n_hidden_in_made":2,
+    "hidden_size": 32,
+    "include_batch_norm":false
+}

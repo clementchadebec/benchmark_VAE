@@ -1,4 +1,5 @@
 {
+    "name": "HVAEConfig",
     "latent_dim": 16,
     "reconstruction_loss": "mse",
     "n_lf": 3,

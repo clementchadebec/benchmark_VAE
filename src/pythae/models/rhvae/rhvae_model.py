@@ -12,10 +12,10 @@ from torch.autograd import grad
 
 from ...customexception import BadInheritanceError
 from ...data.datasets import BaseDataset
-from ...models import VAE
 from ..base.base_utils import CPU_Unpickler, ModelOutput
 from ..nn import BaseDecoder, BaseEncoder, BaseMetric
 from ..nn.default_architectures import Metric_MLP
+from ..vae import VAE
 from .rhvae_config import RHVAEConfig
 from .rhvae_utils import create_inverse_metric, create_metric
 
@@ -174,7 +174,7 @@ class RHVAE(VAE):
                 M.unsqueeze(0)
                 * torch.exp(
                     -torch.norm(mu.unsqueeze(0) - z.unsqueeze(1), dim=-1) ** 2
-                    / (self.temperature**2)
+                    / (self.temperature ** 2)
                 )
                 .unsqueeze(-1)
                 .unsqueeze(-1)
@@ -214,7 +214,7 @@ class RHVAE(VAE):
                     M.unsqueeze(0)
                     * torch.exp(
                         -torch.norm(mu.unsqueeze(0) - z.unsqueeze(1), dim=-1) ** 2
-                        / (self.temperature**2)
+                        / (self.temperature ** 2)
                     )
                     .unsqueeze(-1)
                     .unsqueeze(-1)
@@ -254,6 +254,334 @@ class RHVAE(VAE):
         )
 
         return output
+
+    def _leap_step_1(self, recon_x, x, z, rho, G_inv, G_log_det, steps=3):
+        """
+        Resolves first equation of generalized leapfrog integrator
+        using fixed point iterations
+        """
+
+        def f_(rho_):
+            H = self._hamiltonian(recon_x, x, z, rho_, G_inv, G_log_det)
+            gz = grad(H, z, retain_graph=True)[0]
+            return rho - 0.5 * self.eps_lf * gz
+
+        rho_ = rho.clone()
+        for _ in range(steps):
+            rho_ = f_(rho_)
+        return rho_
+
+    def _leap_step_2(self, recon_x, x, z, rho, G_inv, G_log_det, steps=3):
+        """
+        Resolves second equation of generalized leapfrog integrator
+        using fixed point iterations
+        """
+        H0 = self._hamiltonian(recon_x, x, z, rho, G_inv, G_log_det)
+        grho_0 = grad(H0, rho)[0]
+
+        def f_(z_):
+            H = self._hamiltonian(recon_x, x, z_, rho, G_inv, G_log_det)
+            grho = grad(H, rho, retain_graph=True)[0]
+            return z + 0.5 * self.eps_lf * (grho_0 + grho)
+
+        z_ = z.clone()
+        for _ in range(steps):
+            z_ = f_(z_)
+        return z_
+
+    def _leap_step_3(self, recon_x, x, z, rho, G_inv, G_log_det, steps=3):
+        """
+        Resolves third equation of generalized leapfrog integrator
+        """
+        H = self._hamiltonian(recon_x, x, z, rho, G_inv, G_log_det)
+        gz = grad(H, z, create_graph=True)[0]
+        return rho - 0.5 * self.eps_lf * gz
+
+    def _hamiltonian(self, recon_x, x, z, rho, G_inv=None, G_log_det=None):
+        """
+        Computes the Hamiltonian function.
+        used for RHVAE
+        """
+        norm = (
+            torch.transpose(rho.unsqueeze(-1), 1, 2) @ G_inv @ rho.unsqueeze(-1)
+        ).sum()
+
+        return -self._log_p_xz(recon_x, x, z).sum() + 0.5 * norm + 0.5 * G_log_det.sum()
+
+    def _update_metric(self):
+        # convert to 1 big tensor
+
+        self.M_tens = torch.cat(list(self.M))
+        self.centroids_tens = torch.cat(list(self.centroids))
+
+        # define new metric
+        def G(z):
+            return torch.inverse(
+                (
+                    self.M_tens.unsqueeze(0)
+                    * torch.exp(
+                        -torch.norm(
+                            self.centroids_tens.unsqueeze(0) - z.unsqueeze(1), dim=-1
+                        )
+                        ** 2
+                        / (self.temperature ** 2)
+                    )
+                    .unsqueeze(-1)
+                    .unsqueeze(-1)
+                ).sum(dim=1)
+                + self.lbd * torch.eye(self.latent_dim).to(z.device)
+            )
+
+        def G_inv(z):
+            return (
+                self.M_tens.unsqueeze(0)
+                * torch.exp(
+                    -torch.norm(
+                        self.centroids_tens.unsqueeze(0) - z.unsqueeze(1), dim=-1
+                    )
+                    ** 2
+                    / (self.temperature ** 2)
+                )
+                .unsqueeze(-1)
+                .unsqueeze(-1)
+            ).sum(dim=1) + self.lbd * torch.eye(self.latent_dim).to(z.device)
+
+        self.G = G
+        self.G_inv = G_inv
+        self.M = deque(maxlen=100)
+        self.centroids = deque(maxlen=100)
+
+    def loss_function(
+        self, recon_x, x, z0, zK, rhoK, eps0, gamma, mu, log_var, G_inv, G_log_det
+    ):
+
+        logpxz = self._log_p_xz(recon_x, x, zK)  # log p(x, z_K)
+        logrhoK = (
+            -0.5
+            * (torch.transpose(rhoK.unsqueeze(-1), 1, 2) @ G_inv @ rhoK.unsqueeze(-1))
+            .squeeze()
+            .squeeze()
+            - 0.5 * G_log_det
+            # - torch.log(torch.tensor([2 * np.pi]).to(x.device)) * self.latent_dim / 2
+        )  # log p(\rho_K)
+
+        logp = logpxz + logrhoK
+
+        # define a N(0, I) distribution
+        normal = torch.distributions.MultivariateNormal(
+            loc=torch.zeros(self.latent_dim).to(x.device),
+            covariance_matrix=torch.eye(self.latent_dim).to(x.device),
+        )
+
+        logq = normal.log_prob(eps0) - 0.5 * log_var.sum(dim=1)  # log(q(z_0|x))
+
+        return -(logp - logq).mean(dim=0)
+
+    def _sample_gauss(self, mu, std):
+        # Reparametrization trick
+        # Sample N(0, I)
+        eps = torch.randn_like(std)
+        return mu + eps * std, eps
+
+    def _tempering(self, k, K):
+        """Perform tempering step"""
+
+        beta_k = (
+            (1 - 1 / self.beta_zero_sqrt) * (k / K) ** 2
+        ) + 1 / self.beta_zero_sqrt
+
+        return 1 / beta_k
+
+    def _log_p_x_given_z(self, recon_x, x):
+
+        if self.model_config.reconstruction_loss == "mse":
+            # sigma is taken as I_D
+            recon_loss = -0.5 * F.mse_loss(
+                recon_x.reshape(x.shape[0], -1),
+                x.reshape(x.shape[0], -1),
+                reduction="none",
+            ).sum(dim=-1)
+            -torch.log(torch.tensor([2 * np.pi]).to(x.device)) * np.prod(
+                self.input_dim
+            ) / 2
+
+        elif self.model_config.reconstruction_loss == "bce":
+
+            recon_loss = -F.binary_cross_entropy(
+                recon_x.reshape(x.shape[0], -1),
+                x.reshape(x.shape[0], -1),
+                reduction="none",
+            ).sum(dim=-1)
+
+        return recon_loss
+
+    def _log_z(self, z):
+        """
+        Return Normal density function as prior on z
+        """
+
+        # define a N(0, I) distribution
+        normal = torch.distributions.MultivariateNormal(
+            loc=torch.zeros(self.latent_dim).to(z.device),
+            covariance_matrix=torch.eye(self.latent_dim).to(z.device),
+        )
+        return normal.log_prob(z)
+
+    def _log_p_xz(self, recon_x, x, z):
+        """
+        Estimate log(p(x, z)) using Bayes rule
+        """
+        logpxz = self._log_p_x_given_z(recon_x, x)
+        logpz = self._log_z(z)
+        return logpxz + logpz
+
+    def get_nll(self, data, n_samples=1, batch_size=100):
+        """
+        Function computed the estimate negative log-likelihood of the model. It uses importance
+        sampling method with the approximate posterior disctribution. This may take a while.
+
+        Args:
+            data (torch.Tensor): The input data from which the log-likelihood should be estimated.
+                Data must be of shape [Batch x n_channels x ...]
+            n_samples (int): The number of importance samples to use for estimation
+            batch_size (int): The batchsize to use to avoid memory issues
+        """
+        normal = torch.distributions.MultivariateNormal(
+            loc=torch.zeros(self.model_config.latent_dim).to(data.device),
+            covariance_matrix=torch.eye(self.model_config.latent_dim).to(data.device),
+        )
+
+        if n_samples <= batch_size:
+            n_full_batch = 1
+        else:
+            n_full_batch = n_samples // batch_size
+            n_samples = batch_size
+
+        log_p = []
+
+        for i in range(len(data)):
+            x = data[i].unsqueeze(0)
+
+            log_p_x = []
+
+            for j in range(n_full_batch):
+
+                x_rep = torch.cat(batch_size * [x])
+
+                encoder_output = self.encoder(x_rep)
+                mu, log_var = encoder_output.embedding, encoder_output.log_covariance
+
+                std = torch.exp(0.5 * log_var)
+                z0, eps = self._sample_gauss(mu, std)
+                gamma = torch.randn_like(z0, device=x.device)
+                rho = gamma / self.beta_zero_sqrt
+
+                z = z0
+                beta_sqrt_old = self.beta_zero_sqrt
+
+                G = self.G(z0)
+                G_inv = self.G_inv(z0)
+                G_log_det = -torch.logdet(G_inv)
+                L = torch.linalg.cholesky(G)
+
+                G_inv_0 = G_inv
+                G_log_det_0 = G_log_det
+
+                # initialization
+                gamma = torch.randn_like(z0, device=z.device)
+                rho = gamma / self.beta_zero_sqrt
+                beta_sqrt_old = self.beta_zero_sqrt
+
+                rho = (L @ rho.unsqueeze(-1)).squeeze(
+                    -1
+                )  # sample from the multivariate N(0, G)
+
+                rho0 = rho
+
+                recon_x = self.decoder(z)["reconstruction"]
+
+                for k in range(self.n_lf):
+
+                    # perform leapfrog steps
+
+                    # step 1
+                    rho_ = self._leap_step_1(recon_x, x_rep, z, rho, G_inv, G_log_det)
+
+                    # step 2
+                    z = self._leap_step_2(recon_x, x_rep, z, rho_, G_inv, G_log_det)
+
+                    recon_x = self.decoder(z)["reconstruction"]
+
+                    G_inv = self.G_inv(z)
+                    G_log_det = -torch.logdet(G_inv)
+
+                    # step 3
+                    rho__ = self._leap_step_3(recon_x, x_rep, z, rho_, G_inv, G_log_det)
+
+                    # tempering steps
+                    beta_sqrt = self._tempering(k + 1, self.n_lf)
+                    rho = (beta_sqrt_old / beta_sqrt) * rho__
+                    beta_sqrt_old = beta_sqrt
+
+                log_q_z0_given_x = -0.5 * (
+                    log_var + (z0 - mu) ** 2 / torch.exp(log_var)
+                ).sum(dim=-1)
+                log_p_z = -0.5 * (z ** 2).sum(dim=-1)
+
+                log_p_rho0 = normal.log_prob(gamma) - torch.logdet(
+                    L / self.beta_zero_sqrt
+                )  # rho0 ~ N(0, 1/beta_0 * G(z0))
+
+                log_p_rho = (
+                    (
+                        -0.5
+                        * (
+                            torch.transpose(rho.unsqueeze(-1), 1, 2)
+                            @ G_inv
+                            @ rho.unsqueeze(-1)
+                        )
+                        .squeeze()
+                        .squeeze()
+                        - 0.5 * G_log_det
+                    )
+                    - torch.log(torch.tensor([2 * np.pi]).to(z.device))
+                    * self.latent_dim
+                    / 2
+                )  # rho0 ~ N(0, G(z))
+
+                if self.model_config.reconstruction_loss == "mse":
+
+                    log_p_x_given_z = -F.mse_loss(
+                        recon_x.reshape(x_rep.shape[0], -1),
+                        x_rep.reshape(x_rep.shape[0], -1),
+                        reduction="none",
+                    ).sum(dim=-1) - torch.tensor(
+                        [np.prod(self.input_dim) / 2 * np.log(np.pi * 2)]
+                    ).to(
+                        data.device
+                    )  # decoding distribution is assumed unit variance  N(mu, I)
+
+                elif self.model_config.reconstruction_loss == "bce":
+
+                    log_p_x_given_z = -F.binary_cross_entropy(
+                        recon_x.reshape(x_rep.shape[0], -1),
+                        x_rep.reshape(x_rep.shape[0], -1),
+                        reduction="none",
+                    ).sum(dim=-1)
+
+                log_p_x.append(
+                    log_p_x_given_z
+                    + log_p_z
+                    + log_p_rho
+                    - log_p_rho0
+                    - log_q_z0_given_x
+                )  # N*log(2*pi) simplifies in prior and posterior
+
+            log_p_x = torch.cat(log_p_x)
+
+            log_p.append((torch.logsumexp(log_p_x, 0) - np.log(len(log_p_x))).item())
+
+        return np.mean(log_p)
 
     def save(self, dir_path: str):
         """Method to save the model at a specific location
@@ -394,183 +722,3 @@ class RHVAE(VAE):
         model.load_state_dict(model_weights)
 
         return model
-
-    def _leap_step_1(self, recon_x, x, z, rho, G_inv, G_log_det, steps=3):
-        """
-        Resolves first equation of generalized leapfrog integrator
-        using fixed point iterations
-        """
-
-        def f_(rho_):
-            H = self._hamiltonian(recon_x, x, z, rho_, G_inv, G_log_det)
-            gz = grad(H, z, retain_graph=True)[0]
-            return rho - 0.5 * self.eps_lf * gz
-
-        rho_ = rho.clone()
-        for _ in range(steps):
-            rho_ = f_(rho_)
-        return rho_
-
-    def _leap_step_2(self, recon_x, x, z, rho, G_inv, G_log_det, steps=3):
-        """
-        Resolves second equation of generalized leapfrog integrator
-        using fixed point iterations
-        """
-        H0 = self._hamiltonian(recon_x, x, z, rho, G_inv, G_log_det)
-        grho_0 = grad(H0, rho)[0]
-
-        def f_(z_):
-            H = self._hamiltonian(recon_x, x, z_, rho, G_inv, G_log_det)
-            grho = grad(H, rho, retain_graph=True)[0]
-            return z + 0.5 * self.eps_lf * (grho_0 + grho)
-
-        z_ = z.clone()
-        for _ in range(steps):
-            z_ = f_(z_)
-        return z_
-
-    def _leap_step_3(self, recon_x, x, z, rho, G_inv, G_log_det, steps=3):
-        """
-        Resolves third equation of generalized leapfrog integrator
-        """
-        H = self._hamiltonian(recon_x, x, z, rho, G_inv, G_log_det)
-        gz = grad(H, z, create_graph=True)[0]
-        return rho - 0.5 * self.eps_lf * gz
-
-    def _hamiltonian(self, recon_x, x, z, rho, G_inv=None, G_log_det=None):
-        """
-        Computes the Hamiltonian function.
-        used for RHVAE
-        """
-        norm = (
-            torch.transpose(rho.unsqueeze(-1), 1, 2) @ G_inv @ rho.unsqueeze(-1)
-        ).sum()
-
-        return -self._log_p_xz(recon_x, x, z).sum() + 0.5 * norm + 0.5 * G_log_det.sum()
-
-    def _update_metric(self):
-        # convert to 1 big tensor
-
-        self.M_tens = torch.cat(list(self.M))
-        self.centroids_tens = torch.cat(list(self.centroids))
-
-        # define new metric
-        def G(z):
-            return torch.inverse(
-                (
-                    self.M_tens.unsqueeze(0)
-                    * torch.exp(
-                        -torch.norm(
-                            self.centroids_tens.unsqueeze(0) - z.unsqueeze(1), dim=-1
-                        )
-                        ** 2
-                        / (self.temperature**2)
-                    )
-                    .unsqueeze(-1)
-                    .unsqueeze(-1)
-                ).sum(dim=1)
-                + self.lbd * torch.eye(self.latent_dim).to(z.device)
-            )
-
-        def G_inv(z):
-            return (
-                self.M_tens.unsqueeze(0)
-                * torch.exp(
-                    -torch.norm(
-                        self.centroids_tens.unsqueeze(0) - z.unsqueeze(1), dim=-1
-                    )
-                    ** 2
-                    / (self.temperature**2)
-                )
-                .unsqueeze(-1)
-                .unsqueeze(-1)
-            ).sum(dim=1) + self.lbd * torch.eye(self.latent_dim).to(z.device)
-
-        self.G = G
-        self.G_inv = G_inv
-        self.M = deque(maxlen=100)
-        self.centroids = deque(maxlen=100)
-
-    def loss_function(
-        self, recon_x, x, z0, zK, rhoK, eps0, gamma, mu, log_var, G_inv, G_log_det
-    ):
-
-        logpxz = self._log_p_xz(recon_x, x, zK)  # log p(x, z_K)
-        logrhoK = (
-            -0.5
-            * (torch.transpose(rhoK.unsqueeze(-1), 1, 2) @ G_inv @ rhoK.unsqueeze(-1))
-            .squeeze()
-            .squeeze()
-            - 0.5 * G_log_det
-            # - torch.log(torch.tensor([2 * np.pi]).to(x.device)) * self.latent_dim / 2
-        )  # log p(\rho_K)
-
-        logp = logpxz + logrhoK
-
-        # define a N(0, I) distribution
-        normal = torch.distributions.MultivariateNormal(
-            loc=torch.zeros(self.latent_dim).to(x.device),
-            covariance_matrix=torch.eye(self.latent_dim).to(x.device),
-        )
-
-        logq = normal.log_prob(eps0) - 0.5 * log_var.sum(dim=1)  # log(q(z_0|x))
-
-        return -(logp - logq).mean(dim=0)
-
-    def _sample_gauss(self, mu, std):
-        # Reparametrization trick
-        # Sample N(0, I)
-        eps = torch.randn_like(std)
-        return mu + eps * std, eps
-
-    def _tempering(self, k, K):
-        """Perform tempering step"""
-
-        beta_k = (
-            (1 - 1 / self.beta_zero_sqrt) * (k / K) ** 2
-        ) + 1 / self.beta_zero_sqrt
-
-        return 1 / beta_k
-
-    def _log_p_x_given_z(self, recon_x, x):
-
-        if self.model_config.reconstruction_loss == "mse":
-            # sigma is taken as I_D
-            recon_loss = -0.5 * F.mse_loss(
-                recon_x.reshape(x.shape[0], -1),
-                x.reshape(x.shape[0], -1),
-                reduction="none",
-            ).sum(dim=-1)
-            -torch.log(torch.tensor([2 * np.pi]).to(x.device)) * np.prod(
-                self.input_dim
-            ) / 2
-
-        elif self.model_config.reconstruction_loss == "bce":
-
-            recon_loss = -F.binary_cross_entropy(
-                recon_x.reshape(x.shape[0], -1),
-                x.reshape(x.shape[0], -1),
-                reduction="none",
-            ).sum(dim=-1)
-
-        return recon_loss
-
-    def _log_z(self, z):
-        """
-        Return Normal density function as prior on z
-        """
-
-        # define a N(0, I) distribution
-        normal = torch.distributions.MultivariateNormal(
-            loc=torch.zeros(self.latent_dim).to(z.device),
-            covariance_matrix=torch.eye(self.latent_dim).to(z.device),
-        )
-        return normal.log_prob(z)
-
-    def _log_p_xz(self, recon_x, x, z):
-        """
-        Estimate log(p(x, z)) using Bayes rule
-        """
-        logpxz = self._log_p_x_given_z(recon_x, x)
-        logpz = self._log_z(z)
-        return logpxz + logpz

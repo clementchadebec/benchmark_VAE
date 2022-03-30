@@ -1,6 +1,6 @@
 from pydantic.dataclasses import dataclass
 
-from ...models import VAEConfig
+from ..vae import VAEConfig
 
 
 @dataclass
@@ -9,7 +9,7 @@ class MSSSIM_VAEConfig(VAEConfig):
     VAE using using perceptual similarity metrics (MS-SSIM) model config config class
 
     Parameters:
-        input_dim (int): The input_data dimension
+        input_dim (tuple): The input_data dimension.
         latent_dim (int): The latent space dimension. Default: None.
         reconstruction_loss (str): The reconstruction loss to use ['bce', 'mse']. Default: 'mse'
         beta (float): The balancing factor. Default: 1

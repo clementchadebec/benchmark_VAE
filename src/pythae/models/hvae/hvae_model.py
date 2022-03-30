@@ -8,9 +8,9 @@ import torch.nn.functional as F
 from torch.autograd import grad
 
 from ...data.datasets import BaseDataset
-from ...models import VAE
 from ..base.base_utils import ModelOutput
 from ..nn import BaseDecoder, BaseEncoder
+from ..vae import VAE
 from .hvae_config import HVAEConfig
 
 
@@ -19,7 +19,7 @@ class HVAE(VAE):
     Hamiltonian VAE.
 
     Args:
-        model_config (HVAEConfig): A model configuration setting the main parameters of the model
+        model_config (HVAEConfig): A model configuration setting the main parameters of the model.
 
         encoder (BaseEncoder): An instance of BaseEncoder (inheriting from `torch.nn.Module` which
             plays the role of encoder. This argument allows you to use your own neural networks
@@ -202,6 +202,125 @@ class HVAE(VAE):
         """
         return -self.log_p_xz(recon_x.reshape(x.shape[0], -1), x, z).sum()
 
+    def get_nll(self, data, n_samples=1, batch_size=100):
+        """
+        Function computed the estimate negative log-likelihood of the model. It uses importance
+        sampling method with the approximate posterior disctribution. This may take a while.
+
+        Args:
+            data (torch.Tensor): The input data from which the log-likelihood should be estimated.
+                Data must be of shape [Batch x n_channels x ...]
+            n_samples (int): The number of importance samples to use for estimation
+            batch_size (int): The batchsize to use to avoid memory issues
+        """
+        normal = torch.distributions.MultivariateNormal(
+            loc=torch.zeros(self.model_config.latent_dim).to(data.device),
+            covariance_matrix=torch.eye(self.model_config.latent_dim).to(data.device),
+        )
+
+        if n_samples <= batch_size:
+            n_full_batch = 1
+        else:
+            n_full_batch = n_samples // batch_size
+            n_samples = batch_size
+
+        log_p = []
+
+        for i in range(len(data)):
+            x = data[i].unsqueeze(0)
+
+            log_p_x = []
+
+            for j in range(n_full_batch):
+
+                x_rep = torch.cat(batch_size * [x])
+
+                encoder_output = self.encoder(x_rep)
+                mu, log_var = encoder_output.embedding, encoder_output.log_covariance
+
+                std = torch.exp(0.5 * log_var)
+                z0, eps = self._sample_gauss(mu, std)
+                gamma = torch.randn_like(z0, device=x.device)
+                rho = gamma / self.beta_zero_sqrt
+
+                z = z0
+                beta_sqrt_old = self.beta_zero_sqrt
+
+                recon_x = self.decoder(z)["reconstruction"]
+
+                for k in range(self.n_lf):
+
+                    # perform leapfrog steps
+
+                    # computes potential energy
+                    U = -self._log_p_xz(recon_x, x_rep, z).sum()
+
+                    # Compute its gradient
+                    g = grad(U, z, create_graph=True)[0]
+
+                    # 1st leapfrog step
+                    rho_ = rho - (self.eps_lf / 2) * g
+
+                    # 2nd leapfrog step
+                    z = z + self.eps_lf * rho_
+
+                    recon_x = self.decoder(z)["reconstruction"]
+
+                    U = -self._log_p_xz(recon_x, x_rep, z).sum()
+                    g = grad(U, z, create_graph=True)[0]
+
+                    # 3rd leapfrog step
+                    rho__ = rho_ - (self.eps_lf / 2) * g
+
+                    # tempering steps
+                    beta_sqrt = self._tempering(k + 1, self.n_lf)
+                    rho = (beta_sqrt_old / beta_sqrt) * rho__
+                    beta_sqrt_old = beta_sqrt
+
+                log_q_z0_given_x = -0.5 * (
+                    log_var + (z0 - mu) ** 2 / torch.exp(log_var)
+                ).sum(dim=-1)
+                log_p_z = -0.5 * (z ** 2).sum(dim=-1)
+
+                log_p_rho0 = normal.log_prob(gamma) - 0.5 * self.latent_dim * torch.log(
+                    1 / self.beta_zero_sqrt
+                )  # rho0 ~ N(0, 1/beta_0*I)
+                log_p_rho = normal.log_prob(rho)
+
+                if self.model_config.reconstruction_loss == "mse":
+
+                    log_p_x_given_z = -F.mse_loss(
+                        recon_x.reshape(x_rep.shape[0], -1),
+                        x_rep.reshape(x_rep.shape[0], -1),
+                        reduction="none",
+                    ).sum(dim=-1) - torch.tensor(
+                        [np.prod(self.input_dim) / 2 * np.log(np.pi * 2)]
+                    ).to(
+                        data.device
+                    )  # decoding distribution is assumed unit variance  N(mu, I)
+
+                elif self.model_config.reconstruction_loss == "bce":
+
+                    log_p_x_given_z = -F.binary_cross_entropy(
+                        recon_x.reshape(x_rep.shape[0], -1),
+                        x_rep.reshape(x_rep.shape[0], -1),
+                        reduction="none",
+                    ).sum(dim=-1)
+
+                log_p_x.append(
+                    log_p_x_given_z
+                    + log_p_z
+                    + log_p_rho
+                    - log_p_rho0
+                    - log_q_z0_given_x
+                )  # N*log(2*pi) simplifies in prior and posterior
+
+            log_p_x = torch.cat(log_p_x)
+
+            log_p.append((torch.logsumexp(log_p_x, 0) - np.log(len(log_p_x))).item())
+
+        return np.mean(log_p)
+
     @classmethod
     def _load_model_config_from_folder(cls, dir_path):
         file_list = os.listdir(dir_path)
@@ -216,41 +335,3 @@ class HVAE(VAE):
         model_config = HVAEConfig.from_json_file(path_to_model_config)
 
         return model_config
-
-    @classmethod
-    def load_from_folder(cls, dir_path):
-        """Class method to be used to load the model from a specific folder
-
-        Args:
-            dir_path (str): The path where the model should have been be saved.
-
-        .. note::
-            This function requires the folder to contain:
-
-            - | a ``model_config.json`` and a ``model.pt`` if no custom architectures were provided
-
-            **or**
-
-            - a ``model_config.json``, a ``model.pt`` and a ``encoder.pkl`` (resp.
-                ``decoder.pkl``) if a custom encoder (resp. decoder) was provided
-        """
-
-        model_config = cls._load_model_config_from_folder(dir_path)
-        model_weights = cls._load_model_weights_from_folder(dir_path)
-
-        if not model_config.uses_default_encoder:
-            encoder = cls._load_custom_encoder_from_folder(dir_path)
-
-        else:
-            encoder = None
-
-        if not model_config.uses_default_decoder:
-            decoder = cls._load_custom_decoder_from_folder(dir_path)
-
-        else:
-            decoder = None
-
-        model = cls(model_config, encoder=encoder, decoder=decoder)
-        model.load_state_dict(model_weights)
-
-        return model

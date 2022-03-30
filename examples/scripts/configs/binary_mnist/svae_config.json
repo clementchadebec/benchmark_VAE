@@ -1,0 +1,5 @@
+{
+    "name": "SVAEConfig",
+    "latent_dim": 16,
+    "reconstruction_loss": "bce"
+}

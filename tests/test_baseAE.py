@@ -2,6 +2,7 @@ import os
 
 import pytest
 import torch
+import shutil
 
 from pythae.customexception import BadInheritanceError
 from pythae.models import BaseAE, BaseAEConfig
@@ -11,6 +12,7 @@ from tests.data.custom_architectures import (
     NetBadInheritance,
 )
 
+PATH = os.path.dirname(os.path.abspath(__file__))
 
 @pytest.fixture(params=[BaseAEConfig(), BaseAEConfig(latent_dim=5)])
 def model_configs_no_input_dim(request):
@@ -67,6 +69,14 @@ class Test_Model_Building:
 
 
 class Test_Model_Saving:
+
+    def test_creates_saving_path(self, model_config_with_input_dim):
+        dir_path = os.path.join(PATH, 'test/for/saving')
+        model = BaseAE(model_config_with_input_dim)
+        model.save(dir_path=dir_path)
+        shutil.rmtree(dir_path)
+
+
     def test_default_model_saving(self, tmpdir, model_config_with_input_dim):
 
         tmpdir.mkdir("dummy_folder")
@@ -124,7 +134,7 @@ class Test_Model_Saving:
     ):
 
         tmpdir.mkdir("dummy_folder")
-        dir_path = dir_path = os.path.join(tmpdir, "dummy_folder")
+        dir_path = os.path.join(tmpdir, "dummy_folder")
 
         model = BaseAE(model_config_with_input_dim, decoder=custom_decoder)
 
@@ -138,8 +148,13 @@ class Test_Model_Saving:
 
         os.remove(os.path.join(dir_path, "model.pt"))
 
-        # check raises encoder.pkl is missing
+        # check raises model.pt is missing
         with pytest.raises(FileNotFoundError):
+            model_rec = BaseAE.load_from_folder(dir_path)
+
+        torch.save({"wrong_key": 0.}, os.path.join(dir_path, "model.pt"))
+        # check raises wrong key in model.pt
+        with pytest.raises(KeyError):
             model_rec = BaseAE.load_from_folder(dir_path)
 
         os.remove(os.path.join(dir_path, "model_config.json"))

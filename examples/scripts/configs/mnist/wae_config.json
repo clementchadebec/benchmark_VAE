@@ -1,4 +1,5 @@
 {
+    "name": "WAE_MMD_Config",
     "latent_dim": 16,
     "kernel_choice": "imq",
     "reg_weight": 1,

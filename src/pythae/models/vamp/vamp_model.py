@@ -7,10 +7,10 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from ...data.datasets import BaseDataset
-from ...models import VAE
 from ..base.base_utils import ModelOutput
 from ..nn import BaseDecoder, BaseEncoder
 from ..nn.default_architectures import Encoder_VAE_MLP
+from ..vae import VAE
 from .vamp_config import VAMPConfig
 
 
@@ -18,8 +18,8 @@ class VAMP(VAE):
     """Variational Mixture of Posteriors (VAMP) VAE model
 
     Args:
-        model_config(VAEConfig): The Variational Autoencoder configuration seting the main
-        parameters of the model
+        model_config (VAEConfig): The Variational Autoencoder configuration setting the main
+        parameters of the model.
 
         encoder (BaseEncoder): An instance of BaseEncoder (inheriting from `torch.nn.Module` which
             plays the role of encoder. This argument allows you to use your own neural networks
@@ -56,10 +56,7 @@ class VAMP(VAE):
             model_config.number_components, int(np.prod(model_config.input_dim))
         )
 
-        self.pseudo_inputs = nn.Sequential(
-            linear_layer,
-            nn.Hardtanh(0.0, 1.0),
-        )
+        self.pseudo_inputs = nn.Sequential(linear_layer, nn.Hardtanh(0.0, 1.0))
 
         # init weights
         # linear_layer.weight.data.normal_(0, 0.0)
@@ -88,8 +85,9 @@ class VAMP(VAE):
         encoder_output = self.encoder(x)
 
         # we bound log_var to avoid unbounded optim
-        mu, log_var = encoder_output.embedding, torch.tanh(
-            encoder_output.log_covariance
+        mu, log_var = (
+            encoder_output.embedding,
+            torch.tanh(encoder_output.log_covariance),
         )
 
         std = torch.exp(0.5 * log_var)
@@ -141,7 +139,7 @@ class VAMP(VAE):
 
         C = self.number_components
 
-        x = self.pseudo_inputs(self.idle_input.to(self.device)).reshape(
+        x = self.pseudo_inputs(self.idle_input.to(z.device)).reshape(
             (C,) + self.model_config.input_dim
         )
 
@@ -171,6 +169,82 @@ class VAMP(VAE):
         eps = torch.randn_like(std)
         return mu + eps * std, eps
 
+    def get_nll(self, data, n_samples=1, batch_size=100):
+        """
+        Function computed the estimate negative log-likelihood of the model. It uses importance
+        sampling method with the approximate posterior disctribution. This may take a while.
+
+        Args:
+            data (torch.Tensor): The input data from which the log-likelihood should be estimated.
+                Data must be of shape [Batch x n_channels x ...]
+            n_samples (int): The number of importance samples to use for estimation
+            batch_size (int): The batchsize to use to avoid memory issues
+        """
+
+        if n_samples <= batch_size:
+            n_full_batch = 1
+        else:
+            n_full_batch = n_samples // batch_size
+            n_samples = batch_size
+
+        log_p = []
+
+        for i in range(len(data)):
+            x = data[i].unsqueeze(0)
+            encoder_output = self.encoder(x)
+            mu, log_var = encoder_output.embedding, encoder_output.log_covariance
+
+            log_p_x = []
+
+            for j in range(n_full_batch):
+
+                x_rep = torch.cat(batch_size * [x])
+
+                encoder_output = self.encoder(x_rep)
+                mu, log_var = encoder_output.embedding, encoder_output.log_covariance
+
+                std = torch.exp(0.5 * log_var)
+                z, eps = self._sample_gauss(mu, std)
+
+                log_q_z_given_x = -0.5 * (
+                    log_var + (z - mu) ** 2 / torch.exp(log_var)
+                ).sum(dim=-1)
+                log_p_z = self._log_p_z(z)
+
+                recon_x = self.decoder(z)["reconstruction"]
+
+                if self.model_config.reconstruction_loss == "mse":
+
+                    log_p_x_given_z = -F.mse_loss(
+                        recon_x.reshape(x_rep.shape[0], -1),
+                        x_rep.reshape(x_rep.shape[0], -1),
+                        reduction="none",
+                    ).sum(dim=-1) - torch.tensor(
+                        [np.prod(self.input_dim) / 2 * np.log(np.pi * 2)]
+                    ).to(
+                        data.device
+                    )  # decoding distribution is assumed unit variance  N(mu, I)
+
+                elif self.model_config.reconstruction_loss == "bce":
+
+                    log_p_x_given_z = -F.binary_cross_entropy(
+                        recon_x.reshape(x_rep.shape[0], -1),
+                        x_rep.reshape(x_rep.shape[0], -1),
+                        reduction="none",
+                    ).sum(dim=-1)
+
+                log_p_x.append(
+                    log_p_x_given_z + log_p_z - log_q_z_given_x
+                )  # log(2*pi) simplifies
+
+            log_p_x = torch.cat(log_p_x)
+
+            log_p.append((torch.logsumexp(log_p_x, 0) - np.log(len(log_p_x))).item())
+
+            if i % 1000 == 0:
+                print(f"Current nll at {i}: {np.mean(log_p)}")
+        return np.mean(log_p)
+
     @classmethod
     def _load_model_config_from_folder(cls, dir_path):
         file_list = os.listdir(dir_path)
@@ -185,42 +259,3 @@ class VAMP(VAE):
         model_config = VAMPConfig.from_json_file(path_to_model_config)
 
         return model_config
-
-    @classmethod
-    def load_from_folder(cls, dir_path):
-        """Class method to be used to load the model from a specific folder
-
-        Args:
-            dir_path (str): The path where the model should have been be saved.
-
-        .. note::
-            This function requires the folder to contain:
-
-            - | a ``model_config.json`` and a ``model.pt`` if no custom architectures were provided
-
-            **or**
-
-            - | a ``model_config.json``, a ``model.pt`` and a ``encoder.pkl`` (resp.
-                ``decoder.pkl``) if a custom encoder (resp. decoder) was provided
-
-        """
-
-        model_config = cls._load_model_config_from_folder(dir_path)
-        model_weights = cls._load_model_weights_from_folder(dir_path)
-
-        if not model_config.uses_default_encoder:
-            encoder = cls._load_custom_encoder_from_folder(dir_path)
-
-        else:
-            encoder = None
-
-        if not model_config.uses_default_decoder:
-            decoder = cls._load_custom_decoder_from_folder(dir_path)
-
-        else:
-            decoder = None
-
-        model = cls(model_config, encoder=encoder, decoder=decoder)
-        model.load_state_dict(model_weights)
-
-        return model
