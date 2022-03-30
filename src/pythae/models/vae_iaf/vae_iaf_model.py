@@ -2,9 +2,9 @@ import torch
 import os
 import math
 
-from ..base import BaseAE
-from .vae_nf_config import VAE_NF_Config
-from .vae_nf_utils import PlanarFlow, RadialFlow
+from ..vae import VAE
+from .vae_iaf_config import VAE_IAF_Config
+from ..normalizing_flows import IAF, IAFConfig
 from ...data.datasets import BaseDataset
 from ..base.base_utils import ModelOutput
 from ..nn import BaseEncoder, BaseDecoder
@@ -16,12 +16,12 @@ from typing import Optional
 import torch.nn.functional as F
 
 
-class VAE_NF(BaseAE):
-    """Variational Auto Encoder with Normalizing Flows model.
+class VAE_IAF(VAE):
+    """Variational Auto Encoder with Inverse Autoregressive Flows.
     
     Args:
-        model_config(VAE_NF_Config): The Variational Autoencoder configuration seting the main 
-        parameters of the model
+        model_config(VAE_IAF_Config): The Variational Autoencoder configuration seting the main 
+            parameters of the model.
 
         encoder (BaseEncoder): An instance of BaseEncoder (inheriting from `torch.nn.Module` which
             plays the role of encoder. This argument allows you to use your own neural networks
@@ -33,9 +33,6 @@ class VAE_NF(BaseAE):
             architectures if desired. If None is provided, a simple Multi Layer Preception
             (https://en.wikipedia.org/wiki/Multilayer_perceptron) is used. Default: None.
 
-        flows (List[str]): A list of strings corresponding to the class of each flow to be applied.
-            Default: Empty list (no flow is applied).
-
     .. note::
         For high dimensional data we advice you to provide you own network architectures. With the
         provided MLP you may end up with a ``MemoryError``.
@@ -43,48 +40,24 @@ class VAE_NF(BaseAE):
 
     def __init__(
         self,
-        model_config: VAE_NF_Config,
+        model_config: VAE_IAF_Config,
         encoder: Optional[BaseEncoder] = None,
-        decoder: Optional[BaseDecoder] = None,
-        flows: Optional[list] = []
+        decoder: Optional[BaseDecoder] = None
     ):
 
-        BaseAE.__init__(self, model_config=model_config, decoder=decoder)
+        VAE.__init__(self, model_config=model_config, encoder=encoder, decoder=decoder)
 
-        self.model_name = "VAE_NF"
+        self.model_name = "VAE_IAF"
 
-        if encoder is None:
-            if model_config.input_dim is None:
-                raise AttributeError(
-                    "No input dimension provided !"
-                    "'input_dim' parameter of BaseAEConfig instance must be set to 'data_shape' "
-                    "where the shape of the data is (C, H, W ..). Unable to build encoder "
-                    "automatically"
-                )
+        iaf_config = IAFConfig(
+            input_dim=(model_config.latent_dim,),
+            n_made_blocks=model_config.n_made_blocks,
+            n_hidden_in_made=model_config.n_hidden_in_made,
+            hidden_size=model_config.hidden_size,
+            include_batch_norm=model_config.include_batch_norm
+        )
 
-            encoder = Encoder_VAE_MLP(model_config)
-            self.model_config.uses_default_encoder = True
-
-        else:
-            self.model_config.uses_default_encoder = False
-
-        for i,flow in enumerate(flows):
-            if type(flow)!=str:
-                raise TypeError(
-                    f"Flow number {i} is type {type(flow)}, expected type string"
-                )
-            else:
-                if flow not in ['PlanarFlow','RadialFlow']:
-                    raise NameError(
-                        f"Flow name number {i}: {flow} doesn't correspond to ones of the classes. "
-                        "Available flow classes are [PlanarFlow, RadialFlow]"
-                    )
-
-        self.set_encoder(encoder)
-        self.net = []
-        for flow in flows:
-            layer_class = eval(flow)
-            self.net.append(layer_class(self.latent_dim))
+        self.iaf_flow = IAF(iaf_config)
 
     def forward(self, inputs: BaseDataset, **kwargs):
         """
@@ -109,28 +82,22 @@ class VAE_NF(BaseAE):
 
         z0 = z.clone().detach()
 
-        # starting gaussian log-density
-        log_prob_z0 = torch.sum(
-            -0.5 * torch.log(torch.tensor(2 * math.pi)) - 
-            -0.5 * log_var - 0.5 * ((z0 - mu) / std) ** 2, 
-            axis=-1)
-        
-        log_det = torch.zeros((z0.shape[0],)).to(z.device)
-        
-        for layer in self.net:
-            layer_output = layer(z)
-            z = layer_output.z
-            log_det += layer_output.log_det
+        # Pass it through the Normalizing flows
+        flow_output = self.iaf_flow(z)
 
-        # prior log-density
-        log_prob_zk = torch.sum(
-            -0.5 * (torch.log(torch.tensor(2 * math.pi)) + z ** 2), 
-            axis=-1)
+        z = flow_output.out
+        log_abs_det_jac = flow_output.log_abs_det_jac
 
         recon_x = self.decoder(z)["reconstruction"]
 
-        loss, recon_loss, kld = self.loss_function(recon_x, x,
-            log_prob_z0, log_prob_zk, log_det)
+        loss, recon_loss, kld = self.loss_function(
+            recon_x,
+            x,
+            mu, 
+            log_var,
+            z0,
+            z,
+            log_abs_det_jac)
 
         output = ModelOutput(
             reconstruction_loss=recon_loss,
@@ -142,7 +109,7 @@ class VAE_NF(BaseAE):
 
         return output
 
-    def loss_function(self, recon_x, x, log_prob_z0, log_prob_zk, log_det):
+    def loss_function(self, recon_x, x, mu, log_var, z0, zk, log_abs_det_jac):
 
         if self.model_config.reconstruction_loss == "mse":
 
@@ -160,7 +127,17 @@ class VAE_NF(BaseAE):
                 reduction="none",
             ).sum(dim=-1)
 
-        KLD = (log_prob_z0 - log_prob_zk - log_det).sum(dim=-1)
+        # starting gaussian log-density
+        log_prob_z0 = (-0.5 * (log_var + torch.pow(z0 - mu, 2) / torch.exp(log_var))).sum(
+            dim=1
+        )
+
+        # prior log-density
+        log_prob_zk = (-0.5 * torch.pow(zk, 2)).sum(
+            dim=1
+        )
+
+        KLD = (log_prob_z0 - log_prob_zk - log_abs_det_jac).sum(dim=-1)
 
         return (recon_loss + KLD).mean(dim=0), recon_loss.mean(dim=0), KLD.mean(dim=0)
 
@@ -181,7 +158,7 @@ class VAE_NF(BaseAE):
             )
 
         path_to_model_config = os.path.join(dir_path, "model_config.json")
-        model_config = VAE_NF_Config.from_json_file(path_to_model_config)
+        model_config = VAE_IAF_Config.from_json_file(path_to_model_config)
 
         return model_config
 

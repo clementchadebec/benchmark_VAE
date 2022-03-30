@@ -26,5 +26,3 @@ class VAE_IAF_Config(VAEConfig):
     n_hidden_in_made: int = 3
     hidden_size: int = 128
     include_batch_norm: bool = False
-    
-    

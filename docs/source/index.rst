@@ -12,7 +12,7 @@ we can conduct benchmark analysis and reproducible research!
 
 .. toctree::
    :maxdepth: 1
-   :caption: Pythae main modules
+   :caption: Pythae
    :titlesonly:
 
    models/pythae.models

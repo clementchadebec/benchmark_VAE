@@ -31,6 +31,7 @@ from .rhvae import RHVAE, RHVAEConfig
 from .svae import SVAE, SVAEConfig
 from .vae import VAE, VAEConfig
 from .vae_gan import VAEGAN, VAEGANConfig
+from .vae_iaf import VAE_IAF, VAE_IAF_Config
 from .vamp import VAMP, VAMPConfig
 from .vq_vae import VQVAE, VQVAEConfig
 from .wae_mmd import WAE_MMD, WAE_MMD_Config
@@ -76,4 +77,6 @@ __all__ = [
     "FactorVAEConfig",
     "BetaTCVAE",
     "BetaTCVAEConfig",
+    "VAE_IAF",
+    "VAE_IAF_Config"
 ]
