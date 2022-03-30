@@ -1,14 +1,16 @@
 import torch
+import torch.nn as nn
 import os
 import math
 
-from ..base import BaseAE
+from ..vae import VAE
 from .vae_nf_config import VAE_NF_Config
 from .vae_nf_utils import PlanarFlow, RadialFlow
 from ...data.datasets import BaseDataset
 from ..base.base_utils import ModelOutput
 from ..nn import BaseEncoder, BaseDecoder
 from ..nn.default_architectures import Encoder_VAE_MLP
+from ..normalizing_flows import *
 
 
 from typing import Optional
@@ -16,8 +18,8 @@ from typing import Optional
 import torch.nn.functional as F
 
 
-class VAE_NF(BaseAE):
-    """Variational Auto Encoder with Normalizing Flows model.
+class VAE_NF(VAE):
+    """Variational Auto Encoder with linear Normalizing Flows model.
     
     Args:
         model_config(VAE_NF_Config): The Variational Autoencoder configuration seting the main 
@@ -45,46 +47,21 @@ class VAE_NF(BaseAE):
         self,
         model_config: VAE_NF_Config,
         encoder: Optional[BaseEncoder] = None,
-        decoder: Optional[BaseDecoder] = None,
-        flows: Optional[list] = []
+        decoder: Optional[BaseDecoder] = None
     ):
 
-        BaseAE.__init__(self, model_config=model_config, decoder=decoder)
+        VAE.__init__(self, model_config=model_config, decoder=decoder)
 
         self.model_name = "VAE_NF"
 
-        if encoder is None:
-            if model_config.input_dim is None:
-                raise AttributeError(
-                    "No input dimension provided !"
-                    "'input_dim' parameter of BaseAEConfig instance must be set to 'data_shape' "
-                    "where the shape of the data is (C, H, W ..). Unable to build encoder "
-                    "automatically"
-                )
-
-            encoder = Encoder_VAE_MLP(model_config)
-            self.model_config.uses_default_encoder = True
-
-        else:
-            self.model_config.uses_default_encoder = False
-
-        for i,flow in enumerate(flows):
-            if type(flow)!=str:
-                raise TypeError(
-                    f"Flow number {i} is type {type(flow)}, expected type string"
-                )
-            else:
-                if flow not in ['PlanarFlow','RadialFlow']:
-                    raise NameError(
-                        f"Flow name number {i}: {flow} doesn't correspond to ones of the classes. "
-                        "Available flow classes are [PlanarFlow, RadialFlow]"
-                    )
-
-        self.set_encoder(encoder)
         self.net = []
         for flow in flows:
-            layer_class = eval(flow)
+            if flow == 'Planar':
+                self.net.append
+                layer_class = eval(flow)
             self.net.append(layer_class(self.latent_dim))
+
+        self.net = nn.ModuleList(self.net)
 
     def forward(self, inputs: BaseDataset, **kwargs):
         """
