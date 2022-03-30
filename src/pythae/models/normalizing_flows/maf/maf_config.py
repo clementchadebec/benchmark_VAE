@@ -4,11 +4,11 @@ from typing import List, Tuple, Union
 from pydantic import validator
 from pydantic.dataclasses import dataclass
 
-from pythae.config import BaseConfig
+from ..base import BaseNFConfig
 
 
 @dataclass
-class MAFConfig(BaseConfig):
+class MAFConfig(BaseNFConfig):
     """This is the MADE model configuration instance.
 
     Parameters:
@@ -19,8 +19,6 @@ class MAFConfig(BaseConfig):
         hidden_size (list): The number of unit in each hidder layer. The same number of units is 
             used across the `n_hidden_in_made` and `n_made_blocks`
     """
-
-    input_dim: Union[Tuple[int, ...], None] = None
     n_made_blocks: int = 2
     n_hidden_in_made: int = 3
     hidden_size: int = 128

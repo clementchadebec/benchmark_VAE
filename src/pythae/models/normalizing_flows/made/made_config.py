@@ -5,11 +5,11 @@ from pydantic import validator
 from pydantic.dataclasses import dataclass
 from typing_extensions import Literal
 
-from pythae.config import BaseConfig
+from ..base import BaseNFConfig
 
 
 @dataclass
-class MADEConfig(BaseConfig):
+class MADEConfig(BaseNFConfig):
     """This is the MADE model configuration instance.
 
     Parameters:
@@ -20,8 +20,6 @@ class MADEConfig(BaseConfig):
         degrees_ordering (str): The ordering to use for the mask creation. Can be either 
             `sequential` or `random`. Default: `sequential`.
     """
-
-    input_dim: Union[Tuple[int, ...], None] = None
     output_dim: Union[Tuple[int, ...], None] = None
     hidden_sizes: List[int] = field(default_factory=lambda: [128])
     degrees_ordering: Literal["sequential", "random"] = "sequential"

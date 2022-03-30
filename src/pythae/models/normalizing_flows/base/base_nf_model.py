@@ -10,7 +10,7 @@ from .base_nf_config import BaseNFConfig
 
 
 class BaseNF(nn.Module):
-    """Base Class of Normalizing flows
+    """Base Class from Normalizing flows
 
     Args:
         model_config (BaseNFConfig): The configuration setting the main parameters of the 

@@ -15,7 +15,7 @@ from .maf_config import MAFConfig
 
 
 class MAF(BaseNF):
-    """Masked Autoregressive Flow
+    """Masked Autoregressive Flow.
     
     Args:
         model_config (MAFConfig): The MAF model configuration setting the main parameters of the 

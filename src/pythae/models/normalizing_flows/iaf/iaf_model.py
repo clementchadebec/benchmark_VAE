@@ -16,7 +16,7 @@ from .iaf_config import IAFConfig
 
 
 class IAF(MAF):
-    """Inverse Autoregressive Flow
+    """Inverse Autoregressive Flow.
     
     Args:
         model_config (IAFConfig): The IAF model configuration setting the main parameters of the 
