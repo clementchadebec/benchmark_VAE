@@ -67,20 +67,20 @@ class IAF(BaseNF):
         Returns:
             ModelOutput: An instance of ModelOutput containing all the relevant parameters
         """
-
+        x = x.reshape(x.shape[0], -1)
         sum_log_abs_det_jac = torch.zeros(x.shape[0]).to(x.device)
 
         for layer in self.net:
             if layer.__class__.__name__ == "MADE":
-                y = torch.zeros_like(x.reshape(x.shape[0], -1))
+                y = torch.zeros_like(x)
                 for i in range(self.input_dim):
                     layer_out = layer(y.clone())
 
-                    mu, log_var = layer_out.mu, layer_out.log_var                    
+                    m, s = layer_out.mu, layer_out.log_var                    
 
-                    y[:, i] = (x.reshape(x.shape[0], -1)[:, i] - mu[:, i]) * (-log_var[:, i]).exp()
+                    y[:, i] = (x[:, i] - m[:, i]) * (-s[:, i]).exp()
 
-                    sum_log_abs_det_jac += -log_var[:, i]
+                    sum_log_abs_det_jac += -s[:, i]
 
                 x = y
             else:
@@ -101,19 +101,19 @@ class IAF(BaseNF):
         Returns:
             ModelOutput: An instance of ModelOutput containing all the relevant parameters
         """
-
+        y = y.reshape(y.shape[0], -1)
         sum_log_abs_det_jac = torch.zeros(y.shape[0]).to(y.device)
 
         for layer in self.net[::-1]:
             y = y.flip(dims=(1,))
             if layer.__class__.__name__ == 'MADE':
-                layer_out = layer(y.reshape(y.shape[0], -1))
-                mu, log_var = layer_out.mu, layer_out.log_var
-                y = y.reshape(y.shape[0], -1) * (log_var).exp() + mu
-                sum_log_abs_det_jac += log_var.sum(dim=-1)
+                layer_out = layer(y)
+                m, s = layer_out.mu, layer_out.log_var
+                y = y * s.exp() + m
+                sum_log_abs_det_jac += s.sum(dim=-1)
 
             else:
-                layer_out = layer.inverse(y.reshape(y.shape[0], -1))
+                layer_out = layer.inverse(y)
                 y = layer_out.out
                 sum_log_abs_det_jac += layer_out.log_abs_det_jac
 
