@@ -128,12 +128,12 @@ To launch a model training, you only need to call a `TrainingPipeline` instance.
 >>> pipeline = TrainingPipeline(
 ... 	training_config=my_training_config,
 ... 	model=my_vae_model
-...	)
+... )
 >>> # Launch the Pipeline
 >>> pipeline(
 ...	train_data=your_train_data, # must be torch.Tensor or np.array 
 ...	eval_data=your_eval_data # must be torch.Tensor or np.array
-...	)
+... )
 ```
 
 At the end of training, the best model weights, model configuration and training configuration are stored in a `final_model` folder available in  `my_model/MODEL_NAME_training_YYYY-MM-DD_hh-mm-ss` (with `my_model` being the `output_dir` argument of the `BaseTrainerConfig`). If you further set the `steps_saving` argument to a certain value, folders named `checkpoint_epoch_k` containing the best model weights, optimizer, scheduler, configuration and training configuration at epoch *k* will also appear in `my_model/MODEL_NAME_training_YYYY-MM-DD_hh-mm-ss`.
