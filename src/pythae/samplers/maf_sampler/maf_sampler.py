@@ -20,7 +20,7 @@ from .maf_sampler_config import MAFSamplerConfig
 
 
 class MAFSampler(BaseSampler):
-    """MAF sampler.
+    """Fits an Inverse Autoregressive Flow in the Autoencoder's latent space.
 
     Args:
         model (BaseAE): The AE model to sample from

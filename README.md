@@ -93,7 +93,9 @@ Below is the list of the models currently implemented in the library.
 | Two stage VAE sampler (TwoStageVAESampler)					| all VAE based models| [link](https://openreview.net/pdf?id=B1e0X3C9tQ)  | [link](https://github.com/daib13/TwoStageVAE/) |)
 | Unit sphere uniform sampler (HypersphereUniformSampler)                     |    SVAE  		  | [link](https://arxiv.org/abs/1804.00891)      |		[link](https://github.com/nicola-decao/s-vae-pytorch)
 | VAMP prior sampler (VAMPSampler)                   |    VAMP   		  | [link](https://arxiv.org/abs/1705.07120) 	  | [link](https://github.com/jmtomczak/vae_vampprior) |
-| Manifold sampler (RHVAESampler)                     |    RHVAE  		  | [link](https://arxiv.org/abs/2105.00026)      |													|
+| Manifold sampler (RHVAESampler)                     |    RHVAE  		  | [link](https://arxiv.org/abs/2105.00026)      |	[link](https://github.com/clementchadebec/pyraug)|
+| Masked Autoregressive Flow Sampler (MAFSampler) | all models | [link](https://arxiv.org/abs/1705.07057v4)      |	[link](https://github.com/gpapamak/maf) |
+| Inverse Autoregressive Flow Sampler (IAFSampler) | all models | [link](https://arxiv.org/abs/1606.04934) |  [link](https://github.com/openai/iaf)             |                     
 
 
 ## Launching a model training
@@ -302,6 +304,8 @@ Here, we show the generated samples using using each model implemented in the li
 | AE  + GaussianMixtureSampler                  | ![AE GMM](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/ae_gmm_sampling_mnist.png) | ![AE GMM](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/ae_gmm_sampling_celeba.png)                                                                            |
 | VAE  + NormalSampler    | ![VAE Normal](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/vae_normal_sampling_mnist.png) |  ![VAE Normal](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/vae_normal_sampling_celeba.png)
 | VAE  + GaussianMixtureSampler    | ![VAE GMM](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/vae_gmm_sampling_mnist.png) |  ![VAE GMM](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/vae_gmm_sampling_celeba.png)
+| VAE  + TwoStageVAESampler    | ![VAE 2 stage](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/vae_second_stage_sampling_mnist.png) |  ![VAE 2 stage](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/vae_second_stage_sampling_celeba.png)
+| VAE  + MAFSampler    | ![VAE MAF](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/vae_maf_sampling_mnist.png) |  ![VAE MAF](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/vae_maf_sampling_celeba.png)
 | Beta-VAE + NormalSampler | ![Beta Normal](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/beta_vae_normal_sampling_mnist.png) | ![Beta Normal](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/beta_vae_normal_sampling_celeba.png)
 | VAE IAF + NormalSampler | ![VAE_IAF Normal](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/vae_iaf_normal_sampling_mnist.png) | ![VAE IAF Normal](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/vae_iaf_normal_sampling_celeba.png)
 | Disentangled Beta-VAE + NormalSampler | ![Disentangled Beta Normal](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/disentangled_beta_vae_normal_sampling_mnist.png) | ![Disentangled Beta Normal](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/disentangled_beta_vae_normal_sampling_celeba.png)

@@ -95,7 +95,7 @@ class SecondDecoder(BaseDecoder):
 
 
 class TwoStageVAESampler(BaseSampler):
-    """Two Stage VAE sampler.
+    """Fits a second VAE in the Autoencoder's latent space.
 
     Args:
         model (VAE): The VAE model to sample from

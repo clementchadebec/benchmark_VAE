@@ -20,7 +20,7 @@ from .iaf_sampler_config import IAFSamplerConfig
 
 
 class IAFSampler(BaseSampler):
-    """IAF sampler.
+    """Fits an Inverse Autoregressive Flow in the Autoencoder's latent space.
 
     Args:
         model (BaseAE): The AE model to sample from

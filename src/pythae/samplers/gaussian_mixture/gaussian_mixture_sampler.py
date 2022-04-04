@@ -18,7 +18,7 @@ logger.setLevel(logging.INFO)
 
 
 class GaussianMixtureSampler(BaseSampler):
-    """Gaussian Mixture sampling in the Autoencoder's latent space.
+    """Fits a Gaussian Mixture in the Autoencoder's latent space.
 
     Args:
         model (BaseAE): The vae model to sample from.
