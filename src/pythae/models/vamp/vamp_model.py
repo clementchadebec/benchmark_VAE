@@ -7,10 +7,10 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from ...data.datasets import BaseDataset
-from ...models import VAE
 from ..base.base_utils import ModelOutput
 from ..nn import BaseDecoder, BaseEncoder
 from ..nn.default_architectures import Encoder_VAE_MLP
+from ..vae import VAE
 from .vamp_config import VAMPConfig
 
 
@@ -18,8 +18,8 @@ class VAMP(VAE):
     """Variational Mixture of Posteriors (VAMP) VAE model
 
     Args:
-        model_config(VAEConfig): The Variational Autoencoder configuration seting the main
-        parameters of the model
+        model_config (VAEConfig): The Variational Autoencoder configuration setting the main
+            parameters of the model.
 
         encoder (BaseEncoder): An instance of BaseEncoder (inheriting from `torch.nn.Module` which
             plays the role of encoder. This argument allows you to use your own neural networks
@@ -56,10 +56,7 @@ class VAMP(VAE):
             model_config.number_components, int(np.prod(model_config.input_dim))
         )
 
-        self.pseudo_inputs = nn.Sequential(
-            linear_layer,
-            nn.Hardtanh(0.0, 1.0),
-        )
+        self.pseudo_inputs = nn.Sequential(linear_layer, nn.Hardtanh(0.0, 1.0))
 
         # init weights
         # linear_layer.weight.data.normal_(0, 0.0)
@@ -88,8 +85,9 @@ class VAMP(VAE):
         encoder_output = self.encoder(x)
 
         # we bound log_var to avoid unbounded optim
-        mu, log_var = encoder_output.embedding, torch.tanh(
-            encoder_output.log_covariance
+        mu, log_var = (
+            encoder_output.embedding,
+            torch.tanh(encoder_output.log_covariance),
         )
 
         std = torch.exp(0.5 * log_var)
@@ -217,7 +215,7 @@ class VAMP(VAE):
 
                 if self.model_config.reconstruction_loss == "mse":
 
-                    log_p_x_given_z = -F.mse_loss(
+                    log_p_x_given_z = -0.5 * F.mse_loss(
                         recon_x.reshape(x_rep.shape[0], -1),
                         x_rep.reshape(x_rep.shape[0], -1),
                         reduction="none",
@@ -261,42 +259,3 @@ class VAMP(VAE):
         model_config = VAMPConfig.from_json_file(path_to_model_config)
 
         return model_config
-
-    @classmethod
-    def load_from_folder(cls, dir_path):
-        """Class method to be used to load the model from a specific folder
-
-        Args:
-            dir_path (str): The path where the model should have been be saved.
-
-        .. note::
-            This function requires the folder to contain:
-
-            - | a ``model_config.json`` and a ``model.pt`` if no custom architectures were provided
-
-            **or**
-
-            - | a ``model_config.json``, a ``model.pt`` and a ``encoder.pkl`` (resp.
-                ``decoder.pkl``) if a custom encoder (resp. decoder) was provided
-
-        """
-
-        model_config = cls._load_model_config_from_folder(dir_path)
-        model_weights = cls._load_model_weights_from_folder(dir_path)
-
-        if not model_config.uses_default_encoder:
-            encoder = cls._load_custom_encoder_from_folder(dir_path)
-
-        else:
-            encoder = None
-
-        if not model_config.uses_default_decoder:
-            decoder = cls._load_custom_decoder_from_folder(dir_path)
-
-        else:
-            decoder = None
-
-        model = cls(model_config, encoder=encoder, decoder=decoder)
-        model.load_state_dict(model_weights)
-
-        return model

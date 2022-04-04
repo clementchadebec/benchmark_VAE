@@ -57,8 +57,9 @@ class VAMPSampler(BaseSampler):
             ].reshape((batch_size,) + self.model.model_config.input_dim)
 
             encoder_output = self.model.encoder(means)
-            mu, log_var = encoder_output.embedding, torch.tanh(
-                encoder_output.log_covariance
+            mu, log_var = (
+                encoder_output.embedding,
+                torch.tanh(encoder_output.log_covariance),
             )
             std = torch.exp(0.5 * log_var)
             eps = torch.randn_like(std)
@@ -80,8 +81,9 @@ class VAMPSampler(BaseSampler):
             ].reshape((last_batch_samples_nbr,) + self.model.model_config.input_dim)
 
             encoder_output = self.model.encoder(means)
-            mu, log_var = encoder_output.embedding, torch.tanh(
-                encoder_output.log_covariance
+            mu, log_var = (
+                encoder_output.embedding,
+                torch.tanh(encoder_output.log_covariance),
             )
             std = torch.exp(0.5 * log_var)
             eps = torch.randn_like(std)

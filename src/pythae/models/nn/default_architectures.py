@@ -4,7 +4,8 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from pythae.models.nn import BaseDecoder, BaseDiscriminator, BaseEncoder, BaseMetric
+from pythae.models.nn import (BaseDecoder, BaseDiscriminator, BaseEncoder,
+                              BaseMetric)
 
 from ..base.base_utils import ModelOutput
 
@@ -173,10 +174,7 @@ class Decoder_AE_MLP(BaseDecoder):
         layers.append(nn.Sequential(nn.Linear(args.latent_dim, 512), nn.ReLU()))
 
         layers.append(
-            nn.Sequential(
-                nn.Linear(512, int(np.prod(args.input_dim))),
-                nn.Sigmoid(),
-            )
+            nn.Sequential(nn.Linear(512, int(np.prod(args.input_dim))), nn.Sigmoid())
         )
 
         self.layers = layers
@@ -268,8 +266,7 @@ class Discriminator_MLP(BaseDiscriminator):
 
         layers.append(
             nn.Sequential(
-                nn.Linear(np.prod(args.discriminator_input_dim), 256),
-                nn.ReLU(),
+                nn.Linear(np.prod(args.discriminator_input_dim), 256), nn.ReLU()
             )
         )
 

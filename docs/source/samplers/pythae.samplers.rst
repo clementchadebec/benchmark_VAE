@@ -6,13 +6,15 @@ Samplers
     :hidden:
     :maxdepth: 1
 
-    pythae.samplers.basesampler
-    pythae.samplers.normal_sampler
-    pythae.samplers.gmm_sampler
-    pythae.samplers.twostage_sampler
-    pythae.samplers.unit_sphere_unif_sampler
-    pythae.samplers.vamp_sampler
-    pythae.samplers.rhvae_sampler
+    basesampler
+    normal_sampler
+    gmm_sampler
+    twostage_sampler
+    unit_sphere_unif_sampler
+    vamp_sampler
+    rhvae_sampler
+    maf_sampler
+    iaf_sampler
     
 
 .. automodule::
@@ -27,4 +29,6 @@ Samplers
     ~pythae.samplers.HypersphereUniformSampler
     ~pythae.samplers.VAMPSampler
     ~pythae.samplers.RHVAESampler
+    ~pythae.samplers.MAFSampler
+    ~pythae.samplers.IAFSampler
     :nosignatures:

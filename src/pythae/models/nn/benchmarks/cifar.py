@@ -90,25 +90,19 @@ class Encoder_AE_CIFAR(BaseEncoder):
 
         layers.append(
             nn.Sequential(
-                nn.Conv2d(128, 256, 4, 2, padding=1),
-                nn.BatchNorm2d(256),
-                nn.ReLU(),
+                nn.Conv2d(128, 256, 4, 2, padding=1), nn.BatchNorm2d(256), nn.ReLU()
             )
         )
 
         layers.append(
             nn.Sequential(
-                nn.Conv2d(256, 512, 4, 2, padding=1),
-                nn.BatchNorm2d(512),
-                nn.ReLU(),
+                nn.Conv2d(256, 512, 4, 2, padding=1), nn.BatchNorm2d(512), nn.ReLU()
             )
         )
 
         layers.append(
             nn.Sequential(
-                nn.Conv2d(512, 1024, 4, 2, padding=1),
-                nn.BatchNorm2d(1024),
-                nn.ReLU(),
+                nn.Conv2d(512, 1024, 4, 2, padding=1), nn.BatchNorm2d(1024), nn.ReLU()
             )
         )
 
@@ -249,25 +243,19 @@ class Encoder_VAE_CIFAR(BaseEncoder):
 
         layers.append(
             nn.Sequential(
-                nn.Conv2d(128, 256, 4, 2, padding=1),
-                nn.BatchNorm2d(256),
-                nn.ReLU(),
+                nn.Conv2d(128, 256, 4, 2, padding=1), nn.BatchNorm2d(256), nn.ReLU()
             )
         )
 
         layers.append(
             nn.Sequential(
-                nn.Conv2d(256, 512, 4, 2, padding=1),
-                nn.BatchNorm2d(512),
-                nn.ReLU(),
+                nn.Conv2d(256, 512, 4, 2, padding=1), nn.BatchNorm2d(512), nn.ReLU()
             )
         )
 
         layers.append(
             nn.Sequential(
-                nn.Conv2d(512, 1024, 4, 2, padding=1),
-                nn.BatchNorm2d(1024),
-                nn.ReLU(),
+                nn.Conv2d(512, 1024, 4, 2, padding=1), nn.BatchNorm2d(1024), nn.ReLU()
             )
         )
 
@@ -410,8 +398,7 @@ class Decoder_AE_CIFAR(BaseDecoder):
 
         layers.append(
             nn.Sequential(
-                nn.ConvTranspose2d(256, self.n_channels, 4, 1, padding=2),
-                nn.Sigmoid(),
+                nn.ConvTranspose2d(256, self.n_channels, 4, 1, padding=2), nn.Sigmoid()
             )
         )
 

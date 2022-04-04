@@ -7,10 +7,10 @@ import torch.distributions as dist
 import torch.nn.functional as F
 
 from ...data.datasets import BaseDataset
-from ...models import VAE
 from ..base.base_utils import ModelOutput
 from ..nn import BaseDecoder, BaseEncoder
 from ..nn.default_architectures import Encoder_SVAE_MLP
+from ..vae import VAE
 from .svae_config import SVAEConfig
 from .svae_utils import ive
 
@@ -20,8 +20,8 @@ class SVAE(VAE):
     :math:`\mathcal{S}`-VAE model.
 
     Args:
-        model_config(SVAEConfig): The Variational Autoencoder configuration seting the main
-        parameters of the model
+        model_config (SVAEConfig): The Variational Autoencoder configuration setting the main
+        parameters of the model.
 
         encoder (BaseEncoder): An instance of BaseEncoder (inheriting from `torch.nn.Module` which
             plays the role of encoder. This argument allows you to use your own neural networks
@@ -241,7 +241,7 @@ class SVAE(VAE):
 
         for i in range(len(data)):
             x = data[i].unsqueeze(0)
-            
+
             log_p_x = []
 
             for j in range(n_full_batch):
@@ -270,9 +270,9 @@ class SVAE(VAE):
                     - concentration
                 )
 
-                log_q_z_given_x = (term1 + term2).reshape(-1) # VMF log-density
+                log_q_z_given_x = (term1 + term2).reshape(-1)  # VMF log-density
 
-                log_p_z = -torch.ones_like(log_q_z_given_x)*(
+                log_p_z = -torch.ones_like(log_q_z_given_x) * (
                     -torch.lgamma(torch.tensor([m / 2]).to(concentration.device))
                     + torch.tensor([2]).to(concentration.device).log()
                     + torch.tensor([np.pi]).to(concentration.device).log() * (m / 2)
@@ -282,7 +282,7 @@ class SVAE(VAE):
 
                 if self.model_config.reconstruction_loss == "mse":
 
-                    log_p_x_given_z = -F.mse_loss(
+                    log_p_x_given_z = -0.5 * F.mse_loss(
                         recon_x.reshape(x_rep.shape[0], -1),
                         x_rep.reshape(x_rep.shape[0], -1),
                         reduction="none",
@@ -300,7 +300,7 @@ class SVAE(VAE):
                         reduction="none",
                     ).sum(dim=-1)
 
-                #assert 0, (log_p_x_given_z.shape, log_p_z.shape, log_q_z_given_x.shape)
+                # assert 0, (log_p_x_given_z.shape, log_p_z.shape, log_q_z_given_x.shape)
 
                 log_p_x.append(
                     log_p_x_given_z + log_p_z - log_q_z_given_x
@@ -329,41 +329,3 @@ class SVAE(VAE):
         model_config = SVAEConfig.from_json_file(path_to_model_config)
 
         return model_config
-
-    @classmethod
-    def load_from_folder(cls, dir_path):
-        """Class method to be used to load the model from a specific folder
-
-        Args:
-            dir_path (str): The path where the model should have been be saved.
-
-        .. note::
-            This function requires the folder to contain:
-
-            - | a ``model_config.json`` and a ``model.pt`` if no custom architectures were provided
-
-            **or**
-
-            - | a ``model_config.json``, a ``model.pt`` and a ``encoder.pkl`` (resp.
-                ``decoder.pkl``) if a custom encoder (resp. decoder) was provided
-        """
-
-        model_config = cls._load_model_config_from_folder(dir_path)
-        model_weights = cls._load_model_weights_from_folder(dir_path)
-
-        if not model_config.uses_default_encoder:
-            encoder = cls._load_custom_encoder_from_folder(dir_path)
-
-        else:
-            encoder = None
-
-        if not model_config.uses_default_decoder:
-            decoder = cls._load_custom_decoder_from_folder(dir_path)
-
-        else:
-            decoder = None
-
-        model = cls(model_config, encoder=encoder, decoder=decoder)
-        model.load_state_dict(model_weights)
-
-        return model

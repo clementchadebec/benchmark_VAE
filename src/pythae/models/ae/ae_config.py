@@ -9,7 +9,7 @@ class AEConfig(BaseAEConfig):
     :class:`~BaseAEConfig`.
 
     Parameters:
-        input_dim (int): The input_data dimension
+        input_dim (tuple): The input_data dimension.
         latent_dim (int): The latent space dimension. Default: None.
         default_encoder (bool): Whether the encoder default. Default: True.
         default_decoder (bool): Whether the encoder default. Default: True.

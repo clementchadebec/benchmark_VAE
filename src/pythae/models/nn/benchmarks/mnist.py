@@ -95,25 +95,19 @@ class Encoder_AE_MNIST(BaseEncoder):
 
         layers.append(
             nn.Sequential(
-                nn.Conv2d(128, 256, 4, 2, padding=1),
-                nn.BatchNorm2d(256),
-                nn.ReLU(),
+                nn.Conv2d(128, 256, 4, 2, padding=1), nn.BatchNorm2d(256), nn.ReLU()
             )
         )
 
         layers.append(
             nn.Sequential(
-                nn.Conv2d(256, 512, 4, 2, padding=1),
-                nn.BatchNorm2d(512),
-                nn.ReLU(),
+                nn.Conv2d(256, 512, 4, 2, padding=1), nn.BatchNorm2d(512), nn.ReLU()
             )
         )
 
         layers.append(
             nn.Sequential(
-                nn.Conv2d(512, 1024, 4, 2, padding=1),
-                nn.BatchNorm2d(1024),
-                nn.ReLU(),
+                nn.Conv2d(512, 1024, 4, 2, padding=1), nn.BatchNorm2d(1024), nn.ReLU()
             )
         )
 
@@ -254,25 +248,19 @@ class Encoder_VAE_MNIST(BaseEncoder):
 
         layers.append(
             nn.Sequential(
-                nn.Conv2d(128, 256, 4, 2, padding=1),
-                nn.BatchNorm2d(256),
-                nn.ReLU(),
+                nn.Conv2d(128, 256, 4, 2, padding=1), nn.BatchNorm2d(256), nn.ReLU()
             )
         )
 
         layers.append(
             nn.Sequential(
-                nn.Conv2d(256, 512, 4, 2, padding=1),
-                nn.BatchNorm2d(512),
-                nn.ReLU(),
+                nn.Conv2d(256, 512, 4, 2, padding=1), nn.BatchNorm2d(512), nn.ReLU()
             )
         )
 
         layers.append(
             nn.Sequential(
-                nn.Conv2d(512, 1024, 4, 2, padding=1),
-                nn.BatchNorm2d(1024),
-                nn.ReLU(),
+                nn.Conv2d(512, 1024, 4, 2, padding=1), nn.BatchNorm2d(1024), nn.ReLU()
             )
         )
 
@@ -417,25 +405,19 @@ class Encoder_SVAE_MNIST(BaseEncoder):
 
         layers.append(
             nn.Sequential(
-                nn.Conv2d(128, 256, 4, 2, padding=1),
-                nn.BatchNorm2d(256),
-                nn.ReLU(),
+                nn.Conv2d(128, 256, 4, 2, padding=1), nn.BatchNorm2d(256), nn.ReLU()
             )
         )
 
         layers.append(
             nn.Sequential(
-                nn.Conv2d(256, 512, 4, 2, padding=1),
-                nn.BatchNorm2d(512),
-                nn.ReLU(),
+                nn.Conv2d(256, 512, 4, 2, padding=1), nn.BatchNorm2d(512), nn.ReLU()
             )
         )
 
         layers.append(
             nn.Sequential(
-                nn.Conv2d(512, 1024, 4, 2, padding=1),
-                nn.BatchNorm2d(1024),
-                nn.ReLU(),
+                nn.Conv2d(512, 1024, 4, 2, padding=1), nn.BatchNorm2d(1024), nn.ReLU()
             )
         )
 

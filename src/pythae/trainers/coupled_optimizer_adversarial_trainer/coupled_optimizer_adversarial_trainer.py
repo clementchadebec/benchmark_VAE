@@ -14,12 +14,11 @@ from tqdm import tqdm
 from ...customexception import ModelError
 from ...data.datasets import BaseDataset
 from ...models import BaseAE
-from ...trainers import AdversarialTrainer, BaseTrainer, CoupledOptimizerTrainer
+from ..base_trainer import BaseTrainer
 from ..trainer_utils import set_seed
 from ..training_callbacks import TrainingCallback
-from .coupled_optimizer_adversarial_trainer_config import (
-    CoupledOptimizerAdversarialTrainerConfig,
-)
+from .coupled_optimizer_adversarial_trainer_config import \
+    CoupledOptimizerAdversarialTrainerConfig
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +29,7 @@ logger.setLevel(logging.INFO)
 
 
 class CoupledOptimizerAdversarialTrainer(BaseTrainer):
-    """Trainer using disctinct optimizers for the encoder, decoder and discriminator.
+    """Trainer using distinct optimizers for the encoder, decoder and discriminator.
 
     Args:
         model (BaseAE): The model to train
