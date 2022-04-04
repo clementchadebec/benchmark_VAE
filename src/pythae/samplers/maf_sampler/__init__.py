@@ -1,4 +1,5 @@
-"""Basic sampler sampling from a N(0, 1) in the Autoencoder's latent space.
+"""Sampler fitting a Masked Autoregressive Flow (:class:`pythae.models.normalizing_flows.MAF`) 
+in the Autoencoder's latent space.
 
 Available models:
 ------------------
@@ -7,7 +8,7 @@ Available models:
     ~pythae.models.AE
     ~pythae.models.VAE
     ~pythae.models.BetaVAE
-    ~pythae.models.VAE_IAF
+    ~pythae.models.VAE
     ~pythae.models.DisentangledBetaVAE
     ~pythae.models.IWAE
     ~pythae.models.WAE_MMD
@@ -22,7 +23,7 @@ Available models:
     :nosignatures:
 """
 
-from .normal_config import NormalSamplerConfig
-from .normal_sampler import NormalSampler
+from .maf_sampler_config import MAFSamplerConfig
+from .maf_sampler import MAFSampler
 
-__all__ = ["NormalSampler", "NormalSamplerConfig"]
+__all__ = ["MAFSampler", "MAFSamplerConfig"]

@@ -5,8 +5,8 @@ import pytest
 import torch
 from copy import deepcopy
 
-from pythae.models import VAE, VAEConfig, VAMP, VAMPConfig, AE, AEConfig
-from pythae.samplers import TwoStageVAESampler, TwoStageVAESamplerConfig
+from pythae.models import VAE, VAEConfig, AE, AEConfig
+from pythae.samplers import IAFSampler, IAFSamplerConfig
 from pythae.trainers import BaseTrainerConfig
 
 PATH = os.path.dirname(os.path.abspath(__file__))
@@ -20,7 +20,7 @@ def dummy_data():
 
 @pytest.fixture(
     params=[
-        VAMP(VAMPConfig(input_dim=(1, 28, 28), latent_dim=2)),
+        AE(AEConfig(input_dim=(1, 28, 28), latent_dim=2)),
         VAE(VAEConfig(input_dim=(1, 28, 28), latent_dim=4)),
     ]
 )
@@ -30,8 +30,8 @@ def model(request):
 
 @pytest.fixture(
     params=[
-        TwoStageVAESamplerConfig(second_stage_depth=2, second_layers_dim=100),
-        TwoStageVAESamplerConfig(second_stage_depth=0, second_layers_dim=1024),
+        IAFSamplerConfig(n_made_blocks=2, n_hidden_in_made=1),
+        IAFSamplerConfig(hidden_size=12, include_batch_norm=True),
         None,
     ]
 )
@@ -41,7 +41,7 @@ def sampler_config(request):
 
 @pytest.fixture()
 def sampler(model, sampler_config):
-    return TwoStageVAESampler(model=model, sampler_config=sampler_config)
+    return IAFSampler(model=model, sampler_config=sampler_config)
 
 
 @pytest.fixture(params=[(4, 2), (5, 5), (2, 3)])
@@ -49,18 +49,7 @@ def num_sample_and_batch_size(request):
     return request.param
 
 
-class Test_TwoeStepVAESampler_ModelChecking:
-    @pytest.fixture()
-    def wrong_model(self):
-        return AE(AEConfig(input_dim=(1, 28, 28)))
-
-    def test_raises_wrong_model(self, wrong_model):
-
-        with pytest.raises(AssertionError):
-            sampler = TwoStageVAESampler(model=model)
-
-
-class Test_TwoStageVAESampler_saving:
+class Test_IAFSampler_saving:
     def test_save_config(self, tmpdir, sampler):
 
         tmpdir.mkdir("dummy_folder")
@@ -72,13 +61,13 @@ class Test_TwoStageVAESampler_saving:
 
         assert os.path.isfile(sampler_config_file)
 
-        generation_config_rec = TwoStageVAESamplerConfig.from_json_file(
+        generation_config_rec = IAFSamplerConfig.from_json_file(
             sampler_config_file
         )
 
         assert generation_config_rec.__dict__ == sampler.sampler_config.__dict__
 
-class Test_TwoStageVAESampler_Sampling:
+class Test_IAFSampler_Sampling:
     @pytest.fixture()
     def training_config(self, tmpdir):
         tmpdir.mkdir("dummy_folder")
@@ -94,20 +83,20 @@ class Test_TwoStageVAESampler_Sampling:
             num_sample_and_batch_size[1],
         )
 
-        start_gamma = deepcopy(sampler.second_vae.decoder.gamma_z)
+        start_flow = deepcopy(sampler.flow_contained_model)
 
         sampler.fit(
             train_data=dummy_data, eval_data=dummy_data, training_config=training_config
         )
 
-        final_gamma = deepcopy(sampler.second_vae.decoder.gamma_z)
+        final_flow = deepcopy(sampler.flow_contained_model)
 
         gen_samples = sampler.sample(
             num_samples=num_samples, batch_size=batch_size, return_gen=True
         )
 
         assert gen_samples.shape[0] == num_samples
-        assert start_gamma != final_gamma
+        assert start_flow != final_flow
 
     def test_return_sampling_without_eval(
         self, model, dummy_data, training_config, sampler, num_sample_and_batch_size
@@ -118,20 +107,20 @@ class Test_TwoStageVAESampler_Sampling:
             num_sample_and_batch_size[1],
         )
 
-        start_gamma = deepcopy(sampler.second_vae.decoder.gamma_z)
+        start_flow = deepcopy(sampler.flow_contained_model)
 
         sampler.fit(
             train_data=dummy_data, eval_data=None, training_config=training_config
         )
 
-        final_gamma = deepcopy(sampler.second_vae.decoder.gamma_z)
+        final_flow = deepcopy(sampler.flow_contained_model)
 
         gen_samples = sampler.sample(
             num_samples=num_samples, batch_size=batch_size, return_gen=True
         )
 
         assert gen_samples.shape[0] == num_samples
-        assert start_gamma != final_gamma
+        assert start_flow != final_flow
 
     def test_save_sampling(
         self,

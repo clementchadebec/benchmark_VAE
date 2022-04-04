@@ -6,137 +6,63 @@ import shutil
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
+from torch.distributions import MultivariateNormal
 
 from ...data.preprocessors import DataProcessor
-from ...models import VAE, VAEConfig
+from ...models import BaseAE, AE, AEConfig
+from ...models.normalizing_flows import IAF, IAFConfig, NFModel
 from ...models.base.base_utils import ModelOutput
 from ...models.nn import BaseDecoder, BaseEncoder
 from ...pipelines import TrainingPipeline
 from ...trainers import BaseTrainerConfig
 from ..base.base_sampler import BaseSampler
-from .two_stage_sampler_config import TwoStageVAESamplerConfig
+from .iaf_sampler_config import IAFSamplerConfig
 
 
-class SecondEncoder(BaseEncoder):
-    def __init__(self, model: VAE, sampler_config: TwoStageVAESamplerConfig):
-
-        BaseEncoder.__init__(self)
-
-        layers = []
-
-        layers.append(
-            nn.Sequential(
-                nn.Linear(model.latent_dim, sampler_config.second_layers_dim), nn.ReLU()
-            )
-        )
-
-        for i in range(sampler_config.second_stage_depth - 1):
-            layers.append(
-                nn.Sequential(
-                    nn.Linear(
-                        sampler_config.second_layers_dim,
-                        sampler_config.second_layers_dim,
-                    ),
-                    nn.ReLU(),
-                )
-            )
-
-        self.layers = nn.Sequential(*layers)
-        self.mu = nn.Linear(sampler_config.second_layers_dim, model.latent_dim)
-        self.std = nn.Linear(sampler_config.second_layers_dim, model.latent_dim)
-
-    def forward(self, z: torch.Tensor):
-        out = self.layers(z)
-
-        output = ModelOutput(embedding=self.mu(out), log_covariance=self.std(out))
-
-        return output
-
-
-class SecondDecoder(BaseDecoder):
-    def __init__(self, model: VAE, sampler_config: TwoStageVAESamplerConfig):
-
-        BaseDecoder.__init__(self)
-
-        self.gamma_z = nn.Parameter(torch.ones(1, 1), requires_grad=True)
-
-        layers = []
-
-        layers.append(
-            nn.Sequential(
-                nn.Linear(model.latent_dim, sampler_config.second_layers_dim), nn.ReLU()
-            )
-        )
-
-        for i in range(sampler_config.second_stage_depth - 1):
-            layers.append(
-                nn.Sequential(
-                    nn.Linear(
-                        sampler_config.second_layers_dim,
-                        sampler_config.second_layers_dim,
-                    ),
-                    nn.ReLU(),
-                )
-            )
-
-        self.layers = nn.Sequential(*layers)
-        self.reconstruction = nn.Linear(
-            sampler_config.second_layers_dim, model.latent_dim
-        )
-
-    def forward(self, u: torch.Tensor):
-        out = self.layers(u)
-
-        z = self.reconstruction(out)
-
-        output = ModelOutput(reconstruction=z + self.gamma_z * torch.randn_like(z))
-
-        return output
-
-
-class TwoStageVAESampler(BaseSampler):
-    """Two Stage VAE sampler.
+class IAFSampler(BaseSampler):
+    """IAF sampler.
 
     Args:
-        model (VAE): The VAE model to sample from
-        sampler_config (TwoStageVAESamplerConfig): A TwoStageVAESamplerConfig instance containing
+        model (BaseAE): The AE model to sample from
+        sampler_config (IAFSamplerConfig): A IAFSamplerConfig instance containing
             the main parameters of the sampler. If None, a pre-defined configuration is used.
             Default: None
 
     .. note::
 
-        The method :class:`~pythae.samplers.TwoStageVAESampler.fit` must be called to fit the
+        The method :class:`~pythae.samplers.IAFSampler.fit` must be called to fit the
         sampler before sampling.
     """
 
-    def __init__(self, model: VAE, sampler_config: TwoStageVAESamplerConfig = None):
-
-        assert issubclass(model.__class__, VAE), (
-            "The TwoStageVAESampler is only"
-            f"applicable for VAE based models. Got {model.__class__}."
-        )
+    def __init__(self, model: BaseAE, sampler_config: IAFSamplerConfig = None):
 
         self.is_fitted = False
 
         if sampler_config is None:
-            sampler_config = TwoStageVAESamplerConfig()
+            sampler_config = IAFSamplerConfig()
 
         BaseSampler.__init__(self, model=model, sampler_config=sampler_config)
 
-        second_vae_config = VAEConfig(
-            latent_dim=model.model_config.latent_dim,
-            reconstruction_loss=sampler_config.reconstruction_loss,
+        self.prior = MultivariateNormal(
+            torch.zeros(model.model_config.latent_dim).to(self.device),
+            torch.eye(model.model_config.latent_dim).cuda(self.device)
         )
 
-        self.second_vae = VAE(
-            model_config=second_vae_config,
-            encoder=SecondEncoder(model, sampler_config),
-            decoder=SecondDecoder(model, sampler_config),
+        iaf_config = IAFConfig(
+            input_dim=(model.model_config.latent_dim,),
+            n_made_blocks=sampler_config.n_made_blocks,
+            n_hidden_in_made=sampler_config.n_hidden_in_made,
+            hidden_size=sampler_config.hidden_size,
+            include_batch_norm=sampler_config.include_batch_norm
         )
 
-        self.second_vae.model_name = "Second_Stage_VAE"
+        iaf_model = IAF(
+            model_config=iaf_config
+        )
 
-        self.second_vae.to(self.device)
+        self.flow_contained_model = NFModel(self.prior, iaf_model)
+
+        self.flow_contained_model.to(self.device)
 
     def fit(
         self, train_data, eval_data=None, training_config: BaseTrainerConfig = None
@@ -150,7 +76,7 @@ class TwoStageVAESampler(BaseSampler):
             eval_data (torch.Tensor): The train data needed to retreive the evaluation embeddings
                     and fit the mixture in the latent space. Must be of shape n_imgs x im_channels x
                     ... and in range [0-1]
-            training_config (BaseTrainerConfig): the training config to use to fit the second VAE.
+            training_config (BaseTrainerConfig): the training config to use to fit the flow.
         """
 
         assert (
@@ -167,12 +93,8 @@ class TwoStageVAESampler(BaseSampler):
         with torch.no_grad():
             for _, inputs in enumerate(train_loader):
                 encoder_output = self.model.encoder(inputs["data"].to(self.device))
-                mean_z, log_var_z = (
-                    encoder_output.embedding,
-                    encoder_output.log_covariance,
-                )
-                z_data = mean_z + torch.randn_like(log_var_z) * torch.exp(0.5 * log_var_z)
-                z.append(z_data)
+                mean_z = encoder_output.embedding
+                z.append(mean_z)
 
         train_data = torch.cat(z)
 
@@ -193,21 +115,18 @@ class TwoStageVAESampler(BaseSampler):
             with torch.no_grad():
                 for _, inputs in enumerate(eval_loader):
                     encoder_output = self.model.encoder(inputs["data"].to(self.device))
-                    mean_z, log_var_z = (
-                        encoder_output.embedding,
-                        encoder_output.log_covariance,
-                    )
-                    z_data = mean_z + torch.randn_like(log_var_z) * torch.exp(0.5 * log_var_z)
-                    z.append(z_data)
+                    mean_z = encoder_output.embedding
+                    z.append(mean_z)
 
             eval_data = torch.cat(z)
 
         pipeline = TrainingPipeline(
-            training_config=training_config, model=self.second_vae
+            training_config=training_config, model=self.flow_contained_model
         )
+
         pipeline(train_data=train_data, eval_data=eval_data)
 
-        self.second_vae = VAE.load_from_folder(
+        self.iaf_model = IAF.load_from_folder(
             os.path.join(pipeline.trainer.training_dir, "final_model")
         ).to(self.device)
 
@@ -252,9 +171,9 @@ class TwoStageVAESampler(BaseSampler):
 
         for i in range(full_batch_nbr):
 
-            u = torch.randn(batch_size, self.model.latent_dim).to(self.device)
-            z = self.second_vae.decoder(u).reconstruction
-            x_gen = self.model.decoder(z)["reconstruction"].detach()
+            u = self.prior.sample((batch_size,))
+            z = self.iaf_model.inverse(u).out
+            x_gen = self.model.decoder(z).reconstruction.detach()
 
             if output_dir is not None:
                 for j in range(batch_size):
@@ -265,11 +184,9 @@ class TwoStageVAESampler(BaseSampler):
             x_gen_list.append(x_gen)
 
         if last_batch_samples_nbr > 0:
-            u = torch.randn(last_batch_samples_nbr, self.model.latent_dim).to(
-                self.device
-            )
-            z = self.second_vae.decoder(u).reconstruction
-            x_gen = self.model.decoder(z)["reconstruction"].detach()
+            u = self.prior.sample((last_batch_samples_nbr,))
+            z = self.iaf_model.inverse(u).out
+            x_gen = self.model.decoder(z).reconstruction.detach()
 
             if output_dir is not None:
                 for j in range(last_batch_samples_nbr):

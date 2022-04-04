@@ -28,6 +28,8 @@ examples/notebooks/models_training/my_model/*
 examples/notebooks/test.ipynb
 wandb
 examples/notebooks/dummy_output_dir/
+examples/notebooks/models_training/dummy_output_dir/
+
 
 
 # Byte-compiled / optimized / DLL files
