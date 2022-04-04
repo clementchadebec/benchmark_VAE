@@ -11,15 +11,14 @@ from ....data.datasets import BaseDataset
 from ..base import BaseNF
 from ..layers import BatchNorm
 from ..made import MADE, MADEConfig
-from ..base import BaseNF
 from .iaf_config import IAFConfig
 
 
 class IAF(BaseNF):
     """Inverse Autoregressive Flow.
-    
+
     Args:
-        model_config (IAFConfig): The IAF model configuration setting the main parameters of the 
+        model_config (IAFConfig): The IAF model configuration setting the main parameters of the
             model.
     """
 
@@ -76,7 +75,7 @@ class IAF(BaseNF):
                 for i in range(self.input_dim):
                     layer_out = layer(y.clone())
 
-                    m, s = layer_out.mu, layer_out.log_var                    
+                    m, s = layer_out.mu, layer_out.log_var
 
                     y[:, i] = (x[:, i] - m[:, i]) * (-s[:, i]).exp()
 
@@ -106,7 +105,7 @@ class IAF(BaseNF):
 
         for layer in self.net[::-1]:
             y = y.flip(dims=(1,))
-            if layer.__class__.__name__ == 'MADE':
+            if layer.__class__.__name__ == "MADE":
                 layer_out = layer(y)
                 m, s = layer_out.mu, layer_out.log_var
                 y = y * s.exp() + m

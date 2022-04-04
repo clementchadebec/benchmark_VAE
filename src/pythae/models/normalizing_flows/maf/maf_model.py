@@ -16,9 +16,9 @@ from .maf_config import MAFConfig
 
 class MAF(BaseNF):
     """Masked Autoregressive Flow.
-    
+
     Args:
-        model_config (MAFConfig): The MAF model configuration setting the main parameters of the 
+        model_config (MAFConfig): The MAF model configuration setting the main parameters of the
             model
     """
 
@@ -73,7 +73,7 @@ class MAF(BaseNF):
 
         for layer in self.net:
             layer_out = layer(x)
-            if layer.__class__.__name__ == 'MADE':
+            if layer.__class__.__name__ == "MADE":
                 mu, log_var = layer_out.mu, layer_out.log_var
 
                 x = (x - mu) * (-log_var).exp()
@@ -102,12 +102,12 @@ class MAF(BaseNF):
 
         for layer in self.net[::-1]:
             y = y.flip(dims=(1,))
-            if layer.__class__.__name__ == 'MADE':
+            if layer.__class__.__name__ == "MADE":
                 x = torch.zeros_like(y)
                 for i in range(self.input_dim):
                     layer_out = layer(x.clone())
 
-                    mu, log_var = layer_out.mu, layer_out.log_var                    
+                    mu, log_var = layer_out.mu, layer_out.log_var
 
                     x[:, i] = y[:, i] * (log_var[:, i]).exp() + mu[:, i]
 

@@ -15,9 +15,9 @@ from .made_config import MADEConfig
 
 class MADE(BaseNF):
     """Masked Autoencoder model
-    
+
     Args:
-        model_config (MADEConfig): The MADE model configuration setting the main parameters of the 
+        model_config (MADEConfig): The MADE model configuration setting the main parameters of the
             model
     """
 

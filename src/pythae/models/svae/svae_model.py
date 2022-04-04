@@ -162,7 +162,7 @@ class SVAE(VAE):
 
         w = self._acc_rej_steps(m=loc.shape[-1], k=concentration)
 
-        z = torch.cat((w, (1 - w ** 2).sqrt() * v), dim=-1)
+        z = torch.cat((w, (1 - w**2).sqrt() * v), dim=-1)
 
         return self._householder_rotation(loc, z)
 
@@ -178,7 +178,7 @@ class SVAE(VAE):
 
         batch_size = k.shape[0]
 
-        c = torch.sqrt(4 * k ** 2 + (m - 1) ** 2)
+        c = torch.sqrt(4 * k**2 + (m - 1) ** 2)
 
         b = (-2 * k + c) / (m - 1)
         a = (m - 1 + 2 * k + c) / 4
@@ -282,7 +282,7 @@ class SVAE(VAE):
 
                 if self.model_config.reconstruction_loss == "mse":
 
-                    log_p_x_given_z = -F.mse_loss(
+                    log_p_x_given_z = -0.5 * F.mse_loss(
                         recon_x.reshape(x_rep.shape[0], -1),
                         x_rep.reshape(x_rep.shape[0], -1),
                         reduction="none",

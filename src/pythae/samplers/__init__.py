@@ -13,11 +13,10 @@ this folder:
 """
 
 from .base import BaseSampler, BaseSamplerConfig
-from .gaussian_mixture import GaussianMixtureSampler, GaussianMixtureSamplerConfig
-from .hypersphere_uniform_sampler import (
-    HypersphereUniformSampler,
-    HypersphereUniformSamplerConfig,
-)
+from .gaussian_mixture import (GaussianMixtureSampler,
+                               GaussianMixtureSamplerConfig)
+from .hypersphere_uniform_sampler import (HypersphereUniformSampler,
+                                          HypersphereUniformSamplerConfig)
 from .manifold_sampler import RHVAESampler, RHVAESamplerConfig
 from .normal_sampling import NormalSampler, NormalSamplerConfig
 from .two_stage_vae_sampler import TwoStageVAESampler, TwoStageVAESamplerConfig

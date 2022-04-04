@@ -13,7 +13,7 @@ class BaseNF(nn.Module):
     """Base Class from Normalizing flows
 
     Args:
-        model_config (BaseNFConfig): The configuration setting the main parameters of the 
+        model_config (BaseNFConfig): The configuration setting the main parameters of the
             model.
     """
 
@@ -59,7 +59,7 @@ class BaseNF(nn.Module):
 
     def save(self, dir_path):
         """Method to save the model at a specific location. It saves, the model weights as a
-        ``models.pt`` file along with the model config as a ``model_config.json`` file. 
+        ``models.pt`` file along with the model config as a ``model_config.json`` file.
         Args:
             dir_path (str): The path where the model should be saved. If the path
                 path does not exist a folder will be created at the provided location.
@@ -132,8 +132,8 @@ class BaseNF(nn.Module):
 
 
 class NFModel(nn.Module):
-    """Class wrapping the normalizing flows so it can articulate with 
-        :class:`~pythae.trainers.BaseTrainer`
+    """Class wrapping the normalizing flows so it can articulate with
+    :class:`~pythae.trainers.BaseTrainer`
     """
 
     def __init__(self, prior: torch.distributions, flow: BaseNF):
@@ -168,7 +168,7 @@ class NFModel(nn.Module):
 
     def save(self, dir_path):
         """Method to save the model at a specific location. It saves, the model weights as a
-        ``models.pt`` file along with the model config as a ``model_config.json`` file. 
+        ``models.pt`` file along with the model config as a ``model_config.json`` file.
         Args:
             dir_path (str): The path where the model should be saved. If the path
                 path does not exist a folder will be created at the provided location.

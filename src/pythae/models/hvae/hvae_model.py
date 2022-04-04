@@ -280,7 +280,7 @@ class HVAE(VAE):
                 log_q_z0_given_x = -0.5 * (
                     log_var + (z0 - mu) ** 2 / torch.exp(log_var)
                 ).sum(dim=-1)
-                log_p_z = -0.5 * (z ** 2).sum(dim=-1)
+                log_p_z = -0.5 * (z**2).sum(dim=-1)
 
                 log_p_rho0 = normal.log_prob(gamma) - 0.5 * self.latent_dim * torch.log(
                     1 / self.beta_zero_sqrt
@@ -289,7 +289,7 @@ class HVAE(VAE):
 
                 if self.model_config.reconstruction_loss == "mse":
 
-                    log_p_x_given_z = -F.mse_loss(
+                    log_p_x_given_z = -0.5 * F.mse_loss(
                         recon_x.reshape(x_rep.shape[0], -1),
                         x_rep.reshape(x_rep.shape[0], -1),
                         reduction="none",
