@@ -45,7 +45,7 @@ class MAFSampler(BaseSampler):
 
         self.prior = MultivariateNormal(
             torch.zeros(model.model_config.latent_dim).to(self.device),
-            torch.eye(model.model_config.latent_dim).cuda(self.device)
+            torch.eye(model.model_config.latent_dim).to(self.device)
         )
 
         maf_config = MAFConfig(
