@@ -19,7 +19,7 @@ class MSSSIM_VAE(VAE):
 
     Args:
         model_config (MSSSIM_VAEConfig): The Variational Autoencoder configuration setting the main
-        parameters of the model.
+            parameters of the model.
 
         encoder (BaseEncoder): An instance of BaseEncoder (inheriting from `torch.nn.Module` which
             plays the role of encoder. This argument allows you to use your own neural networks

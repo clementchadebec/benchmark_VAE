@@ -18,7 +18,7 @@ class DisentangledBetaVAE(VAE):
 
     Args:
         model_config (DisentangledBetaVAEConfig): The Variational Autoencoder configuration setting
-        the main parameters of the model.
+            the main parameters of the model.
 
         encoder (BaseEncoder): An instance of BaseEncoder (inheriting from `torch.nn.Module` which
             plays the role of encoder. This argument allows you to use your own neural networks

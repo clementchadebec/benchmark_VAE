@@ -16,7 +16,8 @@ from .vae_iaf_config import VAE_IAF_Config
 
 
 class VAE_IAF(VAE):
-    """Variational Auto Encoder with Inverse Autoregressive Flows.
+    """Variational Auto Encoder with Inverse Autoregressive Flows 
+    (:class:`~pythae.models.normalizing_flows.IAF`).
 
     Args:
         model_config(VAE_IAF_Config): The Variational Autoencoder configuration seting the main
