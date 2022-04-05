@@ -4,7 +4,7 @@ from ..base import BaseNFConfig
 
 
 @dataclass
-class PlanarFlowConfig(BaseNFConfig):
+class RadialFlowConfig(BaseNFConfig):
     """This is the MADE model configuration instance.
 
     Parameters:
@@ -12,10 +12,4 @@ class PlanarFlowConfig(BaseNFConfig):
         activation (str): The activation function to be applied. Choices: ['linear', 'tanh', 'elu'].
             Default: 'tanh'.
     """
-    activation: str = 'tanh'
-
-    def __post_init_post_parse__(self):
-        assert self.activation in ['linear', 'tanh', 'elu'], (
-            f"'{self.activation}' doesn't correspond to an activation handled by the model. "
-            "Available activations ['linear', 'tanh', 'elu']"
-        )
+    pass

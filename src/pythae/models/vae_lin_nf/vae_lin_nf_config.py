@@ -6,7 +6,7 @@ from typing import List
 from ..vae import VAEConfig
 
 @dataclass
-class VAE_NF_Config(VAEConfig):
+class VAE_LinNF_Config(VAEConfig):
     """VAE with linear Normalizing Flow config class.
 
     Parameters:

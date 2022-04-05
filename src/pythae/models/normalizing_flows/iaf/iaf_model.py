@@ -32,15 +32,6 @@ class IAF(BaseNF):
         self.input_dim = np.prod(model_config.input_dim)
         self.hidden_size = model_config.hidden_size
         self.model_name = "IAF"
-
-        if model_config.input_dim is None:
-            raise AttributeError(
-                "No input dimension provided !"
-                "'input_dim' parameter of MADEConfig instance must be set to 'data_shape' "
-                "where the shape of the data is (C, H, W ..)]. Unable to build network"
-                "automatically"
-            )
-
         self.net = []
 
         made_config = MADEConfig(

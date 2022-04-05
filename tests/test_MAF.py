@@ -50,11 +50,11 @@ class Test_Model_Building:
 
 class Test_Model_Saving:
 
-    def test_creates_saving_path(self, model_configs):
-        dir_path = os.path.join(PATH, 'test/for/saving')
+    def test_creates_saving_path(self, tmpdir, model_configs):
+        tmpdir.mkdir('saving')
+        dir_path = os.path.join(tmpdir, 'saving')
         model = MAF(model_configs)
         model.save(dir_path=dir_path)
-        shutil.rmtree(dir_path)
 
         dir_path = None
         model = MAF(model_configs)
@@ -144,6 +144,8 @@ class Test_Model_forward:
         assert out.log_abs_det_jac.shape == (demo_data["data"].shape[0],)
         assert out.out.shape[1:] == np.prod(maf.model_config.input_dim) # input_dim = output_dim
 
+        assert torch.equal(out.log_abs_det_jac, out.log_abs_det_jac) # check no NaN
+
         out = maf.inverse(out.out)
 
         assert isinstance(out, ModelOutput)
@@ -153,6 +155,8 @@ class Test_Model_forward:
         assert out.out.shape[0] == demo_data["data"].shape[0]
         assert out.log_abs_det_jac.shape == (demo_data["data"].shape[0],)
         assert out.out.shape[1:] == np.prod(maf.model_config.input_dim)
+
+        assert torch.equal(out.log_abs_det_jac, out.log_abs_det_jac) # check no NaN
 
 
 @pytest.mark.slow

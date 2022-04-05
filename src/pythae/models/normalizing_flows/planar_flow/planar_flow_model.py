@@ -1,60 +1,81 @@
 import torch
+import numpy as np
 import torch.nn as nn
-from ..base.base_utils import ModelOutput
+from ...base.base_utils import ModelOutput
 import torch.nn.functional as F
-import math
+import os
 
-from .planar_flow_config import VAE_NF_Config
-from ..base import 
+from .planar_flow_config import PlanarFlowConfig
+from ..base import BaseNF
 
-class PlanarFlow(nn.Module):
-    def __init__(self, dim: int, activation:str='tanh'):
-        f"""
-        Planar flow instance.
+ACTIVATION = {
+    "elu": F.elu,
+    "tanh": torch.tanh,
+    "linear": lambda x: x
+}
 
-        Args:
-            dim (int): The dimension the flows lives in.
+ACTIVATION_DERIVATIVES = {
+    "elu": lambda x: torch.ones_like(x) * (x >= 0) + torch.exp(x) * (x < 0),
+    "tanh": lambda x: 1 - torch.tanh(x) ** 2,
+    "linear": lambda x: 1
+}
 
-            activation (str): The activation function to be applied in the flow. 
-                Possible choices are {[key for key in ACTIVATION.keys()]}. 
-                Default: 'tanh'.
-        """
+class PlanarFlow(BaseNF):
+    f"""Planar flow instance.
 
-        assert activation in ACTIVATION.keys(), (
-            f"`{activation}` function is not handled. Possible activation: "
-            f"{[key for key in ACTIVATION.keys()]}"
-        )
+    Args:
+        model_config (PlanarFlowConfig): The PlanarFlow model configuration setting the main parameters of 
+            the model.
+    """
+    def __init__(self, model_config: PlanarFlowConfig):
 
-        super().__init__()
-        self.dim = dim
-        self.w = nn.Parameter(torch.empty(dim))
-        self.b = nn.Parameter(torch.empty(1))
-        self.u = nn.Parameter(torch.empty(dim))
-        self.activation = ACTIVATION[activation]
-        self.activation_derivative = ACTIVATION_DERIVATIVES[activation]
+        
+        BaseNF.__init__(self, model_config)
+
+        self.w = nn.Parameter(torch.randn(1, self.input_dim))
+        self.u = nn.Parameter(torch.randn(1, self.input_dim))
+        self.b = nn.Parameter(torch.randn(1))
+        self.activation = ACTIVATION[model_config.activation]
+        self.activation_derivative = ACTIVATION_DERIVATIVES[model_config.activation]
+        self.model_name = "PlanarFlow"
 
         nn.init.normal_(self.w)
         nn.init.normal_(self.u)
         nn.init.normal_(self.b)
 
-    def forward(self, z: torch.Tensor):
-        """
-        Forward method of the flow.
+    def forward(self, x: torch.Tensor, **kwargs) -> ModelOutput:
+        """The input data is transformed toward the prior
 
         Args:
-            z (torch.Tensor): The input tensor.
+            inputs (torch.Tensor): An input tensor
 
         Returns:
-            ModelOutput: An instance of ModelOutput containing all the relevant parameters.
+            ModelOutput: An instance of ModelOutput containing all the relevant parameters
         """
-        lin = (z @ self.w + self.b).unsqueeze(1)  # [Bx1]
-        f = z + self.u * self.activation(lin)  # [Bxdim]
-        phi = self.activation_derivative(lin) * self.w  # [Bxdim]
-        log_det = torch.log(torch.abs(1 + phi @ self.u) + 1e-4) # [B]
+        x = x.reshape(x.shape[0], -1)
+        lin = (x @ self.w.T + self.b) # [B x 1]
+        f = x + self.u * self.activation(lin)  # [B x input_dim]
+        phi = self.activation_derivative(lin) @ self.w  # [B x input_dim]
+        log_det = torch.log(torch.abs(1 + phi @ self.u.T) + 1e-4).squeeze() # [B]
         
         output = ModelOutput(
-            z=f,
-            log_det=log_det
+            out=f,
+            log_abs_det_jac=log_det
         )
 
         return output
+
+    @classmethod
+    def _load_model_config_from_folder(cls, dir_path):
+        file_list = os.listdir(dir_path)
+
+        if "model_config.json" not in file_list:
+            raise FileNotFoundError(
+                f"Missing model config file ('model_config.json') in"
+                f"{dir_path}... Cannot perform model building."
+            )
+
+        path_to_model_config = os.path.join(dir_path, "model_config.json")
+        model_config = PlanarFlowConfig.from_json_file(path_to_model_config)
+
+        return model_config

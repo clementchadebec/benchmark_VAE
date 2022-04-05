@@ -11,7 +11,7 @@ Available samplers
     :nosignatures:
 """
 
-from .vae_nf_model import VAE_NF
-from .vae_nf_config import VAE_NF_Config
+from .vae_lin_nf_model import VAE_LinNF
+from .vae_lin_nf_config import VAE_LinNF_Config
 
-__all__ = ["VAE_NF", "VAE_NF_Config"]
+__all__ = ["VAE_LinNF", "VAE_LinNF_Config"]

@@ -70,11 +70,11 @@ class Test_Model_Building:
 
 class Test_Model_Saving:
 
-    def test_creates_saving_path(self, model_config_with_input_dim):
-        dir_path = os.path.join(PATH, 'test/for/saving')
+    def test_creates_saving_path(self, tmpdir, model_config_with_input_dim):
+        tmpdir.mkdir('saving')
+        dir_path = os.path.join(tmpdir, 'saving')
         model = BaseAE(model_config_with_input_dim)
         model.save(dir_path=dir_path)
-        shutil.rmtree(dir_path)
 
 
     def test_default_model_saving(self, tmpdir, model_config_with_input_dim):

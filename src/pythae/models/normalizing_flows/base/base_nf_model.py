@@ -2,6 +2,7 @@ import os
 from copy import deepcopy
 
 import torch
+import numpy as np
 import torch.nn as nn
 
 from ....data.datasets import BaseDataset
@@ -20,7 +21,17 @@ class BaseNF(nn.Module):
     def __init__(self, model_config: BaseNFConfig):
 
         nn.Module.__init__(self)
+
+        if model_config.input_dim is None:
+            raise AttributeError(
+                "No input dimension provided !"
+                "'input_dim' parameter of MADEConfig instance must be set to 'data_shape' "
+                "where the shape of the data is (C, H, W ..)]. Unable to build network"
+                "automatically"
+            )
+
         self.model_config = model_config
+        self.input_dim = np.prod(model_config.input_dim)
 
     def forward(self, x: torch.Tensor, **kwargs) -> ModelOutput:
         """Main forward pass mapping the data towards the prior

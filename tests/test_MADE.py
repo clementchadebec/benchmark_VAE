@@ -52,11 +52,11 @@ class Test_Model_Building:
 
 class Test_Model_Saving:
 
-    def test_creates_saving_path(self, model_configs):
-        dir_path = os.path.join(PATH, 'test/for/saving')
+    def test_creates_saving_path(self, tmpdir, model_configs):
+        tmpdir.mkdir('saving')
+        dir_path = os.path.join(tmpdir, 'saving')
         model = MADE(model_configs)
         model.save(dir_path=dir_path)
-        shutil.rmtree(dir_path)
 
         dir_path = None
         model = MADE(model_configs)

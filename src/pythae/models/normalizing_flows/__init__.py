@@ -23,6 +23,8 @@ from .base import BaseNF, BaseNFConfig, NFModel
 from .iaf import IAF, IAFConfig
 from .made import MADE, MADEConfig
 from .maf import MAF, MAFConfig
+from .planar_flow import PlanarFlow, PlanarFlowConfig
+from .radial_flow import RadialFlow, RadialFlowConfig
 
 __all__ = [
     "BaseNF",
@@ -34,4 +36,8 @@ __all__ = [
     "MAFConfig",
     "IAF",
     "IAFConfig",
+    "PlanarFlow",
+    "PlanarFlowConfig",
+    "RadialFlow",
+    "RadialFlowConfig"
 ]

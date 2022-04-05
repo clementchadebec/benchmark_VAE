@@ -1,27 +1,27 @@
-import math
-import os
-from typing import Optional
-
-import numpy as np
 import torch
-import torch.nn.functional as F
+import torch.nn as nn
+import os
+import numpy as np
 
+from ..vae import VAE
+from .vae_lin_nf_config import VAE_LinNF_Config
 from ...data.datasets import BaseDataset
 from ..base.base_utils import ModelOutput
-from ..nn import BaseDecoder, BaseEncoder
-from ..nn.default_architectures import Encoder_VAE_MLP
-from ..normalizing_flows import IAF, IAFConfig
-from ..vae import VAE
-from .vae_iaf_config import VAE_IAF_Config
+from ..nn import BaseEncoder, BaseDecoder
+from ..normalizing_flows import PlanarFlow, PlanarFlowConfig, RadialFlow, RadialFlowConfig
 
 
-class VAE_IAF(VAE):
-    """Variational Auto Encoder with Inverse Autoregressive Flows 
-    (:class:`~pythae.models.normalizing_flows.IAF`).
+from typing import Optional
 
+import torch.nn.functional as F
+
+
+class VAE_LinNF(VAE):
+    """Variational Auto Encoder with linear Normalizing Flows model.
+    
     Args:
-        model_config(VAE_IAF_Config): The Variational Autoencoder configuration seting the main
-            parameters of the model.
+        model_config(VAE_LinNF_Config): The Variational Autoencoder configuration seting the main 
+        parameters of the model
 
         encoder (BaseEncoder): An instance of BaseEncoder (inheriting from `torch.nn.Module` which
             plays the role of encoder. This argument allows you to use your own neural networks
@@ -33,6 +33,9 @@ class VAE_IAF(VAE):
             architectures if desired. If None is provided, a simple Multi Layer Preception
             (https://en.wikipedia.org/wiki/Multilayer_perceptron) is used. Default: None.
 
+        flows (List[str]): A list of strings corresponding to the class of each flow to be applied.
+            Default: Empty list (no flow is applied).
+
     .. note::
         For high dimensional data we advice you to provide you own network architectures. With the
         provided MLP you may end up with a ``MemoryError``.
@@ -40,28 +43,30 @@ class VAE_IAF(VAE):
 
     def __init__(
         self,
-        model_config: VAE_IAF_Config,
+        model_config: VAE_LinNF_Config,
         encoder: Optional[BaseEncoder] = None,
-        decoder: Optional[BaseDecoder] = None,
+        decoder: Optional[BaseDecoder] = None
     ):
 
         VAE.__init__(self, model_config=model_config, encoder=encoder, decoder=decoder)
 
-        self.model_name = "VAE_IAF"
+        self.model_name = "VAE_LinNF"
 
-        iaf_config = IAFConfig(
-            input_dim=(model_config.latent_dim,),
-            n_made_blocks=model_config.n_made_blocks,
-            n_hidden_in_made=model_config.n_hidden_in_made,
-            hidden_size=model_config.hidden_size,
-            include_batch_norm=False,
-        )
+        self.net = []
+        for flow in model_config.flows:
+            if flow == 'Planar':
+                flow_config = PlanarFlowConfig(input_dim=(model_config.latent_dim,), activation='tanh')
+                self.net.append(PlanarFlow(flow_config))
 
-        self.iaf_flow = IAF(iaf_config)
+            elif flow == 'Radial':
+                flow_config = RadialFlowConfig(input_dim=(model_config.latent_dim,))
+                self.net.append(RadialFlow(flow_config))
+
+        self.net = nn.ModuleList(self.net)
 
     def forward(self, inputs: BaseDataset, **kwargs):
         """
-        The VAE NF model
+        The VAE with linear normalizing flows model
 
         Args:
             inputs (BaseDataset): The training datasat with labels
@@ -81,12 +86,13 @@ class VAE_IAF(VAE):
         z, _ = self._sample_gauss(mu, std)
 
         z0 = z
-
-        # Pass it through the Normalizing flows
-        flow_output = self.iaf_flow.inverse(z)  # sampling
-
-        z = flow_output.out
-        log_abs_det_jac = flow_output.log_abs_det_jac
+        
+        log_abs_det_jac = torch.zeros((z0.shape[0],)).to(z.device)
+        
+        for layer in self.net:
+            layer_output = layer(z)
+            z = layer_output.out
+            log_abs_det_jac += layer_output.log_abs_det_jac
 
         recon_x = self.decoder(z)["reconstruction"]
 
@@ -181,11 +187,12 @@ class VAE_IAF(VAE):
 
                 z0 = z
 
-                # Pass it through the Normalizing flows
-                flow_output = self.iaf_flow.inverse(z)  # sampling
-
-                z = flow_output.out
-                log_abs_det_jac = flow_output.log_abs_det_jac
+                log_abs_det_jac = torch.zeros((z0.shape[0],)).to(z.device)
+        
+                for layer in self.net:
+                    layer_output = layer(z)
+                    z = layer_output.out
+                    log_abs_det_jac += layer_output.log_abs_det_jac
 
                 log_q_z_given_x = (
                     -0.5 * (log_var + torch.pow(z0 - mu, 2) / torch.exp(log_var))
@@ -235,6 +242,6 @@ class VAE_IAF(VAE):
             )
 
         path_to_model_config = os.path.join(dir_path, "model_config.json")
-        model_config = VAE_IAF_Config.from_json_file(path_to_model_config)
+        model_config = VAE_LinNF_Config.from_json_file(path_to_model_config)
 
         return model_config

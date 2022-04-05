@@ -8,7 +8,7 @@ from copy import deepcopy
 from torch.optim import Adam
 
 from pythae.models.base.base_utils import ModelOutput
-from pythae.models.normalizing_flows import IAF, IAFConfig
+from pythae.models.normalizing_flows import RadialFlow, RadialFlowConfig
 from pythae.models.normalizing_flows import NFModel
 from pythae.data.datasets import BaseDataset
 
@@ -19,15 +19,16 @@ from pythae.pipelines import TrainingPipeline
 PATH = os.path.dirname(os.path.abspath(__file__))
 
 
-@pytest.fixture(params=[IAFConfig(n_hidden_in_made=10), IAFConfig(n_made_blocks=2)])
+@pytest.fixture(params=[
+    RadialFlowConfig()])
 def model_configs_no_input_output_dim(request):
     return request.param
 
 
 @pytest.fixture(
     params=[
-        IAFConfig(input_dim=(1, 8, 2), n_made_blocks=2, n_hidden_in_made=1, hidden_size=3),
-        IAFConfig(input_dim=(1, 2, 18), hidden_size=12, include_batch_norm=True, n_made_blocks=1),
+        RadialFlowConfig(input_dim=(1, 8, 2)),
+        RadialFlowConfig(input_dim=(1, 2, 18)),
     ]
 )
 def model_configs(request):
@@ -35,8 +36,10 @@ def model_configs(request):
 
 
 class Test_Model_Building:
+
+    
     def test_build_model(self, model_configs):
-        model = IAF(model_configs)
+        model = RadialFlow(model_configs)
         assert all(
             [
                 model.input_dim == np.prod(model_configs.input_dim),
@@ -46,7 +49,7 @@ class Test_Model_Building:
     def test_raises_no_input_output_dim(
         self, model_configs_no_input_output_dim):
         with pytest.raises(AttributeError):
-            model = IAF(model_configs_no_input_output_dim)
+            model = RadialFlow(model_configs_no_input_output_dim)
 
 
 class Test_Model_Saving:
@@ -54,20 +57,20 @@ class Test_Model_Saving:
     def test_creates_saving_path(self, tmpdir, model_configs):
         tmpdir.mkdir('saving')
         dir_path = os.path.join(tmpdir, 'saving')
-        model = IAF(model_configs)
+        model = RadialFlow(model_configs)
         model.save(dir_path=dir_path)
 
         dir_path = None
-        model = IAF(model_configs)
+        model = RadialFlow(model_configs)
         with pytest.raises(TypeError) or pytest.raises(FileNotFoundError):
             model.save(dir_path=dir_path)
 
     def test_default_model_saving(self, tmpdir, model_configs):
 
         tmpdir.mkdir("dummy_folder")
-        dir_path = dir_path = os.path.join(tmpdir, "dummy_folder")
+        dir_path = os.path.join(tmpdir, "dummy_folder")
 
-        model = IAF(model_configs)
+        model = RadialFlow(model_configs)
 
         rnd_key = list(model.state_dict().keys())[0]
         model.state_dict()[rnd_key][0] = 0
@@ -77,7 +80,7 @@ class Test_Model_Saving:
         assert set(os.listdir(dir_path)) == set(["model_config.json", "model.pt"])
 
         # reload model
-        model_rec = IAF.load_from_folder(dir_path)
+        model_rec = RadialFlow.load_from_folder(dir_path)
 
         # check configs are the same
         assert model_rec.model_config.__dict__ == model.model_config.__dict__
@@ -95,7 +98,7 @@ class Test_Model_Saving:
         tmpdir.mkdir("dummy_folder")
         dir_path = dir_path = os.path.join(tmpdir, "dummy_folder")
 
-        model = IAF(model_configs,)
+        model = RadialFlow(model_configs,)
 
         rnd_key = list(model.state_dict().keys())[0]
         model.state_dict()[rnd_key][0] = 0
@@ -106,18 +109,18 @@ class Test_Model_Saving:
 
         # check raises model.pt is missing
         with pytest.raises(FileNotFoundError):
-            model_rec = IAF.load_from_folder(dir_path)
+            model_rec = RadialFlow.load_from_folder(dir_path)
 
         torch.save({"wrong_key": 0.}, os.path.join(dir_path, "model.pt"))
         # check raises wrong key in model.pt
         with pytest.raises(KeyError):
-            model_rec = IAF.load_from_folder(dir_path)
+            model_rec = RadialFlow.load_from_folder(dir_path)
 
         os.remove(os.path.join(dir_path, "model_config.json"))
 
         # check raises model_config.json is missing
         with pytest.raises(FileNotFoundError):
-            model_rec = IAF.load_from_folder(dir_path)
+            model_rec = RadialFlow.load_from_folder(dir_path)
 
 class Test_Model_forward:
     @pytest.fixture
@@ -128,26 +131,14 @@ class Test_Model_forward:
         return data  # This is an extract of 3 data from MNIST (unnormalized) used to test custom architecture
 
     @pytest.fixture
-    def iaf(self, model_configs, demo_data):
+    def radial_flow(self, model_configs, demo_data):
         model_configs.input_dim = tuple(demo_data["data"][0].shape)
-        return IAF(model_configs)
+        return RadialFlow(model_configs)
 
-    def test_model_train_output(self, iaf, demo_data):
+    def test_model_train_output(self, radial_flow, demo_data):
 
-        iaf.train()
-        out = iaf(demo_data['data'])
-
-        assert isinstance(out, ModelOutput)
-
-        assert set(["out", "log_abs_det_jac"]) == set(out.keys())
-
-        assert out.out.shape[0] == demo_data["data"].shape[0]
-        assert out.log_abs_det_jac.shape == (demo_data["data"].shape[0],)
-        assert out.out.shape[1:] == np.prod(iaf.model_config.input_dim) # input_dim = output_dim
-
-        assert torch.equal(out.log_abs_det_jac, out.log_abs_det_jac) # check no NaN
-
-        out = iaf.inverse(out.out)
+        radial_flow.train()
+        out = radial_flow(demo_data['data'])
 
         assert isinstance(out, ModelOutput)
 
@@ -155,13 +146,13 @@ class Test_Model_forward:
 
         assert out.out.shape[0] == demo_data["data"].shape[0]
         assert out.log_abs_det_jac.shape == (demo_data["data"].shape[0],)
-        assert out.out.shape[1:] == np.prod(iaf.model_config.input_dim)
+        assert out.out.shape[1:] == np.prod(radial_flow.model_config.input_dim) # input_dim = output_dim
 
         assert torch.equal(out.log_abs_det_jac, out.log_abs_det_jac) # check no NaN
 
 
 @pytest.mark.slow
-class Test_IAF_Training:
+class Test_RadialFlow_Training:
     @pytest.fixture
     def train_dataset(self):
         return BaseDataset(torch.randn(3, 12), torch.ones(3))
@@ -177,15 +168,15 @@ class Test_IAF_Training:
 
     @pytest.fixture(
     params=[
-        IAFConfig(input_dim=(12,), n_made_blocks=3, n_hidden_in_made=3, hidden_size=134),
+        RadialFlowConfig(input_dim=(12,)),
     ]
     )
     def model_configs(self, request):
         return request.param
 
     @pytest.fixture
-    def iaf(self, model_configs):
-        model = IAF(model_configs)
+    def radial_flow(self, model_configs):
+        model = RadialFlow(model_configs)
         return model
 
     @pytest.fixture()
@@ -199,10 +190,10 @@ class Test_IAF_Training:
             )
 
     @pytest.fixture(params=[Adam])
-    def optimizers(self, request, iaf, training_configs):
+    def optimizers(self, request, radial_flow, training_configs):
         if request.param is not None:
             optimizer = request.param(
-                iaf.parameters(), lr=training_configs.learning_rate
+                radial_flow.parameters(), lr=training_configs.learning_rate
             )
 
         else:
@@ -210,9 +201,9 @@ class Test_IAF_Training:
 
         return optimizer
 
-    def test_iaf_train_step(self, iaf, prior, train_dataset, training_configs, optimizers):
+    def test_radial_flow_train_step(self, radial_flow, prior, train_dataset, training_configs, optimizers):
 
-        nf_model = NFModel(prior=prior, flow=iaf)
+        nf_model = NFModel(prior=prior, flow=radial_flow)
 
         trainer = BaseTrainer(
             model=nf_model,
@@ -235,9 +226,9 @@ class Test_IAF_Training:
             ]
         )
 
-    def test_iaf_eval_step(self, iaf, prior, train_dataset, training_configs, optimizers):
+    def test_radial_flow_eval_step(self, radial_flow, prior, train_dataset, training_configs, optimizers):
 
-        nf_model = NFModel(prior=prior, flow=iaf)
+        nf_model = NFModel(prior=prior, flow=radial_flow)
 
         trainer = BaseTrainer(
             model=nf_model,
@@ -261,10 +252,10 @@ class Test_IAF_Training:
             ]
         )
 
-    def test_iaf_main_train_loop(
-        self, iaf, prior, train_dataset, training_configs, optimizers):
+    def test_radial_flow_main_train_loop(
+        self, radial_flow, prior, train_dataset, training_configs, optimizers):
 
-        nf_model = NFModel(prior=prior, flow=iaf)
+        nf_model = NFModel(prior=prior, flow=radial_flow)
 
         trainer = BaseTrainer(
             model=nf_model,
@@ -288,12 +279,12 @@ class Test_IAF_Training:
         )
 
     def test_checkpoint_saving(
-        self, tmpdir, iaf, prior, train_dataset, training_configs, optimizers
+        self, tmpdir, radial_flow, prior, train_dataset, training_configs, optimizers
     ):
 
         dir_path = training_configs.output_dir
 
-        nf_model = NFModel(prior=prior, flow=iaf)
+        nf_model = NFModel(prior=prior, flow=radial_flow)
 
         trainer = BaseTrainer(
             model=nf_model,
@@ -335,7 +326,7 @@ class Test_IAF_Training:
         )
 
         # check reload full model
-        model_rec = IAF.load_from_folder(os.path.join(checkpoint_dir))
+        model_rec = RadialFlow.load_from_folder(os.path.join(checkpoint_dir))
 
         assert all(
             [
@@ -368,14 +359,14 @@ class Test_IAF_Training:
         )
 
     def test_checkpoint_saving_during_training(
-        self, tmpdir, iaf, prior, train_dataset, training_configs, optimizers
+        self, tmpdir, radial_flow, prior, train_dataset, training_configs, optimizers
     ):
         #
         target_saving_epoch = training_configs.steps_saving
 
         dir_path = training_configs.output_dir
 
-        nf_model = NFModel(prior=prior, flow=iaf)
+        nf_model = NFModel(prior=prior, flow=radial_flow)
 
         trainer = BaseTrainer(
             model=nf_model,
@@ -389,7 +380,7 @@ class Test_IAF_Training:
         trainer.train()
 
         training_dir = os.path.join(
-            dir_path, f"IAF_training_{trainer._training_signature}"
+            dir_path, f"RadialFlow_training_{trainer._training_signature}"
         )
         assert os.path.isdir(training_dir)
 
@@ -418,12 +409,12 @@ class Test_IAF_Training:
         )
 
     def test_final_model_saving(
-        self, tmpdir, iaf, prior, train_dataset, training_configs, optimizers
+        self, tmpdir, radial_flow, prior, train_dataset, training_configs, optimizers
     ):
 
         dir_path = training_configs.output_dir
 
-        nf_model = NFModel(prior=prior, flow=iaf)
+        nf_model = NFModel(prior=prior, flow=radial_flow)
 
         trainer = BaseTrainer(
             model=nf_model,
@@ -437,7 +428,7 @@ class Test_IAF_Training:
         model = deepcopy(trainer._best_model.flow)
 
         training_dir = os.path.join(
-            dir_path, f"IAF_training_{trainer._training_signature}"
+            dir_path, f"RadialFlow_training_{trainer._training_signature}"
         )
         assert os.path.isdir(training_dir)
 
@@ -452,7 +443,7 @@ class Test_IAF_Training:
 
 
         # check reload full model
-        model_rec = IAF.load_from_folder(os.path.join(final_dir))
+        model_rec = RadialFlow.load_from_folder(os.path.join(final_dir))
 
         assert all(
             [
@@ -463,11 +454,11 @@ class Test_IAF_Training:
             ]
         )
 
-    def test_iaf_training_pipeline(self, tmpdir, iaf, prior, train_dataset, training_configs):
+    def test_radial_flow_training_pipeline(self, tmpdir, radial_flow, prior, train_dataset, training_configs):
 
         dir_path = training_configs.output_dir
 
-        nf_model = NFModel(prior=prior, flow=iaf)
+        nf_model = NFModel(prior=prior, flow=radial_flow)
 
         # build pipeline
         pipeline = TrainingPipeline(model=nf_model, training_config=training_configs)
@@ -483,7 +474,7 @@ class Test_IAF_Training:
         model = deepcopy(pipeline.trainer._best_model.flow)
 
         training_dir = os.path.join(
-            dir_path, f"IAF_training_{pipeline.trainer._training_signature}"
+            dir_path, f"RadialFlow_training_{pipeline.trainer._training_signature}"
         )
         assert os.path.isdir(training_dir)
 
@@ -497,7 +488,7 @@ class Test_IAF_Training:
         )
 
         # check reload full model
-        model_rec = IAF.load_from_folder(os.path.join(final_dir))
+        model_rec = RadialFlow.load_from_folder(os.path.join(final_dir))
 
         assert all(
             [
