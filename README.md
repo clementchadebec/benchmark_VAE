@@ -62,6 +62,7 @@ Below is the list of the models currently implemented in the library.
 | Autoencoder (AE)                   | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/notebooks/models_training/ae_training.ipynb) |                                              |                                                                            |
 | Variational Autoencoder (VAE)      | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/notebooks/models_training/vae_training.ipynb) | [link](https://arxiv.org/abs/1312.6114)  |
 | Beta Variational Autoencoder (BetaVAE) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/notebooks/models_training/beta_vae_training.ipynb) | [link](https://openreview.net/pdf?id=Sy2fzU9gl)  |   
+VAE with Inverse Autoregressive Flows (VAE_IAF) |  [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/notebooks/models_training/vae_iaf_training.ipynb) | [link](https://arxiv.org/abs/1606.04934) |  [link](https://github.com/openai/iaf)                                  |
 | Disentangled Beta Variational Autoencoder (DisentangledBetaVAE) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/notebooks/models_training/disentangled_beta_vae_training.ipynb) | [link](https://arxiv.org/abs/1804.03599)  |   
 | Disentangling by Factorising (FactorVAE) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/notebooks/models_training/factor_vae_training.ipynb) | [link](https://arxiv.org/abs/1802.05983)  |                                                                            |
 | Beta-TC-VAE (BetaTCVAE) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/notebooks/models_training/beta_tc_vae_training.ipynb) | [link](https://arxiv.org/abs/1802.04942)  |  [link](https://github.com/rtqichen/beta-tcvae)
@@ -92,7 +93,9 @@ Below is the list of the models currently implemented in the library.
 | Two stage VAE sampler (TwoStageVAESampler)					| all VAE based models| [link](https://openreview.net/pdf?id=B1e0X3C9tQ)  | [link](https://github.com/daib13/TwoStageVAE/) |)
 | Unit sphere uniform sampler (HypersphereUniformSampler)                     |    SVAE  		  | [link](https://arxiv.org/abs/1804.00891)      |		[link](https://github.com/nicola-decao/s-vae-pytorch)
 | VAMP prior sampler (VAMPSampler)                   |    VAMP   		  | [link](https://arxiv.org/abs/1705.07120) 	  | [link](https://github.com/jmtomczak/vae_vampprior) |
-| Manifold sampler (RHVAESampler)                     |    RHVAE  		  | [link](https://arxiv.org/abs/2105.00026)      |													|
+| Manifold sampler (RHVAESampler)                     |    RHVAE  		  | [link](https://arxiv.org/abs/2105.00026)      |	[link](https://github.com/clementchadebec/pyraug)|
+| Masked Autoregressive Flow Sampler (MAFSampler) | all models | [link](https://arxiv.org/abs/1705.07057v4)      |	[link](https://github.com/gpapamak/maf) |
+| Inverse Autoregressive Flow Sampler (IAFSampler) | all models | [link](https://arxiv.org/abs/1606.04934) |  [link](https://github.com/openai/iaf)             |                     
 
 
 ## Launching a model training
@@ -125,12 +128,12 @@ To launch a model training, you only need to call a `TrainingPipeline` instance.
 >>> pipeline = TrainingPipeline(
 ... 	training_config=my_training_config,
 ... 	model=my_vae_model
-...	)
+... )
 >>> # Launch the Pipeline
 >>> pipeline(
 ...	train_data=your_train_data, # must be torch.Tensor or np.array 
 ...	eval_data=your_eval_data # must be torch.Tensor or np.array
-...	)
+... )
 ```
 
 At the end of training, the best model weights, model configuration and training configuration are stored in a `final_model` folder available in  `my_model/MODEL_NAME_training_YYYY-MM-DD_hh-mm-ss` (with `my_model` being the `output_dir` argument of the `BaseTrainerConfig`). If you further set the `steps_saving` argument to a certain value, folders named `checkpoint_epoch_k` containing the best model weights, optimizer, scheduler, configuration and training configuration at epoch *k* will also appear in `my_model/MODEL_NAME_training_YYYY-MM-DD_hh-mm-ss`.
@@ -273,6 +276,7 @@ First let's have a look at the reconstructed samples taken from the evaluation s
 | AE                  | ![AE](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/ae_reconstruction_mnist.png) | ![AE](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/ae_reconstruction_celeba.png)                                                                            |
 | VAE | ![VAE](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/vae_reconstruction_mnist.png) |  ![VAE](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/vae_reconstruction_celeba.png)
 | Beta-VAE| ![Beta](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/beta_vae_reconstruction_mnist.png) | ![Beta Normal](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/beta_vae_reconstruction_celeba.png)
+| VAE IAF| ![VAE_IAF](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/vae_iaf_reconstruction_mnist.png) | ![VAE_IAF Normal](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/vae_iaf_reconstruction_celeba.png)
 | Disentangled  Beta-VAE| ![Disentangled Beta](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/disentangled_beta_vae_reconstruction_mnist.png) | ![Disentangled Beta](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/disentangled_beta_vae_reconstruction_celeba.png)
 | FactorVAE| ![FactorVAE](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/factor_vae_reconstruction_mnist.png) | ![FactorVAE](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/factor_vae_reconstruction_celeba.png)
 | BetaTCVAE| ![BetaTCVAE](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/beta_tc_vae_reconstruction_mnist.png) | ![BetaTCVAE](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/beta_tc_vae_reconstruction_celeba.png)
@@ -300,7 +304,10 @@ Here, we show the generated samples using using each model implemented in the li
 | AE  + GaussianMixtureSampler                  | ![AE GMM](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/ae_gmm_sampling_mnist.png) | ![AE GMM](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/ae_gmm_sampling_celeba.png)                                                                            |
 | VAE  + NormalSampler    | ![VAE Normal](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/vae_normal_sampling_mnist.png) |  ![VAE Normal](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/vae_normal_sampling_celeba.png)
 | VAE  + GaussianMixtureSampler    | ![VAE GMM](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/vae_gmm_sampling_mnist.png) |  ![VAE GMM](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/vae_gmm_sampling_celeba.png)
+| VAE  + TwoStageVAESampler    | ![VAE 2 stage](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/vae_second_stage_sampling_mnist.png) |  ![VAE 2 stage](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/vae_second_stage_sampling_celeba.png)
+| VAE  + MAFSampler    | ![VAE MAF](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/vae_maf_sampling_mnist.png) |  ![VAE MAF](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/vae_maf_sampling_celeba.png)
 | Beta-VAE + NormalSampler | ![Beta Normal](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/beta_vae_normal_sampling_mnist.png) | ![Beta Normal](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/beta_vae_normal_sampling_celeba.png)
+| VAE IAF + NormalSampler | ![VAE_IAF Normal](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/vae_iaf_normal_sampling_mnist.png) | ![VAE IAF Normal](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/vae_iaf_normal_sampling_celeba.png)
 | Disentangled Beta-VAE + NormalSampler | ![Disentangled Beta Normal](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/disentangled_beta_vae_normal_sampling_mnist.png) | ![Disentangled Beta Normal](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/disentangled_beta_vae_normal_sampling_celeba.png)
 | FactorVAE + NormalSampler | ![FactorVAE Normal](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/factor_vae_normal_sampling_mnist.png) | ![FactorVAE Normal](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/factor_vae_normal_sampling_celeba.png)
 | BetaTCVAE + NormalSampler | ![BetaTCVAE Normal](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/beta_tc_vae_normal_sampling_mnist.png) | ![BetaTCVAE Normal](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/beta_tc_vae_normal_sampling_celeba.png)

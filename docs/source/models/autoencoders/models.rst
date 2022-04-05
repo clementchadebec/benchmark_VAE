@@ -13,6 +13,7 @@ Autoencoders
     ae
     vae
     betavae
+    vae_iaf
     disentangled_betavae
     factorvae
     betatcvae
@@ -42,6 +43,7 @@ Available Models
     ~pythae.models.AE
     ~pythae.models.VAE
     ~pythae.models.BetaVAE
+    ~pythae.models.VAE_IAF
     ~pythae.models.DisentangledBetaVAE
     ~pythae.models.FactorVAE
     ~pythae.models.BetaTCVAE

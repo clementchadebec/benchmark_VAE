@@ -33,8 +33,7 @@ def model_configs_no_input_dim(request):
             latent_dim=5,
             n_made_blocks=1,
             n_hidden_in_made=2,
-            hidden_size=142,
-            include_batch_norm=True),
+            hidden_size=142),
     ]
 )
 def model_configs(request):

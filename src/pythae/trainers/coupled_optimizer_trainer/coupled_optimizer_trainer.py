@@ -27,7 +27,7 @@ logger.setLevel(logging.INFO)
 
 
 class CoupledOptimizerTrainer(BaseTrainer):
-    """Trainer using disctinct optimizers for encoder and decoder nn.
+    """Trainer using distinct optimizers for encoder and decoder nn.
 
     Args:
         model (BaseAE): The model to train

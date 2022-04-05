@@ -30,6 +30,8 @@ examples/notebooks/dummy_output_dir/*
 examples/scripts/reproducibility/*
 wandb
 examples/notebooks/dummy_output_dir/
+examples/notebooks/models_training/dummy_output_dir/
+
 
 
 # Byte-compiled / optimized / DLL files

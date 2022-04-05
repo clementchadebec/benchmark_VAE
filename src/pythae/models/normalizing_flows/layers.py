@@ -13,8 +13,8 @@ from pythae.models.base.base_utils import ModelOutput
 
 
 class MaskedLinear(nn.Linear):
-    """Masked Linear Layer inheriting from `~torch.nn.Linear` class and applying a mask to consider 
-        only a selection of weight. 
+    """Masked Linear Layer inheriting from `~torch.nn.Linear` class and applying a mask to consider
+    only a selection of weight.
     """
 
     def __init__(self, in_features, out_features, mask):
@@ -72,8 +72,14 @@ class BatchNorm(nn.Module):
 
     def inverse(self, y):
         if self.training:
-            mean = self.batch_mean
-            var = self.batch_mean
+
+            if not hasattr(self, "batch_mean") or not hasattr(self, "batch_var"):
+                mean = torch.zeros(1).to(y.device)
+                var = torch.ones(1).to(y.device)
+
+            else:
+                mean = self.batch_mean
+                var = self.batch_var
 
         else:
             mean = self.running_mean

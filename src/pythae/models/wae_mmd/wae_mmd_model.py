@@ -16,7 +16,7 @@ class WAE_MMD(AE):
     """Wasserstein Autoencoder model.
 
     Args:
-        model_config (WAE_MMD_Config): The Autoencoder configuration setting the main parameters 
+        model_config (WAE_MMD_Config): The Autoencoder configuration setting the main parameters
             of the model.
 
         encoder (BaseEncoder): An instance of BaseEncoder (inheriting from `torch.nn.Module` which

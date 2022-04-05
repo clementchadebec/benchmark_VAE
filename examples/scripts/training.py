@@ -60,7 +60,7 @@ ap.add_argument(
         "disentangled_beta_vae",
         "factor_vae",
         "beta_tc_vae",
-        "vae_nf"
+        "vae_nf",
         "vae_iaf"
     ],
     required=True,

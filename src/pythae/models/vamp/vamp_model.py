@@ -19,7 +19,7 @@ class VAMP(VAE):
 
     Args:
         model_config (VAEConfig): The Variational Autoencoder configuration setting the main
-        parameters of the model.
+            parameters of the model.
 
         encoder (BaseEncoder): An instance of BaseEncoder (inheriting from `torch.nn.Module` which
             plays the role of encoder. This argument allows you to use your own neural networks
@@ -215,7 +215,7 @@ class VAMP(VAE):
 
                 if self.model_config.reconstruction_loss == "mse":
 
-                    log_p_x_given_z = -F.mse_loss(
+                    log_p_x_given_z = -0.5 * F.mse_loss(
                         recon_x.reshape(x_rep.shape[0], -1),
                         x_rep.reshape(x_rep.shape[0], -1),
                         reduction="none",

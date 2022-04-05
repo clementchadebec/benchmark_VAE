@@ -20,8 +20,8 @@ def dummy_data():
 
 @pytest.fixture(
     params=[
-        VAMP(VAMPConfig(input_dim=(1, 28, 28))),
-        VAE(VAEConfig(input_dim=(1, 28, 28))),
+        VAMP(VAMPConfig(input_dim=(1, 28, 28), latent_dim=2)),
+        VAE(VAEConfig(input_dim=(1, 28, 28), latent_dim=4)),
     ]
 )
 def model(request):
@@ -77,7 +77,6 @@ class Test_TwoStageVAESampler_saving:
         )
 
         assert generation_config_rec.__dict__ == sampler.sampler_config.__dict__
-
 
 class Test_TwoStageVAESampler_Sampling:
     @pytest.fixture()

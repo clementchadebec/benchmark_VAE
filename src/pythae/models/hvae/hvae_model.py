@@ -289,7 +289,7 @@ class HVAE(VAE):
 
                 if self.model_config.reconstruction_loss == "mse":
 
-                    log_p_x_given_z = -F.mse_loss(
+                    log_p_x_given_z = -0.5 * F.mse_loss(
                         recon_x.reshape(x_rep.shape[0], -1),
                         x_rep.reshape(x_rep.shape[0], -1),
                         reduction="none",

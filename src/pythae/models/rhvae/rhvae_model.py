@@ -26,7 +26,7 @@ class RHVAE(VAE):
 
 
     Args:
-        model_config (RHVAEConfig): A model configuration setting the main parameters of the model
+        model_config (RHVAEConfig): A model configuration setting the main parameters of the model.
 
         encoder (BaseEncoder): An instance of BaseEncoder (inheriting from `torch.nn.Module` which
             plays the role of encoder. This argument allows you to use your own neural networks
@@ -533,25 +533,22 @@ class RHVAE(VAE):
                 )  # rho0 ~ N(0, 1/beta_0 * G(z0))
 
                 log_p_rho = (
-                    (
-                        -0.5
-                        * (
-                            torch.transpose(rho.unsqueeze(-1), 1, 2)
-                            @ G_inv
-                            @ rho.unsqueeze(-1)
-                        )
-                        .squeeze()
-                        .squeeze()
-                        - 0.5 * G_log_det
+                    -0.5
+                    * (
+                        torch.transpose(rho.unsqueeze(-1), 1, 2)
+                        @ G_inv
+                        @ rho.unsqueeze(-1)
                     )
-                    - torch.log(torch.tensor([2 * np.pi]).to(z.device))
-                    * self.latent_dim
-                    / 2
-                )  # rho0 ~ N(0, G(z))
+                    .squeeze()
+                    .squeeze()
+                    - 0.5 * G_log_det
+                ) - torch.log(
+                    torch.tensor([2 * np.pi]).to(z.device)
+                ) * self.latent_dim / 2  # rho0 ~ N(0, G(z))
 
                 if self.model_config.reconstruction_loss == "mse":
 
-                    log_p_x_given_z = -F.mse_loss(
+                    log_p_x_given_z = -0.5 * F.mse_loss(
                         recon_x.reshape(x_rep.shape[0], -1),
                         x_rep.reshape(x_rep.shape[0], -1),
                         reduction="none",
