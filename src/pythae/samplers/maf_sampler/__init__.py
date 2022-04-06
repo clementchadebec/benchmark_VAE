@@ -8,6 +8,7 @@ Available models:
     ~pythae.models.AE
     ~pythae.models.VAE
     ~pythae.models.BetaVAE
+    ~pythae.models.VAE_LinNF
     ~pythae.models.VAE_IAF
     ~pythae.models.DisentangledBetaVAE
     ~pythae.models.FactorVAE

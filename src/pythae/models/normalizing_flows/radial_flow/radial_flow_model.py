@@ -12,7 +12,7 @@ from .radial_flow_config import RadialFlowConfig
 
 
 class RadialFlow(BaseNF):
-    f"""Radial flow instance.
+    """Radial Flow model.
 
     Args:
         model_config (RadialFlowConfig): The RadialFlow model configuration setting the main parameters of

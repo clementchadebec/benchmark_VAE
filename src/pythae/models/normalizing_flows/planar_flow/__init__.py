@@ -1,5 +1,5 @@
 """
-Implementation of Planar Flows (Planar Flow) proposed
+Implementation of Planar Flows (PlanarFlow) proposed
 in (https://arxiv.org/abs/1505.05770)
 """
 

@@ -1,5 +1,5 @@
 """
-Implementation of Radial Flows (Planar Flow) proposed
+Implementation of Radial Flows (RadialFlow) proposed
 in (https://arxiv.org/abs/1505.05770)
 """
 

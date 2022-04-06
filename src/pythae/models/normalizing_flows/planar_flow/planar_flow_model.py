@@ -19,7 +19,7 @@ ACTIVATION_DERIVATIVES = {
 
 
 class PlanarFlow(BaseNF):
-    f"""Planar flow instance.
+    """Planar Flow model.
 
     Args:
         model_config (PlanarFlowConfig): The PlanarFlow model configuration setting the main parameters of

@@ -5,7 +5,7 @@ from ..base import BaseNFConfig
 
 @dataclass
 class PlanarFlowConfig(BaseNFConfig):
-    """This is the MADE model configuration instance.
+    """This is the PlanarFlow model configuration instance.
 
     Parameters:
         input_dim (tuple): The input data dimension. Default: None.
