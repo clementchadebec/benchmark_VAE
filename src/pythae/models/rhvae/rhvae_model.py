@@ -174,7 +174,7 @@ class RHVAE(VAE):
                 M.unsqueeze(0)
                 * torch.exp(
                     -torch.norm(mu.unsqueeze(0) - z.unsqueeze(1), dim=-1) ** 2
-                    / (self.temperature ** 2)
+                    / (self.temperature**2)
                 )
                 .unsqueeze(-1)
                 .unsqueeze(-1)
@@ -214,7 +214,7 @@ class RHVAE(VAE):
                     M.unsqueeze(0)
                     * torch.exp(
                         -torch.norm(mu.unsqueeze(0) - z.unsqueeze(1), dim=-1) ** 2
-                        / (self.temperature ** 2)
+                        / (self.temperature**2)
                     )
                     .unsqueeze(-1)
                     .unsqueeze(-1)
@@ -324,7 +324,7 @@ class RHVAE(VAE):
                             self.centroids_tens.unsqueeze(0) - z.unsqueeze(1), dim=-1
                         )
                         ** 2
-                        / (self.temperature ** 2)
+                        / (self.temperature**2)
                     )
                     .unsqueeze(-1)
                     .unsqueeze(-1)
@@ -340,7 +340,7 @@ class RHVAE(VAE):
                         self.centroids_tens.unsqueeze(0) - z.unsqueeze(1), dim=-1
                     )
                     ** 2
-                    / (self.temperature ** 2)
+                    / (self.temperature**2)
                 )
                 .unsqueeze(-1)
                 .unsqueeze(-1)
@@ -526,7 +526,7 @@ class RHVAE(VAE):
                 log_q_z0_given_x = -0.5 * (
                     log_var + (z0 - mu) ** 2 / torch.exp(log_var)
                 ).sum(dim=-1)
-                log_p_z = -0.5 * (z ** 2).sum(dim=-1)
+                log_p_z = -0.5 * (z**2).sum(dim=-1)
 
                 log_p_rho0 = normal.log_prob(gamma) - torch.logdet(
                     L / self.beta_zero_sqrt

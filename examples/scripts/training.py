@@ -62,7 +62,7 @@ ap.add_argument(
         "beta_tc_vae",
         "vae_nf",
         "vae_iaf",
-        "vae_lin_nf"
+        "vae_lin_nf",
     ],
     required=True,
 )

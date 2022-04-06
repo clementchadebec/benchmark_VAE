@@ -5,9 +5,8 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from ...base.base_utils import ModelOutput
-
 from ....data.datasets import BaseDataset
+from ...base.base_utils import ModelOutput
 from ..base import BaseNF
 from ..layers import BatchNorm
 from ..made import MADE, MADEConfig

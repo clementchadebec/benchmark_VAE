@@ -12,4 +12,5 @@ class RadialFlowConfig(BaseNFConfig):
         activation (str): The activation function to be applied. Choices: ['linear', 'tanh', 'elu'].
             Default: 'tanh'.
     """
+
     pass

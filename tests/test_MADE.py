@@ -25,7 +25,7 @@ def model_configs_no_input_output_dim(request):
 
 @pytest.fixture(
     params=[
-        MADEConfig(input_dim=(1, 8, 2), output_dim=(1, 10), degrees_ordering='random'),
+        MADEConfig(input_dim=(1, 8, 2), output_dim=(1, 10), degrees_ordering="random"),
         MADEConfig(input_dim=(1, 2, 18), output_dim=(1, 5), hidden_sizes=[3, 5, 6]),
     ]
 )
@@ -44,17 +44,15 @@ class Test_Model_Building:
             ]
         )
 
-    def test_raises_no_input_output_dim(
-        self, model_configs_no_input_output_dim):
+    def test_raises_no_input_output_dim(self, model_configs_no_input_output_dim):
         with pytest.raises(AttributeError):
             model = MADE(model_configs_no_input_output_dim)
 
 
 class Test_Model_Saving:
-
     def test_creates_saving_path(self, tmpdir, model_configs):
-        tmpdir.mkdir('saving')
-        dir_path = os.path.join(tmpdir, 'saving')
+        tmpdir.mkdir("saving")
+        dir_path = os.path.join(tmpdir, "saving")
         model = MADE(model_configs)
         model.save(dir_path=dir_path)
 
@@ -89,13 +87,14 @@ class Test_Model_Saving:
             ]
         )
 
-    def test_raises_missing_files(
-        self, tmpdir, model_configs):
+    def test_raises_missing_files(self, tmpdir, model_configs):
 
         tmpdir.mkdir("dummy_folder")
         dir_path = dir_path = os.path.join(tmpdir, "dummy_folder")
 
-        model = MADE(model_configs,)
+        model = MADE(
+            model_configs,
+        )
 
         model.state_dict()["net.0.weight"][0] = 0
 
@@ -107,7 +106,7 @@ class Test_Model_Saving:
         with pytest.raises(FileNotFoundError):
             model_rec = MADE.load_from_folder(dir_path)
 
-        torch.save({"wrong_key": 0.}, os.path.join(dir_path, "model.pt"))
+        torch.save({"wrong_key": 0.0}, os.path.join(dir_path, "model.pt"))
         # check raises wrong key in model.pt
         with pytest.raises(KeyError):
             model_rec = MADE.load_from_folder(dir_path)
@@ -117,6 +116,7 @@ class Test_Model_Saving:
         # check raises model_config.json is missing
         with pytest.raises(FileNotFoundError):
             model_rec = MADE.load_from_folder(dir_path)
+
 
 class Test_Model_forward:
     @pytest.fixture
@@ -135,7 +135,7 @@ class Test_Model_forward:
     def test_model_train_output(self, made, demo_data):
 
         made.train()
-        out = made(demo_data['data'])
+        out = made(demo_data["data"])
 
         assert isinstance(out, ModelOutput)
 
@@ -147,8 +147,8 @@ class Test_Model_forward:
         assert out.log_var.shape[1:] == np.prod(made.model_config.output_dim)
 
 
-#@pytest.mark.slow
-#class Test_MADE_Training:
+# @pytest.mark.slow
+# class Test_MADE_Training:
 #    @pytest.fixture
 #    def train_dataset(self):
 #        return torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))

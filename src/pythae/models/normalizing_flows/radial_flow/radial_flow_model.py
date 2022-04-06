@@ -1,24 +1,26 @@
-import torch
-import numpy as np
-import torch.nn as nn
-from ...base.base_utils import ModelOutput
-import torch.nn.functional as F
 import math
 import os
 
-from .radial_flow_config import RadialFlowConfig
+import numpy as np
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
+from ...base.base_utils import ModelOutput
 from ..base import BaseNF
+from .radial_flow_config import RadialFlowConfig
+
 
 class RadialFlow(BaseNF):
     f"""Radial flow instance.
 
     Args:
-        model_config (RadialFlowConfig): The RadialFlow model configuration setting the main parameters of 
+        model_config (RadialFlowConfig): The RadialFlow model configuration setting the main parameters of
             the model.
     """
+
     def __init__(self, model_config: RadialFlowConfig):
 
-        
         BaseNF.__init__(self, model_config)
 
         self.x0 = nn.Parameter(torch.randn(1, self.input_dim))
@@ -26,7 +28,7 @@ class RadialFlow(BaseNF):
         self.beta = nn.Parameter(torch.randn(1))
         self.model_name = "RadialFlow"
 
-        nn.init.normal_(self.x0) 
+        nn.init.normal_(self.x0)
         nn.init.normal_(self.log_alpha)
         nn.init.normal_(self.beta)
 
@@ -42,17 +44,15 @@ class RadialFlow(BaseNF):
         x = x.reshape(x.shape[0], -1)
         x_sub = x - self.x0
         alpha = torch.exp(self.log_alpha)
-        beta = -alpha + torch.log(1 + self.beta.exp()) # ensure invertibility
-        r = torch.norm(x_sub, dim=-1, keepdim=True) # [Bx1]
-        h = 1 / (alpha + r) # [Bx1]
-        f = x + beta * h * x_sub #[Bxdim]
-        log_det = (self.input_dim - 1) * torch.log(1 + beta * h) + \
-            torch.log(1 + beta * h - beta * r / (alpha + r) ** 2)
-
-        output = ModelOutput(
-            out=f,
-            log_abs_det_jac=log_det.squeeze()
+        beta = -alpha + torch.log(1 + self.beta.exp())  # ensure invertibility
+        r = torch.norm(x_sub, dim=-1, keepdim=True)  # [Bx1]
+        h = 1 / (alpha + r)  # [Bx1]
+        f = x + beta * h * x_sub  # [Bxdim]
+        log_det = (self.input_dim - 1) * torch.log(1 + beta * h) + torch.log(
+            1 + beta * h - beta * r / (alpha + r) ** 2
         )
+
+        output = ModelOutput(out=f, log_abs_det_jac=log_det.squeeze())
 
         return output
 

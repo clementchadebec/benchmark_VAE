@@ -338,9 +338,17 @@ class WandbCallback(TrainingCallback):
                 data_to_log.append(
                     [
                         f"img_{i}",
-                        self._wandb.Image(true_data[i].cpu().detach().numpy()),
-                        self._wandb.Image(reconstructions[i].cpu().detach().numpy()),
-                        self._wandb.Image(generations[i].cpu().detach().numpy()),
+                        self._wandb.Image(
+                            np.moveaxis(true_data[i].cpu().detach().numpy(), 0, -1)
+                        ),
+                        self._wandb.Image(
+                            np.moveaxis(
+                                reconstructions[i].cpu().detach().numpy(), 0, -1
+                            )
+                        ),
+                        self._wandb.Image(
+                            np.moveaxis(generations[i].cpu().detach().numpy(), 0, -1)
+                        ),
                     ]
                 )
 

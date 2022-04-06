@@ -1,8 +1,8 @@
 import os
 from copy import deepcopy
 
-import torch
 import numpy as np
+import torch
 import torch.nn as nn
 
 from ....data.datasets import BaseDataset

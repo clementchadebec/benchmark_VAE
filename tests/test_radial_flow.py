@@ -19,8 +19,7 @@ from pythae.pipelines import TrainingPipeline
 PATH = os.path.dirname(os.path.abspath(__file__))
 
 
-@pytest.fixture(params=[
-    RadialFlowConfig()])
+@pytest.fixture(params=[RadialFlowConfig()])
 def model_configs_no_input_output_dim(request):
     return request.param
 
@@ -36,8 +35,6 @@ def model_configs(request):
 
 
 class Test_Model_Building:
-
-    
     def test_build_model(self, model_configs):
         model = RadialFlow(model_configs)
         assert all(
@@ -46,17 +43,15 @@ class Test_Model_Building:
             ]
         )
 
-    def test_raises_no_input_output_dim(
-        self, model_configs_no_input_output_dim):
+    def test_raises_no_input_output_dim(self, model_configs_no_input_output_dim):
         with pytest.raises(AttributeError):
             model = RadialFlow(model_configs_no_input_output_dim)
 
 
 class Test_Model_Saving:
-
     def test_creates_saving_path(self, tmpdir, model_configs):
-        tmpdir.mkdir('saving')
-        dir_path = os.path.join(tmpdir, 'saving')
+        tmpdir.mkdir("saving")
+        dir_path = os.path.join(tmpdir, "saving")
         model = RadialFlow(model_configs)
         model.save(dir_path=dir_path)
 
@@ -92,13 +87,14 @@ class Test_Model_Saving:
             ]
         )
 
-    def test_raises_missing_files(
-        self, tmpdir, model_configs):
+    def test_raises_missing_files(self, tmpdir, model_configs):
 
         tmpdir.mkdir("dummy_folder")
         dir_path = dir_path = os.path.join(tmpdir, "dummy_folder")
 
-        model = RadialFlow(model_configs,)
+        model = RadialFlow(
+            model_configs,
+        )
 
         rnd_key = list(model.state_dict().keys())[0]
         model.state_dict()[rnd_key][0] = 0
@@ -111,7 +107,7 @@ class Test_Model_Saving:
         with pytest.raises(FileNotFoundError):
             model_rec = RadialFlow.load_from_folder(dir_path)
 
-        torch.save({"wrong_key": 0.}, os.path.join(dir_path, "model.pt"))
+        torch.save({"wrong_key": 0.0}, os.path.join(dir_path, "model.pt"))
         # check raises wrong key in model.pt
         with pytest.raises(KeyError):
             model_rec = RadialFlow.load_from_folder(dir_path)
@@ -121,6 +117,7 @@ class Test_Model_Saving:
         # check raises model_config.json is missing
         with pytest.raises(FileNotFoundError):
             model_rec = RadialFlow.load_from_folder(dir_path)
+
 
 class Test_Model_forward:
     @pytest.fixture
@@ -138,7 +135,7 @@ class Test_Model_forward:
     def test_model_train_output(self, radial_flow, demo_data):
 
         radial_flow.train()
-        out = radial_flow(demo_data['data'])
+        out = radial_flow(demo_data["data"])
 
         assert isinstance(out, ModelOutput)
 
@@ -146,9 +143,11 @@ class Test_Model_forward:
 
         assert out.out.shape[0] == demo_data["data"].shape[0]
         assert out.log_abs_det_jac.shape == (demo_data["data"].shape[0],)
-        assert out.out.shape[1:] == np.prod(radial_flow.model_config.input_dim) # input_dim = output_dim
+        assert out.out.shape[1:] == np.prod(
+            radial_flow.model_config.input_dim
+        )  # input_dim = output_dim
 
-        assert torch.equal(out.log_abs_det_jac, out.log_abs_det_jac) # check no NaN
+        assert torch.equal(out.log_abs_det_jac, out.log_abs_det_jac)  # check no NaN
 
 
 @pytest.mark.slow
@@ -167,9 +166,9 @@ class Test_RadialFlow_Training:
         return request.param
 
     @pytest.fixture(
-    params=[
-        RadialFlowConfig(input_dim=(12,)),
-    ]
+        params=[
+            RadialFlowConfig(input_dim=(12,)),
+        ]
     )
     def model_configs(self, request):
         return request.param
@@ -182,12 +181,12 @@ class Test_RadialFlow_Training:
     @pytest.fixture()
     def prior(self, model_configs, request):
 
-        device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        device = "cuda" if torch.cuda.is_available() else "cpu"
 
-        return  torch.distributions.MultivariateNormal(
+        return torch.distributions.MultivariateNormal(
             torch.zeros(np.prod(model_configs.input_dim)).to(device),
-            torch.eye(np.prod(model_configs.input_dim)).to(device)
-            )
+            torch.eye(np.prod(model_configs.input_dim)).to(device),
+        )
 
     @pytest.fixture(params=[Adam])
     def optimizers(self, request, radial_flow, training_configs):
@@ -201,7 +200,9 @@ class Test_RadialFlow_Training:
 
         return optimizer
 
-    def test_radial_flow_train_step(self, radial_flow, prior, train_dataset, training_configs, optimizers):
+    def test_radial_flow_train_step(
+        self, radial_flow, prior, train_dataset, training_configs, optimizers
+    ):
 
         nf_model = NFModel(prior=prior, flow=radial_flow)
 
@@ -226,7 +227,9 @@ class Test_RadialFlow_Training:
             ]
         )
 
-    def test_radial_flow_eval_step(self, radial_flow, prior, train_dataset, training_configs, optimizers):
+    def test_radial_flow_eval_step(
+        self, radial_flow, prior, train_dataset, training_configs, optimizers
+    ):
 
         nf_model = NFModel(prior=prior, flow=radial_flow)
 
@@ -253,7 +256,8 @@ class Test_RadialFlow_Training:
         )
 
     def test_radial_flow_main_train_loop(
-        self, radial_flow, prior, train_dataset, training_configs, optimizers):
+        self, radial_flow, prior, train_dataset, training_configs, optimizers
+    ):
 
         nf_model = NFModel(prior=prior, flow=radial_flow)
 
@@ -310,7 +314,6 @@ class Test_RadialFlow_Training:
         assert set(["model.pt", "optimizer.pt", "training_config.json"]).issubset(
             set(files_list)
         )
-
 
         model_rec_state_dict = torch.load(os.path.join(checkpoint_dir, "model.pt"))[
             "model_state_dict"
@@ -441,7 +444,6 @@ class Test_RadialFlow_Training:
             set(files_list)
         )
 
-
         # check reload full model
         model_rec = RadialFlow.load_from_folder(os.path.join(final_dir))
 
@@ -454,7 +456,9 @@ class Test_RadialFlow_Training:
             ]
         )
 
-    def test_radial_flow_training_pipeline(self, tmpdir, radial_flow, prior, train_dataset, training_configs):
+    def test_radial_flow_training_pipeline(
+        self, tmpdir, radial_flow, prior, train_dataset, training_configs
+    ):
 
         dir_path = training_configs.output_dir
 

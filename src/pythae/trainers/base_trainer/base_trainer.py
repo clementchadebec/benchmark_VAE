@@ -539,10 +539,7 @@ class BaseTrainer:
             if self.device == "cuda":
                 true_data = true_data.cuda()
                 z = z.cuda()
-
-            reconstructions = model.decoder(
-                model.encoder(true_data).embedding
-            ).reconstruction.cpu()
+            reconstructions = model({"data": true_data}).recon_x.cpu().detach()
             normal_generation = model.decoder(z).reconstruction.detach().cpu()
 
         return true_data, reconstructions, normal_generation

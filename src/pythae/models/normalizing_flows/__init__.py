@@ -39,5 +39,5 @@ __all__ = [
     "PlanarFlow",
     "PlanarFlowConfig",
     "RadialFlow",
-    "RadialFlowConfig"
+    "RadialFlowConfig",
 ]

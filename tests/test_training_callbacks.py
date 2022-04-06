@@ -5,9 +5,17 @@ import os
 from pythae.trainers.training_callbacks import *
 from collections import Counter
 from pythae.trainers import *
-from pythae.models import AE, AEConfig, Adversarial_AE, Adversarial_AE_Config, VAEGAN, VAEGANConfig
+from pythae.models import (
+    AE,
+    AEConfig,
+    Adversarial_AE,
+    Adversarial_AE_Config,
+    VAEGAN,
+    VAEGANConfig,
+)
 
 PATH = os.path.dirname(os.path.abspath(__file__))
+
 
 class CustomCallback(TrainingCallback):
     def __init__(self):
@@ -18,79 +26,79 @@ class CustomCallback(TrainingCallback):
         """
         Event called at the end of the initialization of the [`Trainer`].
         """
-        self.step_list.append('on_init_end')
+        self.step_list.append("on_init_end")
 
     def on_train_begin(self, training_config: BaseTrainerConfig, **kwargs):
         """
         Event called at the beginning of training.
         """
-        self.step_list.append('on_train_begin')
+        self.step_list.append("on_train_begin")
 
     def on_train_end(self, training_config: BaseTrainerConfig, **kwargs):
         """
         Event called at the end of training.
         """
-        self.step_list.append('on_train_end')
+        self.step_list.append("on_train_end")
 
     def on_epoch_begin(self, training_config: BaseTrainerConfig, **kwargs):
         """
         Event called at the beginning of an epoch.
         """
-        self.step_list.append('on_epoch_begin')
+        self.step_list.append("on_epoch_begin")
 
     def on_epoch_end(self, training_config: BaseTrainerConfig, **kwargs):
         """
         Event called at the end of an epoch.
         """
-        self.step_list.append('on_epoch_end')
+        self.step_list.append("on_epoch_end")
 
     def on_train_step_begin(self, training_config: BaseTrainerConfig, **kwargs):
         """
         Event called at the beginning of a training step.
         """
-        self.step_list.append('on_train_step_begin')
+        self.step_list.append("on_train_step_begin")
 
     def on_train_step_end(self, training_config: BaseTrainerConfig, **kwargs):
         """
         Event called at the end of a training step.
         """
-        self.step_list.append('on_train_step_end')
+        self.step_list.append("on_train_step_end")
 
     def on_eval_step_begin(self, training_config: BaseTrainerConfig, **kwargs):
         """
         Event called at the beginning of a evaluation step.
         """
-        self.step_list.append('on_eval_step_begin')
+        self.step_list.append("on_eval_step_begin")
 
     def on_eval_step_end(self, training_config: BaseTrainerConfig, **kwargs):
         """
         Event called at the end of a evaluation step.
         """
-        self.step_list.append('on_eval_step_end')
+        self.step_list.append("on_eval_step_end")
 
     def on_evaluate(self, training_config: BaseTrainerConfig, **kwargs):
         """
         Event called after an evaluation phase.
         """
-        self.step_list.append('on_evaluate')
+        self.step_list.append("on_evaluate")
 
     def on_prediction_step(self, training_config: BaseTrainerConfig, **kwargs):
         """
         Event called after a prediction phase.
         """
-        self.step_list.append('on_prediction_step')
+        self.step_list.append("on_prediction_step")
 
     def on_save(self, training_config: BaseTrainerConfig, **kwargs):
         """
         Event called after a checkpoint save.
         """
-        self.step_list.append('on_save')
+        self.step_list.append("on_save")
 
     def on_log(self, training_config: BaseTrainerConfig, logs, **kwargs):
         """
         Event called after logging the last logs.
         """
-        self.step_list.append('on_log')
+        self.step_list.append("on_log")
 
 
 @pytest.fixture()
@@ -156,17 +164,32 @@ class Test_TrainerCallbacks:
             cb.__class__ for cb in trainer.callback_handler.callbacks
         ]
 
-class Test_TrainersCalls:
 
+class Test_TrainersCalls:
     @pytest.fixture
     def train_dataset(self):
         return torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))
 
-    @pytest.fixture(params=[
-        [AEConfig(input_dim=(1, 28, 28)), BaseTrainerConfig(num_epochs=2, steps_predict=1)],
-        [AEConfig(input_dim=(1, 28, 28)), CoupledOptimizerTrainerConfig(num_epochs=3, steps_predict=1)],
-        [Adversarial_AE_Config(input_dim=(1, 28, 28)), AdversarialTrainerConfig(num_epochs=3, steps_predict=2)],
-        [VAEGANConfig(input_dim=(1, 28, 28)), CoupledOptimizerAdversarialTrainerConfig(num_epochs=3, steps_predict=1)]])
+    @pytest.fixture(
+        params=[
+            [
+                AEConfig(input_dim=(1, 28, 28)),
+                BaseTrainerConfig(num_epochs=2, steps_predict=1),
+            ],
+            [
+                AEConfig(input_dim=(1, 28, 28)),
+                CoupledOptimizerTrainerConfig(num_epochs=3, steps_predict=1),
+            ],
+            [
+                Adversarial_AE_Config(input_dim=(1, 28, 28)),
+                AdversarialTrainerConfig(num_epochs=3, steps_predict=2),
+            ],
+            [
+                VAEGANConfig(input_dim=(1, 28, 28)),
+                CoupledOptimizerAdversarialTrainerConfig(num_epochs=3, steps_predict=1),
+            ],
+        ]
+    )
     def configs_and_models(self, tmpdir, request):
         tmpdir.mkdir("dummy_folder")
         dir_path = os.path.join(tmpdir, "dummy_folder")
@@ -195,61 +218,65 @@ class Test_TrainersCalls:
             return AdversarialTrainer
         else:
             return CoupledOptimizerAdversarialTrainer
-   
+
     def test_trainer_callback_calls(
-        self, trainer_cls, configs_and_models, train_dataset, dummy_callback):
+        self, trainer_cls, configs_and_models, train_dataset, dummy_callback
+    ):
 
         trainer = trainer_cls(
             model=configs_and_models[0],
             train_dataset=train_dataset,
             eval_dataset=train_dataset,
             training_config=configs_and_models[1],
-            callbacks=[dummy_callback]
+            callbacks=[dummy_callback],
         )
 
-
-        assert 'on_train_step_begin' not in dummy_callback.step_list
-        assert 'on_train_step_end' not in dummy_callback.step_list
+        assert "on_train_step_begin" not in dummy_callback.step_list
+        assert "on_train_step_end" not in dummy_callback.step_list
         trainer.train_step(epoch=1)
-        assert 'on_train_step_begin' in dummy_callback.step_list
-        assert 'on_train_step_end' in dummy_callback.step_list
+        assert "on_train_step_begin" in dummy_callback.step_list
+        assert "on_train_step_end" in dummy_callback.step_list
 
-        assert 'on_eval_step_begin' not in dummy_callback.step_list
-        assert 'on_eval_step_end' not in dummy_callback.step_list
+        assert "on_eval_step_begin" not in dummy_callback.step_list
+        assert "on_eval_step_end" not in dummy_callback.step_list
         trainer.eval_step(epoch=1)
-        assert 'on_eval_step_begin' in dummy_callback.step_list
-        assert 'on_eval_step_end' in dummy_callback.step_list
+        assert "on_eval_step_begin" in dummy_callback.step_list
+        assert "on_eval_step_end" in dummy_callback.step_list
 
-        assert 'on_save' not in dummy_callback.step_list
+        assert "on_save" not in dummy_callback.step_list
         trainer.save_model(
-            configs_and_models[0], os.path.join(configs_and_models[1].output_dir, "final_model"))
-        assert 'on_save' in dummy_callback.step_list
+            configs_and_models[0],
+            os.path.join(configs_and_models[1].output_dir, "final_model"),
+        )
+        assert "on_save" in dummy_callback.step_list
 
-        assert 'on_train_begin' not in dummy_callback.step_list
-        assert 'on_train_end' not in dummy_callback.step_list
-        assert 'on_epoch_begin' not in dummy_callback.step_list
-        assert 'on_epoch_end' not in dummy_callback.step_list
-        assert 'on_prediction_step' not in dummy_callback.step_list
-        assert 'on_log' not in dummy_callback.step_list
+        assert "on_train_begin" not in dummy_callback.step_list
+        assert "on_train_end" not in dummy_callback.step_list
+        assert "on_epoch_begin" not in dummy_callback.step_list
+        assert "on_epoch_end" not in dummy_callback.step_list
+        assert "on_prediction_step" not in dummy_callback.step_list
+        assert "on_log" not in dummy_callback.step_list
         trainer.train()
-        assert 'on_train_begin' in dummy_callback.step_list
-        assert 'on_train_end' in dummy_callback.step_list
-        assert 'on_epoch_begin' in dummy_callback.step_list
-        assert 'on_epoch_end' in dummy_callback.step_list
-        assert 'on_prediction_step' in dummy_callback.step_list
-        assert 'on_log' in dummy_callback.step_list
+        assert "on_train_begin" in dummy_callback.step_list
+        assert "on_train_end" in dummy_callback.step_list
+        assert "on_epoch_begin" in dummy_callback.step_list
+        assert "on_epoch_end" in dummy_callback.step_list
+        assert "on_prediction_step" in dummy_callback.step_list
+        assert "on_log" in dummy_callback.step_list
 
         count = Counter(dummy_callback.step_list)
 
-        assert count['on_train_begin'] == 1
-        assert count['on_train_end'] == 1
-        assert count['on_prediction_step'] == configs_and_models[1].num_epochs // configs_and_models[1].steps_predict
-        assert count['on_epoch_begin'] == configs_and_models[1].num_epochs
-        assert count['on_epoch_end'] == configs_and_models[1].num_epochs
-        assert count['on_log'] == configs_and_models[1].num_epochs
+        assert count["on_train_begin"] == 1
+        assert count["on_train_end"] == 1
+        assert (
+            count["on_prediction_step"]
+            == configs_and_models[1].num_epochs // configs_and_models[1].steps_predict
+        )
+        assert count["on_epoch_begin"] == configs_and_models[1].num_epochs
+        assert count["on_epoch_end"] == configs_and_models[1].num_epochs
+        assert count["on_log"] == configs_and_models[1].num_epochs
 
-        assert count['on_train_step_begin'] == configs_and_models[1].num_epochs + 1
-        assert count['on_train_step_end'] == configs_and_models[1].num_epochs + 1
-        assert count['on_eval_step_begin'] == configs_and_models[1].num_epochs + 1
-        assert count['on_eval_step_end'] == configs_and_models[1].num_epochs + 1
-
+        assert count["on_train_step_begin"] == configs_and_models[1].num_epochs + 1
+        assert count["on_train_step_end"] == configs_and_models[1].num_epochs + 1
+        assert count["on_eval_step_begin"] == configs_and_models[1].num_epochs + 1
+        assert count["on_eval_step_end"] == configs_and_models[1].num_epochs + 1

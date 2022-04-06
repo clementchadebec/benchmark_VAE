@@ -28,7 +28,7 @@ Available models:
     :nosignatures:
 """
 
-from .iaf_sampler_config import IAFSamplerConfig
 from .iaf_sampler import IAFSampler
+from .iaf_sampler_config import IAFSamplerConfig
 
 __all__ = ["IAFSampler", "IAFSamplerConfig"]

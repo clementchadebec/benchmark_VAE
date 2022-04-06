@@ -13,7 +13,7 @@ class MSSSIM(torch.nn.Module):
     def _gaussian(self, sigma):
         gauss = torch.Tensor(
             [
-                np.exp(-((x - self.window_size // 2) ** 2) / float(2 * sigma ** 2))
+                np.exp(-((x - self.window_size // 2) ** 2) / float(2 * sigma**2))
                 for x in range(self.window_size)
             ]
         )
@@ -96,8 +96,8 @@ class MSSSIM(torch.nn.Module):
         mssim = (mssim + 1) / 2
         mcs = (mcs + 1) / 2
 
-        pow1 = mcs ** weights
-        pow2 = mssim ** weights
+        pow1 = mcs**weights
+        pow2 = mssim**weights
 
         output = torch.prod(pow1[:-1] * pow2[-1])
         return 1 - output

@@ -171,7 +171,9 @@ class TwoStageVAESampler(BaseSampler):
                     encoder_output.embedding,
                     encoder_output.log_covariance,
                 )
-                z_data = mean_z + torch.randn_like(log_var_z) * torch.exp(0.5 * log_var_z)
+                z_data = mean_z + torch.randn_like(log_var_z) * torch.exp(
+                    0.5 * log_var_z
+                )
                 z.append(z_data)
 
         train_data = torch.cat(z)
@@ -197,7 +199,9 @@ class TwoStageVAESampler(BaseSampler):
                         encoder_output.embedding,
                         encoder_output.log_covariance,
                     )
-                    z_data = mean_z + torch.randn_like(log_var_z) * torch.exp(0.5 * log_var_z)
+                    z_data = mean_z + torch.randn_like(log_var_z) * torch.exp(
+                        0.5 * log_var_z
+                    )
                     z.append(z_data)
 
             eval_data = torch.cat(z)

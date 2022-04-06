@@ -12,10 +12,11 @@ class PlanarFlowConfig(BaseNFConfig):
         activation (str): The activation function to be applied. Choices: ['linear', 'tanh', 'elu'].
             Default: 'tanh'.
     """
-    activation: str = 'tanh'
+
+    activation: str = "tanh"
 
     def __post_init_post_parse__(self):
-        assert self.activation in ['linear', 'tanh', 'elu'], (
+        assert self.activation in ["linear", "tanh", "elu"], (
             f"'{self.activation}' doesn't correspond to an activation handled by the model. "
             "Available activations ['linear', 'tanh', 'elu']"
         )

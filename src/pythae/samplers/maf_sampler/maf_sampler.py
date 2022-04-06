@@ -5,14 +5,14 @@ import shutil
 
 import torch
 import torch.nn as nn
-from torch.utils.data import DataLoader
 from torch.distributions import MultivariateNormal
+from torch.utils.data import DataLoader
 
 from ...data.preprocessors import DataProcessor
-from ...models import BaseAE, AE, AEConfig
-from ...models.normalizing_flows import MAF, MAFConfig, NFModel
+from ...models import AE, AEConfig, BaseAE
 from ...models.base.base_utils import ModelOutput
 from ...models.nn import BaseDecoder, BaseEncoder
+from ...models.normalizing_flows import MAF, MAFConfig, NFModel
 from ...pipelines import TrainingPipeline
 from ...trainers import BaseTrainerConfig
 from ..base.base_sampler import BaseSampler
@@ -45,7 +45,7 @@ class MAFSampler(BaseSampler):
 
         self.prior = MultivariateNormal(
             torch.zeros(model.model_config.latent_dim).to(self.device),
-            torch.eye(model.model_config.latent_dim).to(self.device)
+            torch.eye(model.model_config.latent_dim).to(self.device),
         )
 
         maf_config = MAFConfig(
@@ -53,12 +53,10 @@ class MAFSampler(BaseSampler):
             n_made_blocks=sampler_config.n_made_blocks,
             n_hidden_in_made=sampler_config.n_hidden_in_made,
             hidden_size=sampler_config.hidden_size,
-            include_batch_norm=sampler_config.include_batch_norm
+            include_batch_norm=sampler_config.include_batch_norm,
         )
 
-        maf_model = MAF(
-            model_config=maf_config
-        )
+        maf_model = MAF(model_config=maf_config)
 
         self.flow_contained_model = NFModel(self.prior, maf_model)
 

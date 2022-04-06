@@ -31,12 +31,11 @@ def model_configs_no_input_dim(request):
             input_dim=(1, 28, 28),
             latent_dim=10,
             reconstruction_loss="bce",
-            flows= ['Planar', 'Radial', 'Planar']
-            ),
+            flows=["Planar", "Radial", "Planar"],
+        ),
         VAE_LinNF_Config(
-            input_dim=(1, 28),
-            latent_dim=5,
-            flows= ['Radial', 'Radial', 'Radial']),
+            input_dim=(1, 28), latent_dim=5, flows=["Radial", "Radial", "Radial"]
+        ),
     ]
 )
 def model_configs(request):
@@ -59,10 +58,11 @@ class Test_Model_Building:
         return NetBadInheritance()
 
     def test_raises_wrong_flows(self):
-        
+
         with pytest.raises(AssertionError):
-            conf = VAE_LinNF_Config(input_dim=(1, 28),
-            latent_dim=5, flows=['Planar', 'WrongFlow'])
+            conf = VAE_LinNF_Config(
+                input_dim=(1, 28), latent_dim=5, flows=["Planar", "WrongFlow"]
+            )
 
     def test_build_model(self, model_configs):
         model = VAE_LinNF(model_configs)
@@ -72,8 +72,12 @@ class Test_Model_Building:
                 model.latent_dim == model_configs.latent_dim,
             ]
         )
-        assert all([model_flow.__class__.__name__.replace('Flow', '') == custom_flow for model_flow, custom_flow in zip(model.net, model_configs.flows)])
-
+        assert all(
+            [
+                model_flow.__class__.__name__.replace("Flow", "") == custom_flow
+                for model_flow, custom_flow in zip(model.net, model_configs.flows)
+            ]
+        )
 
     def test_raises_bad_inheritance(self, model_configs, bad_net):
         with pytest.raises(BadInheritanceError):
@@ -299,6 +303,7 @@ class Test_Model_forward:
         assert out.z.shape[0] == demo_data["data"].shape[0]
         assert out.recon_x.shape == demo_data["data"].shape
 
+
 class Test_NLL_Compute:
     @pytest.fixture
     def demo_data(self):
@@ -312,18 +317,18 @@ class Test_NLL_Compute:
         model_configs.input_dim = tuple(demo_data["data"][0].shape)
         return VAE_LinNF(model_configs)
 
-    @pytest.fixture(params=[
-        (20, 10),
-        (11, 22)
-    ])
+    @pytest.fixture(params=[(20, 10), (11, 22)])
     def nll_params(self, request):
         return request.param
 
     def test_nll_compute(self, vae, demo_data, nll_params):
-        nll = vae.get_nll(data=demo_data['data'], n_samples=nll_params[0], batch_size=nll_params[1])
+        nll = vae.get_nll(
+            data=demo_data["data"], n_samples=nll_params[0], batch_size=nll_params[1]
+        )
 
         assert isinstance(nll, float)
         assert nll < 0
+
 
 @pytest.mark.slow
 class Test_VAE_Training:
@@ -364,7 +369,9 @@ class Test_VAE_Training:
             model = VAE_LinNF(model_configs, decoder=custom_decoder)
 
         else:
-            model = VAE_LinNF(model_configs, encoder=custom_encoder, decoder=custom_decoder)
+            model = VAE_LinNF(
+                model_configs, encoder=custom_encoder, decoder=custom_decoder
+            )
 
         return model
 

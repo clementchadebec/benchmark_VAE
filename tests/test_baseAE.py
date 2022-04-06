@@ -14,6 +14,7 @@ from tests.data.custom_architectures import (
 
 PATH = os.path.dirname(os.path.abspath(__file__))
 
+
 @pytest.fixture(params=[BaseAEConfig(), BaseAEConfig(latent_dim=5)])
 def model_configs_no_input_dim(request):
     return request.param
@@ -69,13 +70,11 @@ class Test_Model_Building:
 
 
 class Test_Model_Saving:
-
     def test_creates_saving_path(self, tmpdir, model_config_with_input_dim):
-        tmpdir.mkdir('saving')
-        dir_path = os.path.join(tmpdir, 'saving')
+        tmpdir.mkdir("saving")
+        dir_path = os.path.join(tmpdir, "saving")
         model = BaseAE(model_config_with_input_dim)
         model.save(dir_path=dir_path)
-
 
     def test_default_model_saving(self, tmpdir, model_config_with_input_dim):
 
@@ -152,7 +151,7 @@ class Test_Model_Saving:
         with pytest.raises(FileNotFoundError):
             model_rec = BaseAE.load_from_folder(dir_path)
 
-        torch.save({"wrong_key": 0.}, os.path.join(dir_path, "model.pt"))
+        torch.save({"wrong_key": 0.0}, os.path.join(dir_path, "model.pt"))
         # check raises wrong key in model.pt
         with pytest.raises(KeyError):
             model_rec = BaseAE.load_from_folder(dir_path)

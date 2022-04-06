@@ -280,7 +280,7 @@ class HVAE(VAE):
                 log_q_z0_given_x = -0.5 * (
                     log_var + (z0 - mu) ** 2 / torch.exp(log_var)
                 ).sum(dim=-1)
-                log_p_z = -0.5 * (z ** 2).sum(dim=-1)
+                log_p_z = -0.5 * (z**2).sum(dim=-1)
 
                 log_p_rho0 = normal.log_prob(gamma) - 0.5 * self.latent_dim * torch.log(
                     1 / self.beta_zero_sqrt

@@ -461,18 +461,18 @@ class Test_NLL_Compute:
         model_configs.input_dim = tuple(demo_data["data"][0].shape)
         return RHVAE(model_configs)
 
-    @pytest.fixture(params=[
-        (20, 10),
-        (11, 22)
-    ])
+    @pytest.fixture(params=[(20, 10), (11, 22)])
     def nll_params(self, request):
         return request.param
 
     def test_nll_compute(self, rhvae, demo_data, nll_params):
-        nll = rhvae.get_nll(data=demo_data['data'], n_samples=nll_params[0], batch_size=nll_params[1])
+        nll = rhvae.get_nll(
+            data=demo_data["data"], n_samples=nll_params[0], batch_size=nll_params[1]
+        )
 
         assert isinstance(nll, float)
         assert nll < 0
+
 
 @pytest.mark.slow
 class Test_RHVAE_Training:

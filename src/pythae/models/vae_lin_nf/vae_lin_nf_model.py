@@ -1,26 +1,25 @@
-import torch
-import torch.nn as nn
 import os
-import numpy as np
-
-from ..vae import VAE
-from .vae_lin_nf_config import VAE_LinNF_Config
-from ...data.datasets import BaseDataset
-from ..base.base_utils import ModelOutput
-from ..nn import BaseEncoder, BaseDecoder
-from ..normalizing_flows import PlanarFlow, PlanarFlowConfig, RadialFlow, RadialFlowConfig
-
-
 from typing import Optional
 
+import numpy as np
+import torch
+import torch.nn as nn
 import torch.nn.functional as F
+
+from ...data.datasets import BaseDataset
+from ..base.base_utils import ModelOutput
+from ..nn import BaseDecoder, BaseEncoder
+from ..normalizing_flows import (PlanarFlow, PlanarFlowConfig, RadialFlow,
+                                 RadialFlowConfig)
+from ..vae import VAE
+from .vae_lin_nf_config import VAE_LinNF_Config
 
 
 class VAE_LinNF(VAE):
     """Variational Auto Encoder with linear Normalizing Flows model.
-    
+
     Args:
-        model_config(VAE_LinNF_Config): The Variational Autoencoder configuration seting the main 
+        model_config(VAE_LinNF_Config): The Variational Autoencoder configuration seting the main
         parameters of the model
 
         encoder (BaseEncoder): An instance of BaseEncoder (inheriting from `torch.nn.Module` which
@@ -45,7 +44,7 @@ class VAE_LinNF(VAE):
         self,
         model_config: VAE_LinNF_Config,
         encoder: Optional[BaseEncoder] = None,
-        decoder: Optional[BaseDecoder] = None
+        decoder: Optional[BaseDecoder] = None,
     ):
 
         VAE.__init__(self, model_config=model_config, encoder=encoder, decoder=decoder)
@@ -54,11 +53,13 @@ class VAE_LinNF(VAE):
 
         self.net = []
         for flow in model_config.flows:
-            if flow == 'Planar':
-                flow_config = PlanarFlowConfig(input_dim=(model_config.latent_dim,), activation='tanh')
+            if flow == "Planar":
+                flow_config = PlanarFlowConfig(
+                    input_dim=(model_config.latent_dim,), activation="tanh"
+                )
                 self.net.append(PlanarFlow(flow_config))
 
-            elif flow == 'Radial':
+            elif flow == "Radial":
                 flow_config = RadialFlowConfig(input_dim=(model_config.latent_dim,))
                 self.net.append(RadialFlow(flow_config))
 
@@ -86,9 +87,9 @@ class VAE_LinNF(VAE):
         z, _ = self._sample_gauss(mu, std)
 
         z0 = z
-        
+
         log_abs_det_jac = torch.zeros((z0.shape[0],)).to(z.device)
-        
+
         for layer in self.net:
             layer_output = layer(z)
             z = layer_output.out
@@ -188,7 +189,7 @@ class VAE_LinNF(VAE):
                 z0 = z
 
                 log_abs_det_jac = torch.zeros((z0.shape[0],)).to(z.device)
-        
+
                 for layer in self.net:
                     layer_output = layer(z)
                     z = layer_output.out

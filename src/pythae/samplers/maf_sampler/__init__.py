@@ -28,7 +28,7 @@ Available models:
     :nosignatures:
 """
 
-from .maf_sampler_config import MAFSamplerConfig
 from .maf_sampler import MAFSampler
+from .maf_sampler_config import MAFSamplerConfig
 
 __all__ = ["MAFSampler", "MAFSamplerConfig"]
