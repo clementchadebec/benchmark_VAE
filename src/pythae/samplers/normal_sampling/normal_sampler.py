@@ -5,7 +5,7 @@ from ...samplers import BaseSampler, BaseSamplerConfig
 
 
 class NormalSampler(BaseSampler):
-    """NormalSampler sampler.
+    """Samples from a Standard normal distribution in the Autoencoder's latent space.
 
     Args:
         model (BaseAE): The vae model to sample from.

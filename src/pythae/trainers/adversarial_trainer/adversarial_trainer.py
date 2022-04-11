@@ -28,7 +28,7 @@ logger.setLevel(logging.INFO)
 
 
 class AdversarialTrainer(BaseTrainer):
-    """Trainer using disctinct optimizers for the autoencoder and the discriminator.
+    """Trainer using distinct optimizers for the autoencoder and the discriminator.
 
     Args:
         model (BaseAE): The model to train

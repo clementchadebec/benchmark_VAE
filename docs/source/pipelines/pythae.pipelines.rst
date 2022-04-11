@@ -9,11 +9,9 @@ Pipelines
 .. toctree::
    :maxdepth: 1
 
-   pythae.pipelines.training
-   pythae.pipelines.generation
+   training
 
 
 .. autosummary::
     ~pythae.pipelines.TrainingPipeline
-    ~pythae.pipelines.GenerationPipeline
     :nosignatures:

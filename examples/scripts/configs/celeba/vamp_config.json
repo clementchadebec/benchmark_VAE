@@ -1,4 +1,5 @@
 {
+    "name": "VAMPConfig",
     "latent_dim": 64,
     "reconstruction_loss": "mse",
     "number_components": 50

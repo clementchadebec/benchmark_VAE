@@ -37,7 +37,7 @@ class TrainingPipeline(Pipeline):
         model (Optional[BaseAE]): An instance of :class:`~pythae.models.BaseAE` you want to train.
             If None, a default :class:`~pythae.models.VAE` model is used. Default: None.
 
-        training_config (Optional[BaseTrainerConfig]=None): An instance of
+        training_config (Optional[BaseTrainerConfig]): An instance of
             :class:`~pythae.trainers.BaseTrainerConfig` stating the training
             parameters. If None, a default configuration is used.
     """

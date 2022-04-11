@@ -1,4 +1,5 @@
 {
+  "name": "BaseTrainerConfig",
   "output_dir": "my_models_on_celeba",
   "batch_size": 100,
   "num_epochs": 50,

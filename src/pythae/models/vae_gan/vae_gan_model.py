@@ -8,10 +8,10 @@ import torch.nn.functional as F
 
 from ...customexception import BadInheritanceError
 from ...data.datasets import BaseDataset
-from ...models import VAE
 from ..base.base_utils import CPU_Unpickler, ModelOutput
 from ..nn import BaseDecoder, BaseDiscriminator, BaseEncoder
 from ..nn.default_architectures import Discriminator_MLP
+from ..vae import VAE
 from .vae_gan_config import VAEGANConfig
 
 
@@ -19,8 +19,8 @@ class VAEGAN(VAE):
     """Variational Autoencoder using Adversarial reconstruction loss model.
 
     Args:
-        model_config(VAEGANConfig): The Autoencoder configuration seting the main
-            parameters of the model
+        model_config (VAEGANConfig): The Autoencoder configuration setting the main
+            parameters of the model.
 
         encoder (BaseEncoder): An instance of BaseEncoder (inheriting from `torch.nn.Module` which
             plays the role of encoder. This argument allows you to use your own neural networks
@@ -275,9 +275,7 @@ class VAEGAN(VAE):
 
         model_path = dir_path
 
-        model_dict = {
-            "model_state_dict": deepcopy(self.state_dict()),
-        }
+        model_dict = {"model_state_dict": deepcopy(self.state_dict())}
 
         if not self.model_config.uses_default_discriminator:
             with open(os.path.join(model_path, "discriminator.pkl"), "wb") as fp:

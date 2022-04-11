@@ -1,4 +1,5 @@
 {
+    "name": "MSSSIM_VAEConfig",
     "latent_dim": 16,
     "window_size": 3,
     "beta": 1e-2

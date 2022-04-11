@@ -1,4 +1,5 @@
 {
+  "name": "RHVAEConfig",
   "latent_dim": 64,
   "reconstruction_loss": "mse",
   "n_lf": 1,

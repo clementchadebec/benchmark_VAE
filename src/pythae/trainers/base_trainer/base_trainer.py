@@ -14,12 +14,9 @@ from ...customexception import ModelError
 from ...data.datasets import BaseDataset
 from ...models import BaseAE
 from ..trainer_utils import set_seed
-from ..training_callbacks import (
-    CallbackHandler,
-    MetricConsolePrinterCallback,
-    ProgressBarCallback,
-    TrainingCallback,
-)
+from ..training_callbacks import (CallbackHandler,
+                                  MetricConsolePrinterCallback,
+                                  ProgressBarCallback, TrainingCallback)
 from .base_training_config import BaseTrainerConfig
 
 logger = logging.getLogger(__name__)
@@ -34,7 +31,7 @@ class BaseTrainer:
     """Base class to perform model training.
 
     Args:
-        model (BaseAE): A instance of `~pythae.models.BaseAE` to train
+        model (BaseAE): A instance of :class:`~pythae.models.BaseAE` to train
 
         train_dataset (BaseDataset): The training dataset of type
             :class:`~pythae.data.dataset.BaseDataset`
@@ -42,9 +39,9 @@ class BaseTrainer:
         eval_dataset (BaseDataset): The evaluation dataset of type
             :class:`~pythae.data.dataset.BaseDataset`
 
-        training_config: (BaseTrainerConfig): The training arguments summarizing the main
+        training_config (BaseTrainerConfig): The training arguments summarizing the main
             parameters used for training. If None, a basic training instance of
-            :class:`TrainingConfig` is used. Default: None.
+            :class:`BaseTrainerConfig` is used. Default: None.
 
         optimizer (~torch.optim.Optimizer): An instance of `torch.optim.Optimizer` used for
             training. If None, a :class:`~torch.optim.Adam` optimizer is used. Default: None.

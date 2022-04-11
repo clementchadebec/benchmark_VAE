@@ -9,7 +9,7 @@ class VQVAEConfig(AEConfig):
     Vector Quentized VAE model config config class
 
     Parameters:
-        input_dim (int): The input_data dimension
+        input_dim (tuple): The input_data dimension.
         beta (float): The balancing factor in the loss. Default: 1
         num_embedding (int): The number of embedding points. Default: 512
     """

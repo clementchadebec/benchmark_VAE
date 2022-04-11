@@ -7,11 +7,15 @@ Available models:
 .. autosummary::
     ~pythae.models.VAE
     ~pythae.models.BetaVAE
+    ~pythae.models.VAE_IAF
     ~pythae.models.DisentangledBetaVAE
+    ~pythae.models.FactorVAE
+    ~pythae.models.BetaTCVAE
     ~pythae.models.IWAE
+    ~pythae.models.MSSSIM_VAE
+    ~pythae.models.WAE_MMD
     ~pythae.models.INFOVAE_MMD
     ~pythae.models.VAMP
-    ~pythae.models.Adversarial_AE
     ~pythae.models.VAEGAN
     ~pythae.models.HVAE
     ~pythae.models.RHVAE

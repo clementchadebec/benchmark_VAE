@@ -105,13 +105,13 @@ class Test_Model_Building:
 
     def test_raises_bad_inheritance(self, model_configs, bad_net):
         with pytest.raises(BadInheritanceError):
-            adversarial_ae = VAEGAN(model_configs, encoder=bad_net)
+            vaegan = VAEGAN(model_configs, encoder=bad_net)
 
         with pytest.raises(BadInheritanceError):
-            adversarial_ae = VAEGAN(model_configs, decoder=bad_net)
+            vaegan = VAEGAN(model_configs, decoder=bad_net)
 
         with pytest.raises(BadInheritanceError):
-            adversarial_ae = VAEGAN(model_configs, discriminator=bad_net)
+            vaegan = VAEGAN(model_configs, discriminator=bad_net)
 
     def test_raises_no_input_dim(
         self,
@@ -121,20 +121,20 @@ class Test_Model_Building:
         custom_discriminator,
     ):
         with pytest.raises(AttributeError):
-            adversarial_ae = VAEGAN(model_configs_no_input_dim)
+            vaegan = VAEGAN(model_configs_no_input_dim)
 
         with pytest.raises(AttributeError):
-            adversarial_ae = VAEGAN(model_configs_no_input_dim, encoder=custom_encoder)
+            vaegan = VAEGAN(model_configs_no_input_dim, encoder=custom_encoder)
 
         with pytest.raises(AttributeError):
-            adversarial_ae = VAEGAN(model_configs_no_input_dim, decoder=custom_decoder)
+            vaegan = VAEGAN(model_configs_no_input_dim, decoder=custom_decoder)
 
         with pytest.raises(AttributeError):
-            adversarial_ae = VAEGAN(
+            vaegan = VAEGAN(
                 model_configs_no_input_dim, discriminator=custom_discriminator
             )
 
-        adversarial_ae = VAEGAN(
+        vaegan = VAEGAN(
             model_configs_no_input_dim,
             encoder=custom_encoder,
             decoder=custom_decoder,
@@ -145,25 +145,25 @@ class Test_Model_Building:
         self, model_configs, custom_encoder, custom_decoder, custom_discriminator
     ):
 
-        adversarial_ae = VAEGAN(
+        vaegan = VAEGAN(
             model_configs, encoder=custom_encoder, decoder=custom_decoder
         )
 
-        assert adversarial_ae.encoder == custom_encoder
-        assert not adversarial_ae.model_config.uses_default_encoder
+        assert vaegan.encoder == custom_encoder
+        assert not vaegan.model_config.uses_default_encoder
 
-        assert adversarial_ae.decoder == custom_decoder
-        assert not adversarial_ae.model_config.uses_default_encoder
+        assert vaegan.decoder == custom_decoder
+        assert not vaegan.model_config.uses_default_encoder
 
-        assert adversarial_ae.model_config.uses_default_discriminator
+        assert vaegan.model_config.uses_default_discriminator
 
-        adversarial_ae = VAEGAN(model_configs, discriminator=custom_discriminator)
+        vaegan = VAEGAN(model_configs, discriminator=custom_discriminator)
 
-        assert adversarial_ae.model_config.uses_default_encoder
-        assert adversarial_ae.model_config.uses_default_encoder
+        assert vaegan.model_config.uses_default_encoder
+        assert vaegan.model_config.uses_default_encoder
 
-        assert adversarial_ae.discriminator == custom_discriminator
-        assert not adversarial_ae.model_config.uses_default_discriminator
+        assert vaegan.discriminator == custom_discriminator
+        assert not vaegan.model_config.uses_default_discriminator
 
 
 class Test_Model_Saving:
@@ -388,19 +388,19 @@ class Test_Model_forward:
         return data  # This is an extract of 3 data from MNIST (unnormalized) used to test custom architecture
 
     @pytest.fixture
-    def adversarial_ae(self, model_configs, demo_data):
+    def vaegan(self, model_configs, demo_data):
         model_configs.input_dim = tuple(demo_data["data"][0].shape)
         return VAEGAN(model_configs)
 
-    def test_model_train_output(self, adversarial_ae, demo_data):
+    def test_model_train_output(self, vaegan, demo_data):
 
         # model_configs.input_dim = demo_data['data'][0].shape[-1]
 
-        # adversarial_ae = VAEGAN(model_configs)
+        # vaegan = VAEGAN(model_configs)
 
-        adversarial_ae.train()
+        vaegan.train()
 
-        out = adversarial_ae(demo_data)
+        out = vaegan(demo_data)
 
         assert isinstance(out, ModelOutput)
 
@@ -422,6 +422,31 @@ class Test_Model_forward:
         assert out.z.shape[0] == demo_data["data"].shape[0]
         assert out.recon_x.shape == demo_data["data"].shape
 
+class Test_NLL_Compute:
+    @pytest.fixture
+    def demo_data(self):
+        data = torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))[
+            :
+        ]
+        return data  # This is an extract of 3 data from MNIST (unnormalized) used to test custom architecture
+
+    @pytest.fixture
+    def vaegan(self, model_configs, demo_data):
+        model_configs.input_dim = tuple(demo_data["data"][0].shape)
+        return VAEGAN(model_configs)
+
+    @pytest.fixture(params=[
+        (20, 10),
+        (11, 22)
+    ])
+    def nll_params(self, request):
+        return request.param
+
+    def test_nll_compute(self, vaegan, demo_data, nll_params):
+        nll = vaegan.get_nll(data=demo_data['data'], n_samples=nll_params[0], batch_size=nll_params[1])
+
+        assert isinstance(nll, float)
+        assert nll < 0
 
 @pytest.mark.slow
 class Test_VAEGAN_Training:
@@ -451,7 +476,7 @@ class Test_VAEGAN_Training:
             torch.rand(1),
         ]
     )
-    def adversarial_ae(
+    def vaegan(
         self,
         model_configs,
         custom_encoder,
@@ -505,16 +530,16 @@ class Test_VAEGAN_Training:
         return model
 
     @pytest.fixture(params=[Adam])
-    def optimizers(self, request, adversarial_ae, training_configs):
+    def optimizers(self, request, vaegan, training_configs):
         if request.param is not None:
             encoder_optimizer = request.param(
-                adversarial_ae.encoder.parameters(), lr=training_configs.learning_rate
+                vaegan.encoder.parameters(), lr=training_configs.learning_rate
             )
             decoder_optimizer = request.param(
-                adversarial_ae.decoder.parameters(), lr=training_configs.learning_rate
+                vaegan.decoder.parameters(), lr=training_configs.learning_rate
             )
             discriminator_optimizer = request.param(
-                adversarial_ae.discriminator.parameters(),
+                vaegan.discriminator.parameters(),
                 lr=training_configs.learning_rate,
             )
 
@@ -525,11 +550,11 @@ class Test_VAEGAN_Training:
 
         return (encoder_optimizer, decoder_optimizer, discriminator_optimizer)
 
-    def test_adversarial_ae_train_step(
-        self, adversarial_ae, train_dataset, training_configs, optimizers
+    def test_vaegan_train_step(
+        self, vaegan, train_dataset, training_configs, optimizers
     ):
         trainer = CoupledOptimizerAdversarialTrainer(
-            model=adversarial_ae,
+            model=vaegan,
             train_dataset=train_dataset,
             training_config=training_configs,
             encoder_optimizer=optimizers[0],
@@ -551,11 +576,11 @@ class Test_VAEGAN_Training:
             ]
         )
 
-    def test_adversarial_ae_eval_step(
-        self, adversarial_ae, train_dataset, training_configs, optimizers
+    def test_vaegan_eval_step(
+        self, vaegan, train_dataset, training_configs, optimizers
     ):
         trainer = CoupledOptimizerAdversarialTrainer(
-            model=adversarial_ae,
+            model=vaegan,
             train_dataset=train_dataset,
             eval_dataset=train_dataset,
             training_config=training_configs,
@@ -578,12 +603,12 @@ class Test_VAEGAN_Training:
             ]
         )
 
-    def test_adversarial_ae_main_train_loop(
-        self, tmpdir, adversarial_ae, train_dataset, training_configs, optimizers
+    def test_vaegan_main_train_loop(
+        self, tmpdir, vaegan, train_dataset, training_configs, optimizers
     ):
 
         trainer = CoupledOptimizerAdversarialTrainer(
-            model=adversarial_ae,
+            model=vaegan,
             train_dataset=train_dataset,
             eval_dataset=train_dataset,
             training_config=training_configs,
@@ -607,13 +632,13 @@ class Test_VAEGAN_Training:
         )
 
     def test_checkpoint_saving(
-        self, tmpdir, adversarial_ae, train_dataset, training_configs, optimizers
+        self, tmpdir, vaegan, train_dataset, training_configs, optimizers
     ):
 
         dir_path = training_configs.output_dir
 
         trainer = CoupledOptimizerAdversarialTrainer(
-            model=adversarial_ae,
+            model=vaegan,
             train_dataset=train_dataset,
             training_config=training_configs,
             encoder_optimizer=optimizers[0],
@@ -648,21 +673,21 @@ class Test_VAEGAN_Training:
         ).issubset(set(files_list))
 
         # check pickled custom decoder
-        if not adversarial_ae.model_config.uses_default_decoder:
+        if not vaegan.model_config.uses_default_decoder:
             assert "decoder.pkl" in files_list
 
         else:
             assert not "decoder.pkl" in files_list
 
         # check pickled custom encoder
-        if not adversarial_ae.model_config.uses_default_encoder:
+        if not vaegan.model_config.uses_default_encoder:
             assert "encoder.pkl" in files_list
 
         else:
             assert not "encoder.pkl" in files_list
 
         # check pickled custom discriminator
-        if not adversarial_ae.model_config.uses_default_discriminator:
+        if not vaegan.model_config.uses_default_discriminator:
             assert "discriminator.pkl" in files_list
 
         else:
@@ -772,7 +797,7 @@ class Test_VAEGAN_Training:
         )
 
     def test_checkpoint_saving_during_training(
-        self, tmpdir, adversarial_ae, train_dataset, training_configs, optimizers
+        self, tmpdir, vaegan, train_dataset, training_configs, optimizers
     ):
         #
         target_saving_epoch = training_configs.steps_saving
@@ -780,7 +805,7 @@ class Test_VAEGAN_Training:
         dir_path = training_configs.output_dir
 
         trainer = CoupledOptimizerAdversarialTrainer(
-            model=adversarial_ae,
+            model=vaegan,
             train_dataset=train_dataset,
             training_config=training_configs,
             encoder_optimizer=optimizers[0],
@@ -816,21 +841,21 @@ class Test_VAEGAN_Training:
         ).issubset(set(files_list))
 
         # check pickled custom decoder
-        if not adversarial_ae.model_config.uses_default_decoder:
+        if not vaegan.model_config.uses_default_decoder:
             assert "decoder.pkl" in files_list
 
         else:
             assert not "decoder.pkl" in files_list
 
         # check pickled custom encoder
-        if not adversarial_ae.model_config.uses_default_encoder:
+        if not vaegan.model_config.uses_default_encoder:
             assert "encoder.pkl" in files_list
 
         else:
             assert not "encoder.pkl" in files_list
 
         # check pickled custom discriminator
-        if not adversarial_ae.model_config.uses_default_discriminator:
+        if not vaegan.model_config.uses_default_discriminator:
             assert "discriminator.pkl" in files_list
 
         else:
@@ -848,13 +873,13 @@ class Test_VAEGAN_Training:
         )
 
     def test_final_model_saving(
-        self, tmpdir, adversarial_ae, train_dataset, training_configs, optimizers
+        self, tmpdir, vaegan, train_dataset, training_configs, optimizers
     ):
 
         dir_path = training_configs.output_dir
 
         trainer = CoupledOptimizerAdversarialTrainer(
-            model=adversarial_ae,
+            model=vaegan,
             train_dataset=train_dataset,
             training_config=training_configs,
             encoder_optimizer=optimizers[0],
@@ -880,21 +905,21 @@ class Test_VAEGAN_Training:
         )
 
         # check pickled custom decoder
-        if not adversarial_ae.model_config.uses_default_decoder:
+        if not vaegan.model_config.uses_default_decoder:
             assert "decoder.pkl" in files_list
 
         else:
             assert not "decoder.pkl" in files_list
 
         # check pickled custom encoder
-        if not adversarial_ae.model_config.uses_default_encoder:
+        if not vaegan.model_config.uses_default_encoder:
             assert "encoder.pkl" in files_list
 
         else:
             assert not "encoder.pkl" in files_list
 
         # check pickled custom discriminator
-        if not adversarial_ae.model_config.uses_default_discriminator:
+        if not vaegan.model_config.uses_default_discriminator:
             assert "discriminator.pkl" in files_list
 
         else:
@@ -916,20 +941,20 @@ class Test_VAEGAN_Training:
         assert type(model_rec.decoder.cpu()) == type(model.decoder.cpu())
         assert type(model_rec.discriminator.cpu()) == type(model.discriminator.cpu())
 
-    def test_adversarial_ae_training_pipeline(
-        self, tmpdir, adversarial_ae, train_dataset, training_configs
+    def test_vaegan_training_pipeline(
+        self, tmpdir, vaegan, train_dataset, training_configs
     ):
 
         with pytest.raises(AssertionError):
             pipeline = TrainingPipeline(
-                model=adversarial_ae, training_config=BaseTrainerConfig()
+                model=vaegan, training_config=BaseTrainerConfig()
             )
 
         dir_path = training_configs.output_dir
 
         # build pipeline
         pipeline = TrainingPipeline(
-            model=adversarial_ae, training_config=training_configs
+            model=vaegan, training_config=training_configs
         )
 
         assert pipeline.training_config.__dict__ == training_configs.__dict__
@@ -957,21 +982,21 @@ class Test_VAEGAN_Training:
         )
 
         # check pickled custom decoder
-        if not adversarial_ae.model_config.uses_default_decoder:
+        if not vaegan.model_config.uses_default_decoder:
             assert "decoder.pkl" in files_list
 
         else:
             assert not "decoder.pkl" in files_list
 
         # check pickled custom encoder
-        if not adversarial_ae.model_config.uses_default_encoder:
+        if not vaegan.model_config.uses_default_encoder:
             assert "encoder.pkl" in files_list
 
         else:
             assert not "encoder.pkl" in files_list
 
         # check pickled custom discriminator
-        if not adversarial_ae.model_config.uses_default_discriminator:
+        if not vaegan.model_config.uses_default_discriminator:
             assert "discriminator.pkl" in files_list
 
         else:

@@ -1,6 +1,7 @@
 import os
 from typing import Optional
 
+import numpy as np
 import torch
 import torch.nn.functional as F
 
@@ -16,8 +17,8 @@ class VAE(BaseAE):
     """Vanilla Variational Autoencoder model.
 
     Args:
-        model_config(VAEConfig): The Variational Autoencoder configuration seting the main
-        parameters of the model
+        model_config (VAEConfig): The Variational Autoencoder configuration setting the main
+        parameters of the model.
 
         encoder (BaseEncoder): An instance of BaseEncoder (inheriting from `torch.nn.Module` which
             plays the role of encoder. This argument allows you to use your own neural networks
@@ -49,8 +50,8 @@ class VAE(BaseAE):
             if model_config.input_dim is None:
                 raise AttributeError(
                     "No input dimension provided !"
-                    "'input_dim' parameter of BaseAEConfig instance must be set to 'data_shape' where "
-                    "the shape of the data is (C, H, W ..). Unable to build encoder "
+                    "'input_dim' parameter of BaseAEConfig instance must be set to 'data_shape' "
+                    "where the shape of the data is (C, H, W ..). Unable to build encoder "
                     "automatically"
                 )
 
@@ -124,6 +125,77 @@ class VAE(BaseAE):
         eps = torch.randn_like(std)
         return mu + eps * std, eps
 
+    def get_nll(self, data, n_samples=1, batch_size=100):
+        """
+        Function computed the estimate negative log-likelihood of the model. It uses importance
+        sampling method with the approximate posterior disctribution. This may take a while.
+
+        Args:
+            data (torch.Tensor): The input data from which the log-likelihood should be estimated.
+                Data must be of shape [Batch x n_channels x ...]
+            n_samples (int): The number of importance samples to use for estimation
+            batch_size (int): The batchsize to use to avoid memory issues
+        """
+
+        if n_samples <= batch_size:
+            n_full_batch = 1
+        else:
+            n_full_batch = n_samples // batch_size
+            n_samples = batch_size
+
+        log_p = []
+
+        for i in range(len(data)):
+            x = data[i].unsqueeze(0)
+
+            log_p_x = []
+
+            for j in range(n_full_batch):
+
+                x_rep = torch.cat(batch_size * [x])
+
+                encoder_output = self.encoder(x_rep)
+                mu, log_var = encoder_output.embedding, encoder_output.log_covariance
+
+                std = torch.exp(0.5 * log_var)
+                z, eps = self._sample_gauss(mu, std)
+
+                log_q_z_given_x = -0.5 * (
+                    log_var + (z - mu) ** 2 / torch.exp(log_var)
+                ).sum(dim=-1)
+                log_p_z = -0.5 * (z**2).sum(dim=-1)
+
+                recon_x = self.decoder(z)["reconstruction"]
+
+                if self.model_config.reconstruction_loss == "mse":
+
+                    log_p_x_given_z = -0.5 * F.mse_loss(
+                        recon_x.reshape(x_rep.shape[0], -1),
+                        x_rep.reshape(x_rep.shape[0], -1),
+                        reduction="none",
+                    ).sum(dim=-1) - torch.tensor(
+                        [np.prod(self.input_dim) / 2 * np.log(np.pi * 2)]
+                    ).to(
+                        data.device
+                    )  # decoding distribution is assumed unit variance  N(mu, I)
+
+                elif self.model_config.reconstruction_loss == "bce":
+
+                    log_p_x_given_z = -F.binary_cross_entropy(
+                        recon_x.reshape(x_rep.shape[0], -1),
+                        x_rep.reshape(x_rep.shape[0], -1),
+                        reduction="none",
+                    ).sum(dim=-1)
+
+                log_p_x.append(
+                    log_p_x_given_z + log_p_z - log_q_z_given_x
+                )  # log(2*pi) simplifies
+
+            log_p_x = torch.cat(log_p_x)
+
+            log_p.append((torch.logsumexp(log_p_x, 0) - np.log(len(log_p_x))).item())
+        return np.mean(log_p)
+
     @classmethod
     def _load_model_config_from_folder(cls, dir_path):
         file_list = os.listdir(dir_path)
@@ -138,42 +210,3 @@ class VAE(BaseAE):
         model_config = VAEConfig.from_json_file(path_to_model_config)
 
         return model_config
-
-    @classmethod
-    def load_from_folder(cls, dir_path):
-        """Class method to be used to load the model from a specific folder
-
-        Args:
-            dir_path (str): The path where the model should have been be saved.
-
-        .. note::
-            This function requires the folder to contain:
-
-            - | a ``model_config.json`` and a ``model.pt`` if no custom architectures were provided
-
-            **or**
-
-            - | a ``model_config.json``, a ``model.pt`` and a ``encoder.pkl`` (resp.
-                ``decoder.pkl``) if a custom encoder (resp. decoder) was provided
-
-        """
-
-        model_config = cls._load_model_config_from_folder(dir_path)
-        model_weights = cls._load_model_weights_from_folder(dir_path)
-
-        if not model_config.uses_default_encoder:
-            encoder = cls._load_custom_encoder_from_folder(dir_path)
-
-        else:
-            encoder = None
-
-        if not model_config.uses_default_decoder:
-            decoder = cls._load_custom_decoder_from_folder(dir_path)
-
-        else:
-            decoder = None
-
-        model = cls(model_config, encoder=encoder, decoder=decoder)
-        model.load_state_dict(model_weights)
-
-        return model

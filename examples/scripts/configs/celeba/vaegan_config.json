@@ -1,4 +1,5 @@
 {
+    "name": "VAEGANConfig",
     "latent_dim": 64,
     "reconstruction_loss": "mse",
     "adversarial_loss_scale": 0.99999,

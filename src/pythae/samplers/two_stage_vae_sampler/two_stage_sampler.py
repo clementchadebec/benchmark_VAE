@@ -8,7 +8,7 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 
 from ...data.preprocessors import DataProcessor
-from ...models import RHVAE, VAE, RHVAEConfig, VAEConfig
+from ...models import VAE, VAEConfig
 from ...models.base.base_utils import ModelOutput
 from ...models.nn import BaseDecoder, BaseEncoder
 from ...pipelines import TrainingPipeline
@@ -95,7 +95,7 @@ class SecondDecoder(BaseDecoder):
 
 
 class TwoStageVAESampler(BaseSampler):
-    """Two Stage VAE sampler.
+    """Fits a second VAE in the Autoencoder's latent space.
 
     Args:
         model (VAE): The VAE model to sample from
@@ -147,11 +147,10 @@ class TwoStageVAESampler(BaseSampler):
             train_data (torch.Tensor): The train data needed to retreive the training embeddings
                     and fit the mixture in the latent space. Must be of shape n_imgs x im_channels x
                     ... and in range [0-1]
-            train_data (torch.Tensor): The train data needed to retreive the evaluation embeddings
+            eval_data (torch.Tensor): The train data needed to retreive the evaluation embeddings
                     and fit the mixture in the latent space. Must be of shape n_imgs x im_channels x
                     ... and in range [0-1]
-            path_to_training_config (BaseTrainerConfig): path to the training config to use to fit
-                the second VAE.
+            training_config (BaseTrainerConfig): the training config to use to fit the second VAE.
         """
 
         assert (
@@ -161,18 +160,18 @@ class TwoStageVAESampler(BaseSampler):
         data_processor = DataProcessor()
         train_data = data_processor.process_data(train_data)
         train_dataset = data_processor.to_dataset(train_data)
-        train_loader = DataLoader(dataset=train_dataset, batch_size=100, shuffle=False)
+        train_loader = DataLoader(dataset=train_dataset, batch_size=100, shuffle=True)
 
         z = []
 
         with torch.no_grad():
             for _, inputs in enumerate(train_loader):
                 encoder_output = self.model.encoder(inputs["data"].to(self.device))
-                mean_z, log_std_z = (
+                mean_z, log_var_z = (
                     encoder_output.embedding,
                     encoder_output.log_covariance,
                 )
-                z_data = mean_z + torch.randn_like(log_std_z) * log_std_z.exp()
+                z_data = mean_z + torch.randn_like(log_var_z) * torch.exp(0.5 * log_var_z)
                 z.append(z_data)
 
         train_data = torch.cat(z)
@@ -194,11 +193,11 @@ class TwoStageVAESampler(BaseSampler):
             with torch.no_grad():
                 for _, inputs in enumerate(eval_loader):
                     encoder_output = self.model.encoder(inputs["data"].to(self.device))
-                    mean_z, log_std_z = (
+                    mean_z, log_var_z = (
                         encoder_output.embedding,
                         encoder_output.log_covariance,
                     )
-                    z_data = mean_z + torch.randn_like(log_std_z) * log_std_z.exp()
+                    z_data = mean_z + torch.randn_like(log_var_z) * torch.exp(0.5 * log_var_z)
                     z.append(z_data)
 
             eval_data = torch.cat(z)
@@ -207,6 +206,11 @@ class TwoStageVAESampler(BaseSampler):
             training_config=training_config, model=self.second_vae
         )
         pipeline(train_data=train_data, eval_data=eval_data)
+
+        self.second_vae = VAE.load_from_folder(
+            os.path.join(pipeline.trainer.training_dir, "final_model")
+        ).to(self.device)
+
         shutil.rmtree(pipeline.trainer.training_dir)
 
         self.is_fitted = True
@@ -237,7 +241,7 @@ class TwoStageVAESampler(BaseSampler):
 
         if not self.is_fitted:
             raise ArithmeticError(
-                "The sampler needs to be fitted by calling smapler.fit() method"
+                "The sampler needs to be fitted by calling sampler.fit() method"
                 "before sampling."
             )
 
@@ -250,9 +254,6 @@ class TwoStageVAESampler(BaseSampler):
 
             u = torch.randn(batch_size, self.model.latent_dim).to(self.device)
             z = self.second_vae.decoder(u).reconstruction
-            z = z + self.second_vae.decoder.gamma_z * torch.randn(
-                batch_size, self.model.latent_dim
-            ).to(self.device)
             x_gen = self.model.decoder(z)["reconstruction"].detach()
 
             if output_dir is not None:
@@ -268,9 +269,6 @@ class TwoStageVAESampler(BaseSampler):
                 self.device
             )
             z = self.second_vae.decoder(u).reconstruction
-            z = z + self.second_vae.decoder.gamma_z * torch.randn(
-                last_batch_samples_nbr, self.model.latent_dim
-            ).to(self.device)
             x_gen = self.model.decoder(z)["reconstruction"].detach()
 
             if output_dir is not None:

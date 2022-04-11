@@ -1,17 +1,13 @@
 """ Here are implemented the trainers used to train the Autoencoder models
 """
 
-from .base_trainer import BaseTrainer, BaseTrainerConfig
 from .adversarial_trainer import AdversarialTrainer, AdversarialTrainerConfig
-from .coupled_optimizer_trainer import (
-    CoupledOptimizerTrainer,
-    CoupledOptimizerTrainerConfig,
-)
-
+from .base_trainer import BaseTrainer, BaseTrainerConfig
 from .coupled_optimizer_adversarial_trainer import (
     CoupledOptimizerAdversarialTrainer,
-    CoupledOptimizerAdversarialTrainerConfig,
-)
+    CoupledOptimizerAdversarialTrainerConfig)
+from .coupled_optimizer_trainer import (CoupledOptimizerTrainer,
+                                        CoupledOptimizerTrainerConfig)
 
 __all__ = [
     "BaseTrainer",

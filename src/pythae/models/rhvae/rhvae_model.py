@@ -12,10 +12,10 @@ from torch.autograd import grad
 
 from ...customexception import BadInheritanceError
 from ...data.datasets import BaseDataset
-from ...models import VAE
 from ..base.base_utils import CPU_Unpickler, ModelOutput
 from ..nn import BaseDecoder, BaseEncoder, BaseMetric
 from ..nn.default_architectures import Metric_MLP
+from ..vae import VAE
 from .rhvae_config import RHVAEConfig
 from .rhvae_utils import create_inverse_metric, create_metric
 
@@ -26,7 +26,7 @@ class RHVAE(VAE):
 
 
     Args:
-        model_config (RHVAEConfig): A model configuration setting the main parameters of the model
+        model_config (RHVAEConfig): A model configuration setting the main parameters of the model.
 
         encoder (BaseEncoder): An instance of BaseEncoder (inheriting from `torch.nn.Module` which
             plays the role of encoder. This argument allows you to use your own neural networks
@@ -255,146 +255,6 @@ class RHVAE(VAE):
 
         return output
 
-    def save(self, dir_path: str):
-        """Method to save the model at a specific location
-
-        Args:
-            dir_path (str): The path where the model should be saved. If the path
-                path does not exist a folder will be created at the provided location.
-        """
-
-        # This creates the dir if not available
-        super().save(dir_path)
-
-        model_path = dir_path
-
-        model_dict = {
-            "M": deepcopy(self.M_tens.clone().detach()),
-            "centroids": deepcopy(self.centroids_tens.clone().detach()),
-            "model_state_dict": deepcopy(self.state_dict()),
-        }
-
-        if not self.model_config.uses_default_metric:
-            with open(os.path.join(model_path, "metric.pkl"), "wb") as fp:
-                dill.dump(self.metric, fp)
-
-        torch.save(model_dict, os.path.join(model_path, "model.pt"))
-
-    @classmethod
-    def _load_model_config_from_folder(cls, dir_path):
-        file_list = os.listdir(dir_path)
-
-        if "model_config.json" not in file_list:
-            raise FileNotFoundError(
-                f"Missing model config file ('model_config.json') in"
-                f"{dir_path}... Cannot perform model building."
-            )
-
-        path_to_model_config = os.path.join(dir_path, "model_config.json")
-        model_config = RHVAEConfig.from_json_file(path_to_model_config)
-
-        return model_config
-
-    @classmethod
-    def _load_custom_metric_from_folder(cls, dir_path):
-
-        file_list = os.listdir(dir_path)
-
-        if "metric.pkl" not in file_list:
-            raise FileNotFoundError(
-                f"Missing metric pkl file ('metric.pkl') in"
-                f"{dir_path}... This file is needed to rebuild custom metrics."
-                " Cannot perform model building."
-            )
-
-        else:
-            with open(os.path.join(dir_path, "metric.pkl"), "rb") as fp:
-                metric = CPU_Unpickler(fp).load()
-
-        return metric
-
-    @classmethod
-    def _load_metric_matrices_and_centroids(cls, dir_path):
-        """this function can be called safely since it is called after
-        _load_model_weights_from_folder which handles FileNotFoundError and
-        loading issues"""
-
-        path_to_model_weights = os.path.join(dir_path, "model.pt")
-
-        model_weights = torch.load(path_to_model_weights, map_location="cpu")
-
-        if "M" not in model_weights.keys():
-            raise KeyError(
-                "Metric M matrices are not available in 'model.pt' file. Got keys:"
-                f"{model_weights.keys()}. These are needed to build the metric."
-            )
-
-        metric_M = model_weights["M"]
-
-        if "centroids" not in model_weights.keys():
-            raise KeyError(
-                "Metric centroids are not available in 'model.pt' file. Got keys:"
-                f"{model_weights.keys()}. These are needed to build the metric."
-            )
-
-        metric_centroids = model_weights["centroids"]
-
-        return metric_M, metric_centroids
-
-    @classmethod
-    def load_from_folder(cls, dir_path):
-        """Class method to be used to load the model from a specific folder
-
-        Args:
-            dir_path (str): The path where the model should have been be saved.
-
-        .. note::
-            This function requires the folder to contain:
-
-            - | a ``model_config.json`` and a ``model.pt`` if no custom architectures were provided
-
-            **or**
-
-            - | a ``model_config.json``, a ``model.pt`` and a ``encoder.pkl`` (resp.
-                ``decoder.pkl`` or/and ``metric.pkl``) if a custom encoder (resp. decoder or/and
-                metric) was provided
-        """
-
-        model_config = cls._load_model_config_from_folder(dir_path)
-        model_weights = cls._load_model_weights_from_folder(dir_path)
-
-        if not model_config.uses_default_encoder:
-            encoder = cls._load_custom_encoder_from_folder(dir_path)
-
-        else:
-            encoder = None
-
-        if not model_config.uses_default_decoder:
-            decoder = cls._load_custom_decoder_from_folder(dir_path)
-
-        else:
-            decoder = None
-
-        if not model_config.uses_default_metric:
-            metric = cls._load_custom_metric_from_folder(dir_path)
-
-        else:
-            metric = None
-
-        model = cls(model_config, encoder=encoder, decoder=decoder, metric=metric)
-
-        metric_M, metric_centroids = cls._load_metric_matrices_and_centroids(dir_path)
-
-        model.M_tens = metric_M
-        model.centroids_tens = metric_centroids
-
-        model.G = create_metric(model)
-        model.G_inv = create_inverse_metric(model)
-
-        model.load_state_dict(model_weights)
-
-        return model
-
     def _leap_step_1(self, recon_x, x, z, rho, G_inv, G_log_det, steps=3):
         """
         Resolves first equation of generalized leapfrog integrator
@@ -574,3 +434,288 @@ class RHVAE(VAE):
         logpxz = self._log_p_x_given_z(recon_x, x)
         logpz = self._log_z(z)
         return logpxz + logpz
+
+    def get_nll(self, data, n_samples=1, batch_size=100):
+        """
+        Function computed the estimate negative log-likelihood of the model. It uses importance
+        sampling method with the approximate posterior disctribution. This may take a while.
+
+        Args:
+            data (torch.Tensor): The input data from which the log-likelihood should be estimated.
+                Data must be of shape [Batch x n_channels x ...]
+            n_samples (int): The number of importance samples to use for estimation
+            batch_size (int): The batchsize to use to avoid memory issues
+        """
+        normal = torch.distributions.MultivariateNormal(
+            loc=torch.zeros(self.model_config.latent_dim).to(data.device),
+            covariance_matrix=torch.eye(self.model_config.latent_dim).to(data.device),
+        )
+
+        if n_samples <= batch_size:
+            n_full_batch = 1
+        else:
+            n_full_batch = n_samples // batch_size
+            n_samples = batch_size
+
+        log_p = []
+
+        for i in range(len(data)):
+            x = data[i].unsqueeze(0)
+
+            log_p_x = []
+
+            for j in range(n_full_batch):
+
+                x_rep = torch.cat(batch_size * [x])
+
+                encoder_output = self.encoder(x_rep)
+                mu, log_var = encoder_output.embedding, encoder_output.log_covariance
+
+                std = torch.exp(0.5 * log_var)
+                z0, eps = self._sample_gauss(mu, std)
+                gamma = torch.randn_like(z0, device=x.device)
+                rho = gamma / self.beta_zero_sqrt
+
+                z = z0
+                beta_sqrt_old = self.beta_zero_sqrt
+
+                G = self.G(z0)
+                G_inv = self.G_inv(z0)
+                G_log_det = -torch.logdet(G_inv)
+                L = torch.linalg.cholesky(G)
+
+                G_inv_0 = G_inv
+                G_log_det_0 = G_log_det
+
+                # initialization
+                gamma = torch.randn_like(z0, device=z.device)
+                rho = gamma / self.beta_zero_sqrt
+                beta_sqrt_old = self.beta_zero_sqrt
+
+                rho = (L @ rho.unsqueeze(-1)).squeeze(
+                    -1
+                )  # sample from the multivariate N(0, G)
+
+                rho0 = rho
+
+                recon_x = self.decoder(z)["reconstruction"]
+
+                for k in range(self.n_lf):
+
+                    # perform leapfrog steps
+
+                    # step 1
+                    rho_ = self._leap_step_1(recon_x, x_rep, z, rho, G_inv, G_log_det)
+
+                    # step 2
+                    z = self._leap_step_2(recon_x, x_rep, z, rho_, G_inv, G_log_det)
+
+                    recon_x = self.decoder(z)["reconstruction"]
+
+                    G_inv = self.G_inv(z)
+                    G_log_det = -torch.logdet(G_inv)
+
+                    # step 3
+                    rho__ = self._leap_step_3(recon_x, x_rep, z, rho_, G_inv, G_log_det)
+
+                    # tempering steps
+                    beta_sqrt = self._tempering(k + 1, self.n_lf)
+                    rho = (beta_sqrt_old / beta_sqrt) * rho__
+                    beta_sqrt_old = beta_sqrt
+
+                log_q_z0_given_x = -0.5 * (
+                    log_var + (z0 - mu) ** 2 / torch.exp(log_var)
+                ).sum(dim=-1)
+                log_p_z = -0.5 * (z**2).sum(dim=-1)
+
+                log_p_rho0 = normal.log_prob(gamma) - torch.logdet(
+                    L / self.beta_zero_sqrt
+                )  # rho0 ~ N(0, 1/beta_0 * G(z0))
+
+                log_p_rho = (
+                    -0.5
+                    * (
+                        torch.transpose(rho.unsqueeze(-1), 1, 2)
+                        @ G_inv
+                        @ rho.unsqueeze(-1)
+                    )
+                    .squeeze()
+                    .squeeze()
+                    - 0.5 * G_log_det
+                ) - torch.log(
+                    torch.tensor([2 * np.pi]).to(z.device)
+                ) * self.latent_dim / 2  # rho0 ~ N(0, G(z))
+
+                if self.model_config.reconstruction_loss == "mse":
+
+                    log_p_x_given_z = -0.5 * F.mse_loss(
+                        recon_x.reshape(x_rep.shape[0], -1),
+                        x_rep.reshape(x_rep.shape[0], -1),
+                        reduction="none",
+                    ).sum(dim=-1) - torch.tensor(
+                        [np.prod(self.input_dim) / 2 * np.log(np.pi * 2)]
+                    ).to(
+                        data.device
+                    )  # decoding distribution is assumed unit variance  N(mu, I)
+
+                elif self.model_config.reconstruction_loss == "bce":
+
+                    log_p_x_given_z = -F.binary_cross_entropy(
+                        recon_x.reshape(x_rep.shape[0], -1),
+                        x_rep.reshape(x_rep.shape[0], -1),
+                        reduction="none",
+                    ).sum(dim=-1)
+
+                log_p_x.append(
+                    log_p_x_given_z
+                    + log_p_z
+                    + log_p_rho
+                    - log_p_rho0
+                    - log_q_z0_given_x
+                )  # N*log(2*pi) simplifies in prior and posterior
+
+            log_p_x = torch.cat(log_p_x)
+
+            log_p.append((torch.logsumexp(log_p_x, 0) - np.log(len(log_p_x))).item())
+
+        return np.mean(log_p)
+
+    def save(self, dir_path: str):
+        """Method to save the model at a specific location
+
+        Args:
+            dir_path (str): The path where the model should be saved. If the path
+                path does not exist a folder will be created at the provided location.
+        """
+
+        # This creates the dir if not available
+        super().save(dir_path)
+
+        model_path = dir_path
+
+        model_dict = {
+            "M": deepcopy(self.M_tens.clone().detach()),
+            "centroids": deepcopy(self.centroids_tens.clone().detach()),
+            "model_state_dict": deepcopy(self.state_dict()),
+        }
+
+        if not self.model_config.uses_default_metric:
+            with open(os.path.join(model_path, "metric.pkl"), "wb") as fp:
+                dill.dump(self.metric, fp)
+
+        torch.save(model_dict, os.path.join(model_path, "model.pt"))
+
+    @classmethod
+    def _load_model_config_from_folder(cls, dir_path):
+        file_list = os.listdir(dir_path)
+
+        if "model_config.json" not in file_list:
+            raise FileNotFoundError(
+                f"Missing model config file ('model_config.json') in"
+                f"{dir_path}... Cannot perform model building."
+            )
+
+        path_to_model_config = os.path.join(dir_path, "model_config.json")
+        model_config = RHVAEConfig.from_json_file(path_to_model_config)
+
+        return model_config
+
+    @classmethod
+    def _load_custom_metric_from_folder(cls, dir_path):
+
+        file_list = os.listdir(dir_path)
+
+        if "metric.pkl" not in file_list:
+            raise FileNotFoundError(
+                f"Missing metric pkl file ('metric.pkl') in"
+                f"{dir_path}... This file is needed to rebuild custom metrics."
+                " Cannot perform model building."
+            )
+
+        else:
+            with open(os.path.join(dir_path, "metric.pkl"), "rb") as fp:
+                metric = CPU_Unpickler(fp).load()
+
+        return metric
+
+    @classmethod
+    def _load_metric_matrices_and_centroids(cls, dir_path):
+        """this function can be called safely since it is called after
+        _load_model_weights_from_folder which handles FileNotFoundError and
+        loading issues"""
+
+        path_to_model_weights = os.path.join(dir_path, "model.pt")
+
+        model_weights = torch.load(path_to_model_weights, map_location="cpu")
+
+        if "M" not in model_weights.keys():
+            raise KeyError(
+                "Metric M matrices are not available in 'model.pt' file. Got keys:"
+                f"{model_weights.keys()}. These are needed to build the metric."
+            )
+
+        metric_M = model_weights["M"]
+
+        if "centroids" not in model_weights.keys():
+            raise KeyError(
+                "Metric centroids are not available in 'model.pt' file. Got keys:"
+                f"{model_weights.keys()}. These are needed to build the metric."
+            )
+
+        metric_centroids = model_weights["centroids"]
+
+        return metric_M, metric_centroids
+
+    @classmethod
+    def load_from_folder(cls, dir_path):
+        """Class method to be used to load the model from a specific folder
+
+        Args:
+            dir_path (str): The path where the model should have been be saved.
+
+        .. note::
+            This function requires the folder to contain:
+
+            - | a ``model_config.json`` and a ``model.pt`` if no custom architectures were provided
+
+            **or**
+
+            - | a ``model_config.json``, a ``model.pt`` and a ``encoder.pkl`` (resp.
+                ``decoder.pkl`` or/and ``metric.pkl``) if a custom encoder (resp. decoder or/and
+                metric) was provided
+        """
+
+        model_config = cls._load_model_config_from_folder(dir_path)
+        model_weights = cls._load_model_weights_from_folder(dir_path)
+
+        if not model_config.uses_default_encoder:
+            encoder = cls._load_custom_encoder_from_folder(dir_path)
+
+        else:
+            encoder = None
+
+        if not model_config.uses_default_decoder:
+            decoder = cls._load_custom_decoder_from_folder(dir_path)
+
+        else:
+            decoder = None
+
+        if not model_config.uses_default_metric:
+            metric = cls._load_custom_metric_from_folder(dir_path)
+
+        else:
+            metric = None
+
+        model = cls(model_config, encoder=encoder, decoder=decoder, metric=metric)
+
+        metric_M, metric_centroids = cls._load_metric_matrices_and_centroids(dir_path)
+
+        model.M_tens = metric_M
+        model.centroids_tens = metric_centroids
+
+        model.G = create_metric(model)
+        model.G_inv = create_inverse_metric(model)
+
+        model.load_state_dict(model_weights)
+
+        return model
