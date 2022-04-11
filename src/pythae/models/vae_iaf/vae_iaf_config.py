@@ -7,7 +7,7 @@ from ..vae import VAEConfig
 @dataclass
 class VAE_IAF_Config(VAEConfig):
     """VAE with Inverse Autoregressive Normalizing Flow config class.
-    
+
     Parameters:
         input_dim (int): The input_data dimension
         latent_dim (int): The latent space dimension. Default: None.

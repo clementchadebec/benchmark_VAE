@@ -25,6 +25,7 @@ Available Autoencoders
     ~pythae.models.AE
     ~pythae.models.VAE
     ~pythae.models.BetaVAE
+    ~pythae.models.VAE_LinNF
     ~pythae.models.VAE_IAF
     ~pythae.models.DisentangledBetaVAE
     ~pythae.models.FactorVAE
@@ -49,6 +50,8 @@ Available Normalizing Flows
 
 .. autosummary::
     ~pythae.models.normalizing_flows.BaseNF
+    ~pythae.models.normalizing_flows.PlanarFlow
+    ~pythae.models.normalizing_flows.RadialFlow
     ~pythae.models.normalizing_flows.MADE
     ~pythae.models.normalizing_flows.MAF
     ~pythae.models.normalizing_flows.IAF

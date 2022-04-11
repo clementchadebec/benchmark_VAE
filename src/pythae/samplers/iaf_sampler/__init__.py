@@ -8,6 +8,7 @@ Available models:
     ~pythae.models.AE
     ~pythae.models.VAE
     ~pythae.models.BetaVAE
+    ~pythae.models.VAE_LinNF
     ~pythae.models.VAE_IAF
     ~pythae.models.DisentangledBetaVAE
     ~pythae.models.FactorVAE
@@ -28,7 +29,7 @@ Available models:
     :nosignatures:
 """
 
-from .iaf_sampler_config import IAFSamplerConfig
 from .iaf_sampler import IAFSampler
+from .iaf_sampler_config import IAFSamplerConfig
 
 __all__ = ["IAFSampler", "IAFSamplerConfig"]

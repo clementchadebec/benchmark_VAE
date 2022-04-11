@@ -3,13 +3,13 @@ from copy import deepcopy
 
 import pytest
 import torch
-from torch.optim import SGD, Adadelta, Adagrad, Adam, RMSprop
+from torch.optim import Adam
 
 from pythae.customexception import BadInheritanceError
 from pythae.models.base.base_utils import ModelOutput
-from pythae.models import VAE_NF, VAE_NF_Config
+from pythae.models import VAE_LinNF, VAE_LinNF_Config
 
-from pythae.trainers import BaseTrainer, BaseTrainingConfig
+from pythae.trainers import BaseTrainer, BaseTrainerConfig
 from pythae.pipelines import TrainingPipeline
 from tests.data.custom_architectures import (
     Decoder_AE_Conv,
@@ -20,15 +20,22 @@ from tests.data.custom_architectures import (
 PATH = os.path.dirname(os.path.abspath(__file__))
 
 
-@pytest.fixture(params=[VAE_NF_Config(), VAE_NF_Config(latent_dim=5)])
+@pytest.fixture(params=[VAE_LinNF_Config(), VAE_LinNF_Config(latent_dim=5)])
 def model_configs_no_input_dim(request):
     return request.param
 
 
 @pytest.fixture(
     params=[
-        VAE_NF_Config(input_dim=(1, 28, 28), latent_dim=10, reconstruction_loss="bce"),
-        VAE_NF_Config(input_dim=(1, 28), latent_dim=5),
+        VAE_LinNF_Config(
+            input_dim=(1, 28, 28),
+            latent_dim=10,
+            reconstruction_loss="bce",
+            flows=["Planar", "Radial", "Planar"],
+        ),
+        VAE_LinNF_Config(
+            input_dim=(1, 28), latent_dim=5, flows=["Radial", "Radial", "Radial"]
+        ),
     ]
 )
 def model_configs(request):
@@ -44,99 +51,77 @@ def custom_encoder(model_configs):
 def custom_decoder(model_configs):
     return Decoder_AE_Conv(model_configs)
 
-@pytest.fixture(
-    params=[
-        ['PlanarFlow','RadialFlow'],
-    ]
-)
-def custom_flows(request):
-    return request.param
-
-@pytest.fixture(
-    params=[
-        ['BadFlowName'],
-        list(range(5)),
-        ['PlanarFlow','PlanarFowl']
-    ]
-)
-def bad_flows(request):
-    return request.param
 
 class Test_Model_Building:
     @pytest.fixture()
     def bad_net(self):
         return NetBadInheritance()
 
+    def test_raises_wrong_flows(self):
+
+        with pytest.raises(AssertionError):
+            conf = VAE_LinNF_Config(
+                input_dim=(1, 28), latent_dim=5, flows=["Planar", "WrongFlow"]
+            )
+
     def test_build_model(self, model_configs):
-        model = VAE_NF(model_configs)
+        model = VAE_LinNF(model_configs)
         assert all(
             [
                 model.input_dim == model_configs.input_dim,
                 model.latent_dim == model_configs.latent_dim,
             ]
         )
+        assert all(
+            [
+                model_flow.__class__.__name__.replace("Flow", "") == custom_flow
+                for model_flow, custom_flow in zip(model.net, model_configs.flows)
+            ]
+        )
 
     def test_raises_bad_inheritance(self, model_configs, bad_net):
         with pytest.raises(BadInheritanceError):
-            model = VAE_NF(model_configs, encoder=bad_net)
+            model = VAE_LinNF(model_configs, encoder=bad_net)
 
         with pytest.raises(BadInheritanceError):
-            model = VAE_NF(model_configs, decoder=bad_net)
+            model = VAE_LinNF(model_configs, decoder=bad_net)
 
     def test_raises_no_input_dim(
         self, model_configs_no_input_dim, custom_encoder, custom_decoder
     ):
         with pytest.raises(AttributeError):
-            model = VAE_NF(model_configs_no_input_dim)
+            model = VAE_LinNF(model_configs_no_input_dim)
 
         with pytest.raises(AttributeError):
-            model = VAE_NF(model_configs_no_input_dim, encoder=custom_encoder)
+            model = VAE_LinNF(model_configs_no_input_dim, encoder=custom_encoder)
 
         with pytest.raises(AttributeError):
-            model = VAE_NF(model_configs_no_input_dim, decoder=custom_decoder)
+            model = VAE_LinNF(model_configs_no_input_dim, decoder=custom_decoder)
 
-        model = VAE_NF(
+        model = VAE_LinNF(
             model_configs_no_input_dim, encoder=custom_encoder, decoder=custom_decoder
         )
 
-    def test_build_custom_arch(self, model_configs, custom_encoder, custom_decoder, custom_flows):
+    def test_build_custom_arch(self, model_configs, custom_encoder, custom_decoder):
 
-        model = VAE_NF(model_configs, encoder=custom_encoder, decoder=custom_decoder, flows=custom_flows)
-
-        assert model.encoder == custom_encoder
-        assert not model.model_config.uses_default_encoder
-        assert model.decoder == custom_decoder
-        assert not model.model_config.uses_default_decoder
-
-        model = VAE_NF(model_configs, encoder=custom_encoder, decoder=custom_decoder)
+        model = VAE_LinNF(model_configs, encoder=custom_encoder, decoder=custom_decoder)
 
         assert model.encoder == custom_encoder
         assert not model.model_config.uses_default_encoder
         assert model.decoder == custom_decoder
         assert not model.model_config.uses_default_decoder
 
-        model = VAE_NF(model_configs, encoder=custom_encoder)
+        model = VAE_LinNF(model_configs, encoder=custom_encoder)
 
         assert model.encoder == custom_encoder
         assert not model.model_config.uses_default_encoder
         assert model.model_config.uses_default_decoder
 
-        model = VAE_NF(model_configs, decoder=custom_decoder)
+        model = VAE_LinNF(model_configs, decoder=custom_decoder)
 
         assert model.model_config.uses_default_encoder
         assert model.decoder == custom_decoder
         assert not model.model_config.uses_default_decoder
-
-    def test_give_wrong_flow_names(self, model_configs, custom_encoder, custom_decoder, bad_flows):
-
-        if type(bad_flows[0])==str:
-            with pytest.raises(NameError):
-                model = VAE_NF(model_configs, encoder=custom_encoder, decoder=custom_decoder,
-                    flows = bad_flows)
-        else:
-             with pytest.raises(TypeError):
-                model = VAE_NF(model_configs, encoder=custom_encoder, decoder=custom_decoder,
-                    flows = bad_flows)           
 
 
 class Test_Model_Saving:
@@ -145,7 +130,7 @@ class Test_Model_Saving:
         tmpdir.mkdir("dummy_folder")
         dir_path = dir_path = os.path.join(tmpdir, "dummy_folder")
 
-        model = VAE_NF(model_configs)
+        model = VAE_LinNF(model_configs)
 
         model.state_dict()["encoder.layers.0.0.weight"][0] = 0
 
@@ -154,7 +139,7 @@ class Test_Model_Saving:
         assert set(os.listdir(dir_path)) == set(["model_config.json", "model.pt"])
 
         # reload model
-        model_rec = VAE_NF.load_from_folder(dir_path)
+        model_rec = VAE_LinNF.load_from_folder(dir_path)
 
         # check configs are the same
         assert model_rec.model_config.__dict__ == model.model_config.__dict__
@@ -171,7 +156,7 @@ class Test_Model_Saving:
         tmpdir.mkdir("dummy_folder")
         dir_path = dir_path = os.path.join(tmpdir, "dummy_folder")
 
-        model = VAE_NF(model_configs, encoder=custom_encoder)
+        model = VAE_LinNF(model_configs, encoder=custom_encoder)
 
         model.state_dict()["encoder.layers.0.0.weight"][0] = 0
 
@@ -182,7 +167,7 @@ class Test_Model_Saving:
         )
 
         # reload model
-        model_rec = VAE_NF.load_from_folder(dir_path)
+        model_rec = VAE_LinNF.load_from_folder(dir_path)
 
         # check configs are the same
         assert model_rec.model_config.__dict__ == model.model_config.__dict__
@@ -199,7 +184,7 @@ class Test_Model_Saving:
         tmpdir.mkdir("dummy_folder")
         dir_path = dir_path = os.path.join(tmpdir, "dummy_folder")
 
-        model = VAE_NF(model_configs, decoder=custom_decoder)
+        model = VAE_LinNF(model_configs, decoder=custom_decoder)
 
         model.state_dict()["encoder.layers.0.0.weight"][0] = 0
 
@@ -210,7 +195,7 @@ class Test_Model_Saving:
         )
 
         # reload model
-        model_rec = VAE_NF.load_from_folder(dir_path)
+        model_rec = VAE_LinNF.load_from_folder(dir_path)
 
         # check configs are the same
         assert model_rec.model_config.__dict__ == model.model_config.__dict__
@@ -229,7 +214,7 @@ class Test_Model_Saving:
         tmpdir.mkdir("dummy_folder")
         dir_path = dir_path = os.path.join(tmpdir, "dummy_folder")
 
-        model = VAE_NF(model_configs, encoder=custom_encoder, decoder=custom_decoder)
+        model = VAE_LinNF(model_configs, encoder=custom_encoder, decoder=custom_decoder)
 
         model.state_dict()["encoder.layers.0.0.weight"][0] = 0
 
@@ -240,7 +225,7 @@ class Test_Model_Saving:
         )
 
         # reload model
-        model_rec = VAE_NF.load_from_folder(dir_path)
+        model_rec = VAE_LinNF.load_from_folder(dir_path)
 
         # check configs are the same
         assert model_rec.model_config.__dict__ == model.model_config.__dict__
@@ -259,7 +244,7 @@ class Test_Model_Saving:
         tmpdir.mkdir("dummy_folder")
         dir_path = dir_path = os.path.join(tmpdir, "dummy_folder")
 
-        model = VAE_NF(model_configs, encoder=custom_encoder, decoder=custom_decoder)
+        model = VAE_LinNF(model_configs, encoder=custom_encoder, decoder=custom_decoder)
 
         model.state_dict()["encoder.layers.0.0.weight"][0] = 0
 
@@ -269,25 +254,25 @@ class Test_Model_Saving:
 
         # check raises decoder.pkl is missing
         with pytest.raises(FileNotFoundError):
-            model_rec = VAE_NF.load_from_folder(dir_path)
+            model_rec = VAE_LinNF.load_from_folder(dir_path)
 
         os.remove(os.path.join(dir_path, "encoder.pkl"))
 
         # check raises encoder.pkl is missing
         with pytest.raises(FileNotFoundError):
-            model_rec = VAE_NF.load_from_folder(dir_path)
+            model_rec = VAE_LinNF.load_from_folder(dir_path)
 
         os.remove(os.path.join(dir_path, "model.pt"))
 
         # check raises encoder.pkl is missing
         with pytest.raises(FileNotFoundError):
-            model_rec = VAE_NF.load_from_folder(dir_path)
+            model_rec = VAE_LinNF.load_from_folder(dir_path)
 
         os.remove(os.path.join(dir_path, "model_config.json"))
 
         # check raises encoder.pkl is missing
         with pytest.raises(FileNotFoundError):
-            model_rec = VAE_NF.load_from_folder(dir_path)
+            model_rec = VAE_LinNF.load_from_folder(dir_path)
 
 
 class Test_Model_forward:
@@ -296,20 +281,18 @@ class Test_Model_forward:
         data = torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))[
             :
         ]
-        return (
-            data
-        )  # This is an extract of 3 data from MNIST (unnormalized) used to test custom architecture
+        return data  # This is an extract of 3 data from MNIST (unnormalized) used to test custom architecture
 
     @pytest.fixture
-    def VAE_NF(self, model_configs, demo_data):
+    def vae(self, model_configs, demo_data):
         model_configs.input_dim = tuple(demo_data["data"][0].shape)
-        return VAE_NF(model_configs)
+        return VAE_LinNF(model_configs)
 
-    def test_model_train_output(self, VAE_NF, demo_data):
+    def test_model_train_output(self, vae, demo_data):
 
-        VAE_NF.train()
+        vae.train()
 
-        out = VAE_NF(demo_data)
+        out = vae(demo_data)
 
         assert isinstance(out, ModelOutput)
 
@@ -321,14 +304,40 @@ class Test_Model_forward:
         assert out.recon_x.shape == demo_data["data"].shape
 
 
+class Test_NLL_Compute:
+    @pytest.fixture
+    def demo_data(self):
+        data = torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))[
+            :
+        ]
+        return data  # This is an extract of 3 data from MNIST (unnormalized) used to test custom architecture
+
+    @pytest.fixture
+    def vae(self, model_configs, demo_data):
+        model_configs.input_dim = tuple(demo_data["data"][0].shape)
+        return VAE_LinNF(model_configs)
+
+    @pytest.fixture(params=[(20, 10), (11, 22)])
+    def nll_params(self, request):
+        return request.param
+
+    def test_nll_compute(self, vae, demo_data, nll_params):
+        nll = vae.get_nll(
+            data=demo_data["data"], n_samples=nll_params[0], batch_size=nll_params[1]
+        )
+
+        assert isinstance(nll, float)
+        assert nll < 0
+
+
 @pytest.mark.slow
-class Test_VAE_NF_Training:
+class Test_VAE_Training:
     @pytest.fixture
     def train_dataset(self):
         return torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))
 
     @pytest.fixture(
-        params=[BaseTrainingConfig(num_epochs=3, steps_saving=2, learning_rate=1e-5)]
+        params=[BaseTrainerConfig(num_epochs=3, steps_saving=2, learning_rate=1e-3)]
     )
     def training_configs(self, tmpdir, request):
         tmpdir.mkdir("dummy_folder")
@@ -345,30 +354,32 @@ class Test_VAE_NF_Training:
             torch.rand(1),
         ]
     )
-    def VAE_NF(self, model_configs, custom_encoder, custom_decoder, request):
+    def vae(self, model_configs, custom_encoder, custom_decoder, request):
         # randomized
 
         alpha = request.param
 
         if alpha < 0.25:
-            model = VAE_NF(model_configs)
+            model = VAE_LinNF(model_configs)
 
         elif 0.25 <= alpha < 0.5:
-            model = VAE_NF(model_configs, encoder=custom_encoder)
+            model = VAE_LinNF(model_configs, encoder=custom_encoder)
 
         elif 0.5 <= alpha < 0.75:
-            model = VAE_NF(model_configs, decoder=custom_decoder)
+            model = VAE_LinNF(model_configs, decoder=custom_decoder)
 
         else:
-            model = VAE_NF(model_configs, encoder=custom_encoder, decoder=custom_decoder)
+            model = VAE_LinNF(
+                model_configs, encoder=custom_encoder, decoder=custom_decoder
+            )
 
         return model
 
     @pytest.fixture(params=[Adam])
-    def optimizers(self, request, VAE_NF, training_configs):
+    def optimizers(self, request, vae, training_configs):
         if request.param is not None:
             optimizer = request.param(
-                VAE_NF.parameters(), lr=training_configs.learning_rate
+                vae.parameters(), lr=training_configs.learning_rate
             )
 
         else:
@@ -376,9 +387,9 @@ class Test_VAE_NF_Training:
 
         return optimizer
 
-    def test_VAE_NF_train_step(self, VAE_NF, train_dataset, training_configs, optimizers):
+    def test_vae_train_step(self, vae, train_dataset, training_configs, optimizers):
         trainer = BaseTrainer(
-            model=VAE_NF,
+            model=vae,
             train_dataset=train_dataset,
             training_config=training_configs,
             optimizer=optimizers,
@@ -398,9 +409,9 @@ class Test_VAE_NF_Training:
             ]
         )
 
-    def test_VAE_NF_eval_step(self, VAE_NF, train_dataset, training_configs, optimizers):
+    def test_vae_eval_step(self, vae, train_dataset, training_configs, optimizers):
         trainer = BaseTrainer(
-            model=VAE_NF,
+            model=vae,
             train_dataset=train_dataset,
             eval_dataset=train_dataset,
             training_config=training_configs,
@@ -421,12 +432,12 @@ class Test_VAE_NF_Training:
             ]
         )
 
-    def test_VAE_NF_main_train_loop(
-        self, tmpdir, VAE_NF, train_dataset, training_configs, optimizers
+    def test_vae_main_train_loop(
+        self, tmpdir, vae, train_dataset, training_configs, optimizers
     ):
 
         trainer = BaseTrainer(
-            model=VAE_NF,
+            model=vae,
             train_dataset=train_dataset,
             eval_dataset=train_dataset,
             training_config=training_configs,
@@ -448,13 +459,13 @@ class Test_VAE_NF_Training:
         )
 
     def test_checkpoint_saving(
-        self, tmpdir, VAE_NF, train_dataset, training_configs, optimizers
+        self, tmpdir, vae, train_dataset, training_configs, optimizers
     ):
 
         dir_path = training_configs.output_dir
 
         trainer = BaseTrainer(
-            model=VAE_NF,
+            model=vae,
             train_dataset=train_dataset,
             training_config=training_configs,
             optimizer=optimizers,
@@ -479,14 +490,14 @@ class Test_VAE_NF_Training:
         )
 
         # check pickled custom decoder
-        if not VAE_NF.model_config.uses_default_decoder:
+        if not vae.model_config.uses_default_decoder:
             assert "decoder.pkl" in files_list
 
         else:
             assert not "decoder.pkl" in files_list
 
         # check pickled custom encoder
-        if not VAE_NF.model_config.uses_default_encoder:
+        if not vae.model_config.uses_default_encoder:
             assert "encoder.pkl" in files_list
 
         else:
@@ -506,7 +517,7 @@ class Test_VAE_NF_Training:
         )
 
         # check reload full model
-        model_rec = VAE_NF.load_from_folder(os.path.join(checkpoint_dir))
+        model_rec = VAE_LinNF.load_from_folder(os.path.join(checkpoint_dir))
 
         assert all(
             [
@@ -542,7 +553,7 @@ class Test_VAE_NF_Training:
         )
 
     def test_checkpoint_saving_during_training(
-        self, tmpdir, VAE_NF, train_dataset, training_configs, optimizers
+        self, tmpdir, vae, train_dataset, training_configs, optimizers
     ):
         #
         target_saving_epoch = training_configs.steps_saving
@@ -550,7 +561,7 @@ class Test_VAE_NF_Training:
         dir_path = training_configs.output_dir
 
         trainer = BaseTrainer(
-            model=VAE_NF,
+            model=vae,
             train_dataset=train_dataset,
             training_config=training_configs,
             optimizer=optimizers,
@@ -561,7 +572,7 @@ class Test_VAE_NF_Training:
         trainer.train()
 
         training_dir = os.path.join(
-            dir_path, f"VAE_NF_training_{trainer._training_signature}"
+            dir_path, f"VAE_LinNF_training_{trainer._training_signature}"
         )
         assert os.path.isdir(training_dir)
 
@@ -579,14 +590,14 @@ class Test_VAE_NF_Training:
         )
 
         # check pickled custom decoder
-        if not VAE_NF.model_config.uses_default_decoder:
+        if not vae.model_config.uses_default_decoder:
             assert "decoder.pkl" in files_list
 
         else:
             assert not "decoder.pkl" in files_list
 
         # check pickled custom encoder
-        if not VAE_NF.model_config.uses_default_encoder:
+        if not vae.model_config.uses_default_encoder:
             assert "encoder.pkl" in files_list
 
         else:
@@ -604,13 +615,13 @@ class Test_VAE_NF_Training:
         )
 
     def test_final_model_saving(
-        self, tmpdir, VAE_NF, train_dataset, training_configs, optimizers
+        self, tmpdir, vae, train_dataset, training_configs, optimizers
     ):
 
         dir_path = training_configs.output_dir
 
         trainer = BaseTrainer(
-            model=VAE_NF,
+            model=vae,
             train_dataset=train_dataset,
             training_config=training_configs,
             optimizer=optimizers,
@@ -619,8 +630,9 @@ class Test_VAE_NF_Training:
         trainer.train()
 
         model = deepcopy(trainer._best_model)
+
         training_dir = os.path.join(
-            dir_path, f"VAE_NF_training_{trainer._training_signature}"
+            dir_path, f"VAE_LinNF_training_{trainer._training_signature}"
         )
         assert os.path.isdir(training_dir)
 
@@ -634,21 +646,21 @@ class Test_VAE_NF_Training:
         )
 
         # check pickled custom decoder
-        if not VAE_NF.model_config.uses_default_decoder:
+        if not vae.model_config.uses_default_decoder:
             assert "decoder.pkl" in files_list
 
         else:
             assert not "decoder.pkl" in files_list
 
         # check pickled custom encoder
-        if not VAE_NF.model_config.uses_default_encoder:
+        if not vae.model_config.uses_default_encoder:
             assert "encoder.pkl" in files_list
 
         else:
             assert not "encoder.pkl" in files_list
 
         # check reload full model
-        model_rec = VAE_NF.load_from_folder(os.path.join(final_dir))
+        model_rec = VAE_LinNF.load_from_folder(os.path.join(final_dir))
 
         assert all(
             [
@@ -662,16 +674,12 @@ class Test_VAE_NF_Training:
         assert type(model_rec.encoder.cpu()) == type(model.encoder.cpu())
         assert type(model_rec.decoder.cpu()) == type(model.decoder.cpu())
 
-    def test_VAE_NF_training_pipeline(
-        self, tmpdir, VAE_NF, train_dataset, training_configs
-    ):
+    def test_vae_training_pipeline(self, tmpdir, vae, train_dataset, training_configs):
 
         dir_path = training_configs.output_dir
 
         # build pipeline
-        pipeline = TrainingPipeline(
-            model=VAE_NF, training_config=training_configs
-        )
+        pipeline = TrainingPipeline(model=vae, training_config=training_configs)
 
         assert pipeline.training_config.__dict__ == training_configs.__dict__
 
@@ -684,7 +692,7 @@ class Test_VAE_NF_Training:
         model = deepcopy(pipeline.trainer._best_model)
 
         training_dir = os.path.join(
-            dir_path, f"VAE_NF_training_{pipeline.trainer._training_signature}"
+            dir_path, f"VAE_LinNF_training_{pipeline.trainer._training_signature}"
         )
         assert os.path.isdir(training_dir)
 
@@ -698,21 +706,21 @@ class Test_VAE_NF_Training:
         )
 
         # check pickled custom decoder
-        if not VAE_NF.model_config.uses_default_decoder:
+        if not vae.model_config.uses_default_decoder:
             assert "decoder.pkl" in files_list
 
         else:
             assert not "decoder.pkl" in files_list
 
         # check pickled custom encoder
-        if not VAE_NF.model_config.uses_default_encoder:
+        if not vae.model_config.uses_default_encoder:
             assert "encoder.pkl" in files_list
 
         else:
             assert not "encoder.pkl" in files_list
 
         # check reload full model
-        model_rec = VAE_NF.load_from_folder(os.path.join(final_dir))
+        model_rec = VAE_LinNF.load_from_folder(os.path.join(final_dir))
 
         assert all(
             [

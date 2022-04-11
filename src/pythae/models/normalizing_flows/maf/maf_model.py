@@ -5,9 +5,8 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from pythae.models.base.base_utils import ModelOutput
-
 from ....data.datasets import BaseDataset
+from ...base.base_utils import ModelOutput
 from ..base import BaseNF
 from ..layers import BatchNorm
 from ..made import MADE, MADEConfig
@@ -19,7 +18,7 @@ class MAF(BaseNF):
 
     Args:
         model_config (MAFConfig): The MAF model configuration setting the main parameters of the
-            model
+            model.
     """
 
     def __init__(self, model_config: MAFConfig):
@@ -29,19 +28,9 @@ class MAF(BaseNF):
         self.net = []
         self.m = {}
         self.model_config = model_config
-        self.input_dim = np.prod(model_config.input_dim)
         self.hidden_size = model_config.hidden_size
 
         self.model_name = "MAF"
-
-        if model_config.input_dim is None:
-            raise AttributeError(
-                "No input dimension provided !"
-                "'input_dim' parameter of MADEConfig instance must be set to 'data_shape' "
-                "where the shape of the data is (C, H, W ..)]. Unable to build network"
-                "automatically"
-            )
-
         self.net = []
 
         made_config = MADEConfig(

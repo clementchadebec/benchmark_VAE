@@ -42,19 +42,17 @@ class Test_Model_Building:
             ]
         )
 
-    def test_raises_no_input_output_dim(
-        self, model_configs_no_input_output_dim):
+    def test_raises_no_input_output_dim(self, model_configs_no_input_output_dim):
         with pytest.raises(AttributeError):
             model = MAF(model_configs_no_input_output_dim)
 
 
 class Test_Model_Saving:
-
-    def test_creates_saving_path(self, model_configs):
-        dir_path = os.path.join(PATH, 'test/for/saving')
+    def test_creates_saving_path(self, tmpdir, model_configs):
+        tmpdir.mkdir("saving")
+        dir_path = os.path.join(tmpdir, "saving")
         model = MAF(model_configs)
         model.save(dir_path=dir_path)
-        shutil.rmtree(dir_path)
 
         dir_path = None
         model = MAF(model_configs)
@@ -88,13 +86,14 @@ class Test_Model_Saving:
             ]
         )
 
-    def test_raises_missing_files(
-        self, tmpdir, model_configs):
+    def test_raises_missing_files(self, tmpdir, model_configs):
 
         tmpdir.mkdir("dummy_folder")
         dir_path = dir_path = os.path.join(tmpdir, "dummy_folder")
 
-        model = MAF(model_configs,)
+        model = MAF(
+            model_configs,
+        )
 
         rnd_key = list(model.state_dict().keys())[0]
         model.state_dict()[rnd_key][0] = 0
@@ -107,7 +106,7 @@ class Test_Model_Saving:
         with pytest.raises(FileNotFoundError):
             model_rec = MAF.load_from_folder(dir_path)
 
-        torch.save({"wrong_key": 0.}, os.path.join(dir_path, "model.pt"))
+        torch.save({"wrong_key": 0.0}, os.path.join(dir_path, "model.pt"))
         # check raises wrong key in model.pt
         with pytest.raises(KeyError):
             model_rec = MAF.load_from_folder(dir_path)
@@ -117,6 +116,7 @@ class Test_Model_Saving:
         # check raises model_config.json is missing
         with pytest.raises(FileNotFoundError):
             model_rec = MAF.load_from_folder(dir_path)
+
 
 class Test_Model_forward:
     @pytest.fixture
@@ -134,7 +134,7 @@ class Test_Model_forward:
     def test_model_train_output(self, maf, demo_data):
 
         maf.train()
-        out = maf(demo_data['data'])
+        out = maf(demo_data["data"])
 
         assert isinstance(out, ModelOutput)
 
@@ -142,7 +142,11 @@ class Test_Model_forward:
 
         assert out.out.shape[0] == demo_data["data"].shape[0]
         assert out.log_abs_det_jac.shape == (demo_data["data"].shape[0],)
-        assert out.out.shape[1:] == np.prod(maf.model_config.input_dim) # input_dim = output_dim
+        assert out.out.shape[1:] == np.prod(
+            maf.model_config.input_dim
+        )  # input_dim = output_dim
+
+        assert torch.equal(out.log_abs_det_jac, out.log_abs_det_jac)  # check no NaN
 
         out = maf.inverse(out.out)
 
@@ -153,6 +157,8 @@ class Test_Model_forward:
         assert out.out.shape[0] == demo_data["data"].shape[0]
         assert out.log_abs_det_jac.shape == (demo_data["data"].shape[0],)
         assert out.out.shape[1:] == np.prod(maf.model_config.input_dim)
+
+        assert torch.equal(out.log_abs_det_jac, out.log_abs_det_jac)  # check no NaN
 
 
 @pytest.mark.slow
@@ -171,9 +177,11 @@ class Test_MAF_Training:
         return request.param
 
     @pytest.fixture(
-    params=[
-        MAFConfig(input_dim=(784,), n_made_blocks=3, n_hidden_in_made=3, hidden_size=134),
-    ]
+        params=[
+            MAFConfig(
+                input_dim=(784,), n_made_blocks=3, n_hidden_in_made=3, hidden_size=134
+            ),
+        ]
     )
     def model_configs(self, request):
         return request.param
@@ -186,12 +194,12 @@ class Test_MAF_Training:
     @pytest.fixture()
     def prior(self, model_configs, request):
 
-        device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        device = "cuda" if torch.cuda.is_available() else "cpu"
 
-        return  torch.distributions.MultivariateNormal(
+        return torch.distributions.MultivariateNormal(
             torch.zeros(np.prod(model_configs.input_dim)).to(device),
-            torch.eye(np.prod(model_configs.input_dim)).to(device)
-            )
+            torch.eye(np.prod(model_configs.input_dim)).to(device),
+        )
 
     @pytest.fixture(params=[Adam])
     def optimizers(self, request, maf, training_configs):
@@ -205,7 +213,9 @@ class Test_MAF_Training:
 
         return optimizer
 
-    def test_maf_train_step(self, maf, prior, train_dataset, training_configs, optimizers):
+    def test_maf_train_step(
+        self, maf, prior, train_dataset, training_configs, optimizers
+    ):
 
         nf_model = NFModel(prior=prior, flow=maf)
 
@@ -230,7 +240,9 @@ class Test_MAF_Training:
             ]
         )
 
-    def test_maf_eval_step(self, maf, prior, train_dataset, training_configs, optimizers):
+    def test_maf_eval_step(
+        self, maf, prior, train_dataset, training_configs, optimizers
+    ):
 
         nf_model = NFModel(prior=prior, flow=maf)
 
@@ -257,7 +269,8 @@ class Test_MAF_Training:
         )
 
     def test_maf_main_train_loop(
-        self, maf, prior, train_dataset, training_configs, optimizers):
+        self, maf, prior, train_dataset, training_configs, optimizers
+    ):
 
         nf_model = NFModel(prior=prior, flow=maf)
 
@@ -314,7 +327,6 @@ class Test_MAF_Training:
         assert set(["model.pt", "optimizer.pt", "training_config.json"]).issubset(
             set(files_list)
         )
-
 
         model_rec_state_dict = torch.load(os.path.join(checkpoint_dir, "model.pt"))[
             "model_state_dict"
@@ -445,7 +457,6 @@ class Test_MAF_Training:
             set(files_list)
         )
 
-
         # check reload full model
         model_rec = MAF.load_from_folder(os.path.join(final_dir))
 
@@ -458,7 +469,9 @@ class Test_MAF_Training:
             ]
         )
 
-    def test_maf_training_pipeline(self, tmpdir, maf, prior, train_dataset, training_configs):
+    def test_maf_training_pipeline(
+        self, tmpdir, maf, prior, train_dataset, training_configs
+    ):
 
         dir_path = training_configs.output_dir
 

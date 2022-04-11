@@ -60,7 +60,9 @@ ap.add_argument(
         "disentangled_beta_vae",
         "factor_vae",
         "beta_tc_vae",
-        "vae_iaf"
+        "vae_nf",
+        "vae_iaf",
+        "vae_lin_nf",
     ],
     required=True,
 )
@@ -493,6 +495,23 @@ def main(args):
         model_config.input_dim = data_input_dim
 
         model = VAE_IAF(
+            model_config=model_config,
+            encoder=Encoder_VAE(model_config),
+            decoder=Decoder_AE(model_config),
+        )
+
+    elif args.model_name == "vae_lin_nf":
+        from pythae.models import VAE_LinNF, VAE_LinNF_Config
+
+        if args.model_config is not None:
+            model_config = VAE_LinNF_Config.from_json_file(args.model_config)
+
+        else:
+            model_config = VAE_LinNF_Config()
+
+        model_config.input_dim = data_input_dim
+
+        model = VAE_LinNF(
             model_config=model_config,
             encoder=Encoder_VAE(model_config),
             decoder=Decoder_AE(model_config),
