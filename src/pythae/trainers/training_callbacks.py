@@ -320,7 +320,7 @@ class WandbCallback(TrainingCallback):
     def on_prediction_step(self, training_config, **kwargs):
         global_step = kwargs.pop("global_step", None)
 
-        column_names = ["images_id", "truth", "recontruction", "normal_generation"]
+        column_names = ["images_id", "truth", "reconstruction", "normal_generation"]
 
         true_data = kwargs.pop("true_data", None)
         reconstructions = kwargs.pop("reconstructions", None)

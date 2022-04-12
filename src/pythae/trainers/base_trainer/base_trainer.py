@@ -535,11 +535,12 @@ class BaseTrainer:
 
         with torch.no_grad():
             true_data = eval_data
-            z = torch.randn(10, model.latent_dim)
             if self.device == "cuda":
                 true_data = true_data.cuda()
-                z = z.cuda()
-            reconstructions = model({"data": true_data}).recon_x.cpu().detach()
+            model_out = model({"data": true_data})
+            reconstructions = model_out.recon_x.cpu().detach()
+            z_enc = model_out.z
+            z = torch.randn_like(z_enc)
             normal_generation = model.decoder(z).reconstruction.detach().cpu()
 
         return true_data, reconstructions, normal_generation

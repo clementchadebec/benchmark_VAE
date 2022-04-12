@@ -72,6 +72,12 @@ ap.add_argument(
     default=None,
 )
 ap.add_argument(
+    "--nn",
+    help="neural nets to use",
+    default="convnet",
+    choices=["default", "convnet","resnet"]
+)
+ap.add_argument(
     "--training_config",
     help="path to training config_file (expected json file)",
     default=os.path.join(PATH, "configs/base_training_config.json"),
@@ -99,10 +105,24 @@ def main(args):
 
     if args.dataset == "mnist":
 
-        from pythae.models.nn.benchmarks.mnist import Encoder_Conv_AE_MNIST as Encoder_AE
-        from pythae.models.nn.benchmarks.mnist import Encoder_Conv_VAE_MNIST as Encoder_VAE
-        from pythae.models.nn.benchmarks.mnist import Encoder_Conv_SVAE_MNIST as Encoder_SVAE
-        from pythae.models.nn.benchmarks.mnist import Decoder_Conv_AE_MNIST as Decoder_AE
+        if args.nn == "convnet":
+
+            from pythae.models.nn.benchmarks.mnist import Encoder_Conv_AE_MNIST as Encoder_AE
+            from pythae.models.nn.benchmarks.mnist import Encoder_Conv_VAE_MNIST as Encoder_VAE
+            from pythae.models.nn.benchmarks.mnist import Encoder_Conv_SVAE_MNIST as Encoder_SVAE
+            from pythae.models.nn.benchmarks.mnist import Encoder_Conv_AE_MNIST as Encoder_VQVAE
+            from pythae.models.nn.benchmarks.mnist import Decoder_Conv_AE_MNIST as Decoder_AE
+            from pythae.models.nn.benchmarks.mnist import Decoder_Conv_AE_MNIST as Decoder_VQVAE
+
+        elif args.nn == "resnet":
+            from pythae.models.nn.benchmarks.mnist import Encoder_ResNet_AE_MNIST as Encoder_AE
+            from pythae.models.nn.benchmarks.mnist import Encoder_ResNet_VAE_MNIST as Encoder_VAE
+            from pythae.models.nn.benchmarks.mnist import Encoder_ResNet_SVAE_MNIST as Encoder_SVAE
+            from pythae.models.nn.benchmarks.mnist import Encoder_ResNet_VQVAE_MNIST as Encoder_VQVAE
+            from pythae.models.nn.benchmarks.mnist import Decoder_ResNet_AE_MNIST as Decoder_AE
+            from pythae.models.nn.benchmarks.mnist import Decoder_ResNet_VQVAE_MNIST as Decoder_VQVAE
+        
+        
         from pythae.models.nn.benchmarks.mnist import (
             Discriminator_Conv_MNIST as Discriminator,
         )
@@ -394,8 +414,8 @@ def main(args):
 
         model = VQVAE(
             model_config=model_config,
-            encoder=Encoder_AE(model_config),
-            decoder=Decoder_AE(model_config),
+            encoder=Encoder_VQVAE(model_config),
+            decoder=Decoder_VQVAE(model_config),
         )
 
     elif args.model_name == "msssim_vae":
