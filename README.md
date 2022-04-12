@@ -164,7 +164,7 @@ To launch the data generation process from a trained model, you only need to bui
 ...	model=my_trained_vae
 ... )
 >>> # Generate samples
->>> gen_data = normal_samper.sample(
+>>> gen_data = my_samper.sample(
 ...	num_samples=50,
 ...	batch_size=10,
 ...	output_dir=None,
@@ -172,8 +172,33 @@ To launch the data generation process from a trained model, you only need to bui
 ... )
 ```
 If you set `output_dir` to a specific path, the generated images will be saved as `.png` files named `00000000.png`, `00000001.png` ...
-The samplers can be used with any model as long as it is suited. For instance, a `GMMSampler` instance can be used to generate from any model but a `VAMPSampler` will only be usable with a `VAMP` model. Check [here](#available-samplers) to see which ones apply to your model.
+The samplers can be used with any model as long as it is suited. For instance, a `GaussianMixtureSampler` instance can be used to generate from any model but a `VAMPSampler` will only be usable with a `VAMP` model. Check [here](#available-samplers) to see which ones apply to your model. Be carefull that some samplers such as the `GaussianMixtureSampler` for instance may need to be fitted by calling the `fit` method before using. Below is an example for the `GaussianMixtureSampler`. 
 
+```python
+>>> from pythae.models import VAE
+>>> from pythae.samplers import GaussianMixtureSampler, GaussianMixtureSamplerConfig
+>>> # Retrieve the trained model
+>>> my_trained_vae = VAE.load_from_folder(
+...	'path/to/your/trained/model'
+... )
+>>> # Define your sampler
+... gmm_sampler_config = GaussianMixtureSamplerConfig(
+... n_components=10
+... )
+>>> my_samper = GaussianMixtureSampler(
+...	sampler_config=gmm_sampler_config,
+...	model=my_trained_vae
+... )
+>>> # fit the sampler
+>>> gmm_sampler.fit(train_dataset)
+>>> # Generate samples
+>>> gen_data = my_samper.sample(
+...	num_samples=50,
+...	batch_size=10,
+...	output_dir=None,
+...	return_gen=True
+... )
+```
 
 ## Define you own Autoencoder architecture
  
