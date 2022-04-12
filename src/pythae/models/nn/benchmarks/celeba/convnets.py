@@ -6,12 +6,12 @@ import torch
 import torch.nn as nn
 from pythae.models.nn import BaseDecoder, BaseDiscriminator, BaseEncoder
 
-from ....models import BaseAEConfig
-from ....models.base.base_utils import ModelOutput
-from ..base_architectures import BaseDecoder, BaseEncoder
+from ....base import BaseAEConfig
+from ....base.base_utils import ModelOutput
+from ...base_architectures import BaseDecoder, BaseEncoder
 
 
-class Encoder_AE_CELEBA(BaseEncoder):
+class Encoder_Conv_AE_CELEBA(BaseEncoder):
     """
     A Convolutional encoder Neural net suited for CELEBA-64 and Autoencoder-based models.
 
@@ -19,12 +19,12 @@ class Encoder_AE_CELEBA(BaseEncoder):
 
     .. code-block::
 
-            >>> from pythae.models.nn.benchmarks.celeba import Encoder_AE_CELEBA
+            >>> from pythae.models.nn.benchmarks.celeba import Encoder_Conv_AE_CELEBA
             >>> from pythae.models import AEConfig
             >>> model_config = AEConfig(input_dim=(3, 64, 64), latent_dim=64)
-            >>> encoder = Encoder_AE_CELEBA(model_config)
+            >>> encoder = Encoder_Conv_AE_CELEBA(model_config)
             >>> encoder
-            ... Encoder_AE_CELEBA(
+            ... Encoder_Conv_AE_CELEBA(
             ...   (layers): ModuleList(
             ...     (0): Sequential(
             ...       (0): Conv2d(3, 128, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
@@ -159,7 +159,7 @@ class Encoder_AE_CELEBA(BaseEncoder):
         return output
 
 
-class Encoder_VAE_CELEBA(BaseEncoder):
+class Encoder_Conv_VAE_CELEBA(BaseEncoder):
     """
     A Convolutional encoder Neural net suited for CELEBA-64 and
     Variational Autoencoder-based models.
@@ -168,12 +168,12 @@ class Encoder_VAE_CELEBA(BaseEncoder):
 
     .. code-block::
 
-            >>> from pythae.models.nn.benchmarks.celeba import Encoder_VAE_CELEBA
+            >>> from pythae.models.nn.benchmarks.celeba import Encoder_Conv_VAE_CELEBA
             >>> from pythae.models import VAEConfig
             >>> model_config = VAEConfig(input_dim=(3, 64, 64), latent_dim=64)
-            >>> encoder = Encoder_VAE_CELEBA(model_config)
+            >>> encoder = Encoder_Conv_VAE_CELEBA(model_config)
             >>> encoder
-            ... Encoder_VAE_CELEBA(
+            ... Encoder_Conv_VAE_CELEBA(
             ...   (layers): ModuleList(
             ...     (0): Sequential(
             ...       (0): Conv2d(3, 128, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
@@ -318,7 +318,7 @@ class Encoder_VAE_CELEBA(BaseEncoder):
         return output
 
 
-class Encoder_SVAE_CELEBA(BaseEncoder):
+class Encoder_Conv_SVAE_CELEBA(BaseEncoder):
     """
     A Convolutional encoder Neural net suited for CELEBA-64 and Hyperspherical autoencoder
     Variational Autoencoder.
@@ -327,12 +327,12 @@ class Encoder_SVAE_CELEBA(BaseEncoder):
 
     .. code-block::
 
-            >>> from pythae.models.nn.benchmarks.celeba import Encoder_SVAE_CELEBA
+            >>> from pythae.models.nn.benchmarks.celeba import Encoder_Conv_SVAE_CELEBA
             >>> from pythae.models import SVAEConfig
             >>> model_config = SVAEConfig(input_dim=(3, 64, 64), latent_dim=64)
-            >>> encoder = Encoder_SVAE_CELEBA(model_config)
+            >>> encoder = Encoder_Conv_SVAE_CELEBA(model_config)
             >>> encoder
-            ... Encoder_SVAE_CELEBA(
+            ... Encoder_Conv_SVAE_CELEBA(
             ...   (layers): ModuleList(
             ...     (0): Sequential(
             ...       (0): Conv2d(3, 128, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
@@ -479,7 +479,7 @@ class Encoder_SVAE_CELEBA(BaseEncoder):
         return output
 
 
-class Decoder_AE_CELEBA(BaseDecoder):
+class Decoder_Conv_AE_CELEBA(BaseDecoder):
     """
     A Convolutional decoder Neural net suited for CELEBA-64 and Autoencoder-based
     models.
@@ -488,12 +488,12 @@ class Decoder_AE_CELEBA(BaseDecoder):
 
     .. code-block::
 
-            >>> from pythae.models.nn.benchmarks.celeba import Decoder_AE_CELEBA
+            >>> from pythae.models.nn.benchmarks.celeba import Decoder_Conv_AE_CELEBA
             >>> from pythae.models import VAEConfig
             >>> model_config = VAEConfig(input_dim=(3, 64, 64), latent_dim=64)
-            >>> decoder = Decoder_AE_CELEBA(model_config)
+            >>> decoder = Decoder_Conv_AE_CELEBA(model_config)
             >>> decoder
-            ... Decoder_AE_CELEBA(
+            ... Decoder_Conv_AE_CELEBA(
             ...   (layers): ModuleList(
             ...     (0): Sequential(
             ...       (0): Linear(in_features=64, out_features=65536, bias=True)
@@ -634,7 +634,7 @@ class Decoder_AE_CELEBA(BaseDecoder):
         return output
 
 
-class Discriminator_CELEBA(BaseDiscriminator):
+class Discriminator_Conv_CELEBA(BaseDiscriminator):
     """
     A Convolutional discriminator Neural net suited for CELEBA.
 
@@ -643,12 +643,12 @@ class Discriminator_CELEBA(BaseDiscriminator):
 
     .. code-block::
 
-            >>> from pythae.models.nn.benchmarks.celeba import Discriminator_CELEBA
+            >>> from pythae.models.nn.benchmarks.celeba import Discriminator_Conv_CELEBA
             >>> from pythae.models import VAEGANConfig
             >>> model_config = VAEGANConfig(input_dim=(3, 64, 64), latent_dim=64)
-            >>> discriminator = Discriminator_CELEBA(model_config)
+            >>> discriminator = Discriminator_Conv_CELEBA(model_config)
             >>> discriminator
-            ... Discriminator_CELEBA(
+            ... Discriminator_Conv_CELEBA(
             ...   (layers): ModuleList(
             ...     (0): Sequential(
             ...       (0): Conv2d(3, 128, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))

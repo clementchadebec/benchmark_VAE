@@ -99,8 +99,8 @@ class Test_MNIST_Benchmark:
     def test_ae_encoding_decoding_benchmark(
         self, ae_mnist_config, mnist_like_data, recon_layers_benchmark
     ):
-        encoder = Encoder_AE_MNIST(ae_mnist_config).to(device)
-        decoder = Decoder_AE_MNIST(ae_mnist_config).to(device)
+        encoder = Encoder_Conv_AE_MNIST(ae_mnist_config).to(device)
+        decoder = Decoder_Conv_AE_MNIST(ae_mnist_config).to(device)
 
         embedding = encoder(mnist_like_data).embedding
 
@@ -154,7 +154,7 @@ class Test_MNIST_Benchmark:
 
         ae_mnist_config.discriminator_input_dim = (1, 28, 28)
 
-        discriminator = Discriminator_MNIST(ae_mnist_config).to(device)
+        discriminator = Discriminator_Conv_MNIST(ae_mnist_config).to(device)
 
         scores = discriminator(
             mnist_like_data, output_layer_levels=recon_layers_benchmark
@@ -285,8 +285,8 @@ class Test_MNIST_Benchmark:
     def test_vae_encoding_decoding_benchmark(
         self, vae_mnist_config, mnist_like_data, recon_layers_benchmark
     ):
-        encoder = Encoder_VAE_MNIST(vae_mnist_config).to(device)
-        decoder = Decoder_AE_MNIST(vae_mnist_config).to(device)
+        encoder = Encoder_Conv_VAE_MNIST(vae_mnist_config).to(device)
+        decoder = Decoder_Conv_AE_MNIST(vae_mnist_config).to(device)
 
         output = encoder(mnist_like_data)
         embedding, log_covariance = output.embedding, output.log_covariance
@@ -349,8 +349,8 @@ class Test_MNIST_Benchmark:
     def test_svae_encoding_decoding_benchmark(
         self, vae_mnist_config, mnist_like_data, recon_layers_benchmark
     ):
-        encoder = Encoder_SVAE_MNIST(vae_mnist_config).to(device)
-        decoder = Decoder_AE_MNIST(vae_mnist_config).to(device)
+        encoder = Encoder_Conv_SVAE_MNIST(vae_mnist_config).to(device)
+        decoder = Decoder_Conv_AE_MNIST(vae_mnist_config).to(device)
 
         output = encoder(mnist_like_data)
         embedding, log_concentration = output.embedding, output.log_concentration
@@ -429,8 +429,8 @@ class Test_CIFAR_Benchmark:
         return torch.rand(3, 3, 32, 32).to(device)
 
     def test_ae_encoding_decoding(self, ae_cifar_config, cifar_like_data, recon_layers):
-        encoder = Encoder_AE_CIFAR(ae_cifar_config).to(device)
-        decoder = Decoder_AE_CIFAR(ae_cifar_config).to(device)
+        encoder = Encoder_Conv_AE_CIFAR(ae_cifar_config).to(device)
+        decoder = Decoder_Conv_AE_CIFAR(ae_cifar_config).to(device)
 
         embedding = encoder(cifar_like_data).embedding
 
@@ -488,8 +488,8 @@ class Test_CIFAR_Benchmark:
     def test_vae_encoding_decoding(
         self, vae_cifar_config, cifar_like_data, recon_layers
     ):
-        encoder = Encoder_VAE_CIFAR(vae_cifar_config).to(device)
-        decoder = Decoder_AE_CIFAR(vae_cifar_config).to(device)
+        encoder = Encoder_Conv_VAE_CIFAR(vae_cifar_config).to(device)
+        decoder = Decoder_Conv_AE_CIFAR(vae_cifar_config).to(device)
 
         output = encoder(cifar_like_data)
         embedding, log_covariance = output.embedding, output.log_covariance
@@ -569,8 +569,8 @@ class Test_CELEBA_Benchmark:
     def test_ae_encoding_decoding(
         self, ae_celeba_config, celeba_like_data, recon_layers
     ):
-        encoder = Encoder_AE_CELEBA(ae_celeba_config).to(device)
-        decoder = Decoder_AE_CELEBA(ae_celeba_config).to(device)
+        encoder = Encoder_Conv_AE_CELEBA(ae_celeba_config).to(device)
+        decoder = Decoder_Conv_AE_CELEBA(ae_celeba_config).to(device)
 
         embedding = encoder(celeba_like_data).embedding
 
@@ -624,7 +624,7 @@ class Test_CELEBA_Benchmark:
 
         ae_celeba_config.discriminator_input_dim = (3, 64, 64)
 
-        discriminator = Discriminator_CELEBA(ae_celeba_config).to(device)
+        discriminator = Discriminator_Conv_CELEBA(ae_celeba_config).to(device)
 
         scores = discriminator(celeba_like_data, output_layer_levels=recon_layers)
 
@@ -666,8 +666,8 @@ class Test_CELEBA_Benchmark:
     def test_vae_encoding_decoding(
         self, vae_celeba_config, celeba_like_data, recon_layers
     ):
-        encoder = Encoder_VAE_CELEBA(vae_celeba_config).to(device)
-        decoder = Decoder_AE_CELEBA(vae_celeba_config).to(device)
+        encoder = Encoder_Conv_VAE_CELEBA(vae_celeba_config).to(device)
+        decoder = Decoder_Conv_AE_CELEBA(vae_celeba_config).to(device)
 
         output = encoder(celeba_like_data)
         embedding, log_covariance = output.embedding, output.log_covariance
@@ -729,8 +729,8 @@ class Test_CELEBA_Benchmark:
     def test_svae_encoding_decoding(
         self, vae_celeba_config, celeba_like_data, recon_layers
     ):
-        encoder = Encoder_SVAE_CELEBA(vae_celeba_config).to(device)
-        decoder = Decoder_AE_CELEBA(vae_celeba_config).to(device)
+        encoder = Encoder_Conv_SVAE_CELEBA(vae_celeba_config).to(device)
+        decoder = Decoder_Conv_AE_CELEBA(vae_celeba_config).to(device)
 
         output = encoder(celeba_like_data)
         embedding, log_concentration = output.embedding, output.log_concentration

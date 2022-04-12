@@ -10,7 +10,7 @@ from pythae.models import BaseAEConfig
 from pythae.models.nn import BaseEncoder, BaseDecoder, BaseDiscriminator
 
 
-class Fully_Conv_Encoder_AE_MNIST(BaseEncoder):
+class Fully_Conv_Encoder_Conv_AE_MNIST(BaseEncoder):
     """
     A proposed fully Convolutional encoder used for VQVAE.
     """
@@ -89,7 +89,7 @@ class Fully_Conv_Encoder_AE_MNIST(BaseEncoder):
         return output
 
 
-class Fully_Conv_Decoder_AE_MNIST(BaseDecoder):
+class Fully_Conv_Decoder_Conv_AE_MNIST(BaseDecoder):
     """
     A proposed fully Convolutional decoder for VQVAE.
     """

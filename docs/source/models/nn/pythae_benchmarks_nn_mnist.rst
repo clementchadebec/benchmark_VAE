@@ -2,17 +2,17 @@
 MNIST
 **********************************
 
-.. autoclass:: pythae.models.nn.benchmarks.mnist.Encoder_AE_MNIST
+.. autoclass:: pythae.models.nn.benchmarks.mnist.Encoder_Conv_AE_MNIST
    :members:
 
-.. autoclass:: pythae.models.nn.benchmarks.mnist.Encoder_VAE_MNIST
+.. autoclass:: pythae.models.nn.benchmarks.mnist.Encoder_Conv_VAE_MNIST
    :members:
 
-.. autoclass:: pythae.models.nn.benchmarks.mnist.Encoder_SVAE_MNIST
+.. autoclass:: pythae.models.nn.benchmarks.mnist.Encoder_Conv_SVAE_MNIST
    :members:
 
-.. autoclass:: pythae.models.nn.benchmarks.mnist.Decoder_AE_MNIST
+.. autoclass:: pythae.models.nn.benchmarks.mnist.Decoder_Conv_AE_MNIST
    :members:
 
-.. autoclass:: pythae.models.nn.benchmarks.mnist.Discriminator_MNIST
+.. autoclass:: pythae.models.nn.benchmarks.mnist.Discriminator_Conv_MNIST
    :members:

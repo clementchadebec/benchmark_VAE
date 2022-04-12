@@ -5,12 +5,12 @@ from typing import List
 import torch
 import torch.nn as nn
 
-from ....models import BaseAEConfig
-from ....models.base.base_utils import ModelOutput
-from ..base_architectures import BaseDecoder, BaseEncoder
+from ....base import BaseAEConfig
+from ....base.base_utils import ModelOutput
+from ...base_architectures import BaseDecoder, BaseEncoder
 
 
-class Encoder_AE_CIFAR(BaseEncoder):
+class Encoder_Conv_AE_CIFAR(BaseEncoder):
     """
     A Convolutional encoder Neural net suited for CIFAR and Autoencoder-based models.
 
@@ -18,12 +18,12 @@ class Encoder_AE_CIFAR(BaseEncoder):
 
     .. code-block::
 
-            >>> from pythae.models.nn.benchmarks.cifar import Encoder_AE_CIFAR
+            >>> from pythae.models.nn.benchmarks.cifar import Encoder_Conv_AE_CIFAR
             >>> from pythae.models import AEConfig
             >>> model_config = AEConfig(input_dim=(3, 32, 32), latent_dim=16)
-            >>> encoder = Encoder_AE_CIFAR(model_config)
+            >>> encoder = Encoder_Conv_AE_CIFAR(model_config)
             >>> encoder
-            ... Encoder_AE_CIFAR(
+            ... Encoder_Conv_AE_CIFAR(
             ...   (layers): ModuleList(
             ...     (0): Sequential(
             ...       (0): Conv2d(3, 128, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
@@ -156,7 +156,7 @@ class Encoder_AE_CIFAR(BaseEncoder):
         return output
 
 
-class Encoder_VAE_CIFAR(BaseEncoder):
+class Encoder_Conv_VAE_CIFAR(BaseEncoder):
     """
     A Convolutional encoder Neural net suited for CIFAR and Variational Autoencoder-based
     models.
@@ -165,12 +165,12 @@ class Encoder_VAE_CIFAR(BaseEncoder):
 
     .. code-block::
 
-            >>> from pythae.models.nn.benchmarks.cifar import Encoder_VAE_CIFAR
+            >>> from pythae.models.nn.benchmarks.cifar import Encoder_Conv_VAE_CIFAR
             >>> from pythae.models import VAEConfig
             >>> model_config = VAEConfig(input_dim=(3, 32, 32), latent_dim=16)
-            >>> encoder = Encoder_VAE_CIFAR(model_config)
+            >>> encoder = Encoder_Conv_VAE_CIFAR(model_config)
             >>> encoder
-            ... Encoder_VAE_CIFAR(
+            ... Encoder_Conv_VAE_CIFAR(
             ...   (layers): ModuleList(
             ...     (0): Sequential(
             ...       (0): Conv2d(3, 128, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
@@ -314,7 +314,7 @@ class Encoder_VAE_CIFAR(BaseEncoder):
         return output
 
 
-class Decoder_AE_CIFAR(BaseDecoder):
+class Decoder_Conv_AE_CIFAR(BaseDecoder):
     """
     A Convolutional decoder Neural net suited for CIFAR and Autoencoder-based
     models.
@@ -323,12 +323,12 @@ class Decoder_AE_CIFAR(BaseDecoder):
 
     .. code-block::
 
-            >>> from pythae.models.nn.benchmarks.cifar import Decoder_AE_CIFAR
+            >>> from pythae.models.nn.benchmarks.cifar import Decoder_Conv_AE_CIFAR
             >>> from pythae.models import VAEConfig
             >>> model_config = VAEConfig(input_dim=(3, 32, 32), latent_dim=16)
-            >>> decoder = Decoder_AE_CIFAR(model_config)
+            >>> decoder = Decoder_Conv_AE_CIFAR(model_config)
             >>> decoder
-            ... Decoder_AE_CIFAR(
+            ... Decoder_Conv_AE_CIFAR(
             ...   (layers): ModuleList(
             ...     (0): Linear(in_features=16, out_features=65536, bias=True)
             ...     (1): Sequential(

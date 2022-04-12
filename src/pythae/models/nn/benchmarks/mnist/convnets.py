@@ -1,4 +1,4 @@
-"""Proposed neural nets architectures suited for MNIST"""
+"""Proposed convolutional neural nets architectures suited for MNIST"""
 
 from typing import List
 
@@ -7,12 +7,12 @@ import torch
 import torch.nn as nn
 from pythae.models.nn import BaseDecoder, BaseDiscriminator, BaseEncoder
 
-from ....models import BaseAEConfig
-from ....models.base.base_utils import ModelOutput
-from ..base_architectures import BaseDecoder, BaseEncoder
+from ....base import BaseAEConfig
+from ....base.base_utils import ModelOutput
+from ...base_architectures import BaseDecoder, BaseEncoder
 
 
-class Encoder_AE_MNIST(BaseEncoder):
+class Encoder_Conv_AE_MNIST(BaseEncoder):
     """
     A proposed Convolutional encoder Neural net suited for MNIST and Autoencoder-based models.
 
@@ -20,12 +20,12 @@ class Encoder_AE_MNIST(BaseEncoder):
 
     .. code-block::
 
-            >>> from pythae.models.nn.benchmarks.mnist import Encoder_AE_MNIST
+            >>> from pythae.models.nn.benchmarks.mnist import Encoder_Conv_AE_MNIST
             >>> from pythae.models import AEConfig
             >>> model_config = AEConfig(input_dim=(1, 28, 28), latent_dim=16)
-            >>> encoder = Encoder_AE_MNIST(model_config)
+            >>> encoder = Encoder_Conv_AE_MNIST(model_config)
             >>> encoder
-            ... Encoder_AE_MNIST(
+            ... Encoder_Conv_AE_MNIST(
             ...   (layers): ModuleList(
             ...     (0): Sequential(
             ...       (0): Conv2d(1, 128, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
@@ -160,7 +160,7 @@ class Encoder_AE_MNIST(BaseEncoder):
         return output
 
 
-class Encoder_VAE_MNIST(BaseEncoder):
+class Encoder_Conv_VAE_MNIST(BaseEncoder):
     """
     A Convolutional encoder Neural net suited for MNIST and Variational Autoencoder-based
     models.
@@ -170,12 +170,12 @@ class Encoder_VAE_MNIST(BaseEncoder):
 
     .. code-block::
 
-            >>> from pythae.models.nn.benchmarks.mnist import Encoder_VAE_MNIST
+            >>> from pythae.models.nn.benchmarks.mnist import Encoder_Conv_VAE_MNIST
             >>> from pythae.models import VAEConfig
             >>> model_config = VAEConfig(input_dim=(1, 28, 28), latent_dim=16)
-            >>> encoder = Encoder_VAE_MNIST(model_config)
+            >>> encoder = Encoder_Conv_VAE_MNIST(model_config)
             >>> encoder
-            ... Encoder_VAE_MNIST(
+            ... Encoder_Conv_VAE_MNIST(
             ...   (layers): ModuleList(
             ...     (0): Sequential(
             ...       (0): Conv2d(1, 128, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
@@ -317,7 +317,7 @@ class Encoder_VAE_MNIST(BaseEncoder):
         return output
 
 
-class Encoder_SVAE_MNIST(BaseEncoder):
+class Encoder_Conv_SVAE_MNIST(BaseEncoder):
     """
     A Convolutional encoder Neural net suited for mnist and Hyperspherical autoencoder
     Variational Autoencoder.
@@ -327,12 +327,12 @@ class Encoder_SVAE_MNIST(BaseEncoder):
 
     .. code-block::
 
-            >>> from pythae.models.nn.benchmarks.mnist import Encoder_SVAE_MNIST
+            >>> from pythae.models.nn.benchmarks.mnist import Encoder_Conv_SVAE_MNIST
             >>> from pythae.models import SVAEConfig
             >>> model_config = SVAEConfig(input_dim=(1, 28, 28), latent_dim=16)
-            >>> encoder = Encoder_SVAE_MNIST(model_config)
+            >>> encoder = Encoder_Conv_SVAE_MNIST(model_config)
             >>> encoder
-            ... Encoder_SVAE_MNIST(
+            ... Encoder_Conv_SVAE_MNIST(
             ...   (layers): ModuleList(
             ...     (0): Sequential(
             ...       (0): Conv2d(1, 128, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
@@ -476,19 +476,19 @@ class Encoder_SVAE_MNIST(BaseEncoder):
         return output
 
 
-class Decoder_AE_MNIST(BaseDecoder):
+class Decoder_Conv_AE_MNIST(BaseDecoder):
     """
     A proposed Convolutional decoder Neural net suited for MNIST and Autoencoder-based
     models.
 
     .. code-block::
 
-            >>> from pythae.models.nn.benchmarks.mnist import Decoder_AE_MNIST
+            >>> from pythae.models.nn.benchmarks.mnist import Decoder_Conv_AE_MNIST
             >>> from pythae.models import VAEConfig
             >>> model_config = VAEConfig(input_dim=(1, 28, 28), latent_dim=16)
-            >>> decoder = Decoder_AE_MNIST(model_config)
+            >>> decoder = Decoder_Conv_AE_MNIST(model_config)
             >>> decoder
-            ... Decoder_AE_MNIST(
+            ... Decoder_Conv_AE_MNIST(
             ...   (layers): ModuleList(
             ...     (0): Linear(in_features=16, out_features=16384, bias=True)
             ...     (1): Sequential(
@@ -617,7 +617,7 @@ class Decoder_AE_MNIST(BaseDecoder):
         return output
 
 
-class Discriminator_MNIST(BaseDiscriminator):
+class Discriminator_Conv_MNIST(BaseDiscriminator):
     """
     A Convolutional discriminator Neural net suited for MNIST.
 
@@ -626,12 +626,12 @@ class Discriminator_MNIST(BaseDiscriminator):
 
     .. code-block::
 
-            >>> from pythae.models.nn.benchmarks.mnist import Discriminator_MNIST
+            >>> from pythae.models.nn.benchmarks.mnist import Discriminator_Conv_MNIST
             >>> from pythae.models import VAEGANConfig
             >>> model_config = VAEGANConfig(input_dim=(1, 28, 28), latent_dim=16)
-            >>> discriminator = Discriminator_MNIST(model_config)
+            >>> discriminator = Discriminator_Conv_MNIST(model_config)
             >>> discriminator
-            ... Discriminator_MNIST(
+            ... Discriminator_Conv_MNIST(
             ...   (layers): ModuleList(
             ...     (0): Sequential(
             ...       (0): Conv2d(1, 128, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
