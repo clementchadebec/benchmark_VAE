@@ -183,7 +183,7 @@ The samplers can be used with any model as long as it is suited. For instance, a
 ... )
 >>> # Define your sampler
 ... gmm_sampler_config = GaussianMixtureSamplerConfig(
-... n_components=10
+...	n_components=10
 ... )
 >>> my_samper = GaussianMixtureSampler(
 ...	sampler_config=gmm_sampler_config,
