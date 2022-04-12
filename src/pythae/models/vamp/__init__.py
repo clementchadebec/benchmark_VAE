@@ -9,6 +9,8 @@ Available samplers
     ~pythae.samplers.GaussianMixtureSampler
     ~pythae.samplers.TwoStageVAESampler
     ~pythae.samplers.VAMPSampler
+    ~pythae.samplers.MAFSampler
+    ~pythae.samplers.IAFSampler
     :nosignatures:
 """
 
