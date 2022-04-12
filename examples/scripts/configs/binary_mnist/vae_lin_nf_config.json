@@ -1,0 +1,6 @@
+{
+    "name": "VAE_LinNF_Config",
+    "latent_dim": 16,
+    "reconstruction_loss": "bce",
+    "flows": ["Planar", "Planar", "Planar"]
+}

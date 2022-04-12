@@ -61,11 +61,10 @@ class Test_MAFSampler_saving:
 
         assert os.path.isfile(sampler_config_file)
 
-        generation_config_rec = MAFSamplerConfig.from_json_file(
-            sampler_config_file
-        )
+        generation_config_rec = MAFSamplerConfig.from_json_file(sampler_config_file)
 
         assert generation_config_rec.__dict__ == sampler.sampler_config.__dict__
+
 
 class Test_MAFSampler_Sampling:
     @pytest.fixture()

@@ -78,6 +78,7 @@ class Test_TwoStageVAESampler_saving:
 
         assert generation_config_rec.__dict__ == sampler.sampler_config.__dict__
 
+
 class Test_TwoStageVAESampler_Sampling:
     @pytest.fixture()
     def training_config(self, tmpdir):

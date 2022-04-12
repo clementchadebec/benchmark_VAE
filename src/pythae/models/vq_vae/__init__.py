@@ -7,7 +7,10 @@ Available samplers
 Normalizing flows sampler to come.
 
 .. autosummary::
-
+    ~pythae.samplers.GaussianMixtureSampler
+    ~pythae.samplers.MAFSampler
+    ~pythae.samplers.IAFSampler
+    :nosignatures:
 """
 
 from .vq_vae_config import VQVAEConfig

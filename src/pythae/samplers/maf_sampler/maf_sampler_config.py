@@ -19,6 +19,7 @@ class MAFSamplerConfig(BaseNFConfig):
         include_batch_norm (bool): Whether to include batch normalization after each
             :class:`~pythae.models.normalizing_flows.MADE` layers. Default: False.
     """
+
     n_made_blocks: int = 2
     n_hidden_in_made: int = 3
     hidden_size: int = 128

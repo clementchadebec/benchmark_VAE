@@ -26,6 +26,8 @@ examples/notebooks/models_training/generate.py
 dummy_output_dir/*
 examples/notebooks/models_training/my_model/*
 examples/notebooks/test.ipynb
+examples/notebooks/dummy_output_dir/*
+examples/scripts/reproducibility/*
 wandb
 examples/notebooks/dummy_output_dir/
 examples/notebooks/models_training/dummy_output_dir/

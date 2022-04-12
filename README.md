@@ -62,6 +62,7 @@ Below is the list of the models currently implemented in the library.
 | Autoencoder (AE)                   | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/notebooks/models_training/ae_training.ipynb) |                                              |                                                                            |
 | Variational Autoencoder (VAE)      | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/notebooks/models_training/vae_training.ipynb) | [link](https://arxiv.org/abs/1312.6114)  |
 | Beta Variational Autoencoder (BetaVAE) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/notebooks/models_training/beta_vae_training.ipynb) | [link](https://openreview.net/pdf?id=Sy2fzU9gl)  |   
+VAE with Linear Normalizing Flows (VAE_LinNF) |  [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/notebooks/models_training/vae_lin_nf_training.ipynb) | [link](https://arxiv.org/abs/1505.05770) |         
 VAE with Inverse Autoregressive Flows (VAE_IAF) |  [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/notebooks/models_training/vae_iaf_training.ipynb) | [link](https://arxiv.org/abs/1606.04934) |  [link](https://github.com/openai/iaf)                                  |
 | Disentangled Beta Variational Autoencoder (DisentangledBetaVAE) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/notebooks/models_training/disentangled_beta_vae_training.ipynb) | [link](https://arxiv.org/abs/1804.03599)  |   
 | Disentangling by Factorising (FactorVAE) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/notebooks/models_training/factor_vae_training.ipynb) | [link](https://arxiv.org/abs/1802.05983)  |                                                                            |
@@ -163,7 +164,7 @@ To launch the data generation process from a trained model, you only need to bui
 ...	model=my_trained_vae
 ... )
 >>> # Generate samples
->>> gen_data = normal_samper.sample(
+>>> gen_data = my_samper.sample(
 ...	num_samples=50,
 ...	batch_size=10,
 ...	output_dir=None,
@@ -171,8 +172,33 @@ To launch the data generation process from a trained model, you only need to bui
 ... )
 ```
 If you set `output_dir` to a specific path, the generated images will be saved as `.png` files named `00000000.png`, `00000001.png` ...
-The samplers can be used with any model as long as it is suited. For instance, a `GMMSampler` instance can be used to generate from any model but a `VAMPSampler` will only be usable with a `VAMP` model. Check [here](#available-samplers) to see which ones apply to your model.
+The samplers can be used with any model as long as it is suited. For instance, a `GaussianMixtureSampler` instance can be used to generate from any model but a `VAMPSampler` will only be usable with a `VAMP` model. Check [here](#available-samplers) to see which ones apply to your model. Be carefull that some samplers such as the `GaussianMixtureSampler` for instance may need to be fitted by calling the `fit` method before using. Below is an example for the `GaussianMixtureSampler`. 
 
+```python
+>>> from pythae.models import VAE
+>>> from pythae.samplers import GaussianMixtureSampler, GaussianMixtureSamplerConfig
+>>> # Retrieve the trained model
+>>> my_trained_vae = VAE.load_from_folder(
+...	'path/to/your/trained/model'
+... )
+>>> # Define your sampler
+... gmm_sampler_config = GaussianMixtureSamplerConfig(
+...	n_components=10
+... )
+>>> my_samper = GaussianMixtureSampler(
+...	sampler_config=gmm_sampler_config,
+...	model=my_trained_vae
+... )
+>>> # fit the sampler
+>>> gmm_sampler.fit(train_dataset)
+>>> # Generate samples
+>>> gen_data = my_samper.sample(
+...	num_samples=50,
+...	batch_size=10,
+...	output_dir=None,
+...	return_gen=True
+... )
+```
 
 ## Define you own Autoencoder architecture
  
@@ -276,6 +302,7 @@ First let's have a look at the reconstructed samples taken from the evaluation s
 | AE                  | ![AE](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/ae_reconstruction_mnist.png) | ![AE](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/ae_reconstruction_celeba.png)                                                                            |
 | VAE | ![VAE](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/vae_reconstruction_mnist.png) |  ![VAE](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/vae_reconstruction_celeba.png)
 | Beta-VAE| ![Beta](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/beta_vae_reconstruction_mnist.png) | ![Beta Normal](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/beta_vae_reconstruction_celeba.png)
+| VAE Lin NF| ![VAE_LinNF](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/vae_lin_nf_reconstruction_mnist.png) | ![VAE_IAF Normal](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/vae_lin_nf_reconstruction_celeba.png)
 | VAE IAF| ![VAE_IAF](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/vae_iaf_reconstruction_mnist.png) | ![VAE_IAF Normal](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/vae_iaf_reconstruction_celeba.png)
 | Disentangled  Beta-VAE| ![Disentangled Beta](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/disentangled_beta_vae_reconstruction_mnist.png) | ![Disentangled Beta](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/disentangled_beta_vae_reconstruction_celeba.png)
 | FactorVAE| ![FactorVAE](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/factor_vae_reconstruction_mnist.png) | ![FactorVAE](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/factor_vae_reconstruction_celeba.png)
@@ -307,6 +334,7 @@ Here, we show the generated samples using using each model implemented in the li
 | VAE  + TwoStageVAESampler    | ![VAE 2 stage](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/vae_second_stage_sampling_mnist.png) |  ![VAE 2 stage](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/vae_second_stage_sampling_celeba.png)
 | VAE  + MAFSampler    | ![VAE MAF](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/vae_maf_sampling_mnist.png) |  ![VAE MAF](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/vae_maf_sampling_celeba.png)
 | Beta-VAE + NormalSampler | ![Beta Normal](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/beta_vae_normal_sampling_mnist.png) | ![Beta Normal](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/beta_vae_normal_sampling_celeba.png)
+| VAE Lin NF + NormalSampler | ![VAE_LinNF Normal](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/vae_lin_nf_normal_sampling_mnist.png) | ![VAE_LinNF Normal](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/vae_lin_nf_normal_sampling_celeba.png)
 | VAE IAF + NormalSampler | ![VAE_IAF Normal](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/vae_iaf_normal_sampling_mnist.png) | ![VAE IAF Normal](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/vae_iaf_normal_sampling_celeba.png)
 | Disentangled Beta-VAE + NormalSampler | ![Disentangled Beta Normal](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/disentangled_beta_vae_normal_sampling_mnist.png) | ![Disentangled Beta Normal](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/disentangled_beta_vae_normal_sampling_celeba.png)
 | FactorVAE + NormalSampler | ![FactorVAE Normal](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/factor_vae_normal_sampling_mnist.png) | ![FactorVAE Normal](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/factor_vae_normal_sampling_celeba.png)
@@ -319,6 +347,7 @@ Here, we show the generated samples using using each model implemented in the li
 | VAMP + VAMPSampler          | ![VAMP Vamp](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/vamp_vamp_sampling_mnist.png) | ![VAMP Vamp](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/vamp_vamp_sampling_celeba.png) |
 | Adversarial_AE + NormalSampler          | ![AAE_Normal](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/aae_normal_sampling_mnist.png) | ![AAE_Normal](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/aae_normal_sampling_celeba.png) |
 | VAEGAN + NormalSampler          | ![VAEGAN_Normal](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/vaegan_normal_sampling_mnist.png) | ![VAEGAN_Normal](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/vaegan_normal_sampling_celeba.png) |
+| VQVAE + MAFSampler          | ![VQVAE_MAF](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/vqvae_maf_sampling_mnist.png) | ![VQVAE_MAF](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/vqvae_maf_sampling_celeba.png) |
 | HVAE + NormalSampler             | ![HVAE Normal](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/hvae_normal_sampling_mnist.png) | ![HVAE GMM](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/hvae_normal_sampling_celeba.png)
 | RAE_L2 + GaussianMixtureSampler | ![RAE L2 GMM](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/rae_l2_gmm_sampling_mnist.png)  |  ![RAE L2 GMM](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/rae_l2_gmm_sampling_celeba.png)
 | RAE_GP + GaussianMixtureSampler| ![RAE GMM](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/rae_gp_gmm_sampling_mnist.png)  |  ![RAE GMM](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/rae_gp_gmm_sampling_celeba.png)

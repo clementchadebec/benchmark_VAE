@@ -16,7 +16,7 @@ from .vae_iaf_config import VAE_IAF_Config
 
 
 class VAE_IAF(VAE):
-    """Variational Auto Encoder with Inverse Autoregressive Flows 
+    """Variational Auto Encoder with Inverse Autoregressive Flows
     (:class:`~pythae.models.normalizing_flows.IAF`).
 
     Args:
@@ -78,7 +78,7 @@ class VAE_IAF(VAE):
         mu, log_var = encoder_output.embedding, encoder_output.log_covariance
 
         std = torch.exp(0.5 * log_var)
-        z, eps = self._sample_gauss(mu, std)
+        z, _ = self._sample_gauss(mu, std)
 
         z0 = z
 

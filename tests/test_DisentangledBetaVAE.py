@@ -302,6 +302,7 @@ class Test_Model_forward:
         assert out.z.shape[0] == demo_data["data"].shape[0]
         assert out.recon_x.shape == demo_data["data"].shape
 
+
 class Test_NLL_Compute:
     @pytest.fixture
     def demo_data(self):
@@ -315,18 +316,18 @@ class Test_NLL_Compute:
         model_configs.input_dim = tuple(demo_data["data"][0].shape)
         return DisentangledBetaVAE(model_configs)
 
-    @pytest.fixture(params=[
-        (20, 10),
-        (11, 22)
-    ])
+    @pytest.fixture(params=[(20, 10), (11, 22)])
     def nll_params(self, request):
         return request.param
 
     def test_nll_compute(self, betavae, demo_data, nll_params):
-        nll = betavae.get_nll(data=demo_data['data'], n_samples=nll_params[0], batch_size=nll_params[1])
+        nll = betavae.get_nll(
+            data=demo_data["data"], n_samples=nll_params[0], batch_size=nll_params[1]
+        )
 
         assert isinstance(nll, float)
         assert nll < 0
+
 
 @pytest.mark.slow
 class Test_DisentangledBetaVAE_Training:
