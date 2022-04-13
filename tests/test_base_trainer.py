@@ -533,8 +533,9 @@ class Test_Main_Training:
 
         true_data, recon, gene = trainer.predict(trainer.model, train_dataset.data)
 
+
         assert true_data.reshape(3, -1).shape == recon.reshape(3, -1).shape
-        assert gene.reshape(10, -1).shape[1:] == true_data.reshape(3, -1).shape[1:]
+        assert gene.reshape(3, -1).shape[1:] == true_data.reshape(3, -1).shape[1:]
 
     def test_main_train_loop(
         self, tmpdir, ae, train_dataset, training_configs, optimizers, schedulers

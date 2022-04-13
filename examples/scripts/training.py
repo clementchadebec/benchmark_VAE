@@ -129,9 +129,22 @@ def main(args):
 
     elif args.dataset == "cifar10":
 
-        from pythae.models.nn.benchmarks.cifar import Encoder_Conv_AE_CIFAR as Encoder_AE
-        from pythae.models.nn.benchmarks.cifar import Encoder_Conv_VAE_CIFAR as Encoder_VAE
-        from pythae.models.nn.benchmarks.cifar import Decoder_Conv_AE_CIFAR as Decoder_AE
+        if args.nn == "convnet":
+
+            from pythae.models.nn.benchmarks.cifar import Encoder_Conv_AE_CIFAR as Encoder_AE
+            from pythae.models.nn.benchmarks.cifar import Encoder_Conv_VAE_CIFAR as Encoder_VAE
+            from pythae.models.nn.benchmarks.cifar import Encoder_Conv_SVAE_CIFAR as Encoder_SVAE
+            from pythae.models.nn.benchmarks.cifar import Encoder_Conv_AE_CIFAR as Encoder_VQVAE
+            from pythae.models.nn.benchmarks.cifar import Decoder_Conv_AE_CIFAR as Decoder_AE
+            from pythae.models.nn.benchmarks.cifar import Decoder_Conv_AE_CIFAR as Decoder_VQVAE
+
+        elif args.nn == "resnet":
+            from pythae.models.nn.benchmarks.cifar import Encoder_ResNet_AE_CIFAR as Encoder_AE
+            from pythae.models.nn.benchmarks.cifar import Encoder_ResNet_VAE_CIFAR as Encoder_VAE
+            from pythae.models.nn.benchmarks.cifar import Encoder_ResNet_SVAE_CIFAR as Encoder_SVAE
+            from pythae.models.nn.benchmarks.cifar import Encoder_ResNet_VQVAE_CIFAR as Encoder_VQVAE
+            from pythae.models.nn.benchmarks.cifar import Decoder_ResNet_AE_CIFAR as Decoder_AE
+            from pythae.models.nn.benchmarks.cifar import Decoder_ResNet_VQVAE_CIFAR as Decoder_VQVAE
 
     elif args.dataset == "celeba":
 
