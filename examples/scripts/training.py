@@ -135,15 +135,22 @@ def main(args):
 
     elif args.dataset == "celeba":
 
-        from pythae.models.nn.benchmarks.celeba import Encoder_Conv_AE_CELEBA as Encoder_AE
-        from pythae.models.nn.benchmarks.celeba import Encoder_Conv_VAE_CELEBA as Encoder_VAE
-        from pythae.models.nn.benchmarks.celeba import (
-            Encoder_Conv_SVAE_CELEBA as Encoder_SVAE,
-        )
-        from pythae.models.nn.benchmarks.celeba import Decoder_Conv_AE_CELEBA as Decoder_AE
-        from pythae.models.nn.benchmarks.celeba import (
-            Discriminator_Conv_CELEBA as Discriminator,
-        )
+        if args.nn == "convnet":
+
+            from pythae.models.nn.benchmarks.celeba import Encoder_Conv_AE_CELEBA as Encoder_AE
+            from pythae.models.nn.benchmarks.celeba import Encoder_Conv_VAE_CELEBA as Encoder_VAE
+            from pythae.models.nn.benchmarks.celeba import Encoder_Conv_SVAE_CELEBA as Encoder_SVAE
+            from pythae.models.nn.benchmarks.celeba import Encoder_Conv_AE_CELEBA as Encoder_VQVAE
+            from pythae.models.nn.benchmarks.celeba import Decoder_Conv_AE_CELEBA as Decoder_AE
+            from pythae.models.nn.benchmarks.celeba import Decoder_Conv_AE_CELEBA as Decoder_VQVAE
+
+        elif args.nn == "resnet":
+            from pythae.models.nn.benchmarks.celeba import Encoder_ResNet_AE_CELEBA as Encoder_AE
+            from pythae.models.nn.benchmarks.celeba import Encoder_ResNet_VAE_CELEBA as Encoder_VAE
+            from pythae.models.nn.benchmarks.celeba import Encoder_ResNet_SVAE_CELEBA as Encoder_SVAE
+            from pythae.models.nn.benchmarks.celeba import Encoder_ResNet_VQVAE_CELEBA as Encoder_VQVAE
+            from pythae.models.nn.benchmarks.celeba import Decoder_ResNet_AE_CELEBA as Decoder_AE
+            from pythae.models.nn.benchmarks.celeba import Decoder_ResNet_VQVAE_CELEBA as Decoder_VQVAE
 
     try:
         logger.info(f"\nLoading {args.dataset} data...\n")

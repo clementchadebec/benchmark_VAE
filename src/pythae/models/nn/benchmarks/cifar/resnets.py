@@ -1,4 +1,4 @@
-"""Proposed residual neural nets architectures suited for MNIST"""
+"""Proposed residual neural nets architectures suited for CIFAR"""
 
 from turtle import forward
 from typing import List
@@ -13,13 +13,13 @@ from ...base_architectures import BaseDecoder, BaseEncoder
 from ..utils import ResBlock
 
 
-class Encoder_ResNet_AE_MNIST(BaseEncoder):
+class Encoder_ResNet_AE_CIFAR(BaseEncoder):
     def __init__(self, args: BaseAEConfig):
         BaseEncoder.__init__(self)
 
-        self.input_dim = (1, 28, 28)
+        self.input_dim = (3, 32, 32)
         self.latent_dim = args.latent_dim
-        self.n_channels = 1
+        self.n_channels = 3
 
         layers = nn.ModuleList()
 
@@ -102,13 +102,13 @@ class Encoder_ResNet_AE_MNIST(BaseEncoder):
         return output
 
 
-class Encoder_ResNet_VAE_MNIST(BaseEncoder):
+class Encoder_ResNet_VAE_CIFAR(BaseEncoder):
     def __init__(self, args: BaseAEConfig):
         BaseEncoder.__init__(self)
 
-        self.input_dim = (1, 28, 28)
+        self.input_dim = (3, 32, 32)
         self.latent_dim = args.latent_dim
-        self.n_channels = 1
+        self.n_channels = 3
 
         layers = nn.ModuleList()
 
@@ -192,13 +192,13 @@ class Encoder_ResNet_VAE_MNIST(BaseEncoder):
 
         return output
 
-class Encoder_ResNet_SVAE_MNIST(BaseEncoder):
+class Encoder_ResNet_SVAE_CIFAR(BaseEncoder):
     def __init__(self, args: BaseAEConfig):
         BaseEncoder.__init__(self)
 
-        self.input_dim = (1, 28, 28)
+        self.input_dim = (3, 32, 32)
         self.latent_dim = args.latent_dim
-        self.n_channels = 1
+        self.n_channels = 3
 
         layers = nn.ModuleList()
 
@@ -285,13 +285,13 @@ class Encoder_ResNet_SVAE_MNIST(BaseEncoder):
         return output
 
 
-class Encoder_ResNet_VQVAE_MNIST(BaseEncoder):
+class Encoder_ResNet_VQVAE_CIFAR(BaseEncoder):
     def __init__(self, args: BaseAEConfig):
         BaseEncoder.__init__(self)
 
-        self.input_dim = (1, 28, 28)
+        self.input_dim = (3, 32, 32)
         self.latent_dim = args.latent_dim
-        self.n_channels = 1
+        self.n_channels = 3
 
         layers = nn.ModuleList()
 
@@ -373,13 +373,13 @@ class Encoder_ResNet_VQVAE_MNIST(BaseEncoder):
 
         return output
 
-class Decoder_ResNet_AE_MNIST(BaseDecoder):
+class Decoder_ResNet_AE_CIFAR(BaseDecoder):
     def __init__(self, args: BaseAEConfig):
         BaseDecoder.__init__(self)
 
-        self.input_dim = (1, 28, 28)
+        self.input_dim = (3, 32, 32)
         self.latent_dim = args.latent_dim
-        self.n_channels = 1
+        self.n_channels = 3
 
         layers = nn.ModuleList()
 
@@ -399,13 +399,13 @@ class Decoder_ResNet_AE_MNIST(BaseDecoder):
 
         layers.append(
             nn.Sequential(
-                nn.ConvTranspose2d(128, 64, 3, 2, padding=1, output_padding=1),
+                nn.ConvTranspose2d(128, 64, 3, 2),
                 nn.ReLU()
             )
         )
 
         layers.append(
-            nn.ConvTranspose2d(64, self.n_channels, 3, 2, padding=1, output_padding=1)
+            nn.ConvTranspose2d(64, self.n_channels, 4, 2)
         )
 
         self.layers = layers
@@ -462,13 +462,13 @@ class Decoder_ResNet_AE_MNIST(BaseDecoder):
         return output
 
 
-class Decoder_ResNet_VQVAE_MNIST(BaseDecoder):
+class Decoder_ResNet_VQVAE_CIFAR(BaseDecoder):
     def __init__(self, args: BaseAEConfig):
         BaseDecoder.__init__(self)
 
-        self.input_dim = (1, 28, 28)
+        self.input_dim = (3, 32, 32)
         self.latent_dim = args.latent_dim
-        self.n_channels = 1
+        self.n_channels = 3
 
         layers = nn.ModuleList()
 
@@ -490,13 +490,13 @@ class Decoder_ResNet_VQVAE_MNIST(BaseDecoder):
 
         layers.append(
             nn.Sequential(
-                nn.ConvTranspose2d(128, 64, 3, 2, padding=1, output_padding=1),
+                nn.ConvTranspose2d(128, 64, 3, 2),
                 nn.ReLU()
             )
         )
 
         layers.append(
-            nn.ConvTranspose2d(64, self.n_channels, 3, 2, padding=1, output_padding=1)
+            nn.ConvTranspose2d(64, self.n_channels, 4, 2)
         )
 
         self.layers = layers
