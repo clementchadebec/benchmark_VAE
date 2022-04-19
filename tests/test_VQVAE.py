@@ -33,7 +33,7 @@ def model_configs_no_input_dim(request):
         VQVAEConfig(
             input_dim=(1, 28, 28),
             commitment_loss_factor=0.02,
-            quantization_loss_factor=0.18
+            quantization_loss_factor=0.18,
             latent_dim=16,
             use_ema=True,
             decay=0.001
