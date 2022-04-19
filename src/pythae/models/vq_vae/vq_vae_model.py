@@ -10,7 +10,7 @@ from ..base.base_utils import ModelOutput
 from ..nn import BaseDecoder, BaseEncoder
 from ..nn.default_architectures import Encoder_VAE_MLP
 from .vq_vae_config import VQVAEConfig
-from .vq_vae_utils import Quantizer
+from .vq_vae_utils import Quantizer, QuantizerEMA
 
 
 class VQVAE(AE):
@@ -48,7 +48,6 @@ class VQVAE(AE):
         self._set_quantizer(model_config)
 
         self.model_name = "VQVAE"
-        self.beta = model_config.beta
 
     def _set_quantizer(self, model_config):
 
@@ -69,7 +68,11 @@ class VQVAE(AE):
         z = z.permute(0, 2, 3, 1)
 
         self.model_config.embedding_dim = z.shape[-1]
-        self.quantizer = Quantizer(model_config=model_config)
+        if model_config.use_ema:
+            self.quantizer = QuantizerEMA(model_config=model_config)
+
+        else:
+            self.quantizer = Quantizer(model_config=model_config)
 
     def forward(self, inputs: BaseDataset, **kwargs):
         """
@@ -130,11 +133,7 @@ class VQVAE(AE):
             recon_x.reshape(x.shape[0], -1), x.reshape(x.shape[0], -1), reduction="none"
         ).sum(dim=-1)
 
-        vq_loss = (
-            self.model_config.beta * quantizer_output.commitment_loss
-            + self.model_config.quantization_loss_factor
-            * quantizer_output.embedding_loss
-        )
+        vq_loss = quantizer_output.loss
 
         return (
             (recon_loss + vq_loss).mean(dim=0),
