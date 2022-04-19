@@ -26,20 +26,18 @@ class Encoder_ResNet_AE_CIFAR(BaseEncoder):
         layers.append(
             nn.Sequential(
                 nn.Conv2d(self.n_channels, 64, 4, 2, padding=1),
-                nn.ReLU(),
             )
         )
 
         layers.append(
             nn.Sequential(
                 nn.Conv2d(64, 128, 4, 2, padding=1),
-                nn.ReLU()
             )
         )
 
         layers.append(
             nn.Sequential(
-                nn.Conv2d(128, 128, 3, 2, padding=1)
+                nn.Conv2d(128, 128, 3, 1, padding=1)
             )
         )
 
@@ -47,11 +45,10 @@ class Encoder_ResNet_AE_CIFAR(BaseEncoder):
             nn.Sequential(
                 ResBlock(in_channels=128, out_channels=32),
                 ResBlock(in_channels=128, out_channels=32),
-                nn.ReLU()
             )
         )
 
-        self.embedding = nn.Linear(128*4*4, args.latent_dim)
+        self.embedding = nn.Linear(128*8*8, args.latent_dim)
 
         self.layers = layers
         self.depth = len(layers)
@@ -115,20 +112,18 @@ class Encoder_ResNet_VAE_CIFAR(BaseEncoder):
         layers.append(
             nn.Sequential(
                 nn.Conv2d(self.n_channels, 64, 4, 2, padding=1),
-                nn.ReLU(),
             )
         )
 
         layers.append(
             nn.Sequential(
                 nn.Conv2d(64, 128, 4, 2, padding=1),
-                nn.ReLU()
             )
         )
 
         layers.append(
             nn.Sequential(
-                nn.Conv2d(128, 128, 3, 2, padding=1)
+                nn.Conv2d(128, 128, 3, 1, padding=1)
             )
         )
 
@@ -136,15 +131,14 @@ class Encoder_ResNet_VAE_CIFAR(BaseEncoder):
             nn.Sequential(
                 ResBlock(in_channels=128, out_channels=32),
                 ResBlock(in_channels=128, out_channels=32),
-                nn.ReLU()
             )
         )
 
         self.layers = layers
         self.depth = len(layers)
 
-        self.embedding = nn.Linear(128*4*4, args.latent_dim)
-        self.log_var = nn.Linear(128*4*4, args.latent_dim)
+        self.embedding = nn.Linear(128*8*8, args.latent_dim)
+        self.log_var = nn.Linear(128*8*8, args.latent_dim)
 
 
     def forward(self, x: torch.Tensor, output_layer_levels: List[int] = None):
@@ -205,20 +199,18 @@ class Encoder_ResNet_SVAE_CIFAR(BaseEncoder):
         layers.append(
             nn.Sequential(
                 nn.Conv2d(self.n_channels, 64, 4, 2, padding=1),
-                nn.ReLU(),
             )
         )
 
         layers.append(
             nn.Sequential(
                 nn.Conv2d(64, 128, 4, 2, padding=1),
-                nn.ReLU()
             )
         )
 
         layers.append(
             nn.Sequential(
-                nn.Conv2d(128, 128, 3, 2, padding=1)
+                nn.Conv2d(128, 128, 3, 1, padding=1)
             )
         )
 
@@ -226,15 +218,14 @@ class Encoder_ResNet_SVAE_CIFAR(BaseEncoder):
             nn.Sequential(
                 ResBlock(in_channels=128, out_channels=32),
                 ResBlock(in_channels=128, out_channels=32),
-                nn.ReLU()
             )
         )
 
         self.layers = layers
         self.depth = len(layers)
 
-        self.embedding = nn.Linear(128*4*4, args.latent_dim)
-        self.log_concentration = nn.Linear(128*4*4, 1)
+        self.embedding = nn.Linear(128*8*8, args.latent_dim)
+        self.log_concentration = nn.Linear(128*8*8, 1)
 
 
     def forward(self, x: torch.Tensor, output_layer_levels: List[int] = None):
@@ -298,20 +289,18 @@ class Encoder_ResNet_VQVAE_CIFAR(BaseEncoder):
         layers.append(
             nn.Sequential(
                 nn.Conv2d(self.n_channels, 64, 4, 2, padding=1),
-                nn.ReLU(),
             )
         )
 
         layers.append(
             nn.Sequential(
                 nn.Conv2d(64, 128, 4, 2, padding=1),
-                nn.ReLU()
             )
         )
 
         layers.append(
             nn.Sequential(
-                nn.Conv2d(128, 128, 3, 2, padding=1)
+                nn.Conv2d(128, 128, 3, 1, padding=1)
             )
         )
 
@@ -319,7 +308,6 @@ class Encoder_ResNet_VQVAE_CIFAR(BaseEncoder):
             nn.Sequential(
                 ResBlock(in_channels=128, out_channels=32),
                 ResBlock(in_channels=128, out_channels=32),
-                nn.ReLU()
             )
         )
 
@@ -383,29 +371,25 @@ class Decoder_ResNet_AE_CIFAR(BaseDecoder):
 
         layers = nn.ModuleList()
 
-        layers.append(nn.Linear(args.latent_dim, 128 * 4 * 4))
-
-        layers.append(
-            nn.ConvTranspose2d(128, 128, 3, 2, padding=1)
-        )
+        layers.append(nn.Linear(args.latent_dim, 128 * 8 * 8))
 
         layers.append(
             nn.Sequential(
                 ResBlock(in_channels=128, out_channels=32),
                 ResBlock(in_channels=128, out_channels=32),
-                nn.ReLU()
             )
         )
 
         layers.append(
             nn.Sequential(
-                nn.ConvTranspose2d(128, 64, 3, 2),
-                nn.ReLU()
+                nn.ConvTranspose2d(128, 64, 4, 2, padding=1),
             )
         )
 
         layers.append(
-            nn.ConvTranspose2d(64, self.n_channels, 4, 2)
+            nn.Sequential(
+                nn.ConvTranspose2d(64, self.n_channels, 4, 2, padding=1),
+            )
         )
 
         self.layers = layers
@@ -450,7 +434,7 @@ class Decoder_ResNet_AE_CIFAR(BaseDecoder):
             out = self.layers[i](out)
 
             if i == 0:
-                out = out.reshape(z.shape[0], 128, 4, 4)
+                out = out.reshape(z.shape[0], 128, 8, 8)
 
             if output_layer_levels is not None:
                 if i + 1 in output_layer_levels:
@@ -473,32 +457,25 @@ class Decoder_ResNet_VQVAE_CIFAR(BaseDecoder):
         layers = nn.ModuleList()
 
         layers.append(
-            nn.ConvTranspose2d(self.latent_dim, 128, 1, 1)
-        )
-
-        layers.append(
-            nn.ConvTranspose2d(128, 128, 3, 2, padding=1)
+            nn.Conv2d(self.latent_dim, 128, 3, 1, padding=1)
         )
 
         layers.append(
             nn.Sequential(
                 ResBlock(in_channels=128, out_channels=32),
                 ResBlock(in_channels=128, out_channels=32),
-                nn.ReLU()
             )
         )
 
         layers.append(
             nn.Sequential(
-                nn.ConvTranspose2d(128, 64, 3, 2),
-                nn.ReLU()
+                nn.ConvTranspose2d(128, 64, 4, 2, padding=1),
             )
         )
 
         layers.append(
             nn.Sequential(
-                nn.ConvTranspose2d(64, self.n_channels, 4, 2),
-                nn.Sigmoid()
+                nn.ConvTranspose2d(64, self.n_channels, 4, 2, padding=1),
             )
         )
 

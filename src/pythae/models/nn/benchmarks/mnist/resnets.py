@@ -26,14 +26,12 @@ class Encoder_ResNet_AE_MNIST(BaseEncoder):
         layers.append(
             nn.Sequential(
                 nn.Conv2d(self.n_channels, 64, 4, 2, padding=1),
-                nn.ReLU(),
             )
         )
 
         layers.append(
             nn.Sequential(
                 nn.Conv2d(64, 128, 4, 2, padding=1),
-                nn.ReLU()
             )
         )
 
@@ -47,7 +45,6 @@ class Encoder_ResNet_AE_MNIST(BaseEncoder):
             nn.Sequential(
                 ResBlock(in_channels=128, out_channels=32),
                 ResBlock(in_channels=128, out_channels=32),
-                nn.ReLU()
             )
         )
 
@@ -115,14 +112,12 @@ class Encoder_ResNet_VAE_MNIST(BaseEncoder):
         layers.append(
             nn.Sequential(
                 nn.Conv2d(self.n_channels, 64, 4, 2, padding=1),
-                nn.ReLU(),
             )
         )
 
         layers.append(
             nn.Sequential(
                 nn.Conv2d(64, 128, 4, 2, padding=1),
-                nn.ReLU()
             )
         )
 
@@ -136,7 +131,6 @@ class Encoder_ResNet_VAE_MNIST(BaseEncoder):
             nn.Sequential(
                 ResBlock(in_channels=128, out_channels=32),
                 ResBlock(in_channels=128, out_channels=32),
-                nn.ReLU()
             )
         )
 
@@ -205,14 +199,12 @@ class Encoder_ResNet_SVAE_MNIST(BaseEncoder):
         layers.append(
             nn.Sequential(
                 nn.Conv2d(self.n_channels, 64, 4, 2, padding=1),
-                nn.ReLU(),
             )
         )
 
         layers.append(
             nn.Sequential(
                 nn.Conv2d(64, 128, 4, 2, padding=1),
-                nn.ReLU()
             )
         )
 
@@ -226,7 +218,6 @@ class Encoder_ResNet_SVAE_MNIST(BaseEncoder):
             nn.Sequential(
                 ResBlock(in_channels=128, out_channels=32),
                 ResBlock(in_channels=128, out_channels=32),
-                nn.ReLU()
             )
         )
 
@@ -298,14 +289,12 @@ class Encoder_ResNet_VQVAE_MNIST(BaseEncoder):
         layers.append(
             nn.Sequential(
                 nn.Conv2d(self.n_channels, 64, 4, 2, padding=1),
-                nn.ReLU(),
             )
         )
 
         layers.append(
             nn.Sequential(
                 nn.Conv2d(64, 128, 4, 2, padding=1),
-                nn.ReLU()
             )
         )
 
@@ -319,7 +308,6 @@ class Encoder_ResNet_VQVAE_MNIST(BaseEncoder):
             nn.Sequential(
                 ResBlock(in_channels=128, out_channels=32),
                 ResBlock(in_channels=128, out_channels=32),
-                nn.ReLU()
             )
         )
 

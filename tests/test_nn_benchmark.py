@@ -970,17 +970,15 @@ class Test_CIFAR_ResNets:
 
             if 3 in recon_layers:
                 assert encoder_embed[f"embedding_layer_3"].shape[1] == 128
-                assert decoder_recon[f"reconstruction_layer_3"].shape[1] == 128
+                assert decoder_recon[f"reconstruction_layer_3"].shape[1] == 64
 
             if 4 in recon_layers:
                 assert encoder_embed[f"embedding_layer_4"].shape[1] == 128
-                assert decoder_recon[f"reconstruction_layer_4"].shape[1] == 64
-        
-            if 5 in recon_layers:
                 assert (
-                    decoder_recon[f"reconstruction_layer_5"].shape[1:]
+                    decoder_recon[f"reconstruction_layer_4"].shape[1:]
                     == ae_cifar_config.input_dim
                 )
+                
 
     def test_vae_encoding_decoding(
         self, ae_cifar_config, cifar_like_data, recon_layers
@@ -1032,15 +1030,12 @@ class Test_CIFAR_ResNets:
 
             if 3 in recon_layers:
                 assert encoder_embed[f"embedding_layer_3"].shape[1] == 128
-                assert decoder_recon[f"reconstruction_layer_3"].shape[1] == 128
+                assert decoder_recon[f"reconstruction_layer_3"].shape[1] == 64
 
             if 4 in recon_layers:
                 assert encoder_embed[f"embedding_layer_4"].shape[1] == 128
-                assert decoder_recon[f"reconstruction_layer_4"].shape[1] == 64
-        
-            if 5 in recon_layers:
                 assert (
-                    decoder_recon[f"reconstruction_layer_5"].shape[1:]
+                    decoder_recon[f"reconstruction_layer_4"].shape[1:]
                     == ae_cifar_config.input_dim
                 )
 
@@ -1092,15 +1087,12 @@ class Test_CIFAR_ResNets:
 
             if 3 in recon_layers:
                 assert encoder_embed[f"embedding_layer_3"].shape[1] == 128
-                assert decoder_recon[f"reconstruction_layer_3"].shape[1] == 128
+                assert decoder_recon[f"reconstruction_layer_3"].shape[1] == 64
 
             if 4 in recon_layers:
                 assert encoder_embed[f"embedding_layer_4"].shape[1] == 128
-                assert decoder_recon[f"reconstruction_layer_4"].shape[1] == 64
-        
-            if 5 in recon_layers:
                 assert (
-                    decoder_recon[f"reconstruction_layer_5"].shape[1:]
+                    decoder_recon[f"reconstruction_layer_4"].shape[1:]
                     == ae_cifar_config.input_dim
                 )
 
@@ -1150,19 +1142,14 @@ class Test_CIFAR_ResNets:
 
             if 3 in recon_layers:
                 assert encoder_embed[f"embedding_layer_3"].shape[1] == 128
-                assert decoder_recon[f"reconstruction_layer_3"].shape[1] == 128
+                assert decoder_recon[f"reconstruction_layer_3"].shape[1] == 64
 
             if 4 in recon_layers:
                 assert encoder_embed[f"embedding_layer_4"].shape[1] == 128
-                assert decoder_recon[f"reconstruction_layer_4"].shape[1] == 64
-
-            if 5 in recon_layers:
                 assert (
-                    decoder_recon[f"reconstruction_layer_5"].shape[1:]
+                    decoder_recon[f"reconstruction_layer_4"].shape[1:]
                     == ae_cifar_config.input_dim
                 )
-
-
 
 class Test_CELEBA_ConvNets:
 

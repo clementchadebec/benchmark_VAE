@@ -342,13 +342,19 @@ class WandbCallback(TrainingCallback):
                             np.moveaxis(true_data[i].cpu().detach().numpy(), 0, -1)
                         ),
                         self._wandb.Image(
-                            np.moveaxis(
-                                reconstructions[i].cpu().detach().numpy(), 0, -1
+                            np.clip(
+                                np.moveaxis(
+                                    reconstructions[i].cpu().detach().numpy(), 0, -1
+                                ), 0, 255.
                             )
                         ),
                         self._wandb.Image(
-                            np.moveaxis(generations[i].cpu().detach().numpy(), 0, -1)
-                        ),
+                            np.clip(
+                                np.moveaxis(
+                                    generations[i].cpu().detach().numpy(), 0, -1
+                                ), 0, 255.
+                            )
+                        )
                     ]
                 )
 

@@ -25,15 +25,13 @@ class Encoder_ResNet_AE_CELEBA(BaseEncoder):
 
         layers.append(
             nn.Sequential(
-                nn.Conv2d(self.n_channels, 64, 4, 2, padding=1),
-                nn.ReLU(),
+                nn.Conv2d(self.n_channels, 64, 4, 2, padding=1)
             )
         )
 
         layers.append(
             nn.Sequential(
-                nn.Conv2d(64, 128, 4, 2, padding=1),
-                nn.ReLU()
+                nn.Conv2d(64, 128, 4, 2, padding=1)
             )
         )
 
@@ -52,8 +50,7 @@ class Encoder_ResNet_AE_CELEBA(BaseEncoder):
         layers.append(
             nn.Sequential(
                 ResBlock(in_channels=128, out_channels=32),
-                ResBlock(in_channels=128, out_channels=32),
-                nn.ReLU()
+                ResBlock(in_channels=128, out_channels=32)
             )
         )
 
@@ -120,15 +117,13 @@ class Encoder_ResNet_VAE_CELEBA(BaseEncoder):
 
         layers.append(
             nn.Sequential(
-                nn.Conv2d(self.n_channels, 64, 4, 2, padding=1),
-                nn.ReLU(),
+                nn.Conv2d(self.n_channels, 64, 4, 2, padding=1)
             )
         )
 
         layers.append(
             nn.Sequential(
-                nn.Conv2d(64, 128, 4, 2, padding=1),
-                nn.ReLU()
+                nn.Conv2d(64, 128, 4, 2, padding=1)
             )
         )
 
@@ -147,8 +142,7 @@ class Encoder_ResNet_VAE_CELEBA(BaseEncoder):
         layers.append(
             nn.Sequential(
                 ResBlock(in_channels=128, out_channels=32),
-                ResBlock(in_channels=128, out_channels=32),
-                nn.ReLU()
+                ResBlock(in_channels=128, out_channels=32)
             )
         )
 
@@ -216,15 +210,13 @@ class Encoder_ResNet_SVAE_CELEBA(BaseEncoder):
 
         layers.append(
             nn.Sequential(
-                nn.Conv2d(self.n_channels, 64, 4, 2, padding=1),
-                nn.ReLU(),
+                nn.Conv2d(self.n_channels, 64, 4, 2, padding=1)
             )
         )
 
         layers.append(
             nn.Sequential(
-                nn.Conv2d(64, 128, 4, 2, padding=1),
-                nn.ReLU()
+                nn.Conv2d(64, 128, 4, 2, padding=1)
             )
         )
 
@@ -243,8 +235,7 @@ class Encoder_ResNet_SVAE_CELEBA(BaseEncoder):
         layers.append(
             nn.Sequential(
                 ResBlock(in_channels=128, out_channels=32),
-                ResBlock(in_channels=128, out_channels=32),
-                nn.ReLU()
+                ResBlock(in_channels=128, out_channels=32)
             )
         )
 
@@ -315,15 +306,13 @@ class Encoder_ResNet_VQVAE_CELEBA(BaseEncoder):
 
         layers.append(
             nn.Sequential(
-                nn.Conv2d(self.n_channels, 64, 4, 2, padding=1),
-                nn.ReLU(),
+                nn.Conv2d(self.n_channels, 64, 4, 2, padding=1)
             )
         )
 
         layers.append(
             nn.Sequential(
-                nn.Conv2d(64, 128, 4, 2, padding=1),
-                nn.ReLU()
+                nn.Conv2d(64, 128, 4, 2, padding=1)
             )
         )
 
@@ -342,8 +331,7 @@ class Encoder_ResNet_VQVAE_CELEBA(BaseEncoder):
         layers.append(
             nn.Sequential(
                 ResBlock(in_channels=128, out_channels=32),
-                ResBlock(in_channels=128, out_channels=32),
-                nn.ReLU()
+                ResBlock(in_channels=128, out_channels=32)
             )
         )
 
@@ -416,22 +404,19 @@ class Decoder_ResNet_AE_CELEBA(BaseDecoder):
         layers.append(
             nn.Sequential(
                 ResBlock(in_channels=128, out_channels=32),
-                ResBlock(in_channels=128, out_channels=32),
-                nn.ReLU()
+                ResBlock(in_channels=128, out_channels=32)
             )
         )
 
         layers.append(
             nn.Sequential(
-                nn.ConvTranspose2d(128, 128, 5, 2, padding=1),
-                nn.ReLU()
+                nn.ConvTranspose2d(128, 128, 5, 2, padding=1)
             )
         )
 
         layers.append(
             nn.Sequential(
-                nn.ConvTranspose2d(128, 64, 5, 2, padding=1, output_padding=1),
-                nn.ReLU()
+                nn.ConvTranspose2d(128, 64, 5, 2, padding=1, output_padding=1)
             )
         )
 
@@ -514,29 +499,25 @@ class Decoder_ResNet_VQVAE_CELEBA(BaseDecoder):
         layers.append(
             nn.Sequential(
                 ResBlock(in_channels=128, out_channels=32),
-                ResBlock(in_channels=128, out_channels=32),
-                nn.ReLU()
+                ResBlock(in_channels=128, out_channels=32)
             )
         )
 
         layers.append(
             nn.Sequential(
-                nn.ConvTranspose2d(128, 128, 5, 2, padding=1),
-                nn.ReLU()
+                nn.ConvTranspose2d(128, 128, 5, 2, padding=1)
             )
         )
 
         layers.append(
             nn.Sequential(
-                nn.ConvTranspose2d(128, 64, 5, 2, padding=1, output_padding=1),
-                nn.ReLU()
+                nn.ConvTranspose2d(128, 64, 5, 2, padding=1, output_padding=1)
             )
         )
 
         layers.append(
             nn.Sequential(
-                nn.ConvTranspose2d(64, self.n_channels, 4, 2, padding=1),
-                nn.Sigmoid()
+                nn.ConvTranspose2d(64, self.n_channels, 4, 2, padding=1)
             )
         )
 

@@ -1,7 +1,7 @@
 {
     "name": "VQVAEConfig",
     "latent_dim": 16,
-    "beta": 0.25,
-    "quantization_loss_factor": 0.2,
+    "commitment_loss_factor": 0.25,
+    "quantization_loss_factor": 1,
     "num_embeddings": 256
   }
