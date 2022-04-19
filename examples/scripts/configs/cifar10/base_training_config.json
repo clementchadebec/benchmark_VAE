@@ -1,8 +1,10 @@
 {
+  "name": "BaseTrainerConfig",
   "output_dir": "my_models",
   "batch_size": 100,
   "num_epochs": 100,
-  "learning_rate": 1e-4,
+  "learning_rate": 1e-3,
   "steps_saving": null,
+  "steps_predict": 5,
   "no_cuda": false
 }

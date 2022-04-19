@@ -4,7 +4,7 @@
   "batch_size": 100,
   "num_epochs": 50,
   "learning_rate": 0.001,
-  "steps_saving": 3,
+  "steps_saving": null,
   "steps_predict": 3,
   "no_cuda": false
 }

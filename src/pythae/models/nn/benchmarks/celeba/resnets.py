@@ -534,7 +534,10 @@ class Decoder_ResNet_VQVAE_CELEBA(BaseDecoder):
         )
 
         layers.append(
-            nn.ConvTranspose2d(64, self.n_channels, 4, 2, padding=1)
+            nn.Sequential(
+                nn.ConvTranspose2d(64, self.n_channels, 4, 2, padding=1),
+                nn.Sigmoid()
+            )
         )
 
         self.layers = layers
