@@ -1,4 +1,3 @@
-from matplotlib import use
 from pydantic.dataclasses import dataclass
 
 from ...models import AEConfig

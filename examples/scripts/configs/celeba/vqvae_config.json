@@ -3,5 +3,6 @@
     "latent_dim": 64,
     "commitment_loss_factor": 0.25,
     "quantization_loss_factor": 1,
-    "num_embeddings": 1024
+    "num_embeddings": 512,
+    "use_ema": true
   }

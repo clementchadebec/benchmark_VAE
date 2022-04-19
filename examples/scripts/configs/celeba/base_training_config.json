@@ -3,7 +3,7 @@
   "output_dir": "my_models_on_celeba",
   "batch_size": 100,
   "num_epochs": 50,
-  "learning_rate": 0.001,
+  "learning_rate": 0.0001,
   "steps_saving": null,
   "steps_predict": 3,
   "no_cuda": false
