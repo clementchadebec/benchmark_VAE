@@ -1,5 +1,8 @@
+from operator import mod
 import os
 from copy import deepcopy
+from platform import python_branch
+from matplotlib import use
 
 import pytest
 import torch
@@ -8,6 +11,7 @@ from torch.optim import SGD, Adadelta, Adagrad, Adam, RMSprop
 from pythae.customexception import BadInheritanceError
 from pythae.models.base.base_utils import ModelOutput
 from pythae.models import VQVAE, VQVAEConfig
+from pythae.models.vq_vae.vq_vae_utils import Quantizer, QuantizerEMA
 
 from pythae.trainers import BaseTrainer, BaseTrainerConfig
 from pythae.pipelines import TrainingPipeline
@@ -28,12 +32,15 @@ def model_configs_no_input_dim(request):
 @pytest.fixture(
     params=[
         VQVAEConfig(
-            input_dim=(1, 28, 28), latent_dim=4, num_embeddings=10
+            input_dim=(1, 28, 28), latent_dim=16, num_embeddings=10
         ),  #  ! Needs squared latent_dim !
         VQVAEConfig(
             input_dim=(1, 28, 28),
-            beta=0.02,
-            latent_dim=4,
+            commitment_loss_factor=0.02,
+            quantization_loss_factor=0.18,
+            latent_dim=16,
+            use_ema=True,
+            decay=0.001
         ),
     ]
 )
@@ -64,6 +71,18 @@ class Test_Model_Building:
                 model.latent_dim == model_configs.latent_dim,
             ]
         )
+
+        with pytest.raises(AssertionError):
+            VQVAEConfig(decay=10, use_ema=True)
+
+    def build_quantizer(self, model_configs):
+        model = VQVAE(model_configs)
+
+        if model.use_ema:
+            assert isinstance(model.quantizer, QuantizerEMA)
+
+        else:
+            assert isinstance(model.quantizer, Quantizer)
 
     def test_raises_bad_inheritance(self, model_configs, bad_net):
         with pytest.raises(BadInheritanceError):
