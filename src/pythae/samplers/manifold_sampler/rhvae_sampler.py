@@ -175,7 +175,7 @@ class RHVAESampler(BaseSampler):
             @ torch.transpose(
                 (
                     -2
-                    / (model.temperature**2)
+                    / (model.temperature ** 2)
                     * (model.centroids_tens.unsqueeze(0) - z.unsqueeze(1)).unsqueeze(2)
                     @ (
                         model.M_tens.unsqueeze(0)
@@ -185,7 +185,7 @@ class RHVAESampler(BaseSampler):
                                 dim=-1,
                             )
                             ** 2
-                            / (model.temperature**2)
+                            / (model.temperature ** 2)
                         )
                         .unsqueeze(-1)
                         .unsqueeze(-1)

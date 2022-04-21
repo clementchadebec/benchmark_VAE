@@ -1,4 +1,4 @@
-"""Sampler fitting a PixelCNN (:class:`~pythae.models.normalizing_flows.MAF`) 
+"""Sampler fitting a :class:`~pythae.models.normalizing_flows.PixelCNN` 
 in the VQVAE's latent space.
 
 Available models:

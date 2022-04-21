@@ -35,12 +35,18 @@ class PixelCNN(BaseNF):
                     [
                         nn.Sequential(
                             MaskedConv2d(
-                                "A", model_config.input_dim[0], 64, model_config.kernel_size, 1, pad_shape
+                                "A",
+                                model_config.input_dim[0],
+                                64,
+                                model_config.kernel_size,
+                                1,
+                                pad_shape,
                             ),
                             nn.BatchNorm2d(64),
-                            nn.ReLU()
-                            )
-                    ])
+                            nn.ReLU(),
+                        )
+                    ]
+                )
 
             else:
                 self.net.extend(
@@ -50,11 +56,14 @@ class PixelCNN(BaseNF):
                                 "B", 64, 64, model_config.kernel_size, 1, pad_shape
                             ),
                             nn.BatchNorm2d(64),
-                            nn.ReLU()
-                            )
-                    ])
-            
-        self.net.extend([nn.Conv2d(64, model_config.n_embeddings*model_config.input_dim[0], 1)])
+                            nn.ReLU(),
+                        )
+                    ]
+                )
+
+        self.net.extend(
+            [nn.Conv2d(64, model_config.n_embeddings * model_config.input_dim[0], 1)]
+        )
 
         self.net = nn.Sequential(*self.net)
 
@@ -70,16 +79,15 @@ class PixelCNN(BaseNF):
         """
 
         x = inputs["data"]
-        out =  self.net(x).reshape(
+        out = self.net(x).reshape(
             x.shape[0],
             self.model_config.n_embeddings,
             self.model_config.input_dim[0],
             x.shape[2],
-            x.shape[3]
+            x.shape[3],
         )
 
-        #assert 0, (out.reshape(-1, self.model_config.n_embeddings).shape, x.reshape(x.shape[0], -1,).long().shape)
-
+        # assert 0, (out.reshape(-1, self.model_config.n_embeddings).shape, x.reshape(x.shape[0], -1,).long().shape)
 
         loss = F.cross_entropy(out, x.long())
 

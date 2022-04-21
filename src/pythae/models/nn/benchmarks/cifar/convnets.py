@@ -7,7 +7,7 @@ import torch.nn as nn
 
 from ....base import BaseAEConfig
 from ....base.base_utils import ModelOutput
-from ...base_architectures import BaseDecoder, BaseEncoder, BaseDiscriminator
+from ...base_architectures import BaseDecoder, BaseDiscriminator, BaseEncoder
 
 
 class Encoder_Conv_AE_CIFAR(BaseEncoder):
@@ -468,7 +468,9 @@ class Encoder_Conv_SVAE_CIFAR(BaseEncoder):
 
             if i + 1 == self.depth:
                 output["embedding"] = self.embedding(out.reshape(x.shape[0], -1))
-                output["log_concentration"] = self.log_concentration(out.reshape(x.shape[0], -1))
+                output["log_concentration"] = self.log_concentration(
+                    out.reshape(x.shape[0], -1)
+                )
 
         return output
 
@@ -613,6 +615,7 @@ class Decoder_Conv_AE_CIFAR(BaseDecoder):
 
         return output
 
+
 class Discriminator_Conv_CIFAR(BaseDiscriminator):
     """
     A Convolutional discriminator Neural net suited for CIFAR.
@@ -701,7 +704,7 @@ class Discriminator_Conv_CIFAR(BaseDiscriminator):
             )
         )
 
-        layers.append(nn.Sequential(nn.Linear(1024*2*2, 1), nn.Sigmoid()))
+        layers.append(nn.Sequential(nn.Linear(1024 * 2 * 2, 1), nn.Sigmoid()))
 
         self.layers = layers
         self.depth = len(layers)
@@ -755,4 +758,3 @@ class Discriminator_Conv_CIFAR(BaseDiscriminator):
                 output["embedding"] = out
 
         return output
-

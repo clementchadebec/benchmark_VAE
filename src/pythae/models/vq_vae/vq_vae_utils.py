@@ -20,9 +20,7 @@ class Quantizer(nn.Module):
         self.commitment_loss_factor = model_config.commitment_loss_factor
         self.quantization_loss_factor = model_config.quantization_loss_factor
 
-        self.embeddings = nn.Embedding(
-            self.num_embeddings, self.embedding_dim
-        )
+        self.embeddings = nn.Embedding(self.num_embeddings, self.embedding_dim)
 
         self.embeddings.weight.data.uniform_(
             -1 / self.num_embeddings, 1 / self.num_embeddings
@@ -32,7 +30,7 @@ class Quantizer(nn.Module):
 
         distances = (
             (z.reshape(-1, self.embedding_dim) ** 2).sum(dim=-1, keepdim=True)
-            + (self.embeddings.weight**2).sum(dim=-1)
+            + (self.embeddings.weight ** 2).sum(dim=-1)
             - 2 * z.reshape(-1, self.embedding_dim) @ self.embeddings.weight.T
         )
 
@@ -40,15 +38,17 @@ class Quantizer(nn.Module):
 
         quantized_indices = closest.reshape(z.shape[0], z.shape[1], z.shape[2])
 
-        one_hot_encoding = F.one_hot(closest, num_classes=self.num_embeddings).type(
-            torch.float
-        ).squeeze(1)
+        one_hot_encoding = (
+            F.one_hot(closest, num_classes=self.num_embeddings)
+            .type(torch.float)
+            .squeeze(1)
+        )
 
-        #encoding_indices = torch.argmin(distances, dim=1).unsqueeze(1)
-        #one_hot_encoding = torch.zeros(encoding_indices.shape[0], self.num_embeddings, device=z.device)
-        #one_hot_encoding.scatter_(1, encoding_indices, 1)
+        # encoding_indices = torch.argmin(distances, dim=1).unsqueeze(1)
+        # one_hot_encoding = torch.zeros(encoding_indices.shape[0], self.num_embeddings, device=z.device)
+        # one_hot_encoding.scatter_(1, encoding_indices, 1)
 
-        #assert 0, (one_hot_encoding - one_hot_encoding_a.squeeze(1))
+        # assert 0, (one_hot_encoding - one_hot_encoding_a.squeeze(1))
 
         # quantization
         quantized = one_hot_encoding @ self.embeddings.weight
@@ -68,17 +68,20 @@ class Quantizer(nn.Module):
 
         quantized = z + (quantized - z).detach()
 
-        loss = commitment_loss * self.commitment_loss_factor + \
-            embedding_loss * self.quantization_loss_factor
+        loss = (
+            commitment_loss * self.commitment_loss_factor
+            + embedding_loss * self.quantization_loss_factor
+        )
         quantized = quantized.permute(0, 3, 1, 2)
 
         output = ModelOutput(
             quantized_vector=quantized,
             quantized_indices=quantized_indices.unsqueeze(1),
-            loss=loss
+            loss=loss,
         )
 
         return output
+
 
 class QuantizerEMA(nn.Module):
     def __init__(self, model_config: VQVAEConfig):
@@ -92,9 +95,7 @@ class QuantizerEMA(nn.Module):
         self.commitment_loss_factor = model_config.commitment_loss_factor
         self.decay = model_config.decay
 
-        self.embeddings = nn.Embedding(
-            self.num_embeddings, self.embedding_dim
-        )
+        self.embeddings = nn.Embedding(self.num_embeddings, self.embedding_dim)
 
         self.embeddings.weight.data.uniform_(
             -1 / self.num_embeddings, 1 / self.num_embeddings
@@ -105,16 +106,14 @@ class QuantizerEMA(nn.Module):
         self.ema_embed = nn.Parameter(
             torch.Tensor(self.num_embeddings, self.embedding_dim)
         )
-        
-        self.ema_embed.data.uniform_(
-            -1 / self.num_embeddings, 1 / self.num_embeddings
-        )
+
+        self.ema_embed.data.uniform_(-1 / self.num_embeddings, 1 / self.num_embeddings)
 
     def forward(self, z: torch.Tensor):
 
         distances = (
             (z.reshape(-1, self.embedding_dim) ** 2).sum(dim=-1, keepdim=True)
-            + (self.embeddings.weight**2).sum(dim=-1)
+            + (self.embeddings.weight ** 2).sum(dim=-1)
             - 2 * z.reshape(-1, self.embedding_dim) @ self.embeddings.weight.T
         )
 
@@ -122,9 +121,11 @@ class QuantizerEMA(nn.Module):
 
         quantized_indices = closest.reshape(z.shape[0], z.shape[1], z.shape[2])
 
-        one_hot_encoding = F.one_hot(closest, num_classes=self.num_embeddings).type(
-            torch.float
-        ).squeeze(1)
+        one_hot_encoding = (
+            F.one_hot(closest, num_classes=self.num_embeddings)
+            .type(torch.float)
+            .squeeze(1)
+        )
 
         # quantization
         quantized = one_hot_encoding @ self.embeddings.weight
@@ -138,22 +139,26 @@ class QuantizerEMA(nn.Module):
 
             dw = one_hot_encoding.T @ z.reshape(-1, self.embedding_dim)
 
-            self.ema_embed = nn.Parameter(self.ema_embed * self.decay + dw * (1 - self.decay))
+            self.ema_embed = nn.Parameter(
+                self.ema_embed * self.decay + dw * (1 - self.decay)
+            )
 
             n = torch.sum(self.cluster_size)
 
             self.cluster_size = (
-                (self.cluster_size + 1e-5) / (n + self.num_embeddings *  1e-5) * n
+                (self.cluster_size + 1e-5) / (n + self.num_embeddings * 1e-5) * n
             )
 
-            self.embeddings.weight = nn.Parameter(self.ema_embed / self.cluster_size.unsqueeze(-1))
+            self.embeddings.weight = nn.Parameter(
+                self.ema_embed / self.cluster_size.unsqueeze(-1)
+            )
 
         commitment_loss = F.mse_loss(
             quantized.detach().reshape(-1, self.embedding_dim),
             z.reshape(-1, self.embedding_dim),
             reduction="mean",
         )
-        
+
         quantized = z + (quantized - z).detach()
 
         loss = commitment_loss * self.commitment_loss_factor
@@ -162,7 +167,7 @@ class QuantizerEMA(nn.Module):
         output = ModelOutput(
             quantized_vector=quantized,
             quantized_indices=quantized_indices.unsqueeze(1),
-            loss=loss
+            loss=loss,
         )
 
         return output

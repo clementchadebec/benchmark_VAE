@@ -1,6 +1,6 @@
 """
-Implementation of the Masked Autoregressive Flow (MAF) proposed
-in (https://arxiv.org/abs/1502.03509)
+Implementation of PixelCNN model proposed
+in (https://arxiv.org/abs/1601.06759)
 """
 
 from .pixelcnn_config import PixelCNNConfig

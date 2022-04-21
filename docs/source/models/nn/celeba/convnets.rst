@@ -1,6 +1,6 @@
-**********************************
-CELEBA
-**********************************
+********************************
+ConvNets
+********************************
 
 .. autoclass:: pythae.models.nn.benchmarks.celeba.Encoder_Conv_AE_CELEBA
    :members:
@@ -16,4 +16,3 @@ CELEBA
 
 .. autoclass:: pythae.models.nn.benchmarks.celeba.Discriminator_Conv_CELEBA
    :members:
-

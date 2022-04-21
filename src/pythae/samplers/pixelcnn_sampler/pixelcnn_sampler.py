@@ -41,7 +41,7 @@ class PixelCNNSampler(BaseSampler):
         BaseSampler.__init__(self, model=model, sampler_config=sampler_config)
 
         # get size of codes
-        x_dumb = torch.randn((2, ) + model.model_config.input_dim).to(self.device)
+        x_dumb = torch.randn((2,) + model.model_config.input_dim).to(self.device)
         out_dumb = model({"data": x_dumb})
         quant_dumb = out_dumb.quantized_indices
         z_dumb = out_dumb.z
@@ -54,7 +54,7 @@ class PixelCNNSampler(BaseSampler):
             input_dim=quant_dumb.shape[1:],
             n_embeddings=model.model_config.num_embeddings,
             n_layers=sampler_config.n_layers,
-            kernel_size=sampler_config.kernel_size
+            kernel_size=sampler_config.kernel_size,
         )
 
         self.pixelcnn_model = PixelCNN(model_config=pixelcnn_config).to(self.device)
@@ -89,7 +89,11 @@ class PixelCNNSampler(BaseSampler):
             for _, inputs in enumerate(train_loader):
                 model_output = self.model(inputs)
                 mean_z = model_output.quantized_indices
-                z.append(mean_z.reshape((mean_z.shape[0],) + self.pixelcnn_model.model_config.input_dim))
+                z.append(
+                    mean_z.reshape(
+                        (mean_z.shape[0],) + self.pixelcnn_model.model_config.input_dim
+                    )
+                )
 
         train_data = torch.cat(z)
 
@@ -111,7 +115,12 @@ class PixelCNNSampler(BaseSampler):
                 for _, inputs in enumerate(eval_loader):
                     model_output = self.model(inputs)
                     mean_z = model_output.quantized_indices
-                    z.append(mean_z.reshape((mean_z.shape[0],) + self.pixelcnn_model.model_config.input_dim))
+                    z.append(
+                        mean_z.reshape(
+                            (mean_z.shape[0],)
+                            + self.pixelcnn_model.model_config.input_dim
+                        )
+                    )
 
             eval_data = torch.cat(z)
 
@@ -166,19 +175,23 @@ class PixelCNNSampler(BaseSampler):
 
         for i in range(full_batch_nbr):
 
-            z = torch.zeros((batch_size,) + self.pixelcnn_model.model_config.input_dim).to(self.device)
+            z = torch.zeros(
+                (batch_size,) + self.pixelcnn_model.model_config.input_dim
+            ).to(self.device)
             for k in range(self.pixelcnn_model.model_config.input_dim[-2]):
                 for l in range(self.pixelcnn_model.model_config.input_dim[-1]):
-                        out = self.pixelcnn_model({"data": z}).out.squeeze(2)
-                        probs = F.softmax(out[:, :, k, l], dim=-1)
-                        z[:, :, k, l] = torch.multinomial(probs, 1).float()
+                    out = self.pixelcnn_model({"data": z}).out.squeeze(2)
+                    probs = F.softmax(out[:, :, k, l], dim=-1)
+                    z[:, :, k, l] = torch.multinomial(probs, 1).float()
 
             z_quant = self.model.quantizer.embeddings(z.reshape(z.shape[0], -1).long())
 
             if self.needs_reshape:
                 z_quant = z_quant.reshape(z.shape[0], -1)
             else:
-                z_quant = z_quant.reshape(z.shape[0], z.shape[2], z.shape[3], -1).permute(0, 3, 1, 2)
+                z_quant = z_quant.reshape(
+                    z.shape[0], z.shape[2], z.shape[3], -1
+                ).permute(0, 3, 1, 2)
 
             x_gen = self.model.decoder(z_quant).reconstruction.detach()
 
@@ -191,20 +204,23 @@ class PixelCNNSampler(BaseSampler):
             x_gen_list.append(x_gen)
 
         if last_batch_samples_nbr > 0:
-            z = torch.zeros((last_batch_samples_nbr,) + self.pixelcnn_model.model_config.input_dim).to(self.device)
+            z = torch.zeros(
+                (last_batch_samples_nbr,) + self.pixelcnn_model.model_config.input_dim
+            ).to(self.device)
             for k in range(self.pixelcnn_model.model_config.input_dim[-1]):
                 for l in range(self.pixelcnn_model.model_config.input_dim[-2]):
                     out = self.pixelcnn_model({"data": z}).out.squeeze(2)
                     probs = F.softmax(out[:, :, k, l], dim=-1)
                     z[:, :, k, l] = torch.multinomial(probs, 1).float()
 
-
             z_quant = self.model.quantizer.embeddings(z.reshape(z.shape[0], -1).long())
 
             if self.needs_reshape:
                 z_quant = z_quant.reshape(z_quant.shape[0], -1)
             else:
-                z_quant = z_quant.reshape(z.shape[0], z.shape[2], z.shape[3], -1).permute(0, 3, 1, 2)
+                z_quant = z_quant.reshape(
+                    z.shape[0], z.shape[2], z.shape[3], -1
+                ).permute(0, 3, 1, 2)
 
             x_gen = self.model.decoder(z_quant).reconstruction.detach()
 
