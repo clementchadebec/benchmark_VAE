@@ -476,6 +476,7 @@ class Decoder_ResNet_VQVAE_CIFAR(BaseDecoder):
         layers.append(
             nn.Sequential(
                 nn.ConvTranspose2d(64, self.n_channels, 4, 2, padding=1),
+                nn.Sigmoid()
             )
         )
 

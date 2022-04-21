@@ -393,7 +393,10 @@ class Decoder_ResNet_AE_MNIST(BaseDecoder):
         )
 
         layers.append(
-            nn.ConvTranspose2d(64, self.n_channels, 3, 2, padding=1, output_padding=1)
+            nn.Sequential(
+                nn.ConvTranspose2d(64, self.n_channels, 3, 2, padding=1, output_padding=1),
+                nn.Sigmoid()
+            )
         )
 
         self.layers = layers

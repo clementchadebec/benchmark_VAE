@@ -4,5 +4,6 @@
     "commitment_loss_factor": 0.25,
     "quantization_loss_factor": 1,
     "num_embeddings": 256,
-    "decay": 0.99
+    "decay": 0.99,
+    "use_ema": true
   }

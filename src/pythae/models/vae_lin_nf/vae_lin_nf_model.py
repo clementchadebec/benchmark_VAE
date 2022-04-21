@@ -70,7 +70,7 @@ class VAE_LinNF(VAE):
         The VAE with linear normalizing flows model
 
         Args:
-            inputs (BaseDataset): The training datasat with labels
+            inputs (BaseDataset): The training dataset with labels
 
         Returns:
             ModelOutput: An instance of ModelOutput containing all the relevant parameters

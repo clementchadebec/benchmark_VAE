@@ -4,8 +4,8 @@ import pytest
 import torch
 from copy import deepcopy
 
-from pythae.models import VAE, VAEConfig, AE, AEConfig
-from pythae.samplers import IAFSampler, IAFSamplerConfig
+from pythae.models import VQVAE, VQVAEConfig
+from pythae.samplers import PixelCNNSampler, PixelCNNSamplerConfig
 from pythae.trainers import BaseTrainerConfig
 
 PATH = os.path.dirname(os.path.abspath(__file__))
@@ -19,8 +19,8 @@ def dummy_data():
 
 @pytest.fixture(
     params=[
-        AE(AEConfig(input_dim=(1, 28, 28), latent_dim=2)),
-        VAE(VAEConfig(input_dim=(1, 28, 28), latent_dim=4)),
+        VQVAE(VQVAEConfig(input_dim=(1, 28, 28), latent_dim=16)),
+        VQVAE(VQVAEConfig(input_dim=(1, 28, 28), latent_dim=4)),
     ]
 )
 def model(request):
@@ -29,8 +29,8 @@ def model(request):
 
 @pytest.fixture(
     params=[
-        IAFSamplerConfig(n_made_blocks=2, n_hidden_in_made=1),
-        IAFSamplerConfig(hidden_size=12, include_batch_norm=True),
+        PixelCNNSamplerConfig(n_layers=2, kernel_size=5),
+        PixelCNNSamplerConfig(),
         None,
     ]
 )
@@ -40,7 +40,7 @@ def sampler_config(request):
 
 @pytest.fixture()
 def sampler(model, sampler_config):
-    return IAFSampler(model=model, sampler_config=sampler_config)
+    return PixelCNNSampler(model=model, sampler_config=sampler_config)
 
 
 @pytest.fixture(params=[(4, 2), (5, 5), (2, 3)])
@@ -48,7 +48,7 @@ def num_sample_and_batch_size(request):
     return request.param
 
 
-class Test_IAFSampler_saving:
+class Test_PixelCNNSampler_saving:
     def test_save_config(self, tmpdir, sampler):
 
         tmpdir.mkdir("dummy_folder")
@@ -60,12 +60,12 @@ class Test_IAFSampler_saving:
 
         assert os.path.isfile(sampler_config_file)
 
-        generation_config_rec = IAFSamplerConfig.from_json_file(sampler_config_file)
+        generation_config_rec = PixelCNNSamplerConfig.from_json_file(sampler_config_file)
 
         assert generation_config_rec.__dict__ == sampler.sampler_config.__dict__
 
 
-class Test_IAFSampler_Sampling:
+class Test_PixelCNNSampler_Sampling:
     @pytest.fixture()
     def training_config(self, tmpdir):
         tmpdir.mkdir("dummy_folder")
@@ -73,7 +73,7 @@ class Test_IAFSampler_Sampling:
         return BaseTrainerConfig(output_dir=dir_path, num_epochs=20)
 
     def test_return_sampling_with_eval(
-        self, model, dummy_data, training_config, sampler, num_sample_and_batch_size
+        self, dummy_data, training_config, sampler, num_sample_and_batch_size
     ):
 
         num_samples, batch_size = (
@@ -81,13 +81,13 @@ class Test_IAFSampler_Sampling:
             num_sample_and_batch_size[1],
         )
 
-        start_flow = deepcopy(sampler.flow_contained_model)
+        start_flow = deepcopy(sampler.pixelcnn_model)
 
         sampler.fit(
             train_data=dummy_data, eval_data=dummy_data, training_config=training_config
         )
 
-        final_flow = deepcopy(sampler.flow_contained_model)
+        final_flow = deepcopy(sampler.pixelcnn_model)
 
         gen_samples = sampler.sample(
             num_samples=num_samples, batch_size=batch_size, return_gen=True
@@ -105,13 +105,13 @@ class Test_IAFSampler_Sampling:
             num_sample_and_batch_size[1],
         )
 
-        start_flow = deepcopy(sampler.flow_contained_model)
+        start_flow = deepcopy(sampler.pixelcnn_model)
 
         sampler.fit(
             train_data=dummy_data, eval_data=None, training_config=training_config
         )
 
-        final_flow = deepcopy(sampler.flow_contained_model)
+        final_flow = deepcopy(sampler.pixelcnn_model)
 
         gen_samples = sampler.sample(
             num_samples=num_samples, batch_size=batch_size, return_gen=True

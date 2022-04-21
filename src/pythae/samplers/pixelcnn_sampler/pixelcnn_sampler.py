@@ -1,66 +1,63 @@
-import datetime
-import logging
 import os
 import shutil
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from torch.distributions import MultivariateNormal
 from torch.utils.data import DataLoader
 
 from ...data.preprocessors import DataProcessor
-from ...models import AE, AEConfig, BaseAE
-from ...models.base.base_utils import ModelOutput
-from ...models.nn import BaseDecoder, BaseEncoder
-from ...models.normalizing_flows import IAF, IAFConfig, NFModel
+from ...models import VQVAE
+from ...models.normalizing_flows import PixelCNN, PixelCNNConfig
 from ...pipelines import TrainingPipeline
 from ...trainers import BaseTrainerConfig
 from ..base.base_sampler import BaseSampler
-from .iaf_sampler_config import IAFSamplerConfig
+from .pixelcnn_sampler_config import PixelCNNSamplerConfig
 
 
-class IAFSampler(BaseSampler):
-    """Fits an Inverse Autoregressive Flow in the Autoencoder's latent space.
+class PixelCNNSampler(BaseSampler):
+    """Fits a PixelCNN in the VQVAE's latent space.
 
     Args:
-        model (BaseAE): The AE model to sample from
-        sampler_config (IAFSamplerConfig): A IAFSamplerConfig instance containing
+        model (VQVAE): The AE model to sample from
+        sampler_config (PixelCNNSamplerConfig): A PixelCNNSamplerConfig instance containing
             the main parameters of the sampler. If None, a pre-defined configuration is used.
             Default: None
 
     .. note::
 
-        The method :class:`~pythae.samplers.IAFSampler.fit` must be called to fit the
+        The method :class:`~pythae.samplers.MAFSampler.fit` must be called to fit the
         sampler before sampling.
     """
 
-    def __init__(self, model: BaseAE, sampler_config: IAFSamplerConfig = None):
+    def __init__(self, model: VQVAE, sampler_config: PixelCNNSamplerConfig = None):
 
         self.is_fitted = False
 
         if sampler_config is None:
-            sampler_config = IAFSamplerConfig()
+            sampler_config = PixelCNNSamplerConfig()
 
         BaseSampler.__init__(self, model=model, sampler_config=sampler_config)
 
-        self.prior = MultivariateNormal(
-            torch.zeros(model.model_config.latent_dim).to(self.device),
-            torch.eye(model.model_config.latent_dim).to(self.device),
+        # get size of codes
+        x_dumb = torch.randn((2, ) + model.model_config.input_dim).to(self.device)
+        out_dumb = model({"data": x_dumb})
+        quant_dumb = out_dumb.quantized_indices
+        z_dumb = out_dumb.z
+
+        self.needs_reshape = False
+        if len(z_dumb.shape) == 2:
+            self.needs_reshape = True
+
+        pixelcnn_config = PixelCNNConfig(
+            input_dim=quant_dumb.shape[1:],
+            n_embeddings=model.model_config.num_embeddings,
+            n_layers=sampler_config.n_layers,
+            kernel_size=sampler_config.kernel_size
         )
 
-        iaf_config = IAFConfig(
-            input_dim=(model.model_config.latent_dim,),
-            n_made_blocks=sampler_config.n_made_blocks,
-            n_hidden_in_made=sampler_config.n_hidden_in_made,
-            hidden_size=sampler_config.hidden_size,
-            include_batch_norm=sampler_config.include_batch_norm,
-        )
-
-        iaf_model = IAF(model_config=iaf_config)
-
-        self.flow_contained_model = NFModel(self.prior, iaf_model)
-
-        self.flow_contained_model.to(self.device)
+        self.pixelcnn_model = PixelCNN(model_config=pixelcnn_config).to(self.device)
 
     def fit(
         self, train_data, eval_data=None, training_config: BaseTrainerConfig = None
@@ -90,9 +87,9 @@ class IAFSampler(BaseSampler):
 
         with torch.no_grad():
             for _, inputs in enumerate(train_loader):
-                encoder_output = self.model.encoder(inputs["data"])
-                mean_z = encoder_output.embedding
-                z.append(mean_z)
+                model_output = self.model(inputs)
+                mean_z = model_output.quantized_indices
+                z.append(mean_z.reshape((mean_z.shape[0],) + self.pixelcnn_model.model_config.input_dim))
 
         train_data = torch.cat(z)
 
@@ -112,19 +109,19 @@ class IAFSampler(BaseSampler):
 
             with torch.no_grad():
                 for _, inputs in enumerate(eval_loader):
-                    encoder_output = self.model.encoder(inputs["data"])
-                    mean_z = encoder_output.embedding
-                    z.append(mean_z)
+                    model_output = self.model(inputs)
+                    mean_z = model_output.quantized_indices
+                    z.append(mean_z.reshape((mean_z.shape[0],) + self.pixelcnn_model.model_config.input_dim))
 
             eval_data = torch.cat(z)
 
         pipeline = TrainingPipeline(
-            training_config=training_config, model=self.flow_contained_model
+            training_config=training_config, model=self.pixelcnn_model
         )
 
         pipeline(train_data=train_data, eval_data=eval_data)
 
-        self.iaf_model = IAF.load_from_folder(
+        self.pixelcnn_model = PixelCNN.load_from_folder(
             os.path.join(pipeline.trainer.training_dir, "final_model")
         ).to(self.device)
 
@@ -169,9 +166,21 @@ class IAFSampler(BaseSampler):
 
         for i in range(full_batch_nbr):
 
-            u = self.prior.sample((batch_size,))
-            z = self.iaf_model.inverse(u).out
-            x_gen = self.model.decoder(z).reconstruction.detach()
+            z = torch.zeros((batch_size,) + self.pixelcnn_model.model_config.input_dim).to(self.device)
+            for k in range(self.pixelcnn_model.model_config.input_dim[-2]):
+                for l in range(self.pixelcnn_model.model_config.input_dim[-1]):
+                        out = self.pixelcnn_model({"data": z}).out.squeeze(2)
+                        probs = F.softmax(out[:, :, k, l], dim=-1)
+                        z[:, :, k, l] = torch.multinomial(probs, 1).float()
+
+            z_quant = self.model.quantizer.embeddings(z.reshape(z.shape[0], -1).long())
+
+            if self.needs_reshape:
+                z_quant = z_quant.reshape(z.shape[0], -1)
+            else:
+                z_quant = z_quant.reshape(z.shape[0], z.shape[2], z.shape[3], -1).permute(0, 3, 1, 2)
+
+            x_gen = self.model.decoder(z_quant).reconstruction.detach()
 
             if output_dir is not None:
                 for j in range(batch_size):
@@ -182,9 +191,22 @@ class IAFSampler(BaseSampler):
             x_gen_list.append(x_gen)
 
         if last_batch_samples_nbr > 0:
-            u = self.prior.sample((last_batch_samples_nbr,))
-            z = self.iaf_model.inverse(u).out
-            x_gen = self.model.decoder(z).reconstruction.detach()
+            z = torch.zeros((last_batch_samples_nbr,) + self.pixelcnn_model.model_config.input_dim).to(self.device)
+            for k in range(self.pixelcnn_model.model_config.input_dim[-1]):
+                for l in range(self.pixelcnn_model.model_config.input_dim[-2]):
+                    out = self.pixelcnn_model({"data": z}).out.squeeze(2)
+                    probs = F.softmax(out[:, :, k, l], dim=-1)
+                    z[:, :, k, l] = torch.multinomial(probs, 1).float()
+
+
+            z_quant = self.model.quantizer.embeddings(z.reshape(z.shape[0], -1).long())
+
+            if self.needs_reshape:
+                z_quant = z_quant.reshape(z_quant.shape[0], -1)
+            else:
+                z_quant = z_quant.reshape(z.shape[0], z.shape[2], z.shape[3], -1).permute(0, 3, 1, 2)
+
+            x_gen = self.model.decoder(z_quant).reconstruction.detach()
 
             if output_dir is not None:
                 for j in range(last_batch_samples_nbr):

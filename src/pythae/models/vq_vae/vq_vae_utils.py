@@ -21,7 +21,7 @@ class Quantizer(nn.Module):
         self.quantization_loss_factor = model_config.quantization_loss_factor
 
         self.embeddings = nn.Embedding(
-            self.embedding_dim, self.num_embeddings
+            self.num_embeddings, self.embedding_dim
         )
 
         self.embeddings.weight.data.uniform_(
@@ -32,11 +32,13 @@ class Quantizer(nn.Module):
 
         distances = (
             (z.reshape(-1, self.embedding_dim) ** 2).sum(dim=-1, keepdim=True)
-            + (self.embeddings.weight.T**2).sum(dim=-1)
-            - 2 * z.reshape(-1, self.embedding_dim) @ self.embeddings.weight
+            + (self.embeddings.weight**2).sum(dim=-1)
+            - 2 * z.reshape(-1, self.embedding_dim) @ self.embeddings.weight.T
         )
 
         closest = distances.argmin(-1).unsqueeze(-1)
+
+        quantized_indices = closest.reshape(z.shape[0], z.shape[1], z.shape[2])
 
         one_hot_encoding = F.one_hot(closest, num_classes=self.num_embeddings).type(
             torch.float
@@ -49,7 +51,7 @@ class Quantizer(nn.Module):
         #assert 0, (one_hot_encoding - one_hot_encoding_a.squeeze(1))
 
         # quantization
-        quantized = one_hot_encoding @ self.embeddings.weight.T
+        quantized = one_hot_encoding @ self.embeddings.weight
         quantized = quantized.reshape_as(z)
 
         commitment_loss = F.mse_loss(
@@ -72,6 +74,7 @@ class Quantizer(nn.Module):
 
         output = ModelOutput(
             quantized_vector=quantized,
+            quantized_indices=quantized_indices.unsqueeze(1),
             loss=loss
         )
 
@@ -90,7 +93,7 @@ class QuantizerEMA(nn.Module):
         self.decay = model_config.decay
 
         self.embeddings = nn.Embedding(
-            self.embedding_dim, self.num_embeddings
+            self.num_embeddings, self.embedding_dim
         )
 
         self.embeddings.weight.data.uniform_(
@@ -100,7 +103,7 @@ class QuantizerEMA(nn.Module):
         self.register_buffer("cluster_size", torch.zeros(self.num_embeddings))
 
         self.ema_embed = nn.Parameter(
-            torch.Tensor(self.embedding_dim, self.num_embeddings)
+            torch.Tensor(self.num_embeddings, self.embedding_dim)
         )
         
         self.ema_embed.data.uniform_(
@@ -111,18 +114,20 @@ class QuantizerEMA(nn.Module):
 
         distances = (
             (z.reshape(-1, self.embedding_dim) ** 2).sum(dim=-1, keepdim=True)
-            + (self.embeddings.weight.T**2).sum(dim=-1)
-            - 2 * z.reshape(-1, self.embedding_dim) @ self.embeddings.weight
+            + (self.embeddings.weight**2).sum(dim=-1)
+            - 2 * z.reshape(-1, self.embedding_dim) @ self.embeddings.weight.T
         )
 
         closest = distances.argmin(-1).unsqueeze(-1)
+
+        quantized_indices = closest.reshape(z.shape[0], z.shape[1], z.shape[2])
 
         one_hot_encoding = F.one_hot(closest, num_classes=self.num_embeddings).type(
             torch.float
         ).squeeze(1)
 
         # quantization
-        quantized = one_hot_encoding @ self.embeddings.weight.T
+        quantized = one_hot_encoding @ self.embeddings.weight
         quantized = quantized.reshape_as(z)
 
         if self.training:
@@ -133,7 +138,7 @@ class QuantizerEMA(nn.Module):
 
             dw = one_hot_encoding.T @ z.reshape(-1, self.embedding_dim)
 
-            self.ema_embed = nn.Parameter(self.ema_embed * self.decay + dw.T * (1 - self.decay))
+            self.ema_embed = nn.Parameter(self.ema_embed * self.decay + dw * (1 - self.decay))
 
             n = torch.sum(self.cluster_size)
 
@@ -141,7 +146,7 @@ class QuantizerEMA(nn.Module):
                 (self.cluster_size + 1e-5) / (n + self.num_embeddings *  1e-5) * n
             )
 
-            self.embeddings.weight = nn.Parameter(self.ema_embed / self.cluster_size)
+            self.embeddings.weight = nn.Parameter(self.ema_embed / self.cluster_size.unsqueeze(-1))
 
         commitment_loss = F.mse_loss(
             quantized.detach().reshape(-1, self.embedding_dim),
@@ -156,6 +161,7 @@ class QuantizerEMA(nn.Module):
 
         output = ModelOutput(
             quantized_vector=quantized,
+            quantized_indices=quantized_indices.unsqueeze(1),
             loss=loss
         )
 

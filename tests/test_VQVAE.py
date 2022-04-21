@@ -4,6 +4,8 @@ import pytest
 import torch
 from torch.optim import SGD, Adadelta, Adagrad, Adam, RMSprop
 
+from copy import deepcopy
+
 from pythae.customexception import BadInheritanceError
 from pythae.models.base.base_utils import ModelOutput
 from pythae.models import VQVAE, VQVAEConfig
@@ -293,7 +295,7 @@ class Test_Model_forward:
 
         assert isinstance(out, ModelOutput)
 
-        assert set(["loss", "recon_loss", "vq_loss", "recon_x", "z"]) == set(out.keys())
+        assert set(["loss", "recon_loss", "vq_loss", "recon_x", "z", "quantized_indices"]) == set(out.keys())
 
         assert out.z.shape[0] == demo_data["data"].shape[0]
         assert out.recon_x.shape == demo_data["data"].shape

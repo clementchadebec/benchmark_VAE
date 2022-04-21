@@ -331,6 +331,8 @@ class Encoder_ResNet_VQVAE_CELEBA(BaseEncoder):
         layers.append(
             nn.Sequential(
                 ResBlock(in_channels=128, out_channels=32),
+                ResBlock(in_channels=128, out_channels=32),
+                ResBlock(in_channels=128, out_channels=32),
                 ResBlock(in_channels=128, out_channels=32)
             )
         )
@@ -499,6 +501,8 @@ class Decoder_ResNet_VQVAE_CELEBA(BaseDecoder):
 
         layers.append(
             nn.Sequential(
+                ResBlock(in_channels=128, out_channels=32),
+                ResBlock(in_channels=128, out_channels=32),
                 ResBlock(in_channels=128, out_channels=32),
                 ResBlock(in_channels=128, out_channels=32)
             )

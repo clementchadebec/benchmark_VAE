@@ -31,6 +31,7 @@ class BaseSampler:
             sampler_config = BaseSamplerConfig()
 
         self.model = model
+        self.model.eval()
         self.sampler_config = sampler_config
         self.is_fitted = False
 

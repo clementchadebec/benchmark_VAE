@@ -4,14 +4,11 @@ import os
 import shutil
 
 import torch
-import torch.nn as nn
 from torch.distributions import MultivariateNormal
 from torch.utils.data import DataLoader
 
 from ...data.preprocessors import DataProcessor
-from ...models import AE, AEConfig, BaseAE
-from ...models.base.base_utils import ModelOutput
-from ...models.nn import BaseDecoder, BaseEncoder
+from ...models import BaseAE
 from ...models.normalizing_flows import MAF, MAFConfig, NFModel
 from ...pipelines import TrainingPipeline
 from ...trainers import BaseTrainerConfig

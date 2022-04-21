@@ -25,6 +25,7 @@ from .made import MADE, MADEConfig
 from .maf import MAF, MAFConfig
 from .planar_flow import PlanarFlow, PlanarFlowConfig
 from .radial_flow import RadialFlow, RadialFlowConfig
+from .pixelcnn import PixelCNN, PixelCNNConfig
 
 __all__ = [
     "BaseNF",
@@ -40,4 +41,6 @@ __all__ = [
     "PlanarFlowConfig",
     "RadialFlow",
     "RadialFlowConfig",
+    "PixelCNN",
+    "PixelCNNConfig"
 ]

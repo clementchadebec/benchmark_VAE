@@ -23,6 +23,7 @@ from .manifold_sampler import RHVAESampler, RHVAESamplerConfig
 from .normal_sampling import NormalSampler, NormalSamplerConfig
 from .two_stage_vae_sampler import TwoStageVAESampler, TwoStageVAESamplerConfig
 from .vamp_sampler import VAMPSampler, VAMPSamplerConfig
+from .pixelcnn_sampler import PixelCNNSampler, PixelCNNSamplerConfig
 
 __all__ = [
     "BaseSampler",
@@ -43,4 +44,6 @@ __all__ = [
     "MAFSamplerConfig",
     "IAFSampler",
     "IAFSamplerConfig",
+    "PixelCNNSampler",
+    "PixelCNNSamplerConfig"
 ]

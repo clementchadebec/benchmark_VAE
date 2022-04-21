@@ -79,7 +79,7 @@ class VQVAE(AE):
         The VAE model
 
         Args:
-            inputs (BaseDataset): The training datasat with labels
+            inputs (BaseDataset): The training dataset with labels
 
         Returns:
             ModelOutput: An instance of ModelOutput containing all the relevant parameters
@@ -109,6 +109,7 @@ class VQVAE(AE):
         quantizer_output = self.quantizer(embeddings)
 
         quantized_embed = quantizer_output.quantized_vector
+        quantized_indices = quantizer_output.quantized_indices
 
         if reshape_for_decoding:
             quantized_embed = quantized_embed.reshape(embeddings.shape[0], -1)
@@ -123,6 +124,7 @@ class VQVAE(AE):
             loss=loss,
             recon_x=recon_x,
             z=quantized_embed,
+            quantized_indices=quantized_indices
         )
 
         return output
