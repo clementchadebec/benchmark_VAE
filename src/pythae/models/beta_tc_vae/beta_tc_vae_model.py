@@ -64,14 +64,14 @@ class BetaTCVAE(VAE):
 
         x = inputs["data"]
 
-        dataset_size = epoch = kwargs.pop("dataset_size", x.shape[0])
+        dataset_size = kwargs.pop("dataset_size", x.shape[0])
 
         encoder_output = self.encoder(x)
 
         mu, log_var = encoder_output.embedding, encoder_output.log_covariance
 
         std = torch.exp(0.5 * log_var)
-        z, eps = self._sample_gauss(mu, std)
+        z, _ = self._sample_gauss(mu, std)
         recon_x = self.decoder(z)["reconstruction"]
 
         loss, recon_loss, kld = self.loss_function(
@@ -177,7 +177,7 @@ class BetaTCVAE(VAE):
     def _compute_log_gauss_density(self, z, mu, log_var):
         """element-wise computation"""
         return -0.5 * (
-            torch.log(torch.tensor([np.pi]).to(z.device))
+            torch.log(torch.tensor([2 * np.pi]).to(z.device))
             + log_var
             + (z - mu) ** 2 * torch.exp(-log_var)
         )

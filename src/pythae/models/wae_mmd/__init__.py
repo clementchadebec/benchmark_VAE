@@ -12,6 +12,7 @@ Available samplers
     :nosignatures:
 """
 
+from .wae_mmd_model import WAE_MMD
 from .wae_mmd_config import WAE_MMD_Config
 
-__all__ = ["WAE", "WAE_MMD_Config"]
+__all__ = ["WAE_MMD", "WAE_MMD_Config"]

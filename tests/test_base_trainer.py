@@ -531,7 +531,7 @@ class Test_Main_Training:
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
-        true_data, recon, gene = trainer.predict(trainer.model, train_dataset.data)
+        true_data, recon, gene = trainer.predict(trainer.model)
 
 
         assert true_data.reshape(3, -1).shape == recon.reshape(3, -1).shape
