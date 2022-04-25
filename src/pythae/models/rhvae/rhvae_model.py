@@ -484,7 +484,6 @@ class RHVAE(VAE):
                 G_log_det = -torch.logdet(G_inv)
                 L = torch.linalg.cholesky(G)
 
-
                 # initialization
                 gamma = torch.randn_like(z0, device=z.device)
                 rho = gamma / self.beta_zero_sqrt
@@ -493,7 +492,6 @@ class RHVAE(VAE):
                 rho = (L @ rho.unsqueeze(-1)).squeeze(
                     -1
                 )  # sample from the multivariate N(0, G)
-
 
                 recon_x = self.decoder(z)["reconstruction"]
 

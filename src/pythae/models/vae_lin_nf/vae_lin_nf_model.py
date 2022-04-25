@@ -9,8 +9,12 @@ import torch.nn.functional as F
 from ...data.datasets import BaseDataset
 from ..base.base_utils import ModelOutput
 from ..nn import BaseDecoder, BaseEncoder
-from ..normalizing_flows import (PlanarFlow, PlanarFlowConfig, RadialFlow,
-                                 RadialFlowConfig)
+from ..normalizing_flows import (
+    PlanarFlow,
+    PlanarFlowConfig,
+    RadialFlow,
+    RadialFlowConfig,
+)
 from ..vae import VAE
 from .vae_lin_nf_config import VAE_LinNF_Config
 

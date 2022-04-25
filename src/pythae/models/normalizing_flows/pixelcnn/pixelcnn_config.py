@@ -1,4 +1,3 @@
-
 from pydantic.dataclasses import dataclass
 
 from ..base import BaseNFConfig

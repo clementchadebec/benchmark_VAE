@@ -9,4 +9,3 @@ class NormalSamplerConfig(BaseSamplerConfig):
 
     N/A
     """
-

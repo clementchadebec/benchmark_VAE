@@ -7,4 +7,3 @@ class BaseSamplerConfig(BaseConfig):
     """
     BaseSampler config class.
     """
-

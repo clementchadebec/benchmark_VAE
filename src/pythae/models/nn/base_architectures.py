@@ -2,7 +2,6 @@ import torch
 import torch.nn as nn
 
 
-
 class BaseEncoder(nn.Module):
     """This is a base class for Encoders neural networks."""
 

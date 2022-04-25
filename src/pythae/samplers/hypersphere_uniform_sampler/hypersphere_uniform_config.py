@@ -9,4 +9,3 @@ class HypersphereUniformSamplerConfig(BaseSamplerConfig):
 
     N/A
     """
-

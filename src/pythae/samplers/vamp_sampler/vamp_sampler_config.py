@@ -8,4 +8,3 @@ class VAMPSamplerConfig(BaseSamplerConfig):
     """This is the VAMP prior sampler configuration instance deriving from
     :class:`BaseSamplerConfig`.
     """
-

@@ -12,9 +12,12 @@ from ...customexception import ModelError
 from ...data.datasets import BaseDataset
 from ...models import BaseAE
 from ..trainer_utils import set_seed
-from ..training_callbacks import (CallbackHandler,
-                                  MetricConsolePrinterCallback,
-                                  ProgressBarCallback, TrainingCallback)
+from ..training_callbacks import (
+    CallbackHandler,
+    MetricConsolePrinterCallback,
+    ProgressBarCallback,
+    TrainingCallback,
+)
 from .base_training_config import BaseTrainerConfig
 
 logger = logging.getLogger(__name__)

@@ -11,8 +11,9 @@ from ...data.datasets import BaseDataset
 from ...models import BaseAE
 from ..base_trainer import BaseTrainer
 from ..training_callbacks import TrainingCallback
-from .coupled_optimizer_adversarial_trainer_config import \
-    CoupledOptimizerAdversarialTrainerConfig
+from .coupled_optimizer_adversarial_trainer_config import (
+    CoupledOptimizerAdversarialTrainerConfig,
+)
 
 logger = logging.getLogger(__name__)
 
