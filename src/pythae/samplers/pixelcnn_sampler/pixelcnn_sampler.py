@@ -205,7 +205,7 @@ class PixelCNNSampler(BaseSampler):
                 z_quant = z_quant.reshape(z_quant.shape[0], -1)
             else:
                 z_quant = z_quant.reshape(z.shape[0], z.shape[2], z.shape[3], -1).permute(0, 3, 1, 2)
-
+                
             x_gen = self.model.decoder(z_quant).reconstruction.detach()
 
             if output_dir is not None:
