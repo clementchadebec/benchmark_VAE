@@ -1,6 +1,6 @@
-**********************************
-MNIST
-**********************************
+********************************
+ConvNets
+********************************
 
 .. autoclass:: pythae.models.nn.benchmarks.mnist.Encoder_Conv_AE_MNIST
    :members:

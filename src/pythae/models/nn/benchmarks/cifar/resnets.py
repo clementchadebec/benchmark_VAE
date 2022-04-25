@@ -14,6 +14,74 @@ from ..utils import ResBlock
 
 
 class Encoder_ResNet_AE_CIFAR(BaseEncoder):
+    """
+    A ResNet encoder suited for CIFAR and Autoencoder-based models.
+
+    It can be built as follows:
+
+    .. code-block::
+
+        >>> from pythae.models.nn.benchmarks.cifar import Encoder_ResNet_AE_CIFAR
+        >>> from pythae.models import AEConfig
+        >>> model_config = AEConfig(input_dim=(3, 32, 32), latent_dim=16)
+        >>> encoder = Encoder_ResNet_AE_CIFAR(model_config)
+        >>> encoder
+        ... Encoder_ResNet_AE_CIFAR(
+        ...   (layers): ModuleList(
+        ...     (0): Sequential(
+        ...       (0): Conv2d(3, 64, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
+        ...     )
+        ...     (1): Sequential(
+        ...       (0): Conv2d(64, 128, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
+        ...     )
+        ...     (2): Sequential(
+        ...       (0): Conv2d(128, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        ...     )
+        ...     (3): Sequential(
+        ...       (0): ResBlock(
+        ...         (conv_block): Sequential(
+        ...           (0): ReLU()
+        ...           (1): Conv2d(128, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        ...           (2): ReLU()
+        ...           (3): Conv2d(32, 128, kernel_size=(1, 1), stride=(1, 1))
+        ...         )
+        ...       )
+        ...       (1): ResBlock(
+        ...         (conv_block): Sequential(
+        ...           (0): ReLU()
+        ...           (1): Conv2d(128, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        ...           (2): ReLU()
+        ...           (3): Conv2d(32, 128, kernel_size=(1, 1), stride=(1, 1))
+        ...         )
+        ...       )
+        ...     )
+        ...   )
+        ...   (embedding): Linear(in_features=8192, out_features=16, bias=True)
+        ... )
+
+
+    and then passed to a :class:`pythae.models` instance
+
+        >>> from pythae.models import AE
+        >>> model = AE(model_config=model_config, encoder=encoder)
+        >>> model.encoder == encoder
+        ... True
+
+    .. note::
+
+        Please note that this encoder is only suitable for Autoencoder based models since it only
+        outputs the embeddings of the input data under the key `embedding`.
+
+        .. code-block::
+
+            >>> import torch
+            >>> input = torch.rand(2, 3, 32, 32)
+            >>> out = encoder(input)
+            >>> out.embedding.shape
+            ... torch.Size([2, 16])
+
+    """
+
     def __init__(self, args: BaseAEConfig):
         BaseEncoder.__init__(self)
 
@@ -23,23 +91,11 @@ class Encoder_ResNet_AE_CIFAR(BaseEncoder):
 
         layers = nn.ModuleList()
 
-        layers.append(
-            nn.Sequential(
-                nn.Conv2d(self.n_channels, 64, 4, 2, padding=1),
-            )
-        )
+        layers.append(nn.Sequential(nn.Conv2d(self.n_channels, 64, 4, 2, padding=1)))
 
-        layers.append(
-            nn.Sequential(
-                nn.Conv2d(64, 128, 4, 2, padding=1),
-            )
-        )
+        layers.append(nn.Sequential(nn.Conv2d(64, 128, 4, 2, padding=1)))
 
-        layers.append(
-            nn.Sequential(
-                nn.Conv2d(128, 128, 3, 1, padding=1)
-            )
-        )
+        layers.append(nn.Sequential(nn.Conv2d(128, 128, 3, 1, padding=1)))
 
         layers.append(
             nn.Sequential(
@@ -47,12 +103,11 @@ class Encoder_ResNet_AE_CIFAR(BaseEncoder):
                 ResBlock(in_channels=128, out_channels=32),
             )
         )
-
-        self.embedding = nn.Linear(128*8*8, args.latent_dim)
 
         self.layers = layers
         self.depth = len(layers)
 
+        self.embedding = nn.Linear(128 * 8 * 8, args.latent_dim)
 
     def forward(self, x: torch.Tensor, output_layer_levels: List[int] = None):
         """Forward method
@@ -100,6 +155,75 @@ class Encoder_ResNet_AE_CIFAR(BaseEncoder):
 
 
 class Encoder_ResNet_VAE_CIFAR(BaseEncoder):
+    """
+    A ResNet encoder suited for CIFAR and Variational Autoencoder-based models.
+
+    It can be built as follows:
+
+    .. code-block::
+
+        >>> from pythae.models.nn.benchmarks.cifar import Encoder_ResNet_VAE_CIFAR
+        >>> from pythae.models import VAEConfig
+        >>> model_config = VAEConfig(input_dim=(3, 32, 32), latent_dim=16)
+        >>> encoder = Encoder_ResNet_VAE_CIFAR(model_config)
+        >>> encoder
+        ... Encoder_ResNet_VAE_CIFAR(
+        ...   (layers): ModuleList(
+        ...     (0): Sequential(
+        ...       (0): Conv2d(3, 64, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
+        ...     )
+        ...     (1): Sequential(
+        ...       (0): Conv2d(64, 128, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
+        ...     )
+        ...     (2): Sequential(
+        ...       (0): Conv2d(128, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        ...     )
+        ...     (3): Sequential(
+        ...       (0): ResBlock(
+        ...         (conv_block): Sequential(
+        ...           (0): ReLU()
+        ...           (1): Conv2d(128, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        ...           (2): ReLU()
+        ...           (3): Conv2d(32, 128, kernel_size=(1, 1), stride=(1, 1))
+        ...         )
+        ...       )
+        ...       (1): ResBlock(
+        ...         (conv_block): Sequential(
+        ...           (0): ReLU()
+        ...           (1): Conv2d(128, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        ...           (2): ReLU()
+        ...           (3): Conv2d(32, 128, kernel_size=(1, 1), stride=(1, 1))
+        ...         )
+        ...       )
+        ...     )
+        ...   )
+        ...   (embedding): Linear(in_features=8192, out_features=16, bias=True)
+        ...   (log_var): Linear(in_features=8192, out_features=16, bias=True)
+        ... )
+
+
+
+    and then passed to a :class:`pythae.models` instance
+
+        >>> from pythae.models import VAE
+        >>> model = VAE(model_config=model_config, encoder=encoder)
+        >>> model.encoder == encoder
+        ... True
+
+    .. note::
+
+        Please note that this encoder is only suitable for Autoencoder based models since it only
+        outputs the embeddings of the input data under the key `embedding`.
+
+        .. code-block::
+
+            >>> import torch
+            >>> input = torch.rand(2, 3, 32, 32)
+            >>> out = encoder(input)
+            >>> out.embedding.shape
+            ... torch.Size([2, 16])
+    """
+
     def __init__(self, args: BaseAEConfig):
         BaseEncoder.__init__(self)
 
@@ -109,23 +233,11 @@ class Encoder_ResNet_VAE_CIFAR(BaseEncoder):
 
         layers = nn.ModuleList()
 
-        layers.append(
-            nn.Sequential(
-                nn.Conv2d(self.n_channels, 64, 4, 2, padding=1),
-            )
-        )
+        layers.append(nn.Sequential(nn.Conv2d(self.n_channels, 64, 4, 2, padding=1)))
 
-        layers.append(
-            nn.Sequential(
-                nn.Conv2d(64, 128, 4, 2, padding=1),
-            )
-        )
+        layers.append(nn.Sequential(nn.Conv2d(64, 128, 4, 2, padding=1)))
 
-        layers.append(
-            nn.Sequential(
-                nn.Conv2d(128, 128, 3, 1, padding=1)
-            )
-        )
+        layers.append(nn.Sequential(nn.Conv2d(128, 128, 3, 1, padding=1)))
 
         layers.append(
             nn.Sequential(
@@ -137,9 +249,8 @@ class Encoder_ResNet_VAE_CIFAR(BaseEncoder):
         self.layers = layers
         self.depth = len(layers)
 
-        self.embedding = nn.Linear(128*8*8, args.latent_dim)
-        self.log_var = nn.Linear(128*8*8, args.latent_dim)
-
+        self.embedding = nn.Linear(128 * 8 * 8, args.latent_dim)
+        self.log_var = nn.Linear(128 * 8 * 8, args.latent_dim)
 
     def forward(self, x: torch.Tensor, output_layer_levels: List[int] = None):
         """Forward method
@@ -186,7 +297,77 @@ class Encoder_ResNet_VAE_CIFAR(BaseEncoder):
 
         return output
 
+
 class Encoder_ResNet_SVAE_CIFAR(BaseEncoder):
+    """
+    A ResNet encoder suited for CIFAR and Hyperspherical VAE models.
+
+    It can be built as follows:
+
+    .. code-block::
+
+        >>> from pythae.models.nn.benchmarks.cifar import Encoder_ResNet_SVAE_CIFAR
+        >>> from pythae.models import SVAEConfig
+        >>> model_config = SVAEConfig(input_dim=(3, 32, 32), latent_dim=16)
+        >>> encoder = Encoder_ResNet_SVAE_CIFAR(model_config)
+        >>> encoder
+        ... Encoder_ResNet_SVAE_CIFAR(
+        ...   (layers): ModuleList(
+        ...     (0): Sequential(
+        ...       (0): Conv2d(3, 64, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
+        ...     )
+        ...     (1): Sequential(
+        ...       (0): Conv2d(64, 128, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
+        ...     )
+        ...     (2): Sequential(
+        ...       (0): Conv2d(128, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        ...     )
+        ...     (3): Sequential(
+        ...       (0): ResBlock(
+        ...         (conv_block): Sequential(
+        ...           (0): ReLU()
+        ...           (1): Conv2d(128, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        ...           (2): ReLU()
+        ...           (3): Conv2d(32, 128, kernel_size=(1, 1), stride=(1, 1))
+        ...         )
+        ...       )
+        ...       (1): ResBlock(
+        ...         (conv_block): Sequential(
+        ...           (0): ReLU()
+        ...           (1): Conv2d(128, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        ...           (2): ReLU()
+        ...           (3): Conv2d(32, 128, kernel_size=(1, 1), stride=(1, 1))
+        ...         )
+        ...       )
+        ...     )
+        ...   )
+        ...   (embedding): Linear(in_features=8192, out_features=16, bias=True)
+        ...   (log_concentration): Linear(in_features=8192, out_features=1, bias=True)
+        ... )
+
+
+    and then passed to a :class:`pythae.models` instance
+
+        >>> from pythae.models import SVAE
+        >>> model = SVAE(model_config=model_config, encoder=encoder)
+        >>> model.encoder == encoder
+        ... True
+
+    .. note::
+
+        Please note that this encoder is only suitable for Autoencoder based models since it only
+        outputs the embeddings of the input data under the key `embedding`.
+
+        .. code-block::
+
+            >>> import torch
+            >>> input = torch.rand(2, 3, 32, 32)
+            >>> out = encoder(input)
+            >>> out.embedding.shape
+            ... torch.Size([2, 16])
+
+    """
+
     def __init__(self, args: BaseAEConfig):
         BaseEncoder.__init__(self)
 
@@ -196,23 +377,11 @@ class Encoder_ResNet_SVAE_CIFAR(BaseEncoder):
 
         layers = nn.ModuleList()
 
-        layers.append(
-            nn.Sequential(
-                nn.Conv2d(self.n_channels, 64, 4, 2, padding=1),
-            )
-        )
+        layers.append(nn.Sequential(nn.Conv2d(self.n_channels, 64, 4, 2, padding=1)))
 
-        layers.append(
-            nn.Sequential(
-                nn.Conv2d(64, 128, 4, 2, padding=1),
-            )
-        )
+        layers.append(nn.Sequential(nn.Conv2d(64, 128, 4, 2, padding=1)))
 
-        layers.append(
-            nn.Sequential(
-                nn.Conv2d(128, 128, 3, 1, padding=1)
-            )
-        )
+        layers.append(nn.Sequential(nn.Conv2d(128, 128, 3, 1, padding=1)))
 
         layers.append(
             nn.Sequential(
@@ -224,9 +393,8 @@ class Encoder_ResNet_SVAE_CIFAR(BaseEncoder):
         self.layers = layers
         self.depth = len(layers)
 
-        self.embedding = nn.Linear(128*8*8, args.latent_dim)
-        self.log_concentration = nn.Linear(128*8*8, 1)
-
+        self.embedding = nn.Linear(128 * 8 * 8, args.latent_dim)
+        self.log_concentration = nn.Linear(128 * 8 * 8, 1)
 
     def forward(self, x: torch.Tensor, output_layer_levels: List[int] = None):
         """Forward method
@@ -277,6 +445,74 @@ class Encoder_ResNet_SVAE_CIFAR(BaseEncoder):
 
 
 class Encoder_ResNet_VQVAE_CIFAR(BaseEncoder):
+    """
+    A ResNet encoder suited for CIFAR and Vector Quantized VAE models.
+
+    It can be built as follows:
+
+    .. code-block::
+
+        >>> from pythae.models.nn.benchmarks.cifar import Encoder_ResNet_VQVAE_CIFAR
+        >>> from pythae.models import VQVAEConfig
+        >>> model_config = VQVAEConfig(input_dim=(3, 32, 32), latent_dim=16)
+        >>> encoder = Encoder_ResNet_VQVAE_CIFAR(model_config)
+        >>> encoder
+        ... Encoder_ResNet_VQVAE_CIFAR(
+        ...   (layers): ModuleList(
+        ...     (0): Sequential(
+        ...       (0): Conv2d(3, 64, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
+        ...     )
+        ...     (1): Sequential(
+        ...       (0): Conv2d(64, 128, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
+        ...     )
+        ...     (2): Sequential(
+        ...       (0): Conv2d(128, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        ...     )
+        ...     (3): Sequential(
+        ...       (0): ResBlock(
+        ...         (conv_block): Sequential(
+        ...           (0): ReLU()
+        ...           (1): Conv2d(128, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        ...           (2): ReLU()
+        ...           (3): Conv2d(32, 128, kernel_size=(1, 1), stride=(1, 1))
+        ...         )
+        ...       )
+        ...       (1): ResBlock(
+        ...         (conv_block): Sequential(
+        ...           (0): ReLU()
+        ...           (1): Conv2d(128, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        ...           (2): ReLU()
+        ...           (3): Conv2d(32, 128, kernel_size=(1, 1), stride=(1, 1))
+        ...         )
+        ...       )
+        ...     )
+        ...   )
+        ...   (pre_qantized): Conv2d(128, 16, kernel_size=(1, 1), stride=(1, 1))
+        ... )
+
+
+    and then passed to a :class:`pythae.models` instance
+
+        >>> from pythae.models import VQVAE
+        >>> model = VQVAE(model_config=model_config, encoder=encoder)
+        >>> model.encoder == encoder
+        ... True
+
+    .. note::
+
+        Please note that this encoder is only suitable for Autoencoder based models since it only
+        outputs the embeddings of the input data under the key `embedding`.
+
+        .. code-block::
+
+            >>> import torch
+            >>> input = torch.rand(2, 3, 32, 32)
+            >>> out = encoder(input)
+            >>> out.embedding.shape
+            ... torch.Size([2, 16, 8,  8])
+
+    """
+
     def __init__(self, args: BaseAEConfig):
         BaseEncoder.__init__(self)
 
@@ -286,23 +522,11 @@ class Encoder_ResNet_VQVAE_CIFAR(BaseEncoder):
 
         layers = nn.ModuleList()
 
-        layers.append(
-            nn.Sequential(
-                nn.Conv2d(self.n_channels, 64, 4, 2, padding=1),
-            )
-        )
+        layers.append(nn.Sequential(nn.Conv2d(self.n_channels, 64, 4, 2, padding=1)))
 
-        layers.append(
-            nn.Sequential(
-                nn.Conv2d(64, 128, 4, 2, padding=1),
-            )
-        )
+        layers.append(nn.Sequential(nn.Conv2d(64, 128, 4, 2, padding=1)))
 
-        layers.append(
-            nn.Sequential(
-                nn.Conv2d(128, 128, 3, 1, padding=1)
-            )
-        )
+        layers.append(nn.Sequential(nn.Conv2d(128, 128, 3, 1, padding=1)))
 
         layers.append(
             nn.Sequential(
@@ -315,7 +539,6 @@ class Encoder_ResNet_VQVAE_CIFAR(BaseEncoder):
         self.depth = len(layers)
 
         self.pre_qantized = nn.Conv2d(128, self.latent_dim, 1, 1)
-
 
     def forward(self, x: torch.Tensor, output_layer_levels: List[int] = None):
         """Forward method
@@ -361,7 +584,72 @@ class Encoder_ResNet_VQVAE_CIFAR(BaseEncoder):
 
         return output
 
+
 class Decoder_ResNet_AE_CIFAR(BaseDecoder):
+    """
+    A ResNet decoder suited for CIFAR and Autoencoder-based
+    models.
+
+    .. code-block::
+
+        >>> from pythae.models.nn.benchmarks.cifar import Decoder_ResNet_AE_CIFAR
+        >>> from pythae.models import VAEConfig
+        >>> model_config = VAEConfig(input_dim=(3, 32, 32), latent_dim=16)
+        >>> decoder = Decoder_ResNet_AE_CIFAR(model_config)
+        >>> decoder
+        ... Decoder_ResNet_AE_CIFAR(
+        ...   (layers): ModuleList(
+        ...     (0): Linear(in_features=16, out_features=8192, bias=True)
+        ...     (1): Sequential(
+        ...       (0): ResBlock(
+        ...         (conv_block): Sequential(
+        ...           (0): ReLU()
+        ...           (1): Conv2d(128, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        ...           (2): ReLU()
+        ...           (3): Conv2d(32, 128, kernel_size=(1, 1), stride=(1, 1))
+        ...         )
+        ...       )
+        ...       (1): ResBlock(
+        ...         (conv_block): Sequential(
+        ...           (0): ReLU()
+        ...           (1): Conv2d(128, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        ...           (2): ReLU()
+        ...           (3): Conv2d(32, 128, kernel_size=(1, 1), stride=(1, 1))
+        ...         )
+        ...       )
+        ...     )
+        ...     (2): Sequential(
+        ...       (0): ConvTranspose2d(128, 64, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
+        ...     )
+        ...     (3): Sequential(
+        ...       (0): ConvTranspose2d(64, 3, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
+        ...       (1): Sigmoid()
+        ...     )
+        ...   )
+        ... )
+
+
+
+    and then passed to a :class:`pythae.models` instance
+
+        >>> from pythae.models import VAE
+        >>> model = VAE(model_config=model_config, decoder=decoder)
+        >>> model.decoder == decoder
+        ... True
+
+    .. note::
+
+        Please note that this decoder is suitable for **all** models.
+
+        .. code-block::
+
+            >>> import torch
+            >>> input = torch.randn(2, 16)
+            >>> out = decoder(input)
+            >>> out.reconstruction.shape
+            ... torch.Size([2, 3, 32, 32])
+    """
+
     def __init__(self, args: BaseAEConfig):
         BaseDecoder.__init__(self)
 
@@ -380,21 +668,16 @@ class Decoder_ResNet_AE_CIFAR(BaseDecoder):
             )
         )
 
-        layers.append(
-            nn.Sequential(
-                nn.ConvTranspose2d(128, 64, 4, 2, padding=1),
-            )
-        )
+        layers.append(nn.Sequential(nn.ConvTranspose2d(128, 64, 4, 2, padding=1)))
 
         layers.append(
             nn.Sequential(
-                nn.ConvTranspose2d(64, self.n_channels, 4, 2, padding=1),
+                nn.ConvTranspose2d(64, self.n_channels, 4, 2, padding=1), nn.Sigmoid()
             )
         )
 
         self.layers = layers
         self.depth = len(layers)
-
 
     def forward(self, z: torch.Tensor, output_layer_levels: List[int] = None):
         """Forward method
@@ -447,6 +730,67 @@ class Decoder_ResNet_AE_CIFAR(BaseDecoder):
 
 
 class Decoder_ResNet_VQVAE_CIFAR(BaseDecoder):
+    """
+    A ResNet decoder suited for CIFAR and Vector Quantized VAE models.
+
+    .. code-block::
+
+        >>> from pythae.models.nn.benchmarks.cifar import Decoder_ResNet_VQVAE_CIFAR
+        >>> from pythae.models import VQVAEConfig
+        >>> model_config = VQVAEConfig(input_dim=(3, 32, 32), latent_dim=16)
+        >>> decoder = Decoder_ResNet_VQVAE_CIFAR(model_config)
+        >>> decoder
+        ... Decoder_ResNet_VQVAE_CIFAR(
+        ...   (layers): ModuleList(
+        ...     (0): Conv2d(16, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        ...     (1): Sequential(
+        ...       (0): ResBlock(
+        ...         (conv_block): Sequential(
+        ...           (0): ReLU()
+        ...           (1): Conv2d(128, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        ...           (2): ReLU()
+        ...           (3): Conv2d(32, 128, kernel_size=(1, 1), stride=(1, 1))
+        ...         )
+        ...       )
+        ...       (1): ResBlock(
+        ...         (conv_block): Sequential(
+        ...           (0): ReLU()
+        ...           (1): Conv2d(128, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        ...           (2): ReLU()
+        ...           (3): Conv2d(32, 128, kernel_size=(1, 1), stride=(1, 1))
+        ...         )
+        ...       )
+        ...     )
+        ...     (2): Sequential(
+        ...       (0): ConvTranspose2d(128, 64, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
+        ...     )
+        ...     (3): Sequential(
+        ...       (0): ConvTranspose2d(64, 3, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
+        ...       (1): Sigmoid()
+        ...     )
+        ...   )
+        ... )
+
+    and then passed to a :class:`pythae.models` instance
+
+        >>> from pythae.models import VQVAE
+        >>> model = VQVAE(model_config=model_config, decoder=decoder)
+        >>> model.decoder == decoder
+        ... True
+
+    .. note::
+
+        Please note that this decoder is suitable for **all** models.
+
+        .. code-block::
+
+            >>> import torch
+            >>> input = torch.randn(2, 16, 8, 8)
+            >>> out = decoder(input)
+            >>> out.reconstruction.shape
+            ... torch.Size([2, 3, 32, 32])
+    """
+
     def __init__(self, args: BaseAEConfig):
         BaseDecoder.__init__(self)
 
@@ -456,9 +800,7 @@ class Decoder_ResNet_VQVAE_CIFAR(BaseDecoder):
 
         layers = nn.ModuleList()
 
-        layers.append(
-            nn.Conv2d(self.latent_dim, 128, 3, 1, padding=1)
-        )
+        layers.append(nn.Conv2d(self.latent_dim, 128, 3, 1, padding=1))
 
         layers.append(
             nn.Sequential(
@@ -467,22 +809,16 @@ class Decoder_ResNet_VQVAE_CIFAR(BaseDecoder):
             )
         )
 
-        layers.append(
-            nn.Sequential(
-                nn.ConvTranspose2d(128, 64, 4, 2, padding=1),
-            )
-        )
+        layers.append(nn.Sequential(nn.ConvTranspose2d(128, 64, 4, 2, padding=1)))
 
         layers.append(
             nn.Sequential(
-                nn.ConvTranspose2d(64, self.n_channels, 4, 2, padding=1),
-                nn.Sigmoid()
+                nn.ConvTranspose2d(64, self.n_channels, 4, 2, padding=1), nn.Sigmoid()
             )
         )
 
         self.layers = layers
         self.depth = len(layers)
-
 
     def forward(self, z: torch.Tensor, output_layer_levels: List[int] = None):
         """Forward method

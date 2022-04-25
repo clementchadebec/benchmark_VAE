@@ -13,6 +13,7 @@ Normalizing Flows
    made
    maf
    iaf
+   pixelcnn
    
 .. automodule::
     pythae.models.normalizing_flows
@@ -27,4 +28,5 @@ Available Flows
     ~pythae.models.normalizing_flows.MADE
     ~pythae.models.normalizing_flows.MAF
     ~pythae.models.normalizing_flows.IAF
+    ~pythae.models.normalizing_flows.PixelCNN
     :nosignatures:

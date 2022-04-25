@@ -1,4 +1,4 @@
-"""Neural nets used to perform the benchmark on MNIST"""
+"""A collection of Neural nets used to perform the benchmark on MNIST"""
 
 from .convnets import *
 from .resnets import *
@@ -14,5 +14,5 @@ __all__ = [
     "Encoder_ResNet_SVAE_MNIST",
     "Encoder_ResNet_VQVAE_MNIST",
     "Decoder_ResNet_AE_MNIST",
-    "Decoder_ResNet_VQVAE_MNIST"
+    "Decoder_ResNet_VQVAE_MNIST",
 ]

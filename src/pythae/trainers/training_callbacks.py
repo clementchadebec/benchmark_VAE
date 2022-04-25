@@ -345,16 +345,20 @@ class WandbCallback(TrainingCallback):
                             np.clip(
                                 np.moveaxis(
                                     reconstructions[i].cpu().detach().numpy(), 0, -1
-                                ), 0, 255.
+                                ),
+                                0,
+                                255.0,
                             )
                         ),
                         self._wandb.Image(
                             np.clip(
                                 np.moveaxis(
                                     generations[i].cpu().detach().numpy(), 0, -1
-                                ), 0, 255.
+                                ),
+                                0,
+                                255.0,
                             )
-                        )
+                        ),
                     ]
                 )
 

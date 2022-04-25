@@ -5,9 +5,9 @@ Benchmarks
 .. toctree::
    :maxdepth: 1
 
-   pythae_benchmarks_nn_mnist
-   pythae_benchmarks_nn_cifar
-   pythae_benchmarks_nn_celeba
+   mnist/pythae_benchmarks_nn_mnist
+   cifar/pythae_benchmarks_nn_cifar
+   celeba/pythae_benchmarks_nn_celeba
 
 .. automodule::
    pythae.models.nn.benchmarks
@@ -18,6 +18,9 @@ MNIST
 
 .. automodule::
    pythae.models.nn.benchmarks.mnist
+
+ConvNets
+---------------
 
 .. autosummary::
    ~pythae.models.nn.benchmarks.mnist.Encoder_Conv_AE_MNIST
@@ -33,6 +36,9 @@ CIFAR
 .. automodule::
    pythae.models.nn.benchmarks.cifar
 
+ConvNets
+---------------
+
 .. autosummary::
    ~pythae.models.nn.benchmarks.cifar.Encoder_Conv_AE_CIFAR
    ~pythae.models.nn.benchmarks.cifar.Encoder_Conv_VAE_CIFAR
@@ -44,6 +50,9 @@ CELEBA-64
 
 .. automodule::
    pythae.models.nn.benchmarks.celeba
+
+ConvNets
+---------------
 
 .. autosummary::
    ~pythae.models.nn.benchmarks.celeba.Encoder_Conv_AE_CELEBA

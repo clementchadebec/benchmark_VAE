@@ -5,6 +5,7 @@ from typing import List
 import numpy as np
 import torch
 import torch.nn as nn
+
 from pythae.models.nn import BaseDecoder, BaseDiscriminator, BaseEncoder
 
 from ....base import BaseAEConfig
@@ -14,7 +15,7 @@ from ...base_architectures import BaseDecoder, BaseEncoder
 
 class Encoder_Conv_AE_MNIST(BaseEncoder):
     """
-    A proposed Convolutional encoder Neural net suited for MNIST and Autoencoder-based models.
+    A Convolutional encoder suited for MNIST and Autoencoder-based models.
 
     It can be built as follows:
 
@@ -162,7 +163,7 @@ class Encoder_Conv_AE_MNIST(BaseEncoder):
 
 class Encoder_Conv_VAE_MNIST(BaseEncoder):
     """
-    A Convolutional encoder Neural net suited for MNIST and Variational Autoencoder-based
+    A Convolutional encoder suited for MNIST and Variational Autoencoder-based
     models.
 
 
@@ -319,7 +320,7 @@ class Encoder_Conv_VAE_MNIST(BaseEncoder):
 
 class Encoder_Conv_SVAE_MNIST(BaseEncoder):
     """
-    A Convolutional encoder Neural net suited for mnist and Hyperspherical autoencoder
+    A Convolutional encoder suited for mnist and Hyperspherical autoencoder
     Variational Autoencoder.
 
 
@@ -478,7 +479,7 @@ class Encoder_Conv_SVAE_MNIST(BaseEncoder):
 
 class Decoder_Conv_AE_MNIST(BaseDecoder):
     """
-    A proposed Convolutional decoder Neural net suited for MNIST and Autoencoder-based
+    A Convolutional decoder suited for MNIST and Autoencoder-based
     models.
 
     .. code-block::
@@ -619,7 +620,7 @@ class Decoder_Conv_AE_MNIST(BaseDecoder):
 
 class Discriminator_Conv_MNIST(BaseDiscriminator):
     """
-    A Convolutional discriminator Neural net suited for MNIST.
+    A Convolutional discriminator suited for MNIST.
 
 
     It can be built as follows:

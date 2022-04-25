@@ -16,7 +16,7 @@ from .factor_vae_config import FactorVAEConfig
 
 
 class FactorVAE(VAE):
-    r"""
+    """
     FactorVAE model.
 
     Args:

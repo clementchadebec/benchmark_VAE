@@ -144,7 +144,7 @@ class INFOVAE_MMD(VAE):
     def imq_kernel(self, z1, z2):
         """Returns a matrix of shape batch X batch containing the pairwise kernel computation"""
 
-        C = 2.0 * self.model_config.latent_dim * self.model_config.kernel_bandwidth**2
+        C = 2.0 * self.model_config.latent_dim * self.model_config.kernel_bandwidth ** 2
 
         k = C / (C + torch.norm(z1.unsqueeze(1) - z2.unsqueeze(0), dim=-1) ** 2)
 
@@ -153,7 +153,7 @@ class INFOVAE_MMD(VAE):
     def rbf_kernel(self, z1, z2):
         """Returns a matrix of shape batch X batch containing the pairwise kernel computation"""
 
-        C = 2.0 * self.model_config.latent_dim * self.model_config.kernel_bandwidth**2
+        C = 2.0 * self.model_config.latent_dim * self.model_config.kernel_bandwidth ** 2
 
         k = torch.exp(-torch.norm(z1.unsqueeze(1) - z2.unsqueeze(0), dim=-1) ** 2 / C)
 

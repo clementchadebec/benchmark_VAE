@@ -124,7 +124,7 @@ class VQVAE(AE):
             loss=loss,
             recon_x=recon_x,
             z=quantized_embed,
-            quantized_indices=quantized_indices
+            quantized_indices=quantized_indices,
         )
 
         return output

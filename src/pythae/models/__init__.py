@@ -16,7 +16,6 @@ and named likewise the model. The following modules can be found in this folder:
 
 from .adversarial_ae import Adversarial_AE, Adversarial_AE_Config
 from .ae import AE, AEConfig
-from .vae import VAE, VAEConfig
 from .base import BaseAE, BaseAEConfig
 from .beta_tc_vae import BetaTCVAE, BetaTCVAEConfig
 from .beta_vae import BetaVAE, BetaVAEConfig

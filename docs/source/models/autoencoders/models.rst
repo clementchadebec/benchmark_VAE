@@ -1,6 +1,3 @@
-.. _pythae_models:
-
-
 **********************************
 Autoencoders
 **********************************
@@ -31,7 +28,6 @@ Autoencoders
     rae_gp
     rae_l2
     rhvae
-    :nosignatures:
 
 .. automodule::
     pythae.models
