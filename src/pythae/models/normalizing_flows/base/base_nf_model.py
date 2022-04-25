@@ -66,7 +66,6 @@ class BaseNF(nn.Module):
 
         By default, it does nothing.
         """
-        pass
 
     def save(self, dir_path):
         """Method to save the model at a specific location. It saves, the model weights as a

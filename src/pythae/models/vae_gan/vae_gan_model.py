@@ -199,7 +199,7 @@ class VAEGAN(VAE):
         # gen_prior_ = gen_prior.clone().detach().requires_grad_(True)
 
         true_adversarial_score = self.discriminator(x).embedding.flatten()
-        gen_adversarial_score = self.discriminator(recon_x).embedding.flatten()
+        self.discriminator(recon_x).embedding.flatten()
         prior_adversarial_score = self.discriminator(gen_prior).embedding.flatten()
 
         true_labels = torch.ones(N, requires_grad=False).to(self.device)

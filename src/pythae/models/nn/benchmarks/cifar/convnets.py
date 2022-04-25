@@ -316,7 +316,7 @@ class Encoder_Conv_VAE_CIFAR(BaseEncoder):
 
 class Encoder_Conv_SVAE_CIFAR(BaseEncoder):
     """
-    A Convolutional encoder Neural net suited for CIFAR and Hyperspherical Variational 
+    A Convolutional encoder Neural net suited for CIFAR and Hyperspherical Variational
     Autoencoder.
     models.
 

@@ -13,6 +13,5 @@ Available samplers
 """
 
 from .wae_mmd_config import WAE_MMD_Config
-from .wae_mmd_model import WAE_MMD
 
 __all__ = ["WAE", "WAE_MMD_Config"]

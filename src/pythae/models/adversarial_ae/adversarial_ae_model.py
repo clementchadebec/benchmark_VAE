@@ -83,7 +83,7 @@ class Adversarial_AE(VAE):
         r"""This method is called to set the discriminator network
 
         Args:
-            discriminator (BaseDiscriminator): The discriminator module that needs to be set to the 
+            discriminator (BaseDiscriminator): The discriminator module that needs to be set to the
                 model.
 
         """

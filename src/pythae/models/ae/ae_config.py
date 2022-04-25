@@ -15,4 +15,3 @@ class AEConfig(BaseAEConfig):
         default_decoder (bool): Whether the encoder default. Default: True.
     """
 
-    pass

@@ -1,9 +1,7 @@
 """Proposed residual neural nets architectures suited for CELEBA"""
 
-from turtle import forward
 from typing import List
 
-import numpy as np
 import torch
 import torch.nn as nn
 

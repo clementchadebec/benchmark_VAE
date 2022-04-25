@@ -1,4 +1,3 @@
-from typing import Union
 
 from pydantic.dataclasses import dataclass
 

@@ -1,5 +1,4 @@
 from pydantic.dataclasses import dataclass
-
 from pythae.config import BaseConfig
 
 
@@ -9,4 +8,3 @@ class BaseSamplerConfig(BaseConfig):
     BaseSampler config class.
     """
 
-    pass

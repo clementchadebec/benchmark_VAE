@@ -1,5 +1,5 @@
 import os
-from typing import Optional, Union
+from typing import Optional
 
 import numpy as np
 import torch
@@ -162,7 +162,7 @@ class SVAE(VAE):
 
         w = self._acc_rej_steps(m=loc.shape[-1], k=concentration)
 
-        z = torch.cat((w, (1 - w ** 2).sqrt() * v), dim=-1)
+        z = torch.cat((w, (1 - w**2).sqrt() * v), dim=-1)
 
         return self._householder_rotation(loc, z)
 
@@ -178,7 +178,7 @@ class SVAE(VAE):
 
         batch_size = k.shape[0]
 
-        c = torch.sqrt(4 * k ** 2 + (m - 1) ** 2)
+        c = torch.sqrt(4 * k**2 + (m - 1) ** 2)
 
         b = (-2 * k + c) / (m - 1)
         a = (m - 1 + 2 * k + c) / 4

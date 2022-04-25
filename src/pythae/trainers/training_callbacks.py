@@ -40,79 +40,66 @@ class TrainingCallback:
         """
         Event called at the end of the initialization of the [`Trainer`].
         """
-        pass
 
     def on_train_begin(self, training_config: BaseTrainerConfig, **kwargs):
         """
         Event called at the beginning of training.
         """
-        pass
 
     def on_train_end(self, training_config: BaseTrainerConfig, **kwargs):
         """
         Event called at the end of training.
         """
-        pass
 
     def on_epoch_begin(self, training_config: BaseTrainerConfig, **kwargs):
         """
         Event called at the beginning of an epoch.
         """
-        pass
 
     def on_epoch_end(self, training_config: BaseTrainerConfig, **kwargs):
         """
         Event called at the end of an epoch.
         """
-        pass
 
     def on_train_step_begin(self, training_config: BaseTrainerConfig, **kwargs):
         """
         Event called at the beginning of a training step.
         """
-        pass
 
     def on_train_step_end(self, training_config: BaseTrainerConfig, **kwargs):
         """
         Event called at the end of a training step.
         """
-        pass
 
     def on_eval_step_begin(self, training_config: BaseTrainerConfig, **kwargs):
         """
         Event called at the beginning of a evaluation step.
         """
-        pass
 
     def on_eval_step_end(self, training_config: BaseTrainerConfig, **kwargs):
         """
         Event called at the end of a evaluation step.
         """
-        pass
 
     def on_evaluate(self, training_config: BaseTrainerConfig, **kwargs):
         """
         Event called after an evaluation phase.
         """
-        pass
 
     def on_prediction_step(self, training_config: BaseTrainerConfig, **kwargs):
         """
         Event called after a prediction phase.
         """
-        pass
 
     def on_save(self, training_config: BaseTrainerConfig, **kwargs):
         """
         Event called after a checkpoint save.
         """
-        pass
 
     def on_log(self, training_config: BaseTrainerConfig, logs, **kwargs):
         """
         Event called after logging the last logs.
         """
-        pass
 
 
 class CallbackHandler:
@@ -318,7 +305,7 @@ class WandbCallback(TrainingCallback):
         self._wandb.log({**logs, "train/global_step": global_step})
 
     def on_prediction_step(self, training_config, **kwargs):
-        global_step = kwargs.pop("global_step", None)
+        kwargs.pop("global_step", None)
 
         column_names = ["images_id", "truth", "reconstruction", "normal_generation"]
 

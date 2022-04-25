@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
 
-from ..base.base_utils import ModelOutput
 
 
 class BaseEncoder(nn.Module):

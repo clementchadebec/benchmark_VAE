@@ -9,7 +9,7 @@ import torch.nn as nn
 from ...customexception import BadInheritanceError
 from ...data.datasets import BaseDataset
 from ..nn import BaseDecoder, BaseEncoder
-from ..nn.default_architectures import Decoder_AE_MLP, Encoder_AE_MLP
+from ..nn.default_architectures import Decoder_AE_MLP
 from .base_config import BaseAEConfig
 from .base_utils import CPU_Unpickler, ModelOutput
 
@@ -94,7 +94,6 @@ class BaseAE(nn.Module):
 
         By default, it does nothing.
         """
-        pass
 
     def save(self, dir_path):
         """Method to save the model at a specific location. It saves, the model weights as a

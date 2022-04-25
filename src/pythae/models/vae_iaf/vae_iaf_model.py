@@ -1,4 +1,3 @@
-import math
 import os
 from typing import Optional
 
@@ -9,7 +8,6 @@ import torch.nn.functional as F
 from ...data.datasets import BaseDataset
 from ..base.base_utils import ModelOutput
 from ..nn import BaseDecoder, BaseEncoder
-from ..nn.default_architectures import Encoder_VAE_MLP
 from ..normalizing_flows import IAF, IAFConfig
 from ..vae import VAE
 from .vae_iaf_config import VAE_IAF_Config
@@ -190,7 +188,7 @@ class VAE_IAF(VAE):
                 log_q_z_given_x = (
                     -0.5 * (log_var + torch.pow(z0 - mu, 2) / torch.exp(log_var))
                 ).sum(dim=1) - log_abs_det_jac
-                log_p_z = -0.5 * (z ** 2).sum(dim=-1)
+                log_p_z = -0.5 * (z**2).sum(dim=-1)
 
                 recon_x = self.decoder(z)["reconstruction"]
 

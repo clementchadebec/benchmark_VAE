@@ -8,7 +8,6 @@ Code inspired from
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
 from pythae.models.base.base_utils import ModelOutput
 
 

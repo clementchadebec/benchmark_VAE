@@ -5,3 +5,7 @@
     As of now, only imaging modality is handled by pythae. In the near future other
     modalities should be added.
 """
+
+from .datasets import BaseDataset
+
+__all__ = ["BaseDataset"]

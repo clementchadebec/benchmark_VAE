@@ -174,7 +174,7 @@ class RHVAE(VAE):
                 M.unsqueeze(0)
                 * torch.exp(
                     -torch.norm(mu.unsqueeze(0) - z.unsqueeze(1), dim=-1) ** 2
-                    / (self.temperature ** 2)
+                    / (self.temperature**2)
                 )
                 .unsqueeze(-1)
                 .unsqueeze(-1)
@@ -214,7 +214,7 @@ class RHVAE(VAE):
                     M.unsqueeze(0)
                     * torch.exp(
                         -torch.norm(mu.unsqueeze(0) - z.unsqueeze(1), dim=-1) ** 2
-                        / (self.temperature ** 2)
+                        / (self.temperature**2)
                     )
                     .unsqueeze(-1)
                     .unsqueeze(-1)
@@ -324,7 +324,7 @@ class RHVAE(VAE):
                             self.centroids_tens.unsqueeze(0) - z.unsqueeze(1), dim=-1
                         )
                         ** 2
-                        / (self.temperature ** 2)
+                        / (self.temperature**2)
                     )
                     .unsqueeze(-1)
                     .unsqueeze(-1)
@@ -340,7 +340,7 @@ class RHVAE(VAE):
                         self.centroids_tens.unsqueeze(0) - z.unsqueeze(1), dim=-1
                     )
                     ** 2
-                    / (self.temperature ** 2)
+                    / (self.temperature**2)
                 )
                 .unsqueeze(-1)
                 .unsqueeze(-1)
@@ -484,8 +484,6 @@ class RHVAE(VAE):
                 G_log_det = -torch.logdet(G_inv)
                 L = torch.linalg.cholesky(G)
 
-                G_inv_0 = G_inv
-                G_log_det_0 = G_log_det
 
                 # initialization
                 gamma = torch.randn_like(z0, device=z.device)
@@ -496,7 +494,6 @@ class RHVAE(VAE):
                     -1
                 )  # sample from the multivariate N(0, G)
 
-                rho0 = rho
 
                 recon_x = self.decoder(z)["reconstruction"]
 
@@ -526,28 +523,25 @@ class RHVAE(VAE):
                 log_q_z0_given_x = -0.5 * (
                     log_var + (z0 - mu) ** 2 / torch.exp(log_var)
                 ).sum(dim=-1)
-                log_p_z = -0.5 * (z ** 2).sum(dim=-1)
+                log_p_z = -0.5 * (z**2).sum(dim=-1)
 
                 log_p_rho0 = normal.log_prob(gamma) - torch.logdet(
                     L / self.beta_zero_sqrt
                 )  # rho0 ~ N(0, 1/beta_0 * G(z0))
 
                 log_p_rho = (
-                    (
-                        -0.5
-                        * (
-                            torch.transpose(rho.unsqueeze(-1), 1, 2)
-                            @ G_inv
-                            @ rho.unsqueeze(-1)
-                        )
-                        .squeeze()
-                        .squeeze()
-                        - 0.5 * G_log_det
+                    -0.5
+                    * (
+                        torch.transpose(rho.unsqueeze(-1), 1, 2)
+                        @ G_inv
+                        @ rho.unsqueeze(-1)
                     )
-                    - torch.log(torch.tensor([2 * np.pi]).to(z.device))
-                    * self.latent_dim
-                    / 2
-                )  # rho0 ~ N(0, G(z))
+                    .squeeze()
+                    .squeeze()
+                    - 0.5 * G_log_det
+                ) - torch.log(
+                    torch.tensor([2 * np.pi]).to(z.device)
+                ) * self.latent_dim / 2  # rho0 ~ N(0, G(z))
 
                 if self.model_config.reconstruction_loss == "mse":
 

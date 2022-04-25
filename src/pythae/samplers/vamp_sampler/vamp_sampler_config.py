@@ -9,4 +9,3 @@ class VAMPSamplerConfig(BaseSamplerConfig):
     :class:`BaseSamplerConfig`.
     """
 
-    pass

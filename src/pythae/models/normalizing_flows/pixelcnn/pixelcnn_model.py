@@ -1,6 +1,5 @@
 import os
 
-import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
@@ -15,7 +14,7 @@ class PixelCNN(BaseNF):
     """Pixel CNN model.
 
     Args:
-        model_config (PixelCNNConfig): The PixelCNN model configuration setting the main parameters 
+        model_config (PixelCNNConfig): The PixelCNN model configuration setting the main parameters
             of the model.
     """
 
@@ -71,7 +70,7 @@ class PixelCNN(BaseNF):
         """The input data is transformed an output image.
 
         Args:
-            inputs (torch.Tensor): An input tensor image. Be carefull it must be in range 
+            inputs (torch.Tensor): An input tensor image. Be carefull it must be in range
                 [0-max_channels_values] (i.e. [0-256] for RGB images) and shaped [B x C x H x W].
 
         Returns:

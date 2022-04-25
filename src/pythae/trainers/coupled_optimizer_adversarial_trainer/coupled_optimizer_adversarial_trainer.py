@@ -1,21 +1,15 @@
 import datetime
-import itertools
 import logging
 import os
 from copy import deepcopy
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
 
-import numpy as np
 import torch
 import torch.optim as optim
-from torch.utils.data import DataLoader
-from tqdm import tqdm
 
-from ...customexception import ModelError
 from ...data.datasets import BaseDataset
 from ...models import BaseAE
 from ..base_trainer import BaseTrainer
-from ..trainer_utils import set_seed
 from ..training_callbacks import TrainingCallback
 from .coupled_optimizer_adversarial_trainer_config import \
     CoupledOptimizerAdversarialTrainerConfig
@@ -288,7 +282,6 @@ class CoupledOptimizerAdversarialTrainer(BaseTrainer):
                 epoch_eval_loss < best_eval_loss
                 and not self.training_config.keep_best_on_train
             ):
-                best_model_epoch = epoch
                 best_eval_loss = epoch_eval_loss
                 best_model = deepcopy(self.model)
                 self._best_model = best_model
@@ -297,7 +290,6 @@ class CoupledOptimizerAdversarialTrainer(BaseTrainer):
                 epoch_train_loss < best_train_loss
                 and self.training_config.keep_best_on_train
             ):
-                best_model_epoch = epoch
                 best_train_loss = epoch_train_loss
                 best_model = deepcopy(self.model)
                 self._best_model = best_model
@@ -307,12 +299,7 @@ class CoupledOptimizerAdversarialTrainer(BaseTrainer):
                 and epoch % self.training_config.steps_predict == 0
             ):
 
-                true_data, reconstructions, generations = self.predict(
-                    best_model,
-                    self.eval_loader.dataset.data[
-                        : min(self.eval_loader.dataset.data.shape[0], 10)
-                    ],
-                )
+                true_data, reconstructions, generations = self.predict(best_model)
 
                 self.callback_handler.on_prediction_step(
                     self.training_config,

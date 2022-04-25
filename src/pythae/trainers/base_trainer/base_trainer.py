@@ -4,11 +4,9 @@ import os
 from copy import deepcopy
 from typing import Any, Dict, List, Optional
 
-import numpy as np
 import torch
 import torch.optim as optim
 from torch.utils.data import DataLoader
-from tqdm import tqdm
 
 from ...customexception import ModelError
 from ...data.datasets import BaseDataset
@@ -328,7 +326,6 @@ class BaseTrainer:
                 epoch_eval_loss < best_eval_loss
                 and not self.training_config.keep_best_on_train
             ):
-                best_model_epoch = epoch
                 best_eval_loss = epoch_eval_loss
                 best_model = deepcopy(self.model)
                 self._best_model = best_model
@@ -337,7 +334,6 @@ class BaseTrainer:
                 epoch_train_loss < best_train_loss
                 and self.training_config.keep_best_on_train
             ):
-                best_model_epoch = epoch
                 best_train_loss = epoch_train_loss
                 best_model = deepcopy(self.model)
                 self._best_model = best_model
@@ -346,12 +342,7 @@ class BaseTrainer:
                 self.training_config.steps_predict is not None
                 and epoch % self.training_config.steps_predict == 0
             ):
-                true_data, reconstructions, generations = self.predict(
-                    best_model,
-                    self.eval_loader.dataset.data[
-                        : min(self.eval_loader.dataset.data.shape[0], 10)
-                    ],
-                )
+                true_data, reconstructions, generations = self.predict(best_model)
 
                 self.callback_handler.on_prediction_step(
                     self.training_config,
@@ -529,18 +520,21 @@ class BaseTrainer:
         # save training config
         self.training_config.save_json(checkpoint_dir, "training_config")
 
-    def predict(self, model: BaseAE, eval_data: torch.Tensor):
+    def predict(self, model: BaseAE):
 
         model.eval()
 
         with torch.no_grad():
-            true_data = eval_data
-            if self.device == "cuda":
-                true_data = true_data.cuda()
-            model_out = model({"data": true_data})
+
+            inputs = self.eval_loader.dataset[
+                : min(self.eval_loader.dataset.data.shape[0], 10)
+            ]
+            inputs = self._set_inputs_to_device(inputs)
+
+            model_out = model(inputs)
             reconstructions = model_out.recon_x.cpu().detach()
             z_enc = model_out.z
             z = torch.randn_like(z_enc)
             normal_generation = model.decoder(z).reconstruction.detach().cpu()
 
-        return true_data, reconstructions, normal_generation
+        return inputs["data"], reconstructions, normal_generation

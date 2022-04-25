@@ -8,7 +8,6 @@ from ...data.datasets import BaseDataset
 from ...models import AE
 from ..base.base_utils import ModelOutput
 from ..nn import BaseDecoder, BaseEncoder
-from ..nn.default_architectures import Encoder_VAE_MLP
 from .vq_vae_config import VQVAEConfig
 from .vq_vae_utils import Quantizer, QuantizerEMA
 

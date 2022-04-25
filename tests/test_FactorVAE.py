@@ -2,11 +2,11 @@ import os
 import numpy as np
 from copy import deepcopy
 
-import dill
 import pytest
 import torch
-from torch.optim import SGD, Adadelta, Adagrad, Adam, RMSprop
+from torch.optim import Adam
 
+from pythae.data.preprocessors import DataProcessor
 from pythae.customexception import BadInheritanceError
 from pythae.models.base.base_utils import ModelOutput
 from pythae.models import FactorVAE, FactorVAEConfig
@@ -16,15 +16,10 @@ from pythae.trainers import (
     BaseTrainerConfig,
 )
 from pythae.pipelines import TrainingPipeline
-from pythae.models.nn.default_architectures import (
-    Decoder_AE_MLP,
-    Encoder_VAE_MLP,
-    Discriminator_MLP,
-)
+
 from tests.data.custom_architectures import (
     Decoder_AE_Conv,
     Encoder_VAE_Conv,
-    Discriminator_MLP_Custom,
     NetBadInheritance,
 )
 
@@ -60,11 +55,6 @@ def custom_decoder(model_configs):
     return Decoder_AE_Conv(model_configs)
 
 
-@pytest.fixture
-def custom_discriminator(model_configs):
-    return Discriminator_MLP_Custom(model_configs)
-
-
 class Test_Model_Building:
     @pytest.fixture()
     def bad_net(self):
@@ -86,15 +76,11 @@ class Test_Model_Building:
         with pytest.raises(BadInheritanceError):
             factor_ae = FactorVAE(model_configs, decoder=bad_net)
 
-        with pytest.raises(BadInheritanceError):
-            factor_ae = FactorVAE(model_configs, discriminator=bad_net)
-
     def test_raises_no_input_dim(
         self,
         model_configs_no_input_dim,
         custom_encoder,
-        custom_decoder,
-        custom_discriminator,
+        custom_decoder
     ):
         with pytest.raises(AttributeError):
             factor_ae = FactorVAE(model_configs_no_input_dim)
@@ -105,20 +91,14 @@ class Test_Model_Building:
         with pytest.raises(AttributeError):
             factor_ae = FactorVAE(model_configs_no_input_dim, decoder=custom_decoder)
 
-        with pytest.raises(AttributeError):
-            factor_ae = FactorVAE(
-                model_configs_no_input_dim, discriminator=custom_discriminator
-            )
-
         factor_ae = FactorVAE(
             model_configs_no_input_dim,
             encoder=custom_encoder,
-            decoder=custom_decoder,
-            discriminator=custom_discriminator,
+            decoder=custom_decoder
         )
 
     def test_build_custom_arch(
-        self, model_configs, custom_encoder, custom_decoder, custom_discriminator
+        self, model_configs, custom_encoder, custom_decoder
     ):
 
         factor_ae = FactorVAE(
@@ -132,15 +112,6 @@ class Test_Model_Building:
         assert not factor_ae.model_config.uses_default_encoder
 
         assert factor_ae.model_config.uses_default_discriminator
-
-        factor_ae = FactorVAE(model_configs, discriminator=custom_discriminator)
-
-        assert factor_ae.model_config.uses_default_encoder
-        assert factor_ae.model_config.uses_default_encoder
-
-        assert factor_ae.discriminator == custom_discriminator
-        assert not factor_ae.model_config.uses_default_discriminator
-
 
 class Test_Model_Saving:
     def test_default_model_saving(self, tmpdir, model_configs):
@@ -225,43 +196,13 @@ class Test_Model_Saving:
             ]
         )
 
-    def test_custom_discriminator_model_saving(
-        self, tmpdir, model_configs, custom_discriminator
-    ):
-
-        tmpdir.mkdir("dummy_folder")
-        dir_path = dir_path = os.path.join(tmpdir, "dummy_folder")
-
-        model = FactorVAE(model_configs, discriminator=custom_discriminator)
-
-        model.state_dict()["encoder.layers.0.0.weight"][0] = 0
-
-        model.save(dir_path=dir_path)
-
-        assert set(os.listdir(dir_path)) == set(
-            ["model_config.json", "model.pt", "discriminator.pkl"]
-        )
-
-        # reload model
-        model_rec = FactorVAE.load_from_folder(dir_path)
-
-        # check configs are the same
-        assert model_rec.model_config.__dict__ == model.model_config.__dict__
-
-        assert all(
-            [
-                torch.equal(model_rec.state_dict()[key], model.state_dict()[key])
-                for key in model.state_dict().keys()
-            ]
-        )
 
     def test_full_custom_model_saving(
         self,
         tmpdir,
         model_configs,
         custom_encoder,
-        custom_decoder,
-        custom_discriminator,
+        custom_decoder
     ):
 
         tmpdir.mkdir("dummy_folder")
@@ -270,8 +211,7 @@ class Test_Model_Saving:
         model = FactorVAE(
             model_configs,
             encoder=custom_encoder,
-            decoder=custom_decoder,
-            discriminator=custom_discriminator,
+            decoder=custom_decoder
         )
 
         model.state_dict()["encoder.layers.0.0.weight"][0] = 0
@@ -283,8 +223,7 @@ class Test_Model_Saving:
                 "model_config.json",
                 "model.pt",
                 "encoder.pkl",
-                "decoder.pkl",
-                "discriminator.pkl",
+                "decoder.pkl"
             ]
         )
 
@@ -306,8 +245,7 @@ class Test_Model_Saving:
         tmpdir,
         model_configs,
         custom_encoder,
-        custom_decoder,
-        custom_discriminator,
+        custom_decoder
     ):
 
         tmpdir.mkdir("dummy_folder")
@@ -316,19 +254,12 @@ class Test_Model_Saving:
         model = FactorVAE(
             model_configs,
             encoder=custom_encoder,
-            decoder=custom_decoder,
-            discriminator=custom_discriminator,
+            decoder=custom_decoder
         )
 
         model.state_dict()["encoder.layers.0.0.weight"][0] = 0
 
         model.save(dir_path=dir_path)
-
-        os.remove(os.path.join(dir_path, "discriminator.pkl"))
-
-        # check raises decoder.pkl is missing
-        with pytest.raises(FileNotFoundError):
-            model_rec = FactorVAE.load_from_folder(dir_path)
 
         os.remove(os.path.join(dir_path, "decoder.pkl"))
 
@@ -361,6 +292,7 @@ class Test_Model_forward:
         data = torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))[
             :
         ]
+        data['data_bis'] = torch.flipud(data["data"])
         return data  # This is an extract of 3 data from MNIST (unnormalized) used to test custom architecture
 
     @pytest.fixture
@@ -376,6 +308,7 @@ class Test_Model_forward:
 
         factor_ae.train()
 
+       
         out = factor_ae(demo_data)
 
         assert isinstance(out, ModelOutput)
@@ -388,11 +321,15 @@ class Test_Model_forward:
                 "discriminator_loss",
                 "recon_x",
                 "z",
+                "z_bis_permuted"
             ]
         ) == set(out.keys())
 
         assert out.z.shape[0] == demo_data["data"].shape[0]
+        assert out.z_bis_permuted.shape[0] == demo_data["data"].shape[0]
         assert out.recon_x.shape == demo_data["data"].shape
+        
+        assert not torch.equal(out.z, out.z_bis_permuted)
 
 
 class Test_NLL_Compute:
@@ -401,6 +338,7 @@ class Test_NLL_Compute:
         data = torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))[
             :
         ]
+        data['data_bis'] = torch.flipud(data["data"])
         return data  # This is an extract of 3 data from MNIST (unnormalized) used to test custom architecture
 
     @pytest.fixture
@@ -425,7 +363,10 @@ class Test_NLL_Compute:
 class Test_FactorVAE_Training:
     @pytest.fixture
     def train_dataset(self):
-        return torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))
+        data = torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))[
+            :
+        ]
+        return DataProcessor().to_dataset(data['data'], dataset_type="DoubleBatchDataset")
 
     @pytest.fixture(
         params=[
@@ -452,8 +393,7 @@ class Test_FactorVAE_Training:
         model_configs,
         custom_encoder,
         custom_decoder,
-        custom_discriminator,
-        request,
+        request
     ):
         # randomized
 
@@ -469,7 +409,7 @@ class Test_FactorVAE_Training:
             model = FactorVAE(model_configs, decoder=custom_decoder)
 
         elif 0.375 <= alpha < 0.5:
-            model = FactorVAE(model_configs, discriminator=custom_discriminator)
+            model = FactorVAE(model_configs)
 
         elif 0.5 <= alpha < 0.625:
             model = FactorVAE(
@@ -479,23 +419,20 @@ class Test_FactorVAE_Training:
         elif 0.625 <= alpha < 0:
             model = FactorVAE(
                 model_configs,
-                encoder=custom_encoder,
-                discriminator=custom_discriminator,
+                encoder=custom_encoder
             )
 
         elif 0.750 <= alpha < 0.875:
             model = FactorVAE(
                 model_configs,
-                decoder=custom_decoder,
-                discriminator=custom_discriminator,
+                decoder=custom_decoder
             )
 
         else:
             model = FactorVAE(
                 model_configs,
                 encoder=custom_encoder,
-                decoder=custom_decoder,
-                discriminator=custom_discriminator,
+                decoder=custom_decoder
             )
 
         return model
@@ -647,13 +584,6 @@ class Test_FactorVAE_Training:
         else:
             assert not "encoder.pkl" in files_list
 
-        # check pickled custom discriminator
-        if not factor_ae.model_config.uses_default_discriminator:
-            assert "discriminator.pkl" in files_list
-
-        else:
-            assert not "discriminator.pkl" in files_list
-
         model_rec_state_dict = torch.load(os.path.join(checkpoint_dir, "model.pt"))[
             "model_state_dict"
         ]
@@ -791,13 +721,6 @@ class Test_FactorVAE_Training:
         else:
             assert not "encoder.pkl" in files_list
 
-        # check pickled custom discriminator
-        if not factor_ae.model_config.uses_default_discriminator:
-            assert "discriminator.pkl" in files_list
-
-        else:
-            assert not "discriminator.pkl" in files_list
-
         model_rec_state_dict = torch.load(os.path.join(checkpoint_dir, "model.pt"))[
             "model_state_dict"
         ]
@@ -854,13 +777,6 @@ class Test_FactorVAE_Training:
 
         else:
             assert not "encoder.pkl" in files_list
-
-        # check pickled custom discriminator
-        if not factor_ae.model_config.uses_default_discriminator:
-            assert "discriminator.pkl" in files_list
-
-        else:
-            assert not "discriminator.pkl" in files_list
 
         # check reload full model
         model_rec = FactorVAE.load_from_folder(os.path.join(final_dir))
@@ -927,13 +843,6 @@ class Test_FactorVAE_Training:
 
         else:
             assert not "encoder.pkl" in files_list
-
-        # check pickled custom discriminator
-        if not factor_ae.model_config.uses_default_discriminator:
-            assert "discriminator.pkl" in files_list
-
-        else:
-            assert not "discriminator.pkl" in files_list
 
         # check reload full model
         model_rec = FactorVAE.load_from_folder(os.path.join(final_dir))

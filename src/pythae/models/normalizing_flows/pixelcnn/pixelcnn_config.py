@@ -1,7 +1,4 @@
-from dataclasses import field
-from typing import List, Tuple, Union
 
-from pydantic import validator
 from pydantic.dataclasses import dataclass
 
 from ..base import BaseNFConfig
