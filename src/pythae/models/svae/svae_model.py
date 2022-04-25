@@ -50,14 +50,6 @@ class SVAE(VAE):
         self.model_name = "SVAE"
 
         if encoder is None:
-            if model_config.input_dim is None:
-                raise AttributeError(
-                    "No input dimension provided !"
-                    "'input_dim' parameter of BaseAEConfig instance must be set to 'data_shape' where "
-                    "the shape of the data is (C, H, W ..). Unable to build encoder "
-                    "automatically"
-                )
-
             encoder = Encoder_SVAE_MLP(model_config)
             self.model_config.uses_default_encoder = True
 
@@ -147,12 +139,6 @@ class SVAE(VAE):
         )  # good
 
         return (term1 + term2 + term3).squeeze(-1)
-
-    def _sample_gauss(self, mu, std):
-        # Reparametrization trick
-        # Sample N(0, I)
-        eps = torch.randn_like(std)
-        return mu + eps * std, eps
 
     def _sample_von_mises(self, loc, concentration):
 

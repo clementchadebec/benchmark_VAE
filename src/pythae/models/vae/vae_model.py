@@ -158,7 +158,7 @@ class VAE(BaseAE):
                 mu, log_var = encoder_output.embedding, encoder_output.log_covariance
 
                 std = torch.exp(0.5 * log_var)
-                z, eps = self._sample_gauss(mu, std)
+                z, _ = self._sample_gauss(mu, std)
 
                 log_q_z_given_x = -0.5 * (
                     log_var + (z - mu) ** 2 / torch.exp(log_var)

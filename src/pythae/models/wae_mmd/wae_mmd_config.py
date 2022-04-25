@@ -1,5 +1,7 @@
 from pydantic.dataclasses import dataclass
 from typing_extensions import Literal
+from typing import List, Union
+from dataclasses import field
 
 from ...models import AEConfig
 
@@ -16,8 +18,11 @@ class WAE_MMD_Config(AEConfig):
         reg_weight (float): The weight to apply between reconstruction and Maximum Mean
             Discrepancy. Default: 3e-2
         kernel_bandwidth (float): The kernel bandwidth. Default: 1
+        scales (list): The scales to apply if using multi-scale imq kernels. If None, use a unique 
+            imq kernel. Default: [.1, .2, .5, 1., 2., 5, 10.].
     """
 
     kernel_choice: Literal["rbf", "imq"] = "imq"
     reg_weight: float = 3e-2
     kernel_bandwidth: float = 1.0
+    scales: Union[List[float], None] = field(default_factory=lambda: [.1, .2, .5, 1., 2., 5, 10.])

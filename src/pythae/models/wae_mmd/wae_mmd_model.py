@@ -1,4 +1,5 @@
 import os
+from pyexpat import model
 from typing import Optional
 
 import torch
@@ -45,6 +46,7 @@ class WAE_MMD(AE):
         self.model_name = "WAE_MMD"
 
         self.kernel_choice = model_config.kernel_choice
+        self.scales = model_config.scales if model_config.scales is not None else [1.]
 
     def forward(self, inputs: BaseDataset, **kwargs) -> ModelOutput:
         """The input data is encoded and decoded
@@ -102,16 +104,20 @@ class WAE_MMD(AE):
         )
 
     def imq_kernel(self, z1, z2):
-        """Returns a matrix of shape batch X batch containing the pairwise kernel computation"""
+        """Returns a matrix of shape [batch x batch] containing the pairwise kernel computation"""
 
-        C = 2.0 * self.model_config.latent_dim * self.model_config.kernel_bandwidth**2
+        Cbase = 2.0 * self.model_config.latent_dim * self.model_config.kernel_bandwidth**2
 
-        k = C / (C + torch.norm(z1.unsqueeze(1) - z2.unsqueeze(0), dim=-1) ** 2)
+        k = 0
+
+        for scale in self.scales:
+            C = scale * Cbase
+            k += C / (C + torch.norm(z1.unsqueeze(1) - z2.unsqueeze(0), dim=-1) ** 2)
 
         return k
 
     def rbf_kernel(self, z1, z2):
-        """Returns a matrix of shape batch X batch containing the pairwise kernel computation"""
+        """Returns a matrix of shape [batch x batch] containing the pairwise kernel computation"""
 
         C = 2.0 * self.model_config.latent_dim * self.model_config.kernel_bandwidth**2
 

@@ -1,5 +1,7 @@
 from pydantic.dataclasses import dataclass
 from typing_extensions import Literal
+from typing import List, Union
+from dataclasses import field
 
 from ..vae import VAEConfig
 
@@ -17,9 +19,12 @@ class INFOVAE_MMD_Config(VAEConfig):
         alpha (float): The alpha factor balancing the weigth: Default: 0.5
         lbd (float): The lambda factor. Default: 3e-2
         kernel_bandwidth (float): The kernel bandwidth. Default: 1
+        scales (list): The scales to apply if using multi-scale imq kernels. If None, use a unique 
+            imq kernel. Default: [.1, .2, .5, 1., 2., 5, 10.].
     """
 
     kernel_choice: Literal["rbf", "imq"] = "imq"
-    alpha: float = 0.5
-    lbd: float = 3e-2
+    alpha: float = 0
+    lbd: float = 1e-3
     kernel_bandwidth: float = 1.0
+    scales: Union[List[float], None] = field(default_factory=lambda: [.1, .2, .5, 1., 2., 5, 10.])

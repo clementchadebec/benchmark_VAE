@@ -27,7 +27,7 @@ def model_configs_no_input_dim(request):
 
 @pytest.fixture(
     params=[
-        WAE_MMD_Config(input_dim=(1, 28, 28), latent_dim=10, kernel_choice="rbf"),
+        WAE_MMD_Config(input_dim=(1, 28, 28), latent_dim=10, kernel_choice="rbf", scales=None),
         WAE_MMD_Config(
             input_dim=(1, 2, 18), latent_dim=5, reg_weight=1.0, kernel_bandwidth=0.2
         ),

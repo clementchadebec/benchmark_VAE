@@ -92,7 +92,8 @@ class MSSSIM(torch.nn.Module):
         mssim = torch.stack(mssim)
         mcs = torch.stack(mcs)
 
-        # Normalize (to avoid NaNs during training unstable models, not compliant with original definition)
+        # Normalize (to avoid NaNs during training unstable models, not compliant with original
+        # definition)
         mssim = (mssim + 1) / 2
         mcs = (mcs + 1) / 2
 
