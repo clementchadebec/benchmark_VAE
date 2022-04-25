@@ -90,7 +90,7 @@ class VAMP(VAE):
         )
 
         std = torch.exp(0.5 * log_var)
-        z, eps = self._sample_gauss(mu, std)
+        z, _ = self._sample_gauss(mu, std)
 
         recon_x = self.decoder(z)["reconstruction"]
 
@@ -126,7 +126,7 @@ class VAMP(VAE):
 
         log_p_z = self._log_p_z(z)
 
-        log_q_z = (-0.5 * (log_var + torch.pow(z - mu, 2) / torch.exp(log_var))).sum(
+        log_q_z = (-0.5 * (log_var + torch.pow(z - mu, 2) / log_var.exp())).sum(
             dim=1
         )
         KLD = -(log_p_z - log_q_z)
@@ -146,7 +146,7 @@ class VAMP(VAE):
         encoder_output = self.encoder(x)
         prior_mu, prior_log_var = (
             encoder_output.embedding,
-            torch.tanh(encoder_output.log_covariance),
+            torch.tanh(encoder_output.log_covariance), #needed to avoid unbounded optim
         )
 
         z_expand = z.unsqueeze(1)

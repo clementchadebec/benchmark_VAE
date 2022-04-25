@@ -30,5 +30,11 @@
 #python training.py --dataset mnist --model_name beta_tc_vae --model_config configs/mnist/beta_tc_vae_config.json --training_config configs/mnist/base_training_config.json
 #python training.py --dataset celeba --model_name beta_tc_vae --model_config configs/celeba/beta_tc_vae_config.json --training_config configs/celeba/base_training_config.json
 
-python training.py --dataset celeba --model_name vae_lin_nf --model_config configs/celeba/vae_lin_nf_config.json --training_config configs/celeba/base_training_config.json --use_wandb
-python training.py --dataset mnist --model_name vae_lin_nf --model_config configs/mnist/vae_lin_nf_config.json --training_config configs/mnist/base_training_config.json --use_wandb
+#python training.py --dataset celeba --model_name vae_lin_nf --model_config configs/celeba/vae_lin_nf_config.json --training_config configs/celeba/base_training_config.json --use_wandb
+#python training.py --dataset mnist --model_name vae_lin_nf --model_config configs/mnist/vae_lin_nf_config.json --training_config configs/mnist/base_training_config.json --use_wandb
+
+python training.py --dataset mnist --model_name wae --model_config configs/mnist/wae_config.json --training_config configs/mnist/base_training_config.json --use_wandb --nn convnet
+python training.py --dataset mnist --model_name info_vae --model_config configs/mnist/info_vae_config.json --training_config configs/mnist/base_training_config.json --use_wandb --nn convnet
+python training.py --dataset celeba --model_name wae --model_config configs/celeba/wae_config.json --training_config configs/celeba/base_training_config.json --use_wandb --nn convnet
+python training.py --dataset celeba --model_name info_vae --model_config configs/celeba/info_vae_config.json --training_config configs/celeba/base_training_config.json --use_wandb --nn convnet
+python training.py --dataset celeba --model_name factor_vae --model_config configs/celeba/factor_vae_config.json --training_config configs/celeba/base_training_config.json --use_wandb --nn convnet
