@@ -185,7 +185,7 @@ class HVAE(VAE):
             loc=torch.zeros(self.latent_dim).to(z.device),
             covariance_matrix=torch.eye(self.latent_dim).to(z.device),
         )
-        return -0.5 * torch.pow(z, 2).sum(dim=-1)
+        return normal.log_prob(z)
 
     def _log_p_xz(self, recon_x, x, z):
         """
@@ -195,7 +195,7 @@ class HVAE(VAE):
         logpz = self._log_z(z)
         return logpxz + logpz
 
-    def _hamiltonian(self, recon_x, x, z, rho, G_inv=None, G_log_det=None):
+    def _hamiltonian(self, recon_x, x, z):
         """
         Computes the Hamiltonian function.
         used for HVAE
@@ -205,7 +205,7 @@ class HVAE(VAE):
     def get_nll(self, data, n_samples=1, batch_size=100):
         """
         Function computed the estimate negative log-likelihood of the model. It uses importance
-        sampling method with the approximate posterior disctribution. This may take a while.
+        sampling method with the approximate posterior distribution. This may take a while.
 
         Args:
             data (torch.Tensor): The input data from which the log-likelihood should be estimated.
