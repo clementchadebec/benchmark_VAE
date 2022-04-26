@@ -134,7 +134,7 @@ class VAEGAN(VAE):
         mu, log_var = encoder_output.embedding, encoder_output.log_covariance
 
         std = torch.exp(0.5 * log_var)
-        z, eps = self._sample_gauss(mu, std)
+        z, _ = self._sample_gauss(mu, std)
         recon_x = self.decoder(z).reconstruction
 
         z_prior = torch.randn_like(z, device=x.device).requires_grad_(True)
@@ -194,12 +194,8 @@ class VAEGAN(VAE):
 
         gen_prior = self.decoder(z_prior).reconstruction
 
-        # x_ = x.clone().detach().requires_grad_(True)
-        # recon_x_ = recon_x.clone().detach().requires_grad_(True)
-        # gen_prior_ = gen_prior.clone().detach().requires_grad_(True)
-
         true_adversarial_score = self.discriminator(x).embedding.flatten()
-        self.discriminator(recon_x).embedding.flatten()
+        #gen_adversarial_score = self.discriminator(recon_x).embedding.flatten()
         prior_adversarial_score = self.discriminator(gen_prior).embedding.flatten()
 
         true_labels = torch.ones(N, requires_grad=False).to(self.device)
@@ -211,14 +207,15 @@ class VAEGAN(VAE):
         prior_dis_cost = F.binary_cross_entropy(
             prior_adversarial_score, fake_labels
         )  # prior is false
+        # gen_cost =  F.binary_cross_entropy(
+        #   gen_adversarial_score, fake_labels
+        # ) # generated are false
 
         discriminator_loss = (
             (original_dis_cost)
             + (prior_dis_cost)
             # +
-            # (
-            #    F.binary_cross_entropy(gen_adversarial_score, fake_labels) # generated are false
-            # )
+            # (gen_cost)
         )
 
         decoder_loss = (

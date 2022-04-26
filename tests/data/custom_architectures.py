@@ -342,7 +342,32 @@ class Metric_Custom(BaseMetric):
         BaseMetric.__init__(self)
 
 
-class Encoder_MLP_Custom(BaseEncoder):
+class Encoder_AE_MLP_Custom(BaseEncoder):
+    def __init__(self, args: dict):
+        BaseEncoder.__init__(self)
+
+        if args.input_dim is None:
+            raise AttributeError(
+                "No input dimension provided !"
+                "'input_dim' parameter of ModelConfig instance must be set to 'data_shape' where"
+                "the shape of the data is [mini_batch x data_shape]. Unable to build encoder"
+                "automatically"
+            )
+
+        self.input_dim = args.input_dim
+        self.latent_dim = args.latent_dim
+
+        self.layers = nn.Sequential(nn.Linear(np.prod(args.input_dim), 10), nn.ReLU())
+        self.mu = nn.Linear(10, self.latent_dim)
+
+    def forward(self, x):
+        out = self.layers(x.reshape(-1, int(np.prod(self.input_dim))))
+
+        output = ModelOutput(embedding=self.mu(out))
+
+        return output
+
+class Encoder_VAE_MLP_Custom(BaseEncoder):
     def __init__(self, args: dict):
         BaseEncoder.__init__(self)
 

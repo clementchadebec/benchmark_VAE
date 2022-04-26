@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional
 
 import torch
 import torch.optim as optim
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torch.utils.data import DataLoader
 
 from ...customexception import ModelError
@@ -61,7 +62,7 @@ class BaseTrainer:
         eval_dataset: Optional[BaseDataset] = None,
         training_config: Optional[BaseTrainerConfig] = None,
         optimizer: Optional[torch.optim.Optimizer] = None,
-        scheduler: Optional = None,
+        scheduler: Optional[torch.optim.lr_scheduler.LambdaLR] = None,
         callbacks: List[TrainingCallback] = None,
     ):
 
@@ -224,6 +225,14 @@ class BaseTrainer:
 
         return inputs_on_device
 
+    def _schedulers_step(self, metrics=None):
+        if isinstance(self.scheduler, ReduceLROnPlateau):
+            self.scheduler.step(metrics)
+
+        else:
+            self.scheduler.step()
+
+
     def train(self, log_output_dir: str = None):
         """This function is the main training function
 
@@ -319,11 +328,11 @@ class BaseTrainer:
             if self.eval_dataset is not None:
                 epoch_eval_loss = self.eval_step(epoch)
                 metrics["eval_epoch_loss"] = epoch_eval_loss
-                self.scheduler.step(epoch_eval_loss)
+                self._schedulers_step(epoch_eval_loss)
 
             else:
                 epoch_eval_loss = best_eval_loss
-                self.scheduler.step(epoch_train_loss)
+                self._schedulers_step(epoch_train_loss)
 
             if (
                 epoch_eval_loss < best_eval_loss
@@ -423,6 +432,16 @@ class BaseTrainer:
 
         return epoch_loss
 
+    def _reset_optimizers_grads(self):
+        self.optimizer.zero_grad()
+
+    def _optimizers_step(self, model_output=None):
+        loss = model_output.loss
+
+        loss.backward()
+        self.optimizer.step()
+
+
     def train_step(self, epoch: int):
         """The trainer performs training loop over the train_loader.
 
@@ -447,16 +466,15 @@ class BaseTrainer:
 
             inputs = self._set_inputs_to_device(inputs)
 
-            self.optimizer.zero_grad()
+            self._reset_optimizers_grads()
 
             model_output = self.model(
                 inputs, epoch=epoch, dataset_size=len(self.train_loader.dataset)
             )
 
-            loss = model_output.loss
+            self._optimizers_step(model_output)
 
-            loss.backward()
-            self.optimizer.step()
+            loss = model_output.loss
 
             epoch_loss += loss.item()
 

@@ -1,5 +1,6 @@
 import os
 from copy import deepcopy
+from turtle import update
 from typing import Optional
 
 import dill
@@ -114,7 +115,7 @@ class Adversarial_AE(VAE):
         mu, log_var = encoder_output.embedding, encoder_output.log_covariance
 
         std = torch.exp(0.5 * log_var)
-        z, eps = self._sample_gauss(mu, std)
+        z, _ = self._sample_gauss(mu, std)
         recon_x = self.decoder(z)["reconstruction"]
 
         z_prior = torch.randn_like(z, device=x.device).requires_grad_(True)
@@ -168,9 +169,7 @@ class Adversarial_AE(VAE):
             )  # generated are true
         ) + (1 - self.adversarial_loss_scale) * (recon_loss)
 
-        z_ = z.clone().detach().requires_grad_(True)
-
-        gen_adversarial_score_ = self.discriminator(z_).embedding.flatten()
+        gen_adversarial_score_ = self.discriminator(z.detach()).embedding.flatten()
 
         discriminator_loss = 0.5 * (
             F.binary_cross_entropy(

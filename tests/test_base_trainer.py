@@ -2,12 +2,13 @@ import os
 from copy import deepcopy
 
 import pytest
+from sklearn.model_selection import learning_curve
 import torch
 from torch.optim import SGD, Adadelta, Adagrad, Adam, RMSprop
 from torch.optim.lr_scheduler import StepLR, LinearLR, ExponentialLR
 
 from pythae.customexception import ModelError
-from pythae.models import BaseAE, BaseAEConfig, AE, AEConfig, RHVAE, RHVAEConfig
+from pythae.models import BaseAE, BaseAEConfig, AE, AEConfig, VAE, VAEConfig, RHVAE, RHVAEConfig
 from pythae.trainers import BaseTrainer, BaseTrainerConfig
 from tests.data.custom_architectures import *
 
@@ -182,7 +183,7 @@ class Test_Build_Scheduler:
         ]
     )
     def schedulers(
-        self, request, model_sample, training_configs_learning_rate, optimizers
+        self, request, optimizers
     ):
         if request.param[0] is not None:
             scheduler = request.param[0](optimizers, **request.param[1])
@@ -250,7 +251,7 @@ class Test_Device_Checks:
 
     @pytest.fixture
     def custom_encoder(self, ae_config):
-        return Encoder_MLP_Custom(ae_config)
+        return Encoder_AE_MLP_Custom(ae_config)
 
     @pytest.fixture
     def custom_decoder(self, ae_config):
@@ -384,7 +385,7 @@ class Test_Sanity_Checks:
 @pytest.mark.slow
 class Test_Main_Training:
     @pytest.fixture(
-        params=[BaseTrainerConfig(num_epochs=3, steps_saving=2, steps_predict=2)]
+        params=[BaseTrainerConfig(num_epochs=3, steps_saving=2, steps_predict=2, learning_rate=1e-2)]
     )
     def training_configs(self, tmpdir, request):
         tmpdir.mkdir("dummy_folder")
@@ -395,7 +396,7 @@ class Test_Main_Training:
     @pytest.fixture(
         params=[
             AEConfig(input_dim=(1, 28, 28)),
-            RHVAEConfig(input_dim=(1, 28, 28), latent_dim=5),
+            VAEConfig(input_dim=(1, 28, 28), latent_dim=5),
         ]
     )
     def ae_config(self, request):
@@ -403,7 +404,9 @@ class Test_Main_Training:
 
     @pytest.fixture
     def custom_encoder(self, ae_config):
-        return Encoder_MLP_Custom(ae_config)
+        if isinstance(ae_config, VAEConfig):
+            return Encoder_VAE_MLP_Custom(ae_config)
+        return Encoder_AE_MLP_Custom(ae_config)
 
     @pytest.fixture
     def custom_decoder(self, ae_config):
@@ -424,16 +427,28 @@ class Test_Main_Training:
         alpha = request.param
 
         if alpha < 0.25:
-            model = AE(ae_config)
+            if isinstance(ae_config, VAEConfig):
+                model = VAE(ae_config)
+            else:
+                model = AE(ae_config)
 
         elif 0.25 <= alpha < 0.5:
-            model = AE(ae_config, encoder=custom_encoder)
+            if isinstance(ae_config, VAEConfig):
+                model = VAE(ae_config, encoder=custom_encoder)
+            else:
+                model = AE(ae_config, encoder=custom_encoder)
 
         elif 0.5 <= alpha < 0.75:
-            model = AE(ae_config, decoder=custom_decoder)
+            if isinstance(ae_config, VAEConfig):
+                model = VAE(ae_config, decoder=custom_decoder)
+            else:
+                model = AE(ae_config, decoder=custom_decoder)
 
         else:
-            model = AE(ae_config, encoder=custom_encoder, decoder=custom_decoder)
+            if isinstance(ae_config, VAEConfig):
+                model = VAE(ae_config, encoder=custom_encoder, decoder=custom_decoder)
+            else:
+                model = AE(ae_config, encoder=custom_encoder, decoder=custom_decoder)
 
         return model
 
@@ -457,7 +472,7 @@ class Test_Main_Training:
             (ExponentialLR, {"gamma": 0.99}),
         ]
     )
-    def schedulers(self, request, ae, training_configs, optimizers):
+    def schedulers(self, request, optimizers):
         if request.param[0] is not None and optimizers is not None:
             scheduler = request.param[0](optimizers, **request.param[1])
 
@@ -484,12 +499,12 @@ class Test_Main_Training:
         step_1_model_state_dict = deepcopy(trainer.model.state_dict())
 
         # check that weights were updated
-        assert not all(
-            [
-                torch.equal(start_model_state_dict[key], step_1_model_state_dict[key])
-                for key in start_model_state_dict.keys()
-            ]
-        )
+        for key in start_model_state_dict.keys():
+            if "encoder" in key:
+                assert not torch.equal(step_1_model_state_dict[key], start_model_state_dict[key]), key
+
+            if "decoder" in key:
+                assert not torch.equal(step_1_model_state_dict[key], start_model_state_dict[key])
 
     def test_eval_step(
         self, ae, train_dataset, training_configs, optimizers, schedulers
@@ -509,7 +524,7 @@ class Test_Main_Training:
 
         step_1_model_state_dict = deepcopy(trainer.model.state_dict())
 
-        # check that weights were updated
+        # check that weights were not updated
         assert all(
             [
                 torch.equal(start_model_state_dict[key], step_1_model_state_dict[key])
@@ -557,12 +572,12 @@ class Test_Main_Training:
         step_1_model_state_dict = deepcopy(trainer.model.state_dict())
 
         # check that weights were updated
-        assert not all(
-            [
-                torch.equal(start_model_state_dict[key], step_1_model_state_dict[key])
-                for key in start_model_state_dict.keys()
-            ]
-        )
+        for key in start_model_state_dict.keys():
+            if "encoder" in key:
+                assert not torch.equal(step_1_model_state_dict[key], start_model_state_dict[key])
+
+            if "decoder" in key:
+                assert not torch.equal(step_1_model_state_dict[key], start_model_state_dict[key])
 
         # check changed lr with custom schedulers
         if type(trainer.scheduler) != torch.optim.lr_scheduler.ReduceLROnPlateau:

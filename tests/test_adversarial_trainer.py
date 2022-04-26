@@ -2,10 +2,11 @@ import os
 from copy import deepcopy
 
 import pytest
+import itertools
 import torch
 from torch.optim import SGD, Adadelta, Adagrad, Adam, RMSprop
+from torch.optim.lr_scheduler import StepLR, LinearLR, ExponentialLR
 
-from pythae.customexception import ModelError
 from pythae.models import Adversarial_AE, Adversarial_AE_Config
 from pythae.trainers import AdversarialTrainer, AdversarialTrainerConfig
 from tests.data.custom_architectures import *
@@ -116,7 +117,7 @@ class Test_Set_Training_config:
 class Test_Build_Optimizer:
     @pytest.fixture(
         params=[
-            AdversarialTrainerConfig(learning_rate=1e-6),
+            AdversarialTrainerConfig(learning_rate=1e-2),
             AdversarialTrainerConfig(),
         ]
     )
@@ -184,6 +185,87 @@ class Test_Build_Optimizer:
             == training_configs_learning_rate.learning_rate
         )
 
+class Test_Build_Scheduler:
+    @pytest.fixture(params=[AdversarialTrainerConfig(), AdversarialTrainerConfig(learning_rate=1e-5)])
+    def training_configs_learning_rate(self, tmpdir, request):
+        request.param.output_dir = tmpdir.mkdir("dummy_folder")
+        return request.param
+
+    @pytest.fixture(params=[Adagrad, Adam, Adadelta, SGD, RMSprop])
+    def optimizers(self, request, model_sample, training_configs_learning_rate):
+
+        autoencoder_optimizer = request.param(
+            model_sample.encoder.parameters(),
+            lr=training_configs_learning_rate.learning_rate,
+        )
+        discriminator_optimizer = request.param(
+            model_sample.decoder.parameters(),
+            lr=training_configs_learning_rate.learning_rate,
+        )
+        return (autoencoder_optimizer, discriminator_optimizer)
+
+    @pytest.fixture(
+        params=[
+            (StepLR, {"step_size": 1}),
+            (LinearLR, {"start_factor": 0.01}),
+            (ExponentialLR, {"gamma": 0.1}),
+        ]
+    )
+    def schedulers(
+        self, request, optimizers
+    ):
+        if request.param[0] is not None:
+            autoencoder_scheduler = request.param[0](optimizers[0], **request.param[1])
+            discriminator_scheduler = request.param[0](optimizers[1], **request.param[1])
+
+        else:
+            autoencoder_scheduler = None
+            discriminator_scheduler = None
+
+        return (autoencoder_scheduler, discriminator_scheduler)
+
+    def test_default_scheduler_building(
+        self, model_sample, train_dataset, training_configs_learning_rate
+    ):
+
+        trainer = AdversarialTrainer(
+            model=model_sample,
+            train_dataset=train_dataset,
+            training_config=training_configs_learning_rate,
+            autoencoder_optimizer=None,
+            discriminator_optimizer=None
+        )
+
+        assert issubclass(
+            type(trainer.autoencoder_scheduler), torch.optim.lr_scheduler.ReduceLROnPlateau
+        )
+
+        assert issubclass(
+            type(trainer.discriminator_scheduler), torch.optim.lr_scheduler.ReduceLROnPlateau
+        )
+
+    def test_set_custom_scheduler(
+        self,
+        model_sample,
+        train_dataset,
+        training_configs_learning_rate,
+        optimizers,
+        schedulers,
+    ):
+        trainer = AdversarialTrainer(
+            model=model_sample,
+            train_dataset=train_dataset,
+            training_config=training_configs_learning_rate,
+            autoencoder_optimizer=optimizers[0],
+            autoencoder_scheduler=schedulers[0],
+            discriminator_optimizer=optimizers[1],
+            discriminator_scheduler=schedulers[1]
+
+        )
+
+        assert issubclass(type(trainer.autoencoder_scheduler), type(schedulers[0]))
+        assert issubclass(type(trainer.discriminator_scheduler), type(schedulers[1]))
+
 
 @pytest.mark.slow
 class Test_Main_Training:
@@ -205,7 +287,7 @@ class Test_Main_Training:
 
     @pytest.fixture
     def custom_encoder(self, ae_config):
-        return Encoder_MLP_Custom(ae_config)
+        return Encoder_VAE_MLP_Custom(ae_config)
 
     @pytest.fixture
     def custom_decoder(self, ae_config):
@@ -278,11 +360,11 @@ class Test_Main_Training:
     def optimizers(self, request, ae, training_configs):
         if request.param is not None:
             autoencoder_optimizer = request.param(
-                ae.encoder.parameters(), lr=training_configs.learning_rate
+                itertools.chain(ae.encoder.parameters(), ae.decoder.parameters()), lr=training_configs.learning_rate
             )
 
             discriminator_optimizer = request.param(
-                ae.decoder.parameters(), lr=training_configs.learning_rate
+                ae.discriminator.parameters(), lr=training_configs.learning_rate
             )
 
         else:
@@ -291,30 +373,60 @@ class Test_Main_Training:
 
         return (autoencoder_optimizer, discriminator_optimizer)
 
-    def test_train_step(self, ae, train_dataset, training_configs, optimizers):
+    @pytest.fixture(
+        params=[
+            (None, None),
+            (StepLR, {"step_size": 1, "gamma": 0.99}),
+            (LinearLR, {"start_factor": 0.99}),
+            (ExponentialLR, {"gamma": 0.99}),
+        ]
+    )
+    def schedulers(self, request, optimizers):
+        if request.param[0] is not None and optimizers[0] is not None:
+            autoencoder_scheduler = request.param[0](optimizers[0], **request.param[1])
+        
+        else:
+            autoencoder_scheduler = None
+        
+        if request.param[0] is not None and optimizers[1] is not None:
+            discriminator_scheduler = request.param[0](optimizers[1], **request.param[1])
+
+        else:
+            discriminator_scheduler = None
+
+        return (autoencoder_scheduler, discriminator_scheduler)
+
+
+    def test_train_step(self, ae, train_dataset, training_configs, optimizers, schedulers):
         trainer = AdversarialTrainer(
             model=ae,
             train_dataset=train_dataset,
             training_config=training_configs,
             autoencoder_optimizer=optimizers[0],
             discriminator_optimizer=optimizers[1],
+            autoencoder_scheduler=schedulers[0],
+            discriminator_scheduler=schedulers[1]
         )
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
-        step_1_loss = trainer.train_step(epoch=1)
+        step_1_loss = trainer.train_step(epoch=3)
 
         step_1_model_state_dict = deepcopy(trainer.model.state_dict())
 
         # check that weights were updated
-        assert not all(
-            [
-                torch.equal(start_model_state_dict[key], step_1_model_state_dict[key])
-                for key in start_model_state_dict.keys()
-            ]
-        )
+        for key in start_model_state_dict.keys():
+            if "encoder" in key:
+                assert not torch.equal(step_1_model_state_dict[key], start_model_state_dict[key])
 
-    def test_eval_step(self, ae, train_dataset, training_configs, optimizers):
+            if "decoder" in key:
+                assert not torch.equal(step_1_model_state_dict[key], start_model_state_dict[key])
+
+            if "discriminator" in key:
+                assert not torch.equal(step_1_model_state_dict[key], start_model_state_dict[key])
+
+
+    def test_eval_step(self, ae, train_dataset, training_configs, optimizers, schedulers):
         trainer = AdversarialTrainer(
             model=ae,
             train_dataset=train_dataset,
@@ -322,6 +434,8 @@ class Test_Main_Training:
             training_config=training_configs,
             autoencoder_optimizer=optimizers[0],
             discriminator_optimizer=optimizers[1],
+            autoencoder_scheduler=schedulers[0],
+            discriminator_scheduler=schedulers[1]
         )
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
@@ -330,7 +444,7 @@ class Test_Main_Training:
 
         step_1_model_state_dict = deepcopy(trainer.model.state_dict())
 
-        # check that weights were updated
+        # check that weights not were updated
         assert all(
             [
                 torch.equal(start_model_state_dict[key], step_1_model_state_dict[key])
@@ -339,7 +453,7 @@ class Test_Main_Training:
         )
 
     def test_main_train_loop(
-        self, tmpdir, ae, train_dataset, training_configs, optimizers
+        self, ae, train_dataset, training_configs, optimizers, schedulers
     ):
 
         trainer = AdversarialTrainer(
@@ -349,6 +463,8 @@ class Test_Main_Training:
             training_config=training_configs,
             autoencoder_optimizer=optimizers[0],
             discriminator_optimizer=optimizers[1],
+            autoencoder_scheduler=schedulers[0],
+            discriminator_scheduler=schedulers[1]
         )
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
@@ -358,13 +474,15 @@ class Test_Main_Training:
         step_1_model_state_dict = deepcopy(trainer.model.state_dict())
 
         # check that weights were updated
-        assert not all(
-            [
-                torch.equal(start_model_state_dict[key], step_1_model_state_dict[key])
-                for key in start_model_state_dict.keys()
-            ]
-        )
+        for key in start_model_state_dict.keys():
+            if "encoder" in key:
+                assert not torch.equal(step_1_model_state_dict[key], start_model_state_dict[key])
 
+            if "decoder" in key:
+                assert not torch.equal(step_1_model_state_dict[key], start_model_state_dict[key])
+
+            if "discriminator" in key:
+                assert not torch.equal(step_1_model_state_dict[key], start_model_state_dict[key])
 
 class Test_Logging:
     @pytest.fixture

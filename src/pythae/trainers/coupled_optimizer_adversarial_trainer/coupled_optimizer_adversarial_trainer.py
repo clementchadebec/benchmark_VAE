@@ -1,4 +1,5 @@
 import datetime
+import dis
 import logging
 import os
 from copy import deepcopy
@@ -6,6 +7,7 @@ from typing import List, Optional
 
 import torch
 import torch.optim as optim
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 
 from ...data.datasets import BaseDataset
 from ...models import BaseAE
@@ -58,9 +60,9 @@ class CoupledOptimizerAdversarialTrainer(BaseTrainer):
         encoder_optimizer: Optional[torch.optim.Optimizer] = None,
         decoder_optimizer: Optional[torch.optim.Optimizer] = None,
         discriminator_optimizer: Optional[torch.optim.Optimizer] = None,
-        encoder_scheduler: Optional = None,
-        decoder_scheduler: Optional = None,
-        discriminator_scheduler: Optional = None,
+        encoder_scheduler: Optional[torch.optim.lr_scheduler.LambdaLR] = None,
+        decoder_scheduler: Optional[torch.optim.lr_scheduler.LambdaLR] = None,
+        discriminator_scheduler: Optional[torch.optim.lr_scheduler.LambdaLR] = None,
         callbacks: List[TrainingCallback] = None,
     ):
 
@@ -152,6 +154,25 @@ class CoupledOptimizerAdversarialTrainer(BaseTrainer):
         )
 
         return optimizer
+
+    def _schedulers_step(self, encoder_metrics=None, decoder_metrics=None, discriminator_metrics=None):
+        if isinstance(self.encoder_scheduler, ReduceLROnPlateau):
+            self.encoder_scheduler.step(encoder_metrics)
+
+        else:
+            self.encoder_scheduler.step()
+        
+        if isinstance(self.decoder_scheduler, ReduceLROnPlateau):
+            self.decoder_scheduler.step(decoder_metrics)
+
+        else:
+            self.decoder_scheduler.step()
+
+        if isinstance(self.discriminator_scheduler, ReduceLROnPlateau):
+            self.discriminator_scheduler.step(discriminator_metrics)
+
+        else:
+            self.discriminator_scheduler.step()
 
     def train(self, log_output_dir: str = None):
         """This function is the main training function
@@ -269,15 +290,12 @@ class CoupledOptimizerAdversarialTrainer(BaseTrainer):
                 metrics["eval_decoder_loss"] = epoch_eval_decoder_loss
                 metrics["eval_discriminator_loss"] = epoch_eval_discriminator_loss
 
-                self.encoder_scheduler.step(epoch_eval_encoder_loss)
-                self.decoder_scheduler.step(epoch_eval_decoder_loss)
-                self.discriminator_scheduler.step(epoch_eval_discriminator_loss)
+                self._schedulers_step(encoder_metrics=epoch_eval_encoder_loss, decoder_metrics=epoch_eval_decoder_loss, discriminator_metrics=epoch_eval_discriminator_loss)
 
             else:
                 epoch_eval_loss = best_eval_loss
-                self.encoder_scheduler.step(epoch_train_encoder_loss)
-                self.decoder_scheduler.step(epoch_train_decoder_loss)
-                self.discriminator_scheduler.step(epoch_train_discriminator_loss)
+                self._schedulers_step(encoder_metrics=epoch_train_encoder_loss, decoder_metrics=epoch_train_decoder_loss, discriminator_metrics=epoch_train_discriminator_loss)
+
 
             if (
                 epoch_eval_loss < best_eval_loss
@@ -405,6 +423,42 @@ class CoupledOptimizerAdversarialTrainer(BaseTrainer):
             epoch_discriminator_loss,
         )
 
+    def _reset_optimizers_grads(self):
+        self.encoder_optimizer.zero_grad()
+        self.decoder_optimizer.zero_grad()
+        self.discriminator_optimizer.zero_grad()
+
+    def _optimizers_step(self, model_output):
+
+        encoder_loss = model_output.encoder_loss
+        decoder_loss = model_output.decoder_loss
+        discriminator_loss = model_output.discriminator_loss
+
+        # Reset optimizers
+        if model_output.update_encoder:
+            #self.encoder_optimizer.zero_grad()
+            encoder_loss.backward(retain_graph=True)
+
+        if model_output.update_decoder:
+            #self.decoder_optimizer.zero_grad()
+            decoder_loss.backward(retain_graph=True)
+
+        if model_output.update_discriminator:
+            #self.discriminator_optimizer.zero_grad()
+            discriminator_loss.backward()
+        
+        if model_output.update_encoder:
+            self.encoder_optimizer.step()
+
+        if model_output.update_decoder:
+            # print('update dec')
+            self.decoder_optimizer.step()
+
+        if model_output.update_discriminator:
+            # print('update discr')
+            self.discriminator_optimizer.step()
+
+
     def train_step(self, epoch: int):
         """The trainer performs training loop over the train_loader.
 
@@ -432,36 +486,17 @@ class CoupledOptimizerAdversarialTrainer(BaseTrainer):
 
             inputs = self._set_inputs_to_device(inputs)
 
+            self._reset_optimizers_grads()
+
             model_output = self.model(
                 inputs, epoch=epoch, dataset_size=len(self.train_loader.dataset)
             )
 
+            self._optimizers_step(model_output)
+
             encoder_loss = model_output.encoder_loss
             decoder_loss = model_output.decoder_loss
             discriminator_loss = model_output.discriminator_loss
-
-            # Reset optimizers
-            if model_output.update_encoder:
-                self.encoder_optimizer.zero_grad()
-                encoder_loss.backward(retain_graph=True)
-
-            if model_output.update_decoder:
-                self.decoder_optimizer.zero_grad()
-                decoder_loss.backward(retain_graph=True)
-
-            if model_output.update_discriminator:
-                self.discriminator_optimizer.zero_grad()
-                discriminator_loss.backward()
-
-            self.encoder_optimizer.step()
-
-            if model_output.update_decoder:
-                # print('update dec')
-                self.decoder_optimizer.step()
-
-            if model_output.update_discriminator:
-                # print('update discr')
-                self.discriminator_optimizer.step()
 
             loss = encoder_loss + decoder_loss + discriminator_loss
 
@@ -469,14 +504,6 @@ class CoupledOptimizerAdversarialTrainer(BaseTrainer):
             epoch_decoder_loss += decoder_loss.item()
             epoch_discriminator_loss += discriminator_loss.item()
             epoch_loss += loss.item()
-
-            # tepoch.set_postfix(
-            #    {
-            #        'encoder_loss': epoch_encoder_loss / (i+1),
-            #        'decoder_loss': epoch_decoder_loss / (i+1),
-            #        'discriminator_loss': epoch_discriminator_loss / (i+1)
-            #    }
-            # )
 
             self.callback_handler.on_train_step_end(
                 training_config=self.training_config
