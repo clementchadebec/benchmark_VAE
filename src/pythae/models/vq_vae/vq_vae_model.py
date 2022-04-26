@@ -54,7 +54,7 @@ class VQVAE(AE):
             raise AttributeError(
                 "No input dimension provided !"
                 "'input_dim' parameter of VQVAEConfig instance must be set to 'data_shape' where "
-                "the shape of the data is (C, H, W ..). Unable to set quantizer"
+                "the shape of the data is (C, H, W ..). Unable to set quantizer."
             )
 
         x = torch.randn((2,) + self.model_config.input_dim)

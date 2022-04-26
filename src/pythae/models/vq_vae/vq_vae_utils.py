@@ -44,12 +44,6 @@ class Quantizer(nn.Module):
             .squeeze(1)
         )
 
-        # encoding_indices = torch.argmin(distances, dim=1).unsqueeze(1)
-        # one_hot_encoding = torch.zeros(encoding_indices.shape[0], self.num_embeddings, device=z.device)
-        # one_hot_encoding.scatter_(1, encoding_indices, 1)
-
-        # assert 0, (one_hot_encoding - one_hot_encoding_a.squeeze(1))
-
         # quantization
         quantized = one_hot_encoding @ self.embeddings.weight
         quantized = quantized.reshape_as(z)
