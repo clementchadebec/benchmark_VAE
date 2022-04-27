@@ -125,13 +125,28 @@ class AdversarialTrainer(BaseTrainer):
 
         return optimizer
 
+    def _reset_optimizers_grads(self):
+        self.autoencoder_optimizer.zero_grad()
+        self.discriminator_optimizer.zero_grad()
+
+    def _optimizers_step(self, model_output):
+
+        autoencoder_loss = model_output.autoencoder_loss
+        discriminator_loss = model_output.discriminator_loss
+
+        autoencoder_loss.backward(retain_graph=True)
+        discriminator_loss.backward()
+
+        self.autoencoder_optimizer.step()
+        self.discriminator_optimizer.step()
+
     def _schedulers_step(self, autoencoder_metrics=None, discriminator_metrics=None):
         if isinstance(self.autoencoder_scheduler, ReduceLROnPlateau):
             self.autoencoder_scheduler.step(autoencoder_metrics)
 
         else:
             self.autoencoder_scheduler.step()
-        
+
         if isinstance(self.discriminator_scheduler, ReduceLROnPlateau):
             self.discriminator_scheduler.step(discriminator_metrics)
 
@@ -250,12 +265,18 @@ class AdversarialTrainer(BaseTrainer):
                 metrics["eval_autoencoder_loss"] = epoch_eval_autoencoder_loss
                 metrics["eval_discriminator_loss"] = epoch_eval_discriminator_loss
 
-                self._schedulers_step(autoencoder_metrics=epoch_eval_autoencoder_loss, discriminator_metrics=epoch_eval_discriminator_loss)
+                self._schedulers_step(
+                    autoencoder_metrics=epoch_eval_autoencoder_loss,
+                    discriminator_metrics=epoch_eval_discriminator_loss,
+                )
 
             else:
                 epoch_eval_loss = best_eval_loss
 
-                self._schedulers_step(autoencoder_metrics=epoch_train_autoencoder_loss, discriminator_metrics=epoch_train_discriminator_loss)
+                self._schedulers_step(
+                    autoencoder_metrics=epoch_train_autoencoder_loss,
+                    discriminator_metrics=epoch_train_discriminator_loss,
+                )
 
             if (
                 epoch_eval_loss < best_eval_loss
@@ -366,21 +387,6 @@ class AdversarialTrainer(BaseTrainer):
 
         return epoch_loss, epoch_autoencoder_loss, epoch_discriminator_loss
 
-    def _reset_optimizers_grads(self):
-        self.autoencoder_optimizer.zero_grad()
-        self.discriminator_optimizer.zero_grad()
-
-    def _optimizers_step(self, model_output):
-
-        autoencoder_loss = model_output.autoencoder_loss
-        discriminator_loss = model_output.discriminator_loss
-
-        autoencoder_loss.backward(retain_graph=True)
-        discriminator_loss.backward()
-
-        self.autoencoder_optimizer.step()
-        self.discriminator_optimizer.step()
-
     def train_step(self, epoch: int):
         """The trainer performs training loop over the train_loader.
 
@@ -417,7 +423,7 @@ class AdversarialTrainer(BaseTrainer):
 
             autoencoder_loss = model_output.autoencoder_loss
             discriminator_loss = model_output.discriminator_loss
-            
+
             loss = autoencoder_loss + discriminator_loss
 
             epoch_autoencoder_loss += autoencoder_loss.item()

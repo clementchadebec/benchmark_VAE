@@ -1,7 +1,8 @@
+from dataclasses import field
+from typing import List, Union
+
 from pydantic.dataclasses import dataclass
 from typing_extensions import Literal
-from typing import List, Union
-from dataclasses import field
 
 from ..vae import VAEConfig
 
@@ -27,4 +28,6 @@ class INFOVAE_MMD_Config(VAEConfig):
     alpha: float = 0
     lbd: float = 1e-3
     kernel_bandwidth: float = 1.0
-    scales: Union[List[float], None] = field(default_factory=lambda: [.1, .2, .5, 1., 2., 5, 10.])
+    scales: Union[List[float], None] = field(
+        default_factory=lambda: [0.1, 0.2, 0.5, 1.0, 2.0, 5, 10.0]
+    )

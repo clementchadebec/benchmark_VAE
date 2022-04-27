@@ -1,9 +1,9 @@
 import os
 from typing import Optional
 
+import numpy as np
 import torch
 import torch.nn.functional as F
-import numpy as np
 
 from ...data.datasets import BaseDataset
 from ..base.base_utils import ModelOutput
@@ -176,10 +176,10 @@ class IWAE(VAE):
                 log_q_z_given_x = -0.5 * (
                     log_var + (z - mu) ** 2 / torch.exp(log_var)
                 ).sum(dim=-1)
-                log_p_z = -0.5 * (z**2).sum(dim=-1)
+                log_p_z = -0.5 * (z ** 2).sum(dim=-1)
 
                 recon_x = self.decoder(z.reshape(-1, self.latent_dim))["reconstruction"]
-                
+
                 if self.model_config.reconstruction_loss == "mse":
 
                     log_p_x_given_z = -0.5 * F.mse_loss(
@@ -197,20 +197,22 @@ class IWAE(VAE):
 
                 elif self.model_config.reconstruction_loss == "bce":
 
-                    log_p_x_given_z = -F.binary_cross_entropy(
-                        recon_x.reshape(recon_x.shape[0], -1),
-                        x_rep.reshape(x_rep.shape[0], -1)
-                        .unsqueeze(1)
-                        .repeat(1, self.n_samples, 1)
-                        .reshape(recon_x.shape[0], -1),
-                        reduction="none",
-                    ).sum(dim=-1).reshape(x_rep.shape[0], -1)
+                    log_p_x_given_z = (
+                        -F.binary_cross_entropy(
+                            recon_x.reshape(recon_x.shape[0], -1),
+                            x_rep.reshape(x_rep.shape[0], -1)
+                            .unsqueeze(1)
+                            .repeat(1, self.n_samples, 1)
+                            .reshape(recon_x.shape[0], -1),
+                            reduction="none",
+                        )
+                        .sum(dim=-1)
+                        .reshape(x_rep.shape[0], -1)
+                    )
 
                 log_w = log_p_x_given_z + log_p_z - log_q_z_given_x
 
-                log_p_x.append(
-                    (log_w).exp().mean(dim=-1).log()
-                )  # log(2*pi) simplifies
+                log_p_x.append((log_w).exp().mean(dim=-1).log())  # log(2*pi) simplifies
 
             log_p_x = torch.cat(log_p_x)
 

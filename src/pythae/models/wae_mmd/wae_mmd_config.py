@@ -1,7 +1,8 @@
+from dataclasses import field
+from typing import List, Union
+
 from pydantic.dataclasses import dataclass
 from typing_extensions import Literal
-from typing import List, Union
-from dataclasses import field
 
 from ...models import AEConfig
 
@@ -25,4 +26,6 @@ class WAE_MMD_Config(AEConfig):
     kernel_choice: Literal["rbf", "imq"] = "imq"
     reg_weight: float = 3e-2
     kernel_bandwidth: float = 1.0
-    scales: Union[List[float], None] = field(default_factory=lambda: [.1, .2, .5, 1., 2., 5, 10.])
+    scales: Union[List[float], None] = field(
+        default_factory=lambda: [0.1, 0.2, 0.5, 1.0, 2.0, 5, 10.0]
+    )

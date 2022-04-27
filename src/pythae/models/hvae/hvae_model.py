@@ -113,7 +113,7 @@ class HVAE(VAE):
             rho = (beta_sqrt_old / beta_sqrt) * rho__
             beta_sqrt_old = beta_sqrt
 
-        loss = self.loss_function(recon_x, x, z0, z, rho, eps0, gamma, mu, log_var)
+        loss = self.loss_function(recon_x, x, z, rho, eps0, log_var)
 
         output = ModelOutput(
             loss=loss,
@@ -129,7 +129,7 @@ class HVAE(VAE):
 
         return output
 
-    def loss_function(self, recon_x, x, z0, zK, rhoK, eps0, gamma, mu, log_var):
+    def loss_function(self, recon_x, x, zK, rhoK, eps0, log_var):
 
         normal = torch.distributions.MultivariateNormal(
             loc=torch.zeros(self.model_config.latent_dim).to(x.device),
@@ -280,7 +280,7 @@ class HVAE(VAE):
                 log_q_z0_given_x = -0.5 * (
                     log_var + (z0 - mu) ** 2 / torch.exp(log_var)
                 ).sum(dim=-1)
-                log_p_z = -0.5 * (z**2).sum(dim=-1)
+                log_p_z = -0.5 * (z ** 2).sum(dim=-1)
 
                 log_p_rho0 = normal.log_prob(gamma) - 0.5 * self.latent_dim * torch.log(
                     1 / self.beta_zero_sqrt

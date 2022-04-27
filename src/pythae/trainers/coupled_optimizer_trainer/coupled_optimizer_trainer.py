@@ -118,13 +118,26 @@ class CoupledOptimizerTrainer(BaseTrainer):
 
         return optimizer
 
+    def _reset_optimizers_grads(self):
+        self.encoder_optimizer.zero_grad()
+        self.decoder_optimizer.zero_grad()
+
+    def _optimizers_step(self, model_output):
+
+        loss = model_output.loss
+
+        loss.backward()
+
+        self.encoder_optimizer.step()
+        self.decoder_optimizer.step()
+
     def _schedulers_step(self, encoder_metrics=None, decoder_metrics=None):
         if isinstance(self.encoder_scheduler, ReduceLROnPlateau):
             self.encoder_scheduler.step(encoder_metrics)
 
         else:
             self.encoder_scheduler.step()
-        
+
         if isinstance(self.decoder_scheduler, ReduceLROnPlateau):
             self.decoder_scheduler.step(decoder_metrics)
 
@@ -227,11 +240,15 @@ class CoupledOptimizerTrainer(BaseTrainer):
                 epoch_eval_loss = self.eval_step(epoch)
                 metrics["eval_epoch_loss"] = epoch_eval_loss
 
-                self._schedulers_step(encoder_metrics=epoch_eval_loss, decoder_metrics=epoch_eval_loss)
-            
+                self._schedulers_step(
+                    encoder_metrics=epoch_eval_loss, decoder_metrics=epoch_eval_loss
+                )
+
             else:
                 epoch_eval_loss = best_eval_loss
-                self._schedulers_step(encoder_metrics=epoch_train_loss, decoder_metrics=epoch_train_loss)
+                self._schedulers_step(
+                    encoder_metrics=epoch_train_loss, decoder_metrics=epoch_train_loss
+                )
 
             if (
                 epoch_eval_loss < best_eval_loss
@@ -290,19 +307,6 @@ class CoupledOptimizerTrainer(BaseTrainer):
         logger.info(f"Saved final model in {final_dir}")
 
         self.callback_handler.on_train_end(self.training_config)
-
-    def _reset_optimizers_grads(self):
-        self.encoder_optimizer.zero_grad()
-        self.decoder_optimizer.zero_grad()
-
-    def _optimizers_step(self, model_output):
-
-        loss = model_output.loss
-
-        loss.backward()
-
-        self.encoder_optimizer.step()
-        self.decoder_optimizer.step()
 
     def train_step(self, epoch: int):
         """The trainer performs training loop over the train_loader.

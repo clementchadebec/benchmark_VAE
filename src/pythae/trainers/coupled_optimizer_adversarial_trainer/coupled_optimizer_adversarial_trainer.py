@@ -155,13 +155,45 @@ class CoupledOptimizerAdversarialTrainer(BaseTrainer):
 
         return optimizer
 
-    def _schedulers_step(self, encoder_metrics=None, decoder_metrics=None, discriminator_metrics=None):
+    def _reset_optimizers_grads(self):
+        self.encoder_optimizer.zero_grad()
+        self.decoder_optimizer.zero_grad()
+        self.discriminator_optimizer.zero_grad()
+
+    def _optimizers_step(self, model_output):
+
+        encoder_loss = model_output.encoder_loss
+        decoder_loss = model_output.decoder_loss
+        discriminator_loss = model_output.discriminator_loss
+
+        # Reset optimizers
+        if model_output.update_encoder:
+            encoder_loss.backward(retain_graph=True)
+
+        if model_output.update_decoder:
+            decoder_loss.backward(retain_graph=True)
+
+        if model_output.update_discriminator:
+            discriminator_loss.backward()
+
+        if model_output.update_encoder:
+            self.encoder_optimizer.step()
+
+        if model_output.update_decoder:
+            self.decoder_optimizer.step()
+
+        if model_output.update_discriminator:
+            self.discriminator_optimizer.step()
+
+    def _schedulers_step(
+        self, encoder_metrics=None, decoder_metrics=None, discriminator_metrics=None
+    ):
         if isinstance(self.encoder_scheduler, ReduceLROnPlateau):
             self.encoder_scheduler.step(encoder_metrics)
 
         else:
             self.encoder_scheduler.step()
-        
+
         if isinstance(self.decoder_scheduler, ReduceLROnPlateau):
             self.decoder_scheduler.step(decoder_metrics)
 
@@ -290,12 +322,19 @@ class CoupledOptimizerAdversarialTrainer(BaseTrainer):
                 metrics["eval_decoder_loss"] = epoch_eval_decoder_loss
                 metrics["eval_discriminator_loss"] = epoch_eval_discriminator_loss
 
-                self._schedulers_step(encoder_metrics=epoch_eval_encoder_loss, decoder_metrics=epoch_eval_decoder_loss, discriminator_metrics=epoch_eval_discriminator_loss)
+                self._schedulers_step(
+                    encoder_metrics=epoch_eval_encoder_loss,
+                    decoder_metrics=epoch_eval_decoder_loss,
+                    discriminator_metrics=epoch_eval_discriminator_loss,
+                )
 
             else:
                 epoch_eval_loss = best_eval_loss
-                self._schedulers_step(encoder_metrics=epoch_train_encoder_loss, decoder_metrics=epoch_train_decoder_loss, discriminator_metrics=epoch_train_discriminator_loss)
-
+                self._schedulers_step(
+                    encoder_metrics=epoch_train_encoder_loss,
+                    decoder_metrics=epoch_train_decoder_loss,
+                    discriminator_metrics=epoch_train_discriminator_loss,
+                )
 
             if (
                 epoch_eval_loss < best_eval_loss
@@ -422,42 +461,6 @@ class CoupledOptimizerAdversarialTrainer(BaseTrainer):
             epoch_decoder_loss,
             epoch_discriminator_loss,
         )
-
-    def _reset_optimizers_grads(self):
-        self.encoder_optimizer.zero_grad()
-        self.decoder_optimizer.zero_grad()
-        self.discriminator_optimizer.zero_grad()
-
-    def _optimizers_step(self, model_output):
-
-        encoder_loss = model_output.encoder_loss
-        decoder_loss = model_output.decoder_loss
-        discriminator_loss = model_output.discriminator_loss
-
-        # Reset optimizers
-        if model_output.update_encoder:
-            #self.encoder_optimizer.zero_grad()
-            encoder_loss.backward(retain_graph=True)
-
-        if model_output.update_decoder:
-            #self.decoder_optimizer.zero_grad()
-            decoder_loss.backward(retain_graph=True)
-
-        if model_output.update_discriminator:
-            #self.discriminator_optimizer.zero_grad()
-            discriminator_loss.backward()
-        
-        if model_output.update_encoder:
-            self.encoder_optimizer.step()
-
-        if model_output.update_decoder:
-            # print('update dec')
-            self.decoder_optimizer.step()
-
-        if model_output.update_discriminator:
-            # print('update discr')
-            self.discriminator_optimizer.step()
-
 
     def train_step(self, epoch: int):
         """The trainer performs training loop over the train_loader.

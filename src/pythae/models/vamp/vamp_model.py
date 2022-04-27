@@ -126,9 +126,7 @@ class VAMP(VAE):
 
         log_p_z = self._log_p_z(z)
 
-        log_q_z = (-0.5 * (log_var + torch.pow(z - mu, 2) / log_var.exp())).sum(
-            dim=1
-        )
+        log_q_z = (-0.5 * (log_var + torch.pow(z - mu, 2) / log_var.exp())).sum(dim=1)
         KLD = -(log_p_z - log_q_z)
 
         return (recon_loss + KLD).mean(dim=0), recon_loss.mean(dim=0), KLD.mean(dim=0)
@@ -146,7 +144,9 @@ class VAMP(VAE):
         encoder_output = self.encoder(x)
         prior_mu, prior_log_var = (
             encoder_output.embedding,
-            torch.tanh(encoder_output.log_covariance), #needed to avoid unbounded optim
+            torch.tanh(
+                encoder_output.log_covariance
+            ),  # needed to avoid unbounded optim
         )
 
         z_expand = z.unsqueeze(1)

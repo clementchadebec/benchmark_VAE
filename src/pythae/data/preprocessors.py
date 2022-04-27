@@ -14,8 +14,9 @@ from typing import Optional, Union
 
 import numpy as np
 import torch
-from pythae.data.datasets import BaseDataset, DoubleBatchDataset
 from typing_extensions import Literal
+
+from pythae.data.datasets import BaseDataset, DoubleBatchDataset
 
 logger = logging.getLogger(__name__)
 

@@ -195,7 +195,7 @@ class VAEGAN(VAE):
         gen_prior = self.decoder(z_prior).reconstruction
 
         true_adversarial_score = self.discriminator(x).embedding.flatten()
-        #gen_adversarial_score = self.discriminator(recon_x).embedding.flatten()
+        # gen_adversarial_score = self.discriminator(recon_x).embedding.flatten()
         prior_adversarial_score = self.discriminator(gen_prior).embedding.flatten()
 
         true_labels = torch.ones(N, requires_grad=False).to(self.device)

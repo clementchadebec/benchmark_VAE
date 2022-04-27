@@ -225,13 +225,21 @@ class BaseTrainer:
 
         return inputs_on_device
 
+    def _reset_optimizers_grads(self):
+        self.optimizer.zero_grad()
+
+    def _optimizers_step(self, model_output=None):
+        loss = model_output.loss
+
+        loss.backward()
+        self.optimizer.step()
+
     def _schedulers_step(self, metrics=None):
         if isinstance(self.scheduler, ReduceLROnPlateau):
             self.scheduler.step(metrics)
 
         else:
             self.scheduler.step()
-
 
     def train(self, log_output_dir: str = None):
         """This function is the main training function
@@ -431,16 +439,6 @@ class BaseTrainer:
         epoch_loss /= len(self.eval_loader)
 
         return epoch_loss
-
-    def _reset_optimizers_grads(self):
-        self.optimizer.zero_grad()
-
-    def _optimizers_step(self, model_output=None):
-        loss = model_output.loss
-
-        loss.backward()
-        self.optimizer.step()
-
 
     def train_step(self, epoch: int):
         """The trainer performs training loop over the train_loader.
