@@ -97,7 +97,7 @@ ConvNets
 .. autosummary::
    ~pythae.models.nn.benchmarks.celeba.Encoder_Conv_AE_CELEBA
    ~pythae.models.nn.benchmarks.celeba.Encoder_Conv_VAE_CELEBA
-   ~pythae.models.nn.benchmarks.celeba.Encoder_Conv_VAE_CELEBA
+   ~pythae.models.nn.benchmarks.celeba.Encoder_Conv_SVAE_CELEBA
    ~pythae.models.nn.benchmarks.celeba.Decoder_Conv_AE_CELEBA
    ~pythae.models.nn.benchmarks.celeba.Discriminator_Conv_CELEBA
    :nosignatures:

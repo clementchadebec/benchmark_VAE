@@ -1,5 +1,5 @@
 ********************************
-CIFAR ResNets
+ResNets
 ********************************
 
 .. autoclass:: pythae.models.nn.benchmarks.cifar.Encoder_ResNet_AE_CIFAR

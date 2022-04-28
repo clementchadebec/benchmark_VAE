@@ -15,7 +15,7 @@ import sphinx_rtd_theme
 
 # -- Path setup --------------------------------------------------------------
 
-needs_sphinx = "1.6"
+needs_sphinx = "1.3"
 
 sys.path.insert(0, os.path.abspath("../../src/"))
 
@@ -31,7 +31,7 @@ author = "Clement Chadebec"
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = extensions = [
+extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
     "sphinx.ext.doctest",
@@ -41,8 +41,11 @@ extensions = extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
     "sphinx.ext.autosectionlabel",
-    "sphinxcontrib.bibtex",
+    "sphinxcontrib.bibtex"
 ]
+
+
+suppress_warnings = ['autosectionlabel.*']
 
 bibtex_bibfiles = ["references.bib"]
 

@@ -59,6 +59,8 @@ class Encoder_ResNet_AE_MNIST(BaseEncoder):
 
     and then passed to a :class:`pythae.models` instance
 
+    .. code-block::
+
         >>> from pythae.models import AE
         >>> model = AE(model_config=model_config, encoder=encoder)
         >>> model.encoder == encoder
@@ -485,6 +487,7 @@ class Encoder_ResNet_VQVAE_MNIST(BaseEncoder):
         ...   )
         ...   (pre_qantized): Conv2d(128, 16, kernel_size=(1, 1), stride=(1, 1))
         ... )
+
     and then passed to a :class:`pythae.models` instance
 
         >>> from pythae.models import VQVAE
