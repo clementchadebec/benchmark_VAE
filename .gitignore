@@ -31,8 +31,10 @@ examples/scripts/reproducibility/*
 wandb
 examples/notebooks/dummy_output_dir/
 examples/notebooks/models_training/dummy_output_dir/
-
-
+logs/
+downloads_data/
+*wandb*
+*.slurm
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
