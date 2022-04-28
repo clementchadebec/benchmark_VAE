@@ -35,6 +35,7 @@ logs/
 downloads_data/
 *wandb*
 *.slurm
+configs
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
