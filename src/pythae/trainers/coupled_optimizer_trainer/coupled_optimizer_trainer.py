@@ -89,7 +89,7 @@ class CoupledOptimizerTrainer(BaseTrainer):
             )
 
         if decoder_scheduler is None:
-            decoder_scheduler = self.set_default_scheduler(model, encoder_optimizer)
+            decoder_scheduler = self.set_default_scheduler(model, decoder_optimizer)
 
         self.encoder_optimizer = encoder_optimizer
         self.decoder_optimizer = decoder_optimizer

@@ -442,14 +442,6 @@ class CoupledOptimizerAdversarialTrainer(BaseTrainer):
 
             self.callback_handler.on_eval_step_end(training_config=self.training_config)
 
-            # tepoch.set_postfix(
-            #    {
-            #        'encoder_loss': epoch_encoder_loss / (i+1),
-            #        'decoder_loss': epoch_decoder_loss / (i+1),
-            #        'discriminator_loss': epoch_discriminator_loss / (i+1)
-            #    }
-            # )
-
         epoch_encoder_loss /= len(self.eval_loader)
         epoch_decoder_loss /= len(self.eval_loader)
         epoch_discriminator_loss /= len(self.eval_loader)
