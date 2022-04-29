@@ -543,17 +543,17 @@ class BaseTrainer:
 
         model.eval()
 
-        with torch.no_grad():
+        #with torch.no_grad():
 
-            inputs = self.eval_loader.dataset[
-                : min(self.eval_loader.dataset.data.shape[0], 10)
-            ]
-            inputs = self._set_inputs_to_device(inputs)
+        inputs = self.eval_loader.dataset[
+            : min(self.eval_loader.dataset.data.shape[0], 10)
+        ]
+        inputs = self._set_inputs_to_device(inputs)
 
-            model_out = model(inputs)
-            reconstructions = model_out.recon_x.cpu().detach()
-            z_enc = model_out.z
-            z = torch.randn_like(z_enc)
-            normal_generation = model.decoder(z).reconstruction.detach().cpu()
+        model_out = model(inputs)
+        reconstructions = model_out.recon_x.cpu().detach()
+        z_enc = model_out.z
+        z = torch.randn_like(z_enc)
+        normal_generation = model.decoder(z).reconstruction.detach().cpu()
 
         return inputs["data"], reconstructions, normal_generation
