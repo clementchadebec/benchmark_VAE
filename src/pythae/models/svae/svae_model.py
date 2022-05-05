@@ -179,7 +179,7 @@ class SVAE(VAE):
 
         i = 0
 
-        while stopping_mask.sum() > 0:
+        while stopping_mask.sum() > 0 and i < 1000:
 
             i += 1
 
