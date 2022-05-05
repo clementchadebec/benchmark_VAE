@@ -15,6 +15,7 @@ from tests.data.custom_architectures import *
 
 PATH = os.path.dirname(os.path.abspath(__file__))
 
+device = "cuda" if torch.cuda.is_available() else "cpu"
 
 @pytest.fixture
 def train_dataset():
@@ -455,10 +456,8 @@ class Test_Main_Training:
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
-        trainer._reset_optimizers_grads()
-
         model_output = ae(
-                {"data": train_dataset.data})
+                {"data": train_dataset.data.to(device)})
 
         model_output.update_encoder = False
         model_output.update_decoder = False
@@ -476,10 +475,8 @@ class Test_Main_Training:
             ]
         )
 
-        trainer._reset_optimizers_grads()
-
         model_output = ae(
-                {"data": train_dataset.data})
+                {"data": train_dataset.data.to(device)})
 
         model_output.update_encoder = bool(optimizer_updates[0])
         model_output.update_decoder = bool(optimizer_updates[1])
@@ -524,10 +521,8 @@ class Test_Main_Training:
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
-        trainer._reset_optimizers_grads()
-
         model_output = ae(
-                {"data": train_dataset.data})
+                {"data": train_dataset.data.to(device)})
 
         model_output.update_encoder = bool(optimizer_updates[0])
         model_output.update_decoder = bool(optimizer_updates[1])

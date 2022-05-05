@@ -479,8 +479,6 @@ class CoupledOptimizerAdversarialTrainer(BaseTrainer):
 
             inputs = self._set_inputs_to_device(inputs)
 
-            self._reset_optimizers_grads()
-
             model_output = self.model(
                 inputs, epoch=epoch, dataset_size=len(self.train_loader.dataset)
             )
