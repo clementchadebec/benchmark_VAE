@@ -155,11 +155,6 @@ class CoupledOptimizerAdversarialTrainer(BaseTrainer):
 
         return optimizer
 
-    def _reset_optimizers_grads(self):
-        self.encoder_optimizer.zero_grad()
-        self.decoder_optimizer.zero_grad()
-        self.discriminator_optimizer.zero_grad()
-
     def _optimizers_step(self, model_output):
 
         encoder_loss = model_output.encoder_loss
@@ -168,12 +163,15 @@ class CoupledOptimizerAdversarialTrainer(BaseTrainer):
 
         # Reset optimizers
         if model_output.update_encoder:
+            self.encoder_optimizer.zero_grad()
             encoder_loss.backward(retain_graph=True)
 
         if model_output.update_decoder:
+            self.decoder_optimizer.zero_grad()
             decoder_loss.backward(retain_graph=True)
 
         if model_output.update_discriminator:
+            self.discriminator_optimizer.zero_grad()
             discriminator_loss.backward()
 
         if model_output.update_encoder:

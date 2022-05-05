@@ -125,16 +125,15 @@ class AdversarialTrainer(BaseTrainer):
 
         return optimizer
 
-    def _reset_optimizers_grads(self):
-        self.autoencoder_optimizer.zero_grad()
-        self.discriminator_optimizer.zero_grad()
-
     def _optimizers_step(self, model_output):
 
         autoencoder_loss = model_output.autoencoder_loss
         discriminator_loss = model_output.discriminator_loss
 
+        self.autoencoder_optimizer.zero_grad()
         autoencoder_loss.backward(retain_graph=True)
+
+        self.discriminator_optimizer.zero_grad()
         discriminator_loss.backward()
 
         self.autoencoder_optimizer.step()
@@ -412,8 +411,6 @@ class AdversarialTrainer(BaseTrainer):
             )
 
             inputs = self._set_inputs_to_device(inputs)
-
-            self._reset_optimizers_grads()
 
             model_output = self.model(
                 inputs, epoch=epoch, dataset_size=len(self.train_loader.dataset)

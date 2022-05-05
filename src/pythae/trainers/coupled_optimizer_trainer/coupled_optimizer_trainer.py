@@ -118,13 +118,12 @@ class CoupledOptimizerTrainer(BaseTrainer):
 
         return optimizer
 
-    def _reset_optimizers_grads(self):
-        self.encoder_optimizer.zero_grad()
-        self.decoder_optimizer.zero_grad()
-
     def _optimizers_step(self, model_output):
 
         loss = model_output.loss
+
+        self.encoder_optimizer.zero_grad()
+        self.decoder_optimizer.zero_grad()
 
         loss.backward()
 

@@ -225,12 +225,10 @@ class BaseTrainer:
 
         return inputs_on_device
 
-    def _reset_optimizers_grads(self):
-        self.optimizer.zero_grad()
-
     def _optimizers_step(self, model_output=None):
         loss = model_output.loss
 
+        self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
 
@@ -463,8 +461,6 @@ class BaseTrainer:
             )
 
             inputs = self._set_inputs_to_device(inputs)
-
-            self._reset_optimizers_grads()
 
             model_output = self.model(
                 inputs, epoch=epoch, dataset_size=len(self.train_loader.dataset)
