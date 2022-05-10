@@ -79,8 +79,8 @@ class IWAE(VAE):
             reconstruction_loss=recon_loss,
             reg_loss=kld,
             loss=loss,
-            recon_x=recon_x,
-            z=z,
+            recon_x=recon_x.reshape(x.shape[0], self.n_samples, -1)[:, 0, :].reshape_as(x),
+            z=z[:, 0, :].reshape(-1, self.latent_dim),
         )
 
         return output

@@ -380,13 +380,42 @@ class Test_RAE_GP_Training:
 
         step_1_model_state_dict = deepcopy(trainer.model.state_dict())
 
-        # check that weights were updated
+        # check that weights were not updated
         assert all(
             [
                 torch.equal(start_model_state_dict[key], step_1_model_state_dict[key])
                 for key in start_model_state_dict.keys()
             ]
         )
+
+    def test_rae_predict_step(
+        self, rae, train_dataset, training_configs, optimizers
+    ):
+        trainer = BaseTrainer(
+            model=rae,
+            train_dataset=train_dataset,
+            eval_dataset=train_dataset,
+            training_config=training_configs,
+            optimizer=optimizers,
+        )
+
+        start_model_state_dict = deepcopy(trainer.model.state_dict())
+
+        inputs, recon, generated = trainer.predict(trainer.model)
+
+        step_1_model_state_dict = deepcopy(trainer.model.state_dict())
+
+        # check that weights were not updated
+        assert all(
+            [
+                torch.equal(start_model_state_dict[key], step_1_model_state_dict[key])
+                for key in start_model_state_dict.keys()
+            ]
+        )
+
+        assert torch.equal(inputs.cpu(), train_dataset.data.cpu())
+        assert recon.shape == inputs.shape
+        assert generated.shape == inputs.shape 
 
     def test_rae_main_train_loop(
         self, tmpdir, rae, train_dataset, training_configs, optimizers

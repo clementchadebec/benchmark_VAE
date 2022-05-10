@@ -424,13 +424,42 @@ class Test_VAE_Training:
 
         step_1_model_state_dict = deepcopy(trainer.model.state_dict())
 
-        # check that weights were updated
+        # check that weights were not updated
         assert all(
             [
                 torch.equal(start_model_state_dict[key], step_1_model_state_dict[key])
                 for key in start_model_state_dict.keys()
             ]
         )
+
+    def test_vae_predict_step(
+        self, vae, train_dataset, training_configs, optimizers
+    ):
+        trainer = BaseTrainer(
+            model=vae,
+            train_dataset=train_dataset,
+            eval_dataset=train_dataset,
+            training_config=training_configs,
+            optimizer=optimizers,
+        )
+
+        start_model_state_dict = deepcopy(trainer.model.state_dict())
+
+        inputs, recon, generated = trainer.predict(trainer.model)
+
+        step_1_model_state_dict = deepcopy(trainer.model.state_dict())
+
+        # check that weights were not updated
+        assert all(
+            [
+                torch.equal(start_model_state_dict[key], step_1_model_state_dict[key])
+                for key in start_model_state_dict.keys()
+            ]
+        )
+
+        assert torch.equal(inputs.cpu(), train_dataset.data.cpu())
+        assert recon.shape == inputs.shape
+        assert generated.shape == inputs.shape 
 
     def test_vae_main_train_loop(
         self, tmpdir, vae, train_dataset, training_configs, optimizers
