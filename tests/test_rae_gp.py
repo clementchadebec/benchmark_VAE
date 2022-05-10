@@ -7,7 +7,7 @@ from torch.optim import SGD, Adadelta, Adagrad, Adam, RMSprop
 
 from pythae.customexception import BadInheritanceError
 from pythae.models.base.base_utils import ModelOutput
-from pythae.models import RAE_GP, RAE_GP_Config
+from pythae.models import RAE_GP, RAE_GP_Config, AutoModel
 
 from pythae.trainers import BaseTrainer, BaseTrainerConfig
 from pythae.pipelines import TrainingPipeline
@@ -121,7 +121,7 @@ class Test_Model_Saving:
         assert set(os.listdir(dir_path)) == set(["model_config.json", "model.pt"])
 
         # reload model
-        model_rec = RAE_GP.load_from_folder(dir_path)
+        model_rec = AutoModel.load_from_folder(dir_path)
 
         # check configs are the same
         assert model_rec.model_config.__dict__ == model.model_config.__dict__
@@ -149,7 +149,7 @@ class Test_Model_Saving:
         )
 
         # reload model
-        model_rec = RAE_GP.load_from_folder(dir_path)
+        model_rec = AutoModel.load_from_folder(dir_path)
 
         # check configs are the same
         assert model_rec.model_config.__dict__ == model.model_config.__dict__
@@ -177,7 +177,7 @@ class Test_Model_Saving:
         )
 
         # reload model
-        model_rec = RAE_GP.load_from_folder(dir_path)
+        model_rec = AutoModel.load_from_folder(dir_path)
 
         # check configs are the same
         assert model_rec.model_config.__dict__ == model.model_config.__dict__
@@ -207,7 +207,7 @@ class Test_Model_Saving:
         )
 
         # reload model
-        model_rec = RAE_GP.load_from_folder(dir_path)
+        model_rec = AutoModel.load_from_folder(dir_path)
 
         # check configs are the same
         assert model_rec.model_config.__dict__ == model.model_config.__dict__
@@ -236,25 +236,25 @@ class Test_Model_Saving:
 
         # check raises decoder.pkl is missing
         with pytest.raises(FileNotFoundError):
-            model_rec = RAE_GP.load_from_folder(dir_path)
+            model_rec = AutoModel.load_from_folder(dir_path)
 
         os.remove(os.path.join(dir_path, "encoder.pkl"))
 
         # check raises encoder.pkl is missing
         with pytest.raises(FileNotFoundError):
-            model_rec = RAE_GP.load_from_folder(dir_path)
+            model_rec = AutoModel.load_from_folder(dir_path)
 
         os.remove(os.path.join(dir_path, "model.pt"))
 
         # check raises encoder.pkl is missing
         with pytest.raises(FileNotFoundError):
-            model_rec = RAE_GP.load_from_folder(dir_path)
+            model_rec = AutoModel.load_from_folder(dir_path)
 
         os.remove(os.path.join(dir_path, "model_config.json"))
 
         # check raises encoder.pkl is missing
         with pytest.raises(FileNotFoundError):
-            model_rec = RAE_GP.load_from_folder(dir_path)
+            model_rec = AutoModel.load_from_folder(dir_path)
 
 
 class Test_Model_forward:
@@ -502,7 +502,7 @@ class Test_RAE_GP_Training:
         )
 
         # check reload full model
-        model_rec = RAE_GP.load_from_folder(os.path.join(checkpoint_dir))
+        model_rec = AutoModel.load_from_folder(os.path.join(checkpoint_dir))
 
         assert all(
             [
@@ -645,7 +645,7 @@ class Test_RAE_GP_Training:
             assert not "encoder.pkl" in files_list
 
         # check reload full model
-        model_rec = RAE_GP.load_from_folder(os.path.join(final_dir))
+        model_rec = AutoModel.load_from_folder(os.path.join(final_dir))
 
         assert all(
             [
@@ -705,7 +705,7 @@ class Test_RAE_GP_Training:
             assert not "encoder.pkl" in files_list
 
         # check reload full model
-        model_rec = RAE_GP.load_from_folder(os.path.join(final_dir))
+        model_rec = AutoModel.load_from_folder(os.path.join(final_dir))
 
         assert all(
             [
