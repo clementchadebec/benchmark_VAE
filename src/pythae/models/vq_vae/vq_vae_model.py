@@ -5,7 +5,7 @@ import torch
 import torch.nn.functional as F
 
 from ...data.datasets import BaseDataset
-from ...models import AE
+from ..ae import AE
 from ..base.base_utils import ModelOutput
 from ..nn import BaseDecoder, BaseEncoder
 from .vq_vae_config import VQVAEConfig

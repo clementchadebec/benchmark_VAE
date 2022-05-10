@@ -1,6 +1,6 @@
 from pydantic.dataclasses import dataclass
 
-from ...models import AEConfig
+from ..ae import AEConfig
 
 
 @dataclass
