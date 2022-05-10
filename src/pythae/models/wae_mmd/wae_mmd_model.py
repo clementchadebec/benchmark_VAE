@@ -91,16 +91,16 @@ class WAE_MMD(AE):
             k_z_prior = self.imq_kernel(z_prior, z_prior)
             k_cross = self.imq_kernel(z, z_prior)
 
-        mmd_z = (k_z - k_z.diag()).sum() / (N - 1)
-        mmd_z_prior = (k_z_prior - k_z_prior.diag()).sum() / (N - 1)
-        mmd_cross = k_cross.sum() / N
+        mmd_z = (k_z - k_z.diag().diag()).sum() / ((N - 1) * N)
+        mmd_z_prior = (k_z_prior - k_z_prior.diag().diag()).sum() / ((N - 1) * N)
+        mmd_cross = k_cross.sum() / (N**2)
 
         mmd_loss = mmd_z + mmd_z_prior - 2 * mmd_cross
 
         return (
-            (recon_loss + self.model_config.reg_weight * mmd_loss).mean(dim=0),
+            recon_loss.mean(dim=0) + self.model_config.reg_weight * mmd_loss,
             (recon_loss).mean(dim=0),
-            mmd_loss / N,
+            mmd_loss,
         )
 
     def imq_kernel(self, z1, z2):
