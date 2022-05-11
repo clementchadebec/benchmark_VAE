@@ -14,9 +14,9 @@ and named likewise the model. The following modules can be found in this folder:
 - *modelname_utils.py* (optional): A module where utils methods are stored.
 """
 
-from .auto_model import AutoModel
 from .adversarial_ae import Adversarial_AE, Adversarial_AE_Config
 from .ae import AE, AEConfig
+from .auto_model import AutoModel
 from .base import BaseAE, BaseAEConfig
 from .beta_tc_vae import BetaTCVAE, BetaTCVAEConfig
 from .beta_vae import BetaVAE, BetaVAEConfig

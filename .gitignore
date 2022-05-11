@@ -36,6 +36,7 @@ downloads_data/
 *wandb*
 *.slurm
 configs
+examples/scripts/generation_jz.py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

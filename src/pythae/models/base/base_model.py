@@ -6,7 +6,6 @@ import dill
 import torch
 import torch.nn as nn
 
-
 from ...customexception import BadInheritanceError
 from ...data.datasets import BaseDataset
 from ..nn import BaseDecoder, BaseEncoder

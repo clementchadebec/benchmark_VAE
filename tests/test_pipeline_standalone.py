@@ -39,6 +39,9 @@ class Test_Pipeline_Standalone:
         assert isinstance(pipe.model, VAE)
 
     def test_generation_pipeline(self, tmpdir, train_dataset):
+
+        with pytest.raises(NotImplementedError):
+            pipe = GenerationPipeline(model=VAE(VAEConfig(input_dim=(1, 2, 3))), sampler_config=BaseTrainerConfig())
         
         tmpdir.mkdir("dummy_folder")
         dir_path = os.path.join(tmpdir, "dummy_folder")

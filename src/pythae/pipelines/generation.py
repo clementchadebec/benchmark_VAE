@@ -6,8 +6,8 @@ import torch
 
 from ..data.preprocessors import DataProcessor
 from ..models import BaseAE
-from ..trainers import BaseTrainerConfig
 from ..samplers import *
+from ..trainers import BaseTrainerConfig
 from .base_pipeline import Pipeline
 
 logger = logging.getLogger(__name__)
@@ -51,6 +51,7 @@ class GenerationPipeline(Pipeline):
 
         if sampler_config.name == "NormalSamplerConfig":
             from ..samplers.normal_sampling import NormalSampler
+
             sampler = NormalSampler(model=model, sampler_config=sampler_config)
 
         elif sampler_config.name == "GaussianMixtureSamplerConfig":
@@ -80,8 +81,9 @@ class GenerationPipeline(Pipeline):
             sampler = VAMPSampler(model=model, sampler_config=sampler_config)
 
         elif sampler_config.name == "HypersphereUniformSamplerConfig":
-            sampler = HypersphereUniformSampler(model=model, sampler_config=sampler_config)
-
+            sampler = HypersphereUniformSampler(
+                model=model, sampler_config=sampler_config
+            )
 
         else:
             raise NotImplementedError(
@@ -89,8 +91,6 @@ class GenerationPipeline(Pipeline):
                 f"is written correctly. Got '{sampler_config.name}'."
             )
 
-        self.data_processor = DataProcessor()
-        self.model = model
         self.sampler = sampler
 
     def __call__(
@@ -102,7 +102,7 @@ class GenerationPipeline(Pipeline):
         save_sampler_config: bool = False,
         train_data: Union[np.ndarray, torch.Tensor] = None,
         eval_data: Union[np.ndarray, torch.Tensor] = None,
-        training_config: BaseTrainerConfig = None
+        training_config: BaseTrainerConfig = None,
     ):
         """
         Launch the model training on the provided data.

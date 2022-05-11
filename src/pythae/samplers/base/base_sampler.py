@@ -90,4 +90,3 @@ class BaseSampler:
 
         img = img.astype("uint8")
         imwrite(os.path.join(dir_path, f"{img_name}"), img)
-

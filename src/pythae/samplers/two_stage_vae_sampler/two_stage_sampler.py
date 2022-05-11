@@ -207,9 +207,12 @@ class TwoStageVAESampler(BaseSampler):
             eval_data = torch.cat(z)
             eval_dataset = data_processor.to_dataset(eval_data)
 
-
         trainer = BaseTrainer(
-            model=self.second_vae, train_dataset=train_dataset, eval_dataset=eval_dataset, training_config=training_config)
+            model=self.second_vae,
+            train_dataset=train_dataset,
+            eval_dataset=eval_dataset,
+            training_config=training_config,
+        )
 
         trainer.train()
 

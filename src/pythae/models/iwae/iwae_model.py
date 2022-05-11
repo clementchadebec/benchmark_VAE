@@ -79,7 +79,9 @@ class IWAE(VAE):
             reconstruction_loss=recon_loss,
             reg_loss=kld,
             loss=loss,
-            recon_x=recon_x.reshape(x.shape[0], self.n_samples, -1)[:, 0, :].reshape_as(x),
+            recon_x=recon_x.reshape(x.shape[0], self.n_samples, -1)[:, 0, :].reshape_as(
+                x
+            ),
             z=z[:, 0, :].reshape(-1, self.latent_dim),
         )
 
@@ -176,7 +178,7 @@ class IWAE(VAE):
                 log_q_z_given_x = -0.5 * (
                     log_var + (z - mu) ** 2 / torch.exp(log_var)
                 ).sum(dim=-1)
-                log_p_z = -0.5 * (z ** 2).sum(dim=-1)
+                log_p_z = -0.5 * (z**2).sum(dim=-1)
 
                 recon_x = self.decoder(z.reshape(-1, self.latent_dim))["reconstruction"]
 

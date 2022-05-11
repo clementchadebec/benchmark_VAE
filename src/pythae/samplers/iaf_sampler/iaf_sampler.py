@@ -90,7 +90,7 @@ class IAFSampler(BaseSampler):
 
         train_data = torch.cat(z)
         train_dataset = data_processor.to_dataset(train_data)
-        
+
         eval_dataset = None
 
         if eval_data is not None:
@@ -117,7 +117,11 @@ class IAFSampler(BaseSampler):
             eval_dataset = data_processor.to_dataset(eval_data)
 
         trainer = BaseTrainer(
-            model=self.flow_contained_model, train_dataset=train_dataset, eval_dataset=eval_dataset, training_config=training_config)
+            model=self.flow_contained_model,
+            train_dataset=train_dataset,
+            eval_dataset=eval_dataset,
+            training_config=training_config,
+        )
 
         trainer.train()
 

@@ -539,7 +539,7 @@ class BaseTrainer:
 
         model.eval()
 
-        #with torch.no_grad():
+        # with torch.no_grad():
 
         inputs = self.eval_loader.dataset[
             : min(self.eval_loader.dataset.data.shape[0], 10)

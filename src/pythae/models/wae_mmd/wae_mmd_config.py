@@ -19,7 +19,7 @@ class WAE_MMD_Config(AEConfig):
         reg_weight (float): The weight to apply between reconstruction and Maximum Mean
             Discrepancy. Default: 3e-2
         kernel_bandwidth (float): The kernel bandwidth. Default: 1
-        scales (list): The scales to apply if using multi-scale imq kernels. If None, use a unique 
+        scales (list): The scales to apply if using multi-scale imq kernels. If None, use a unique
             imq kernel. Default: [.1, .2, .5, 1., 2., 5, 10.].
     """
 

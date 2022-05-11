@@ -20,7 +20,7 @@ class INFOVAE_MMD_Config(VAEConfig):
         alpha (float): The alpha factor balancing the weigth: Default: 0.5
         lbd (float): The lambda factor. Default: 3e-2
         kernel_bandwidth (float): The kernel bandwidth. Default: 1
-        scales (list): The scales to apply if using multi-scale imq kernels. If None, use a unique 
+        scales (list): The scales to apply if using multi-scale imq kernels. If None, use a unique
             imq kernel. Default: [.1, .2, .5, 1., 2., 5, 10.].
     """
 

@@ -1,5 +1,5 @@
-import os
 import json
+import os
 
 import torch.nn as nn
 
@@ -27,7 +27,6 @@ from ..wae_mmd import WAE_MMD
 
 
 class AutoModel(nn.Module):
-
     def __init__(self) -> None:
         super().__init__()
 
@@ -49,8 +48,8 @@ class AutoModel(nn.Module):
                 ``decoder.pkl``) if a custom encoder (resp. decoder) was provided
         """
 
-        with open(os.path.join(dir_path, 'model_config.json')) as f:
-            model_name = json.load(f)['name']
+        with open(os.path.join(dir_path, "model_config.json")) as f:
+            model_name = json.load(f)["name"]
 
         if model_name == "Adversarial_AE_Config":
             model = Adversarial_AE.load_from_folder(dir_path=dir_path)
@@ -63,7 +62,7 @@ class AutoModel(nn.Module):
 
         elif model_name == "BetaVAEConfig":
             model = BetaVAE.load_from_folder(dir_path=dir_path)
-        
+
         elif model_name == "DisentangledBetaVAEConfig":
             model = DisentangledBetaVAE.load_from_folder(dir_path=dir_path)
 
@@ -75,7 +74,7 @@ class AutoModel(nn.Module):
 
         elif model_name == "INFOVAE_MMD_Config":
             model = INFOVAE_MMD.load_from_folder(dir_path=dir_path)
-        
+
         elif model_name == "IWAEConfig":
             model = IWAE.load_from_folder(dir_path=dir_path)
 
@@ -84,7 +83,7 @@ class AutoModel(nn.Module):
 
         elif model_name == "RAE_GP_Config":
             model = RAE_GP.load_from_folder(dir_path=dir_path)
-    
+
         elif model_name == "RAE_L2_Config":
             model = RAE_L2.load_from_folder(dir_path=dir_path)
 
@@ -99,7 +98,7 @@ class AutoModel(nn.Module):
 
         elif model_name == "VAEGANConfig":
             model = VAEGAN.load_from_folder(dir_path=dir_path)
-        
+
         elif model_name == "VAE_IAF_Config":
             model = VAE_IAF.load_from_folder(dir_path=dir_path)
 
@@ -116,7 +115,9 @@ class AutoModel(nn.Module):
             model = WAE_MMD.load_from_folder(dir_path=dir_path)
 
         else:
-            raise NameError('Cannot reload automatically the model... '
-            f'The model name in the `model_config.json may be corrupted. Got {model_name}')
+            raise NameError(
+                "Cannot reload automatically the model... "
+                f"The model name in the `model_config.json may be corrupted. Got {model_name}"
+            )
 
         return model
