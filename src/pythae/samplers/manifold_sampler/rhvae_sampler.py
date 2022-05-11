@@ -1,7 +1,7 @@
 import torch
 
 from ...models import RHVAE
-from ..base.base_sampler import BaseSampler
+from ..base import BaseSampler
 from .rhvae_sampler_config import RHVAESamplerConfig
 
 

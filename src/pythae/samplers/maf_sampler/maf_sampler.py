@@ -8,8 +8,7 @@ from torch.utils.data import DataLoader
 from ...data.preprocessors import DataProcessor
 from ...models import BaseAE
 from ...models.normalizing_flows import MAF, MAFConfig, NFModel
-from ...pipelines import TrainingPipeline
-from ...trainers import BaseTrainerConfig
+from ...trainers import BaseTrainer, BaseTrainerConfig
 from ..base.base_sampler import BaseSampler
 from .maf_sampler_config import MAFSamplerConfig
 
@@ -90,6 +89,9 @@ class MAFSampler(BaseSampler):
                 z.append(mean_z)
 
         train_data = torch.cat(z)
+        train_dataset = data_processor.to_dataset(train_data)
+        
+        eval_dataset = None
 
         if eval_data is not None:
 
@@ -112,18 +114,18 @@ class MAFSampler(BaseSampler):
                     z.append(mean_z)
 
             eval_data = torch.cat(z)
+            eval_dataset = data_processor.to_dataset(eval_data)
 
-        pipeline = TrainingPipeline(
-            training_config=training_config, model=self.flow_contained_model
-        )
+        trainer = BaseTrainer(
+            model=self.flow_contained_model, train_dataset=train_dataset, eval_dataset=eval_dataset, training_config=training_config)
 
-        pipeline(train_data=train_data, eval_data=eval_data)
+        trainer.train()
 
         self.maf_model = MAF.load_from_folder(
-            os.path.join(pipeline.trainer.training_dir, "final_model")
+            os.path.join(trainer.training_dir, "final_model")
         ).to(self.device)
 
-        shutil.rmtree(pipeline.trainer.training_dir)
+        shutil.rmtree(trainer.training_dir)
 
         self.is_fitted = True
 

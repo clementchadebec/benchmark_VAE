@@ -5,8 +5,9 @@ import torch
 from copy import deepcopy
 
 from pythae.models import VAE, VAEConfig, AE, AEConfig
-from pythae.samplers import IAFSampler, IAFSamplerConfig
+from pythae.samplers import NormalSampler, NormalSamplerConfig, IAFSampler, IAFSamplerConfig
 from pythae.trainers import BaseTrainerConfig
+from pythae.pipelines import GenerationPipeline
 
 PATH = os.path.dirname(os.path.abspath(__file__))
 
@@ -175,3 +176,55 @@ class Test_IAFSampler_Sampling:
         assert gen_samples.shape[0] == num_samples
         assert len(os.listdir(dir_path)) == num_samples + 1
         assert "sampler_config.json" in os.listdir(dir_path)
+
+    def test_generation_pipeline(
+        self, tmpdir, dummy_data, model, sampler_config, num_sample_and_batch_size
+    ):
+
+        dir_path = os.path.join(tmpdir, "dummy_folder1")
+        num_samples, batch_size = (
+            num_sample_and_batch_size[0],
+            num_sample_and_batch_size[1],
+        )
+
+        pipe = GenerationPipeline(model=model, sampler_config=None)
+
+        assert isinstance(pipe.sampler, NormalSampler)
+        assert pipe.sampler.sampler_config == NormalSamplerConfig()
+
+        gen_data = pipe(num_samples=num_samples,
+            batch_size=batch_size,
+            output_dir=dir_path,
+            return_gen=True,
+            save_sampler_config=True,
+            train_data=dummy_data,
+            eval_data=None
+        )
+
+        assert tuple(gen_data.shape) == (num_samples,) + tuple(model.model_config.input_dim)
+        assert len(os.listdir(dir_path)) == num_samples + 1
+        assert "sampler_config.json" in os.listdir(dir_path)
+
+        dir_path = os.path.join(tmpdir, "dummy_folder2")
+
+        pipe = GenerationPipeline(model=model, sampler_config=sampler_config)
+
+        if sampler_config is None:
+            assert isinstance(pipe.sampler, NormalSampler)
+
+        else:
+            assert isinstance(pipe.sampler, IAFSampler)
+            assert pipe.sampler.sampler_config == sampler_config
+
+        gen_data = pipe(num_samples=num_samples,
+            batch_size=batch_size,
+            output_dir=dir_path,
+            return_gen=False,
+            save_sampler_config=False,
+            train_data=dummy_data,
+            eval_data=dummy_data
+        )
+
+        assert gen_data is None
+        assert "sampler_config.json" not in os.listdir(dir_path)
+        assert len(os.listdir(dir_path)) == num_samples

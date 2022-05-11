@@ -8,8 +8,7 @@ from torch.utils.data import DataLoader
 from ...data.preprocessors import DataProcessor
 from ...models import VQVAE
 from ...models.normalizing_flows import PixelCNN, PixelCNNConfig
-from ...pipelines import TrainingPipeline
-from ...trainers import BaseTrainerConfig
+from ...trainers import BaseTrainer, BaseTrainerConfig
 from ..base.base_sampler import BaseSampler
 from .pixelcnn_sampler_config import PixelCNNSamplerConfig
 
@@ -94,6 +93,9 @@ class PixelCNNSampler(BaseSampler):
                 )
 
         train_data = torch.cat(z)
+        train_dataset = data_processor.to_dataset(train_data)
+        
+        eval_dataset = None
 
         if eval_data is not None:
 
@@ -121,18 +123,18 @@ class PixelCNNSampler(BaseSampler):
                     )
 
             eval_data = torch.cat(z)
+            eval_dataset = data_processor.to_dataset(eval_data)
 
-        pipeline = TrainingPipeline(
-            training_config=training_config, model=self.pixelcnn_model
-        )
+        trainer = BaseTrainer(
+            model=self.pixelcnn_model, train_dataset=train_dataset, eval_dataset=eval_dataset, training_config=training_config)
 
-        pipeline(train_data=train_data, eval_data=eval_data)
+        trainer.train()
 
         self.pixelcnn_model = PixelCNN.load_from_folder(
-            os.path.join(pipeline.trainer.training_dir, "final_model")
+            os.path.join(trainer.training_dir, "final_model")
         ).to(self.device)
 
-        shutil.rmtree(pipeline.trainer.training_dir)
+        shutil.rmtree(trainer.training_dir)
 
         self.is_fitted = True
 

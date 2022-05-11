@@ -1,7 +1,8 @@
 import torch
 
 from ...models import VAMP
-from ...samplers import BaseSampler, BaseSamplerConfig
+from ..base import BaseSampler
+from .vamp_sampler_config import VAMPSamplerConfig
 
 
 class VAMPSampler(BaseSampler):
@@ -14,9 +15,12 @@ class VAMPSampler(BaseSampler):
 
     """
 
-    def __init__(self, model: VAMP, sampler_config: BaseSamplerConfig = None):
+    def __init__(self, model: VAMP, sampler_config: VAMPSamplerConfig = None):
 
         assert isinstance(model, VAMP), "This sampler is only suitable for VAMP model"
+
+        if sampler_config is None:
+            sampler_config = VAMPSamplerConfig()
 
         BaseSampler.__init__(self, model=model, sampler_config=sampler_config)
 

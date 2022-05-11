@@ -6,7 +6,7 @@ from torch.utils.data import DataLoader
 
 from ...data.preprocessors import DataProcessor
 from ...models import BaseAE
-from ...samplers import BaseSampler
+from ..base import BaseSampler
 from .gaussian_mixture_config import GaussianMixtureSamplerConfig
 
 logger = logging.getLogger(__name__)
@@ -43,7 +43,7 @@ class GaussianMixtureSampler(BaseSampler):
 
         self.n_components = sampler_config.n_components
 
-    def fit(self, train_data):
+    def fit(self, train_data, **kwargs):
         """Method to fit the sampler from the training data
 
         Args:

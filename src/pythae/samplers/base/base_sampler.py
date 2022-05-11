@@ -41,6 +41,7 @@ class BaseSampler:
 
     def fit(self, *args, **kwargs):
         """Function to be called to fit the sampler before sampling"""
+        pass
 
     def sample(
         self,
@@ -90,38 +91,3 @@ class BaseSampler:
         img = img.astype("uint8")
         imwrite(os.path.join(dir_path, f"{img_name}"), img)
 
-    # def save_data_batch(self, data, dir_path, number_of_samples, batch_idx):
-    #    """
-    #    Method to save a batch of generated data. The data will be saved in the
-    #    ``dir_path`` folder. The batch of data
-    #    is saved in a file named ``generated_data_{number_of_samples}_{batch_idx}.pt``
-
-
-#
-#    Args:
-#        data (torch.Tensor): The data to save
-#        dir_path (str): The folder where the data and config file must be saved
-#        batch_idx (int): The batch idx
-#
-#    .. note::
-#        You can then easily reload the generated data using
-#
-#        .. code-block:
-#
-#            >>> import torch
-#            >>> import os
-#            >>> data = torch.load(
-#            ...    os.path.join(
-#            ...        'dir_path', 'generated_data_{number_of_samples}_{batch_idx}.pt'))
-#    """
-#
-#    if not os.path.exists(dir_path):
-#        os.makedirs(dir_path)
-#
-#    torch.save(
-#        data,
-#        os.path.join(
-#            dir_path, f"generated_data_{number_of_samples}_{batch_idx}.pt"
-#        ),
-#    )
-#
