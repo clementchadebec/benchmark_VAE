@@ -407,23 +407,31 @@ class BaseTrainer:
             (torch.Tensor): The evaluation loss
         """
 
+        self.callback_handler.on_eval_step_begin(
+                training_config=self.training_config,
+                eval_loader=self.eval_loader,
+                epoch=epoch,
+            )
+
         self.model.eval()
 
         epoch_loss = 0
 
         for inputs in self.eval_loader:
 
-            self.callback_handler.on_eval_step_begin(
-                training_config=self.training_config,
-                eval_loader=self.eval_loader,
-                epoch=epoch,
-            )
-
             inputs = self._set_inputs_to_device(inputs)
 
-            model_output = self.model(
-                inputs, epoch=epoch, dataset_size=len(self.eval_loader.dataset)
-            )
+            try:
+                with torch.no_grad():
+
+                    model_output = self.model(
+                        inputs, epoch=epoch, dataset_size=len(self.eval_loader.dataset)
+                    )
+
+            except RuntimeError:
+                model_output = self.model(
+                        inputs, epoch=epoch, dataset_size=len(self.eval_loader.dataset)
+                    )
 
             loss = model_output.loss
 
@@ -447,18 +455,18 @@ class BaseTrainer:
         Returns:
             (torch.Tensor): The step training loss
         """
+        self.callback_handler.on_train_step_begin(
+                training_config=self.training_config,
+                train_loader=self.train_loader,
+                epoch=epoch,
+            )
+
         # set model in train model
         self.model.train()
 
         epoch_loss = 0
 
         for inputs in self.train_loader:
-
-            self.callback_handler.on_train_step_begin(
-                training_config=self.training_config,
-                train_loader=self.train_loader,
-                epoch=epoch,
-            )
 
             inputs = self._set_inputs_to_device(inputs)
 

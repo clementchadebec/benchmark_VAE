@@ -216,21 +216,19 @@ class ProgressBarCallback(TrainingCallback):
         self.train_progress_bar = None
         self.eval_progress_bar = None
 
-    def on_epoch_begin(self, training_config, **kwargs):
+    def on_train_step_begin(self, training_config: BaseTrainerConfig, **kwargs):
         epoch = kwargs.pop("epoch", None)
         train_loader = kwargs.pop("train_loader", None)
-        eval_loader = kwargs.pop("eval_loader", None)
-
         if train_loader is not None:
             self.train_progress_bar = tqdm(
                 total=len(train_loader),
                 unit="batch",
                 desc=f"Training of epoch {epoch}/{training_config.num_epochs}",
             )
-            # self.train_progress_bar.set_description(
-            #    f"Training of epoch {epoch}/{training_config.num_epochs}"
-            # )
 
+    def on_eval_step_begin(self, training_config: BaseTrainerConfig, **kwargs):
+        epoch = kwargs.pop("epoch", None)
+        eval_loader = kwargs.pop("eval_loader", None)
         if eval_loader is not None:
             self.eval_progress_bar = tqdm(
                 total=len(eval_loader),
