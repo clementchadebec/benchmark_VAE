@@ -76,7 +76,7 @@ class IAFSampler(BaseSampler):
         ), "Train data must in the range [0-1]"
 
         data_processor = DataProcessor()
-        train_data = data_processor.process_data(train_data.to(self.device))
+        train_data = data_processor.process_data(train_data)
         train_dataset = data_processor.to_dataset(train_data)
         train_loader = DataLoader(dataset=train_dataset, batch_size=100, shuffle=True)
 
@@ -84,7 +84,7 @@ class IAFSampler(BaseSampler):
 
         with torch.no_grad():
             for _, inputs in enumerate(train_loader):
-                encoder_output = self.model.encoder(inputs["data"])
+                encoder_output = self.model.encoder(inputs["data"].to(self.device))
                 mean_z = encoder_output.embedding
                 z.append(mean_z)
 
@@ -99,7 +99,7 @@ class IAFSampler(BaseSampler):
                 eval_data.max() >= 1 and eval_data.min() >= 0
             ), "Eval data must in the range [0-1]"
 
-            eval_data = data_processor.process_data(eval_data.to(self.device))
+            eval_data = data_processor.process_data(eval_data)
             eval_dataset = data_processor.to_dataset(eval_data)
             eval_loader = DataLoader(
                 dataset=eval_dataset, batch_size=100, shuffle=False
@@ -109,7 +109,7 @@ class IAFSampler(BaseSampler):
 
             with torch.no_grad():
                 for _, inputs in enumerate(eval_loader):
-                    encoder_output = self.model.encoder(inputs["data"])
+                    encoder_output = self.model.encoder(inputs["data"].to(self.device))
                     mean_z = encoder_output.embedding
                     z.append(mean_z)
 

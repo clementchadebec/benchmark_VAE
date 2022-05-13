@@ -40,7 +40,7 @@ class DataProcessor:
 
     def process_data(
         self, data: Union[np.ndarray, torch.Tensor], batch_size: int = 100
-    ) -> torch.tensor:
+    ) -> torch.Tensor:
         """This function detects potential check the data type, detects nan in input data and
         preprocessed the data so it can be handled by the models.
 
