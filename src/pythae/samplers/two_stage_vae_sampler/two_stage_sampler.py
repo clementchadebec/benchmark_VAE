@@ -184,7 +184,7 @@ class TwoStageVAESampler(BaseSampler):
                 eval_data.max() >= 1 and eval_data.min() >= 0
             ), "Eval data must in the range [0-1]"
 
-            eval_data = data_processor.process_data(eval_data.to(self.device))
+            eval_data = data_processor.process_data(eval_data)
             eval_dataset = data_processor.to_dataset(eval_data)
             eval_loader = DataLoader(
                 dataset=eval_dataset, batch_size=100, shuffle=False
