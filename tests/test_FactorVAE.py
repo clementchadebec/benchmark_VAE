@@ -15,7 +15,9 @@ from pythae.trainers import (
     AdversarialTrainerConfig,
     BaseTrainerConfig,
 )
-from pythae.pipelines import TrainingPipeline
+from pythae.samplers import NormalSamplerConfig, GaussianMixtureSamplerConfig, MAFSamplerConfig, TwoStageVAESamplerConfig, IAFSamplerConfig
+
+from pythae.pipelines import TrainingPipeline, GenerationPipeline
 
 from tests.data.custom_architectures import (
     Decoder_AE_Conv,
@@ -889,3 +891,38 @@ class Test_FactorVAE_Training:
         assert type(model_rec.encoder.cpu()) == type(model.encoder.cpu())
         assert type(model_rec.decoder.cpu()) == type(model.decoder.cpu())
         assert type(model_rec.discriminator.cpu()) == type(model.discriminator.cpu())
+
+class Test_FactorVAE_Generation:
+    @pytest.fixture
+    def train_data(self):
+        return torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample")).data
+
+    @pytest.fixture()
+    def ae_model(self):
+        return FactorVAE(FactorVAEConfig(input_dim=(1, 28, 28), latent_dim=7))
+
+    @pytest.fixture(
+        params=[
+            NormalSamplerConfig(),
+            GaussianMixtureSamplerConfig(),
+            MAFSamplerConfig(),
+            IAFSamplerConfig(),
+            TwoStageVAESamplerConfig()
+        ]
+    )
+    def sampler_configs(self, request):
+        return request.param
+
+    def test_fits_in_generation_pipeline(self, ae_model, sampler_configs, train_data):
+        pipeline = GenerationPipeline(model=ae_model, sampler_config=sampler_configs)
+        gen_data = pipeline(
+            num_samples=11,
+            batch_size=7,
+            output_dir=None,
+            return_gen=True,
+            train_data=train_data,
+            eval_data=train_data,
+            training_config=BaseTrainerConfig(num_epochs=1)
+        )
+
+        assert gen_data.shape[0] == 11

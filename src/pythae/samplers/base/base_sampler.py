@@ -35,9 +35,12 @@ class BaseSampler:
         self.sampler_config = sampler_config
         self.is_fitted = False
 
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        device = "cuda" if torch.cuda.is_available() else "cpu"
 
-        self.model.to(self.device)
+        self.device = device
+        self.model.device = device
+
+        self.model.to(device)
 
     def fit(self, *args, **kwargs):
         """Function to be called to fit the sampler before sampling"""

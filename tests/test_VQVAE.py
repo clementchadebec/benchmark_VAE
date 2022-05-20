@@ -10,9 +10,9 @@ from pythae.customexception import BadInheritanceError
 from pythae.models.base.base_utils import ModelOutput
 from pythae.models import VQVAE, VQVAEConfig, AutoModel
 from pythae.models.vq_vae.vq_vae_utils import Quantizer, QuantizerEMA
-
+from pythae.samplers import PixelCNNSamplerConfig
 from pythae.trainers import BaseTrainer, BaseTrainerConfig
-from pythae.pipelines import TrainingPipeline
+from pythae.pipelines import TrainingPipeline, GenerationPipeline
 from tests.data.custom_architectures import (
     Decoder_AE_Conv,
     Encoder_AE_Conv,
@@ -729,3 +729,34 @@ class Test_VQVAETraining:
 
         assert type(model_rec.encoder.cpu()) == type(model.encoder.cpu())
         assert type(model_rec.decoder.cpu()) == type(model.decoder.cpu())
+
+class Test_VQVAE_Generation:
+    @pytest.fixture
+    def train_data(self):
+        return torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample")).data
+
+    @pytest.fixture()
+    def ae_model(self):
+        return VQVAE(VQVAEConfig(input_dim=(1, 28, 28), latent_dim=4))
+
+    @pytest.fixture(
+        params=[
+            PixelCNNSamplerConfig()
+        ]
+    )
+    def sampler_configs(self, request):
+        return request.param
+
+    def test_fits_in_generation_pipeline(self, ae_model, sampler_configs, train_data):
+        pipeline = GenerationPipeline(model=ae_model, sampler_config=sampler_configs)
+        gen_data = pipeline(
+            num_samples=11,
+            batch_size=7,
+            output_dir=None,
+            return_gen=True,
+            train_data=train_data,
+            eval_data=train_data,
+            training_config=BaseTrainerConfig(num_epochs=1)
+        )
+
+        assert gen_data.shape[0] == 11
