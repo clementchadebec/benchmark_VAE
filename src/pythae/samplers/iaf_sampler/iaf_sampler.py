@@ -98,7 +98,7 @@ class IAFSampler(BaseSampler):
         except RuntimeError:
             for _, inputs in enumerate(train_loader):
                 encoder_output = self.model(inputs)
-                z_ = encoder_output.z
+                z_ = encoder_output.z.detach()
                 z.append(z_)
 
         train_data = torch.cat(z)
@@ -130,7 +130,7 @@ class IAFSampler(BaseSampler):
             except RuntimeError:
                 for _, inputs in enumerate(eval_loader):
                     encoder_output = self.model(inputs)
-                    z_ = encoder_output.z
+                    z_ = encoder_output.z.detach()
                     z.append(z_)
 
             eval_data = torch.cat(z)
