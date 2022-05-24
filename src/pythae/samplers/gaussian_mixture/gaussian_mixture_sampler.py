@@ -77,7 +77,7 @@ class GaussianMixtureSampler(BaseSampler):
 
         except RuntimeError:
             for _, inputs in enumerate(train_loader):
-                z_ = self.model(inputs).z
+                z_ = self.model(inputs).z.detach()
                 z.append(z_)
 
         z = torch.cat(z)
