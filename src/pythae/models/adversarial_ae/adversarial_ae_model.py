@@ -160,8 +160,8 @@ class Adversarial_AE(VAE):
         gen_adversarial_score = self.discriminator(z).embedding.flatten()
         prior_adversarial_score = self.discriminator(z_prior).embedding.flatten()
 
-        true_labels = torch.ones(N, requires_grad=False).to(self.device)
-        fake_labels = torch.zeros(N, requires_grad=False).to(self.device)
+        true_labels = torch.ones(N, requires_grad=False).to(z.device)
+        fake_labels = torch.zeros(N, requires_grad=False).to(z.device)
 
         autoencoder_loss = self.adversarial_loss_scale * (
             F.binary_cross_entropy(
