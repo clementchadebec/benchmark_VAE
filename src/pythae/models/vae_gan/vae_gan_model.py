@@ -198,8 +198,8 @@ class VAEGAN(VAE):
         # gen_adversarial_score = self.discriminator(recon_x).embedding.flatten()
         prior_adversarial_score = self.discriminator(gen_prior).embedding.flatten()
 
-        true_labels = torch.ones(N, requires_grad=False).to(self.device)
-        fake_labels = torch.zeros(N, requires_grad=False).to(self.device)
+        true_labels = torch.ones(N, requires_grad=False).to(x.device)
+        fake_labels = torch.zeros(N, requires_grad=False).to(x.device)
 
         original_dis_cost = F.binary_cross_entropy(
             true_adversarial_score, true_labels
