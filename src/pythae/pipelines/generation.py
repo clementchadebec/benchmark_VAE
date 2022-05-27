@@ -4,7 +4,6 @@ from typing import Optional, Union
 import numpy as np
 import torch
 
-from ..data.preprocessors import DataProcessor
 from ..models import BaseAE
 from ..samplers import *
 from ..trainers import BaseTrainerConfig
@@ -50,17 +49,10 @@ class GenerationPipeline(Pipeline):
             sampler_config = NormalSamplerConfig()
 
         if sampler_config.name == "NormalSamplerConfig":
-            from ..samplers.normal_sampling import NormalSampler
-
             sampler = NormalSampler(model=model, sampler_config=sampler_config)
 
         elif sampler_config.name == "GaussianMixtureSamplerConfig":
             sampler = GaussianMixtureSampler(model=model, sampler_config=sampler_config)
-
-        elif sampler_config.name == "GaussianMixtureSamplerConfig":
-            sampler = HypersphereUniformSampler(
-                model=model, sampler_config=sampler_config
-            )
 
         elif sampler_config.name == "IAFSamplerConfig":
             sampler = IAFSampler(model=model, sampler_config=sampler_config)

@@ -37,6 +37,10 @@ downloads_data/
 *.slurm
 configs
 examples/scripts/generation_jz.py
+examples/scripts/classification_jz.py
+examples/scripts/latent_dim_sensi.py
+examples/scripts/reconstruction_jz.py
+examples/scripts/jz_array_training.py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
