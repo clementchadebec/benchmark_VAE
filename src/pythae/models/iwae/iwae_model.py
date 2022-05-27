@@ -45,7 +45,6 @@ class IWAE(VAE):
         VAE.__init__(self, model_config=model_config, encoder=encoder, decoder=decoder)
 
         self.model_name = "IWAE"
-        self.beta = model_config.beta
         self.n_samples = model_config.number_samples
 
     def forward(self, inputs: BaseDataset, **kwargs):
@@ -119,11 +118,14 @@ class IWAE(VAE):
                 .reshape(x.shape[0], -1)
             )
 
-        KLD = -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp(), dim=-1)
+        log_q_z =  (-0.5 * (log_var + torch.pow(z - mu, 2) / log_var.exp())).sum(dim=-1)
+        log_p_z = -0.5 * (z**2).sum(dim=-1)
 
-        log_w = recon_loss + self.beta * KLD
+        KLD = -(log_p_z - log_q_z)
 
-        w_tilde = F.softmax(log_w, dim=-1)
+        log_w = recon_loss + KLD
+
+        w_tilde = F.softmax(log_w.detach(), dim=-1)
 
         return (
             (w_tilde * log_w).sum(dim=-1).mean(dim=0),

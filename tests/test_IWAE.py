@@ -20,7 +20,7 @@ from tests.data.custom_architectures import (
 PATH = os.path.dirname(os.path.abspath(__file__))
 
 
-@pytest.fixture(params=[IWAEConfig(), IWAEConfig(latent_dim=5, beta=5.0)])
+@pytest.fixture(params=[IWAEConfig(), IWAEConfig(latent_dim=5,)])
 def model_configs_no_input_dim(request):
     return request.param
 
@@ -33,7 +33,7 @@ def model_configs_no_input_dim(request):
             reconstruction_loss="bce",
             number_samples=2,
         ),
-        IWAEConfig(input_dim=(1, 28), latent_dim=5, beta=5.2),
+        IWAEConfig(input_dim=(1, 28), latent_dim=5),
     ]
 )
 def model_configs(request):
