@@ -5,7 +5,7 @@ import importlib
 import logging
 
 import numpy as np
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from .base_trainer.base_training_config import BaseTrainerConfig
 
@@ -222,8 +222,6 @@ class ProgressBarCallback(TrainingCallback):
         if train_loader is not None:
             self.train_progress_bar = tqdm(
                 total=len(train_loader),
-                position=0,
-                leave=True,
                 unit="batch",
                 desc=f"Training of epoch {epoch}/{training_config.num_epochs}",
             )
@@ -234,8 +232,6 @@ class ProgressBarCallback(TrainingCallback):
         if eval_loader is not None:
             self.eval_progress_bar = tqdm(
                 total=len(eval_loader),
-                position=0,
-                leave=True,
                 unit="batch",
                 desc=f"Eval of epoch {epoch}/{training_config.num_epochs}",
             )
