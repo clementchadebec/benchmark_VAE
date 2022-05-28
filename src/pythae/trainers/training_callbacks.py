@@ -5,7 +5,7 @@ import importlib
 import logging
 
 import numpy as np
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from .base_trainer.base_training_config import BaseTrainerConfig
 
