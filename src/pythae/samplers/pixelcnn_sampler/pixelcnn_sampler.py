@@ -211,8 +211,8 @@ class PixelCNNSampler(BaseSampler):
             z = torch.zeros(
                 (last_batch_samples_nbr,) + self.pixelcnn_model.model_config.input_dim
             ).to(self.device)
-            for k in range(self.pixelcnn_model.model_config.input_dim[-1]):
-                for l in range(self.pixelcnn_model.model_config.input_dim[-2]):
+            for k in range(self.pixelcnn_model.model_config.input_dim[-2]):
+                for l in range(self.pixelcnn_model.model_config.input_dim[-1]):
                     out = self.pixelcnn_model({"data": z}).out.squeeze(2)
                     probs = F.softmax(out[:, :, k, l], dim=-1)
                     z[:, :, k, l] = torch.multinomial(probs, 1).float()
