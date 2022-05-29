@@ -61,9 +61,6 @@ class VQVAE(AE):
         z = self.encoder(x).embedding
         if len(z.shape) == 2:
             z = z.reshape(z.shape[0], 1, 1, -1)
-            #z = z.reshape(
-            #    z.shape[0], 1, int(z.shape[-1] ** 0.5), int(z.shape[-1] ** 0.5)
-            #)
 
         z = z.permute(0, 2, 3, 1)
 
@@ -96,13 +93,6 @@ class VQVAE(AE):
 
         if len(embeddings.shape) == 2:
             embeddings = embeddings.reshape(embeddings.shape[0], 1, 1, -1)
-            #embeddings = embeddings.reshape(
-            #    embeddings.shape[0],
-            #    1,
-            #    int(embeddings.shape[-1] ** 0.5),
-            #    int(embeddings.shape[-1] ** 0.5),
-            #)
-
             reshape_for_decoding = True
 
         embeddings = embeddings.permute(0, 2, 3, 1)
