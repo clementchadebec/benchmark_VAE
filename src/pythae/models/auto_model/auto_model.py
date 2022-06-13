@@ -13,6 +13,7 @@ from ..hvae import HVAE
 from ..info_vae import INFOVAE_MMD
 from ..iwae import IWAE
 from ..msssim_vae import MSSSIM_VAE
+from ..normalizing_flows import MAF, IAF
 from ..rae_gp import RAE_GP
 from ..rae_l2 import RAE_L2
 from ..rhvae import RHVAE
@@ -113,6 +114,12 @@ class AutoModel(nn.Module):
 
         elif model_name == "WAE_MMD_Config":
             model = WAE_MMD.load_from_folder(dir_path=dir_path)
+
+        elif model_name == "MAFConfig":
+            model = MAF.load_from_folder(dir_path=dir_path)
+
+        elif model_name == "IAFConfig":
+            model = IAF.load_from_folder(dir_path=dir_path)
 
         else:
             raise NameError(
