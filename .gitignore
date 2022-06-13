@@ -41,8 +41,13 @@ examples/scripts/classification_jz.py
 examples/scripts/latent_dim_sensi.py
 examples/scripts/reconstruction_jz.py
 examples/scripts/jz_array_training.py
+examples/scripts/interpolation_jz.py
+examples/scripts/kmeans_jz.py
 *.csv
 results.ipynb
+examples/scripts/artifacts/*
+examples/scripts/plots/*
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
