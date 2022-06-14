@@ -47,6 +47,8 @@ examples/scripts/kmeans_jz.py
 results.ipynb
 examples/scripts/artifacts/*
 examples/scripts/plots/*
+examples/notebooks/my_model_with_custom_archi/
+
 
 
 # Byte-compiled / optimized / DLL files
