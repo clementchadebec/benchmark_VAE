@@ -1,4 +1,4 @@
-"""Sampler fitting an Inverse Autoregressive Flow (:class:`pythae.models.normalizing_flows.IAF`) 
+"""Sampler fitting an Inverse Autoregressive Flow (:class:`~pythae.models.normalizing_flows.IAF`) 
 in the Autoencoder's latent space.
 
 Available models:

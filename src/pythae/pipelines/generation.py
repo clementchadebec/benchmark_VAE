@@ -19,15 +19,8 @@ logger.setLevel(logging.INFO)
 
 class GenerationPipeline(Pipeline):
     """
-    This Pipeline provides an end to end way to generate samples from a trained VAE model.
-    The trained model will be saved in ``output_dir`` stated in the
-    :class:`~pythae.trainers.BaseTrainerConfig`. A folder
-    ``training_YYYY-MM-DD_hh-mm-ss`` is
-    created where checkpoints and final model will be saved. Checkpoints are saved in
-    ``checkpoint_epoch_{epoch}`` folder (optimizer and training config
-    saved as well to resume training if needed)
-    and the final model is saved in a ``final_model`` folder. If ``output_dir`` is
-    None, data is saved in ``dummy_output_dir/training_YYYY-MM-DD_hh-mm-ss`` is created.
+    This Pipeline provides an end to end way to generate samples from a trained VAE model. It only 
+    needs a :class:`pythae.models` to sample from and a smapler configuration.
 
     Parameters:
 
