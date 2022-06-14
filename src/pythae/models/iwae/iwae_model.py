@@ -118,8 +118,8 @@ class IWAE(VAE):
                 .reshape(x.shape[0], -1)
             )
 
-        log_q_z =  (-0.5 * (log_var + torch.pow(z - mu, 2) / log_var.exp())).sum(dim=-1)
-        log_p_z = -0.5 * (z**2).sum(dim=-1)
+        log_q_z = (-0.5 * (log_var + torch.pow(z - mu, 2) / log_var.exp())).sum(dim=-1)
+        log_p_z = -0.5 * (z ** 2).sum(dim=-1)
 
         KLD = -(log_p_z - log_q_z)
 
@@ -180,7 +180,7 @@ class IWAE(VAE):
                 log_q_z_given_x = -0.5 * (
                     log_var + (z - mu) ** 2 / torch.exp(log_var)
                 ).sum(dim=-1)
-                log_p_z = -0.5 * (z**2).sum(dim=-1)
+                log_p_z = -0.5 * (z ** 2).sum(dim=-1)
 
                 recon_x = self.decoder(z.reshape(-1, self.latent_dim))["reconstruction"]
 

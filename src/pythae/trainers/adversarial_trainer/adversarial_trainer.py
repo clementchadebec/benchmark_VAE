@@ -346,10 +346,10 @@ class AdversarialTrainer(BaseTrainer):
             (torch.Tensor): The evaluation loss
         """
         self.callback_handler.on_eval_step_begin(
-                training_config=self.training_config,
-                eval_loader=self.eval_loader,
-                epoch=epoch,
-            )
+            training_config=self.training_config,
+            eval_loader=self.eval_loader,
+            epoch=epoch,
+        )
 
         self.model.eval()
 
@@ -370,8 +370,8 @@ class AdversarialTrainer(BaseTrainer):
 
             except RuntimeError:
                 model_output = self.model(
-                        inputs, epoch=epoch, dataset_size=len(self.eval_loader.dataset)
-                    )
+                    inputs, epoch=epoch, dataset_size=len(self.eval_loader.dataset)
+                )
 
             autoencoder_loss = model_output.autoencoder_loss
             discriminator_loss = model_output.discriminator_loss
@@ -403,10 +403,10 @@ class AdversarialTrainer(BaseTrainer):
             (torch.Tensor): The step training loss
         """
         self.callback_handler.on_train_step_begin(
-                training_config=self.training_config,
-                train_loader=self.train_loader,
-                epoch=epoch,
-            )
+            training_config=self.training_config,
+            train_loader=self.train_loader,
+            epoch=epoch,
+        )
 
         # set model in train model
         self.model.train()

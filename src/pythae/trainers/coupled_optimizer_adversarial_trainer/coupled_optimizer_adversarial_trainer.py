@@ -403,10 +403,10 @@ class CoupledOptimizerAdversarialTrainer(BaseTrainer):
             (torch.Tensor): The evaluation loss
         """
         self.callback_handler.on_eval_step_begin(
-                training_config=self.training_config,
-                eval_loader=self.eval_loader,
-                epoch=epoch,
-            )
+            training_config=self.training_config,
+            eval_loader=self.eval_loader,
+            epoch=epoch,
+        )
 
         self.model.eval()
 
@@ -428,8 +428,8 @@ class CoupledOptimizerAdversarialTrainer(BaseTrainer):
 
             except RuntimeError:
                 model_output = self.model(
-                        inputs, epoch=epoch, dataset_size=len(self.eval_loader.dataset)
-                    )
+                    inputs, epoch=epoch, dataset_size=len(self.eval_loader.dataset)
+                )
 
             encoder_loss = model_output.encoder_loss
             decoder_loss = model_output.decoder_loss
@@ -469,10 +469,10 @@ class CoupledOptimizerAdversarialTrainer(BaseTrainer):
             (torch.Tensor): The step training loss
         """
         self.callback_handler.on_train_step_begin(
-                training_config=self.training_config,
-                train_loader=self.train_loader,
-                epoch=epoch,
-            )
+            training_config=self.training_config,
+            train_loader=self.train_loader,
+            epoch=epoch,
+        )
 
         # set model in train model
         self.model.train()

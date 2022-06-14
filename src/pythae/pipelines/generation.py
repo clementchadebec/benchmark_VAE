@@ -19,7 +19,7 @@ logger.setLevel(logging.INFO)
 
 class GenerationPipeline(Pipeline):
     """
-    This Pipeline provides an end to end way to generate samples from a trained VAE model. It only 
+    This Pipeline provides an end to end way to generate samples from a trained VAE model. It only
     needs a :class:`pythae.models` to sample from and a smapler configuration.
 
     Parameters:

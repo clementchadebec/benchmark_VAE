@@ -317,10 +317,10 @@ class CoupledOptimizerTrainer(BaseTrainer):
             (torch.Tensor): The step training loss
         """
         self.callback_handler.on_train_step_begin(
-                training_config=self.training_config,
-                train_loader=self.train_loader,
-                epoch=epoch,
-            )
+            training_config=self.training_config,
+            train_loader=self.train_loader,
+            epoch=epoch,
+        )
 
         # set model in train model
         self.model.train()

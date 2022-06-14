@@ -192,7 +192,9 @@ class TwoStageVAESampler(BaseSampler):
             ), "Eval data must in the range [0-1]"
 
             eval_data = data_processor.process_data(eval_data).to(self.device)
-            eval_dataset = data_processor.to_dataset(eval_data, dataset_type=dataset_type)
+            eval_dataset = data_processor.to_dataset(
+                eval_data, dataset_type=dataset_type
+            )
             eval_loader = DataLoader(
                 dataset=eval_dataset, batch_size=100, shuffle=False
             )
@@ -205,7 +207,7 @@ class TwoStageVAESampler(BaseSampler):
                         encoder_output = self.model(inputs)
                         z_ = encoder_output.z
                         z.append(z_)
-                
+
             except RuntimeError:
                 for _, inputs in enumerate(eval_loader):
                     encoder_output = self.model(inputs)
