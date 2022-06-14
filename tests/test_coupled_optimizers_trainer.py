@@ -4,9 +4,9 @@ from copy import deepcopy
 import pytest
 import torch
 from torch.optim import SGD, Adadelta, Adagrad, Adam, RMSprop
+from torch.optim.lr_scheduler import StepLR, LinearLR, ExponentialLR
 
-from pythae.customexception import ModelError
-from pythae.models import AE, AEConfig, RHVAE, RHVAEConfig
+from pythae.models import AE, AEConfig, VAE, VAEConfig
 from pythae.trainers import CoupledOptimizerTrainer, CoupledOptimizerTrainerConfig
 from tests.data.custom_architectures import *
 
@@ -114,7 +114,7 @@ class Test_Set_Training_config:
 class Test_Build_Optimizer:
     @pytest.fixture(
         params=[
-            CoupledOptimizerTrainerConfig(learning_rate=1e-6),
+            CoupledOptimizerTrainerConfig(learning_rate=1e-5),
             CoupledOptimizerTrainerConfig(),
         ]
     )
@@ -182,10 +182,89 @@ class Test_Build_Optimizer:
             == training_configs_learning_rate.learning_rate
         )
 
+class Test_Build_Scheduler:
+    @pytest.fixture(params=[CoupledOptimizerTrainerConfig(), CoupledOptimizerTrainerConfig(learning_rate=1e-5)])
+    def training_configs_learning_rate(self, tmpdir, request):
+        request.param.output_dir = tmpdir.mkdir("dummy_folder")
+        return request.param
+
+    @pytest.fixture(params=[Adagrad, Adam, Adadelta, SGD, RMSprop])
+    def optimizers(self, request, model_sample, training_configs_learning_rate):
+
+        autoencoder_optimizer = request.param(
+            model_sample.encoder.parameters(),
+            lr=training_configs_learning_rate.learning_rate,
+        )
+        discriminator_optimizer = request.param(
+            model_sample.decoder.parameters(),
+            lr=training_configs_learning_rate.learning_rate,
+        )
+        return (autoencoder_optimizer, discriminator_optimizer)
+
+    @pytest.fixture(
+        params=[
+            (StepLR, {"step_size": 1}),
+            (LinearLR, {"start_factor": 0.01}),
+            (ExponentialLR, {"gamma": 0.1}),
+        ]
+    )
+    def schedulers(
+        self, request, optimizers
+    ):
+        if request.param[0] is not None:
+            encoder_scheduler = request.param[0](optimizers[0], **request.param[1])
+            decoder_scheduler = request.param[0](optimizers[1], **request.param[1])
+
+        else:
+            encoder_scheduler = None
+            decoder_scheduler = None
+
+        return (encoder_scheduler, decoder_scheduler)
+
+    def test_default_scheduler_building(
+        self, model_sample, train_dataset, training_configs_learning_rate
+    ):
+
+        trainer = CoupledOptimizerTrainer(
+            model=model_sample,
+            train_dataset=train_dataset,
+            training_config=training_configs_learning_rate,
+            encoder_optimizer=None,
+            decoder_optimizer=None
+        )
+
+        assert issubclass(
+            type(trainer.encoder_scheduler), torch.optim.lr_scheduler.ReduceLROnPlateau
+        )
+
+        assert issubclass(
+            type(trainer.decoder_scheduler), torch.optim.lr_scheduler.ReduceLROnPlateau
+        )
+
+    def test_set_custom_scheduler(
+        self,
+        model_sample,
+        train_dataset,
+        training_configs_learning_rate,
+        optimizers,
+        schedulers,
+    ):
+        trainer = CoupledOptimizerTrainer(
+            model=model_sample,
+            train_dataset=train_dataset,
+            training_config=training_configs_learning_rate,
+            encoder_optimizer=optimizers[0],
+            encoder_scheduler=schedulers[0],
+            decoder_optimizer=optimizers[1],
+            decoder_scheduler=schedulers[1]
+        )
+
+        assert issubclass(type(trainer.encoder_scheduler), type(schedulers[0]))
+        assert issubclass(type(trainer.decoder_scheduler), type(schedulers[1]))
 
 @pytest.mark.slow
 class Test_Main_Training:
-    @pytest.fixture(params=[CoupledOptimizerTrainerConfig(num_epochs=3)])
+    @pytest.fixture(params=[CoupledOptimizerTrainerConfig(num_epochs=3, learning_rate=1e-4)])
     def training_configs(self, tmpdir, request):
         tmpdir.mkdir("dummy_folder")
         dir_path = os.path.join(tmpdir, "dummy_folder")
@@ -195,7 +274,7 @@ class Test_Main_Training:
     @pytest.fixture(
         params=[
             AEConfig(input_dim=(1, 28, 28)),
-            RHVAEConfig(input_dim=(1, 28, 28), latent_dim=5),
+            VAEConfig(input_dim=(1, 28, 28), latent_dim=5),
         ]
     )
     def ae_config(self, request):
@@ -203,7 +282,9 @@ class Test_Main_Training:
 
     @pytest.fixture
     def custom_encoder(self, ae_config):
-        return Encoder_MLP_Custom(ae_config)
+        if isinstance(ae_config, VAEConfig):
+            return Encoder_VAE_MLP_Custom(ae_config)
+        return Encoder_AE_MLP_Custom(ae_config)
 
     @pytest.fixture
     def custom_decoder(self, ae_config):
@@ -224,16 +305,28 @@ class Test_Main_Training:
         alpha = request.param
 
         if alpha < 0.25:
-            model = AE(ae_config)
+            if isinstance(ae_config, VAEConfig):
+                model = VAE(ae_config)
+            else:
+                model = AE(ae_config)
 
         elif 0.25 <= alpha < 0.5:
-            model = AE(ae_config, encoder=custom_encoder)
+            if isinstance(ae_config, VAEConfig):
+                model = VAE(ae_config, encoder=custom_encoder)
+            else:
+                model = AE(ae_config, encoder=custom_encoder)
 
         elif 0.5 <= alpha < 0.75:
-            model = AE(ae_config, decoder=custom_decoder)
+            if isinstance(ae_config, VAEConfig):
+                model = VAE(ae_config, decoder=custom_decoder)
+            else:
+                model = AE(ae_config, decoder=custom_decoder)
 
         else:
-            model = AE(ae_config, encoder=custom_encoder, decoder=custom_decoder)
+            if isinstance(ae_config, VAEConfig):
+                model = VAE(ae_config, encoder=custom_encoder, decoder=custom_decoder)
+            else:
+                model = AE(ae_config, encoder=custom_encoder, decoder=custom_decoder)
 
         return model
 
@@ -254,13 +347,38 @@ class Test_Main_Training:
 
         return (encoder_optimizer, decoder_optimizer)
 
-    def test_train_step(self, ae, train_dataset, training_configs, optimizers):
+    @pytest.fixture(
+        params=[
+            (None, None),
+            (StepLR, {"step_size": 1, "gamma": 0.99}),
+            (LinearLR, {"start_factor": 0.99}),
+            (ExponentialLR, {"gamma": 0.99}),
+        ]
+    )
+    def schedulers(self, request, optimizers):
+        if request.param[0] is not None and optimizers[0] is not None:
+            encoder_scheduler = request.param[0](optimizers[0], **request.param[1])
+        
+        else:
+            encoder_scheduler = None
+        
+        if request.param[0] is not None and optimizers[1] is not None:
+            decoder_scheduler = request.param[0](optimizers[1], **request.param[1])
+
+        else:
+            decoder_scheduler = None
+
+        return (encoder_scheduler, decoder_scheduler)
+
+    def test_train_step(self, ae, train_dataset, training_configs, optimizers, schedulers):
         trainer = CoupledOptimizerTrainer(
             model=ae,
             train_dataset=train_dataset,
             training_config=training_configs,
             encoder_optimizer=optimizers[0],
             decoder_optimizer=optimizers[1],
+            encoder_scheduler=schedulers[0],
+            decoder_scheduler=schedulers[1]
         )
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
@@ -270,14 +388,14 @@ class Test_Main_Training:
         step_1_model_state_dict = deepcopy(trainer.model.state_dict())
 
         # check that weights were updated
-        assert not all(
-            [
-                torch.equal(start_model_state_dict[key], step_1_model_state_dict[key])
-                for key in start_model_state_dict.keys()
-            ]
-        )
+        for key in start_model_state_dict.keys():
+            if "encoder" in key:
+                assert not torch.equal(step_1_model_state_dict[key], start_model_state_dict[key]), key
 
-    def test_eval_step(self, ae, train_dataset, training_configs, optimizers):
+            if "decoder" in key:
+                assert not torch.equal(step_1_model_state_dict[key], start_model_state_dict[key])
+
+    def test_eval_step(self, ae, train_dataset, training_configs, optimizers, schedulers):
         trainer = CoupledOptimizerTrainer(
             model=ae,
             train_dataset=train_dataset,
@@ -285,6 +403,8 @@ class Test_Main_Training:
             training_config=training_configs,
             encoder_optimizer=optimizers[0],
             decoder_optimizer=optimizers[1],
+            encoder_scheduler=schedulers[0],
+            decoder_scheduler=schedulers[1]
         )
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
@@ -293,7 +413,7 @@ class Test_Main_Training:
 
         step_1_model_state_dict = deepcopy(trainer.model.state_dict())
 
-        # check that weights were updated
+        # check that weights were not updated
         assert all(
             [
                 torch.equal(start_model_state_dict[key], step_1_model_state_dict[key])
@@ -302,7 +422,7 @@ class Test_Main_Training:
         )
 
     def test_main_train_loop(
-        self, tmpdir, ae, train_dataset, training_configs, optimizers
+        self, ae, train_dataset, training_configs, optimizers, schedulers
     ):
 
         trainer = CoupledOptimizerTrainer(
@@ -312,6 +432,8 @@ class Test_Main_Training:
             training_config=training_configs,
             encoder_optimizer=optimizers[0],
             decoder_optimizer=optimizers[1],
+            encoder_scheduler=schedulers[0],
+            decoder_scheduler=schedulers[1]
         )
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
@@ -321,12 +443,12 @@ class Test_Main_Training:
         step_1_model_state_dict = deepcopy(trainer.model.state_dict())
 
         # check that weights were updated
-        assert not all(
-            [
-                torch.equal(start_model_state_dict[key], step_1_model_state_dict[key])
-                for key in start_model_state_dict.keys()
-            ]
-        )
+        for key in start_model_state_dict.keys():
+            if "encoder" in key:
+                assert not torch.equal(step_1_model_state_dict[key], start_model_state_dict[key]), key
+
+            if "decoder" in key:
+                assert not torch.equal(step_1_model_state_dict[key], start_model_state_dict[key])
 
 
 class Test_Logging:
@@ -338,7 +460,7 @@ class Test_Logging:
 
     @pytest.fixture
     def model_sample(self):
-        return RHVAE(RHVAEConfig(input_dim=(1, 28, 28)))
+        return VAE(VAEConfig(input_dim=(1, 28, 28)))
 
     def test_create_log_file(
         self, tmpdir, model_sample, train_dataset, training_config

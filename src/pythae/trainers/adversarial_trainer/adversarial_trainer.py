@@ -3,19 +3,15 @@ import itertools
 import logging
 import os
 from copy import deepcopy
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
 
-import numpy as np
 import torch
 import torch.optim as optim
-from torch.utils.data import DataLoader
-from tqdm import tqdm
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 
-from ...customexception import ModelError
 from ...data.datasets import BaseDataset
 from ...models import BaseAE
 from ..base_trainer import BaseTrainer
-from ..trainer_utils import set_seed
 from ..training_callbacks import TrainingCallback
 from .adversarial_trainer_config import AdversarialTrainerConfig
 
@@ -57,8 +53,8 @@ class AdversarialTrainer(BaseTrainer):
         training_config: Optional[AdversarialTrainerConfig] = None,
         autoencoder_optimizer: Optional[torch.optim.Optimizer] = None,
         discriminator_optimizer: Optional[torch.optim.Optimizer] = None,
-        autoencoder_scheduler: Optional = None,
-        discriminator_scheduler: Optional = None,
+        autoencoder_scheduler: Optional[torch.optim.lr_scheduler.LambdaLR] = None,
+        discriminator_scheduler: Optional[torch.optim.lr_scheduler.LambdaLR] = None,
         callbacks: List[TrainingCallback] = None,
     ):
 
@@ -128,6 +124,33 @@ class AdversarialTrainer(BaseTrainer):
         )
 
         return optimizer
+
+    def _optimizers_step(self, model_output):
+
+        autoencoder_loss = model_output.autoencoder_loss
+        discriminator_loss = model_output.discriminator_loss
+
+        self.autoencoder_optimizer.zero_grad()
+        autoencoder_loss.backward(retain_graph=True)
+
+        self.discriminator_optimizer.zero_grad()
+        discriminator_loss.backward()
+
+        self.autoencoder_optimizer.step()
+        self.discriminator_optimizer.step()
+
+    def _schedulers_step(self, autoencoder_metrics=None, discriminator_metrics=None):
+        if isinstance(self.autoencoder_scheduler, ReduceLROnPlateau):
+            self.autoencoder_scheduler.step(autoencoder_metrics)
+
+        else:
+            self.autoencoder_scheduler.step()
+
+        if isinstance(self.discriminator_scheduler, ReduceLROnPlateau):
+            self.discriminator_scheduler.step(discriminator_metrics)
+
+        else:
+            self.discriminator_scheduler.step()
 
     def train(self, log_output_dir: str = None):
         """This function is the main training function
@@ -241,19 +264,23 @@ class AdversarialTrainer(BaseTrainer):
                 metrics["eval_autoencoder_loss"] = epoch_eval_autoencoder_loss
                 metrics["eval_discriminator_loss"] = epoch_eval_discriminator_loss
 
-                self.autoencoder_scheduler.step(epoch_eval_autoencoder_loss)
-                self.discriminator_scheduler.step(epoch_eval_discriminator_loss)
+                self._schedulers_step(
+                    autoencoder_metrics=epoch_eval_autoencoder_loss,
+                    discriminator_metrics=epoch_eval_discriminator_loss,
+                )
 
             else:
                 epoch_eval_loss = best_eval_loss
-                self.autoencoder_scheduler.step(epoch_train_autoencoder_loss)
-                self.discriminator_scheduler.step(epoch_train_discriminator_loss)
+
+                self._schedulers_step(
+                    autoencoder_metrics=epoch_train_autoencoder_loss,
+                    discriminator_metrics=epoch_train_discriminator_loss,
+                )
 
             if (
                 epoch_eval_loss < best_eval_loss
                 and not self.training_config.keep_best_on_train
             ):
-                best_model_epoch = epoch
                 best_eval_loss = epoch_eval_loss
                 best_model = deepcopy(self.model)
                 self._best_model = best_model
@@ -262,7 +289,6 @@ class AdversarialTrainer(BaseTrainer):
                 epoch_train_loss < best_train_loss
                 and self.training_config.keep_best_on_train
             ):
-                best_model_epoch = epoch
                 best_train_loss = epoch_train_loss
                 best_model = deepcopy(self.model)
                 self._best_model = best_model
@@ -272,12 +298,7 @@ class AdversarialTrainer(BaseTrainer):
                 and epoch % self.training_config.steps_predict == 0
             ):
 
-                true_data, reconstructions, generations = self.predict(
-                    best_model,
-                    self.eval_loader.dataset.data[
-                        : min(self.eval_loader.dataset.data.shape[0], 10)
-                    ],
-                )
+                true_data, reconstructions, generations = self.predict(best_model)
 
                 self.callback_handler.on_prediction_step(
                     self.training_config,
@@ -324,6 +345,11 @@ class AdversarialTrainer(BaseTrainer):
         Returns:
             (torch.Tensor): The evaluation loss
         """
+        self.callback_handler.on_eval_step_begin(
+            training_config=self.training_config,
+            eval_loader=self.eval_loader,
+            epoch=epoch,
+        )
 
         self.model.eval()
 
@@ -333,17 +359,19 @@ class AdversarialTrainer(BaseTrainer):
 
         for inputs in self.eval_loader:
 
-            self.callback_handler.on_eval_step_begin(
-                training_config=self.training_config,
-                eval_loader=self.eval_loader,
-                epoch=epoch,
-            )
-
             inputs = self._set_inputs_to_device(inputs)
 
-            model_output = self.model(
-                inputs, epoch=epoch, dataset_size=len(self.eval_loader.dataset)
-            )
+            try:
+                with torch.no_grad():
+
+                    model_output = self.model(
+                        inputs, epoch=epoch, dataset_size=len(self.eval_loader.dataset)
+                    )
+
+            except RuntimeError:
+                model_output = self.model(
+                    inputs, epoch=epoch, dataset_size=len(self.eval_loader.dataset)
+                )
 
             autoencoder_loss = model_output.autoencoder_loss
             discriminator_loss = model_output.discriminator_loss
@@ -374,6 +402,12 @@ class AdversarialTrainer(BaseTrainer):
         Returns:
             (torch.Tensor): The step training loss
         """
+        self.callback_handler.on_train_step_begin(
+            training_config=self.training_config,
+            train_loader=self.train_loader,
+            epoch=epoch,
+        )
+
         # set model in train model
         self.model.train()
 
@@ -383,29 +417,16 @@ class AdversarialTrainer(BaseTrainer):
 
         for inputs in self.train_loader:
 
-            self.callback_handler.on_train_step_begin(
-                training_config=self.training_config,
-                train_loader=self.train_loader,
-                epoch=epoch,
-            )
-
             inputs = self._set_inputs_to_device(inputs)
 
             model_output = self.model(
                 inputs, epoch=epoch, dataset_size=len(self.train_loader.dataset)
             )
 
+            self._optimizers_step(model_output)
+
             autoencoder_loss = model_output.autoencoder_loss
             discriminator_loss = model_output.discriminator_loss
-
-            self.autoencoder_optimizer.zero_grad()
-            autoencoder_loss.backward(retain_graph=True)
-
-            self.discriminator_optimizer.zero_grad()
-            discriminator_loss.backward()
-
-            self.autoencoder_optimizer.step()
-            self.discriminator_optimizer.step()
 
             loss = autoencoder_loss + discriminator_loss
 

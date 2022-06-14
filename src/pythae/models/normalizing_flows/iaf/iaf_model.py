@@ -1,12 +1,11 @@
 import os
-from copy import deepcopy
 
 import numpy as np
 import torch
 import torch.nn as nn
+
 from pythae.models.base.base_utils import ModelOutput
 
-from ....data.datasets import BaseDataset
 from ..base import BaseNF
 from ..layers import BatchNorm
 from ..made import MADE, MADEConfig
@@ -31,7 +30,6 @@ class IAF(BaseNF):
         self.input_dim = np.prod(model_config.input_dim)
         self.hidden_size = model_config.hidden_size
         self.model_name = "IAF"
-        self.net = []
 
         made_config = MADEConfig(
             input_dim=(self.input_dim,),

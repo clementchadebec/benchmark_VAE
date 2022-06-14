@@ -3,12 +3,12 @@ from typing import Optional
 
 import torch
 import torch.nn.functional as F
+from pyexpat import model
 
 from ...data.datasets import BaseDataset
-from ...models import AE
+from ..ae import AE
 from ..base.base_utils import ModelOutput
 from ..nn import BaseDecoder, BaseEncoder
-from ..nn.default_architectures import Encoder_AE_MLP
 from .wae_mmd_config import WAE_MMD_Config
 
 
@@ -46,6 +46,7 @@ class WAE_MMD(AE):
         self.model_name = "WAE_MMD"
 
         self.kernel_choice = model_config.kernel_choice
+        self.scales = model_config.scales if model_config.scales is not None else [1.0]
 
     def forward(self, inputs: BaseDataset, **kwargs) -> ModelOutput:
         """The input data is encoded and decoded
@@ -90,31 +91,37 @@ class WAE_MMD(AE):
             k_z_prior = self.imq_kernel(z_prior, z_prior)
             k_cross = self.imq_kernel(z, z_prior)
 
-        mmd_z = (k_z - k_z.diag()).sum() / (N - 1)
-        mmd_z_prior = (k_z_prior - k_z_prior.diag()).sum() / (N - 1)
-        mmd_cross = k_cross.sum() / N
+        mmd_z = (k_z - k_z.diag().diag()).sum() / ((N - 1) * N)
+        mmd_z_prior = (k_z_prior - k_z_prior.diag().diag()).sum() / ((N - 1) * N)
+        mmd_cross = k_cross.sum() / (N ** 2)
 
         mmd_loss = mmd_z + mmd_z_prior - 2 * mmd_cross
 
         return (
-            (recon_loss + self.model_config.reg_weight * mmd_loss).mean(dim=0),
+            recon_loss.mean(dim=0) + self.model_config.reg_weight * mmd_loss,
             (recon_loss).mean(dim=0),
-            mmd_loss / N,
+            mmd_loss,
         )
 
     def imq_kernel(self, z1, z2):
-        """Returns a matrix of shape batch X batch containing the pairwise kernel computation"""
+        """Returns a matrix of shape [batch x batch] containing the pairwise kernel computation"""
 
-        C = 2.0 * self.model_config.latent_dim * self.model_config.kernel_bandwidth**2
+        Cbase = (
+            2.0 * self.model_config.latent_dim * self.model_config.kernel_bandwidth ** 2
+        )
 
-        k = C / (C + torch.norm(z1.unsqueeze(1) - z2.unsqueeze(0), dim=-1) ** 2)
+        k = 0
+
+        for scale in self.scales:
+            C = scale * Cbase
+            k += C / (C + torch.norm(z1.unsqueeze(1) - z2.unsqueeze(0), dim=-1) ** 2)
 
         return k
 
     def rbf_kernel(self, z1, z2):
-        """Returns a matrix of shape batch X batch containing the pairwise kernel computation"""
+        """Returns a matrix of shape [batch x batch] containing the pairwise kernel computation"""
 
-        C = 2.0 * self.model_config.latent_dim * self.model_config.kernel_bandwidth**2
+        C = 2.0 * self.model_config.latent_dim * self.model_config.kernel_bandwidth ** 2
 
         k = torch.exp(-torch.norm(z1.unsqueeze(1) - z2.unsqueeze(0), dim=-1) ** 2 / C)
 

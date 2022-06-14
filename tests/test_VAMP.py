@@ -3,14 +3,14 @@ from copy import deepcopy
 
 import pytest
 import torch
-from torch.optim import SGD, Adadelta, Adagrad, Adam, RMSprop
+from torch.optim import Adam
 
 from pythae.customexception import BadInheritanceError
 from pythae.models.base.base_utils import ModelOutput
-from pythae.models import VAMP, VAMPConfig
-
+from pythae.models import VAMP, VAMPConfig, AutoModel
+from pythae.samplers import VAMPSamplerConfig
 from pythae.trainers import BaseTrainer, BaseTrainerConfig
-from pythae.pipelines import TrainingPipeline
+from pythae.pipelines import TrainingPipeline, GenerationPipeline
 from tests.data.custom_architectures import (
     Decoder_AE_Conv,
     Encoder_VAE_Conv,
@@ -123,7 +123,7 @@ class Test_Model_Saving:
         assert set(os.listdir(dir_path)) == set(["model_config.json", "model.pt"])
 
         # reload model
-        model_rec = VAMP.load_from_folder(dir_path)
+        model_rec = AutoModel.load_from_folder(dir_path)
 
         # check configs are the same
         assert model_rec.model_config.__dict__ == model.model_config.__dict__
@@ -151,7 +151,7 @@ class Test_Model_Saving:
         )
 
         # reload model
-        model_rec = VAMP.load_from_folder(dir_path)
+        model_rec = AutoModel.load_from_folder(dir_path)
 
         # check configs are the same
         assert model_rec.model_config.__dict__ == model.model_config.__dict__
@@ -179,7 +179,7 @@ class Test_Model_Saving:
         )
 
         # reload model
-        model_rec = VAMP.load_from_folder(dir_path)
+        model_rec = AutoModel.load_from_folder(dir_path)
 
         # check configs are the same
         assert model_rec.model_config.__dict__ == model.model_config.__dict__
@@ -209,7 +209,7 @@ class Test_Model_Saving:
         )
 
         # reload model
-        model_rec = VAMP.load_from_folder(dir_path)
+        model_rec = AutoModel.load_from_folder(dir_path)
 
         # check configs are the same
         assert model_rec.model_config.__dict__ == model.model_config.__dict__
@@ -238,25 +238,25 @@ class Test_Model_Saving:
 
         # check raises decoder.pkl is missing
         with pytest.raises(FileNotFoundError):
-            model_rec = VAMP.load_from_folder(dir_path)
+            model_rec = AutoModel.load_from_folder(dir_path)
 
         os.remove(os.path.join(dir_path, "encoder.pkl"))
 
         # check raises encoder.pkl is missing
         with pytest.raises(FileNotFoundError):
-            model_rec = VAMP.load_from_folder(dir_path)
+            model_rec = AutoModel.load_from_folder(dir_path)
 
         os.remove(os.path.join(dir_path, "model.pt"))
 
         # check raises encoder.pkl is missing
         with pytest.raises(FileNotFoundError):
-            model_rec = VAMP.load_from_folder(dir_path)
+            model_rec = AutoModel.load_from_folder(dir_path)
 
         os.remove(os.path.join(dir_path, "model_config.json"))
 
         # check raises encoder.pkl is missing
         with pytest.raises(FileNotFoundError):
-            model_rec = VAMP.load_from_folder(dir_path)
+            model_rec = AutoModel.load_from_folder(dir_path)
 
 
 class Test_Model_forward:
@@ -383,13 +383,34 @@ class Test_VAMP_Training:
 
         step_1_model_state_dict = deepcopy(trainer.model.state_dict())
 
-        # check that weights were updated
+        # check that weights were not updated
         assert not all(
             [
                 torch.equal(start_model_state_dict[key], step_1_model_state_dict[key])
                 for key in start_model_state_dict.keys()
             ]
         )
+
+    def test_vamp_predict_step(
+        self, vamp, train_dataset, training_configs, optimizers
+    ):
+        trainer = BaseTrainer(
+            model=vamp,
+            train_dataset=train_dataset,
+            eval_dataset=train_dataset,
+            training_config=training_configs,
+            optimizer=optimizers,
+        )
+
+        start_model_state_dict = deepcopy(trainer.model.state_dict())
+
+        inputs, recon, generated = trainer.predict(trainer.model)
+
+        step_1_model_state_dict = deepcopy(trainer.model.state_dict())
+
+        assert torch.equal(inputs.cpu(), train_dataset.data.cpu())
+        assert recon.shape == inputs.shape
+        assert generated.shape == inputs.shape 
 
     def test_vamp_main_train_loop(
         self, tmpdir, vamp, train_dataset, training_configs, optimizers
@@ -476,7 +497,7 @@ class Test_VAMP_Training:
         )
 
         # check reload full model
-        model_rec = VAMP.load_from_folder(os.path.join(checkpoint_dir))
+        model_rec = AutoModel.load_from_folder(os.path.join(checkpoint_dir))
 
         assert all(
             [
@@ -619,7 +640,7 @@ class Test_VAMP_Training:
             assert not "encoder.pkl" in files_list
 
         # check reload full model
-        model_rec = VAMP.load_from_folder(os.path.join(final_dir))
+        model_rec = AutoModel.load_from_folder(os.path.join(final_dir))
 
         assert all(
             [
@@ -681,7 +702,7 @@ class Test_VAMP_Training:
             assert not "encoder.pkl" in files_list
 
         # check reload full model
-        model_rec = VAMP.load_from_folder(os.path.join(final_dir))
+        model_rec = AutoModel.load_from_folder(os.path.join(final_dir))
 
         assert all(
             [
@@ -694,3 +715,34 @@ class Test_VAMP_Training:
 
         assert type(model_rec.encoder.cpu()) == type(model.encoder.cpu())
         assert type(model_rec.decoder.cpu()) == type(model.decoder.cpu())
+
+class Test_VAMP_Generation:
+    @pytest.fixture
+    def train_data(self):
+        return torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample")).data
+
+    @pytest.fixture()
+    def ae_model(self):
+        return VAMP(VAMPConfig(input_dim=(1, 28, 28), latent_dim=7))
+
+    @pytest.fixture(
+        params=[
+            VAMPSamplerConfig()
+        ]
+    )
+    def sampler_configs(self, request):
+        return request.param
+
+    def test_fits_in_generation_pipeline(self, ae_model, sampler_configs, train_data):
+        pipeline = GenerationPipeline(model=ae_model, sampler_config=sampler_configs)
+        gen_data = pipeline(
+            num_samples=11,
+            batch_size=7,
+            output_dir=None,
+            return_gen=True,
+            train_data=train_data,
+            eval_data=train_data,
+            training_config=BaseTrainerConfig(num_epochs=1)
+        )
+
+        assert gen_data.shape[0] == 11

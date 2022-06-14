@@ -1,16 +1,18 @@
 import os
-from copy import deepcopy
 
 import pytest
 import torch
 from torch.optim import SGD, Adadelta, Adagrad, Adam, RMSprop
 
+from copy import deepcopy
+
 from pythae.customexception import BadInheritanceError
 from pythae.models.base.base_utils import ModelOutput
-from pythae.models import VQVAE, VQVAEConfig
-
+from pythae.models import VQVAE, VQVAEConfig, AutoModel
+from pythae.models.vq_vae.vq_vae_utils import Quantizer, QuantizerEMA
+from pythae.samplers import PixelCNNSamplerConfig
 from pythae.trainers import BaseTrainer, BaseTrainerConfig
-from pythae.pipelines import TrainingPipeline
+from pythae.pipelines import TrainingPipeline, GenerationPipeline
 from tests.data.custom_architectures import (
     Decoder_AE_Conv,
     Encoder_AE_Conv,
@@ -28,12 +30,15 @@ def model_configs_no_input_dim(request):
 @pytest.fixture(
     params=[
         VQVAEConfig(
-            input_dim=(1, 28, 28), latent_dim=4, num_embeddings=10
+            input_dim=(1, 28, 28), latent_dim=16, num_embeddings=10
         ),  #  ! Needs squared latent_dim !
         VQVAEConfig(
             input_dim=(1, 28, 28),
-            beta=0.02,
-            latent_dim=4,
+            commitment_loss_factor=0.02,
+            quantization_loss_factor=0.18,
+            latent_dim=16,
+            use_ema=True,
+            decay=0.001
         ),
     ]
 )
@@ -64,6 +69,18 @@ class Test_Model_Building:
                 model.latent_dim == model_configs.latent_dim,
             ]
         )
+
+        with pytest.raises(AssertionError):
+            VQVAEConfig(decay=10, use_ema=True)
+
+    def build_quantizer(self, model_configs):
+        model = VQVAE(model_configs)
+
+        if model.use_ema:
+            assert isinstance(model.quantizer, QuantizerEMA)
+
+        else:
+            assert isinstance(model.quantizer, Quantizer)
 
     def test_raises_bad_inheritance(self, model_configs, bad_net):
         with pytest.raises(BadInheritanceError):
@@ -121,7 +138,7 @@ class Test_Model_Saving:
         assert set(os.listdir(dir_path)) == set(["model_config.json", "model.pt"])
 
         # reload model
-        model_rec = VQVAE.load_from_folder(dir_path)
+        model_rec = AutoModel.load_from_folder(dir_path)
 
         # check configs are the same
         assert model_rec.model_config.__dict__ == model.model_config.__dict__
@@ -149,7 +166,7 @@ class Test_Model_Saving:
         )
 
         # reload model
-        model_rec = VQVAE.load_from_folder(dir_path)
+        model_rec = AutoModel.load_from_folder(dir_path)
 
         # check configs are the same
         assert model_rec.model_config.__dict__ == model.model_config.__dict__
@@ -177,7 +194,7 @@ class Test_Model_Saving:
         )
 
         # reload model
-        model_rec = VQVAE.load_from_folder(dir_path)
+        model_rec = AutoModel.load_from_folder(dir_path)
 
         # check configs are the same
         assert model_rec.model_config.__dict__ == model.model_config.__dict__
@@ -207,7 +224,7 @@ class Test_Model_Saving:
         )
 
         # reload model
-        model_rec = VQVAE.load_from_folder(dir_path)
+        model_rec = AutoModel.load_from_folder(dir_path)
 
         # check configs are the same
         assert model_rec.model_config.__dict__ == model.model_config.__dict__
@@ -236,25 +253,25 @@ class Test_Model_Saving:
 
         # check raises decoder.pkl is missing
         with pytest.raises(FileNotFoundError):
-            model_rec = VQVAE.load_from_folder(dir_path)
+            model_rec = AutoModel.load_from_folder(dir_path)
 
         os.remove(os.path.join(dir_path, "encoder.pkl"))
 
         # check raises encoder.pkl is missing
         with pytest.raises(FileNotFoundError):
-            model_rec = VQVAE.load_from_folder(dir_path)
+            model_rec = AutoModel.load_from_folder(dir_path)
 
         os.remove(os.path.join(dir_path, "model.pt"))
 
         # check raises encoder.pkl is missing
         with pytest.raises(FileNotFoundError):
-            model_rec = VQVAE.load_from_folder(dir_path)
+            model_rec = AutoModel.load_from_folder(dir_path)
 
         os.remove(os.path.join(dir_path, "model_config.json"))
 
         # check raises encoder.pkl is missing
         with pytest.raises(FileNotFoundError):
-            model_rec = VQVAE.load_from_folder(dir_path)
+            model_rec = AutoModel.load_from_folder(dir_path)
 
 
 class Test_Model_forward:
@@ -278,7 +295,7 @@ class Test_Model_forward:
 
         assert isinstance(out, ModelOutput)
 
-        assert set(["loss", "recon_loss", "vq_loss", "recon_x", "z"]) == set(out.keys())
+        assert set(["loss", "recon_loss", "vq_loss", "recon_x", "z", "quantized_indices"]) == set(out.keys())
 
         assert out.z.shape[0] == demo_data["data"].shape[0]
         assert out.recon_x.shape == demo_data["data"].shape
@@ -376,13 +393,42 @@ class Test_VQVAETraining:
 
         step_1_model_state_dict = deepcopy(trainer.model.state_dict())
 
-        # check that weights were updated
+        # check that weights were not updated
         assert all(
             [
                 torch.equal(start_model_state_dict[key], step_1_model_state_dict[key])
                 for key in start_model_state_dict.keys()
             ]
         )
+
+    def test_vae_predict_step(
+        self, vae, train_dataset, training_configs, optimizers
+    ):
+        trainer = BaseTrainer(
+            model=vae,
+            train_dataset=train_dataset,
+            eval_dataset=train_dataset,
+            training_config=training_configs,
+            optimizer=optimizers,
+        )
+
+        start_model_state_dict = deepcopy(trainer.model.state_dict())
+
+        inputs, recon, generated = trainer.predict(trainer.model)
+
+        step_1_model_state_dict = deepcopy(trainer.model.state_dict())
+
+        # check that weights were not updated
+        assert all(
+            [
+                torch.equal(start_model_state_dict[key], step_1_model_state_dict[key])
+                for key in start_model_state_dict.keys()
+            ]
+        )
+
+        assert torch.equal(inputs.cpu(), train_dataset.data.cpu())
+        assert recon.shape == inputs.shape
+        assert generated.shape == inputs.shape 
 
     def test_vae_main_train_loop(
         self, tmpdir, vae, train_dataset, training_configs, optimizers
@@ -469,7 +515,7 @@ class Test_VQVAETraining:
         )
 
         # check reload full model
-        model_rec = VQVAE.load_from_folder(os.path.join(checkpoint_dir))
+        model_rec = AutoModel.load_from_folder(os.path.join(checkpoint_dir))
 
         assert all(
             [
@@ -612,7 +658,7 @@ class Test_VQVAETraining:
             assert not "encoder.pkl" in files_list
 
         # check reload full model
-        model_rec = VQVAE.load_from_folder(os.path.join(final_dir))
+        model_rec = AutoModel.load_from_folder(os.path.join(final_dir))
 
         assert all(
             [
@@ -670,7 +716,7 @@ class Test_VQVAETraining:
             assert not "encoder.pkl" in files_list
 
         # check reload full model
-        model_rec = VQVAE.load_from_folder(os.path.join(final_dir))
+        model_rec = AutoModel.load_from_folder(os.path.join(final_dir))
 
         assert all(
             [
@@ -683,3 +729,34 @@ class Test_VQVAETraining:
 
         assert type(model_rec.encoder.cpu()) == type(model.encoder.cpu())
         assert type(model_rec.decoder.cpu()) == type(model.decoder.cpu())
+
+class Test_VQVAE_Generation:
+    @pytest.fixture
+    def train_data(self):
+        return torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample")).data
+
+    @pytest.fixture()
+    def ae_model(self):
+        return VQVAE(VQVAEConfig(input_dim=(1, 28, 28), latent_dim=4))
+
+    @pytest.fixture(
+        params=[
+            PixelCNNSamplerConfig()
+        ]
+    )
+    def sampler_configs(self, request):
+        return request.param
+
+    def test_fits_in_generation_pipeline(self, ae_model, sampler_configs, train_data):
+        pipeline = GenerationPipeline(model=ae_model, sampler_config=sampler_configs)
+        gen_data = pipeline(
+            num_samples=11,
+            batch_size=7,
+            output_dir=None,
+            return_gen=True,
+            train_data=train_data,
+            eval_data=train_data,
+            training_config=BaseTrainerConfig(num_epochs=1)
+        )
+
+        assert gen_data.shape[0] == 11

@@ -7,7 +7,6 @@ import torch.nn.functional as F
 from ...data.datasets import BaseDataset
 from ..base.base_utils import ModelOutput
 from ..nn import BaseDecoder, BaseEncoder
-from ..nn.default_architectures import Encoder_VAE_MLP
 from ..vae import VAE
 from .beta_vae_config import BetaVAEConfig
 
@@ -52,7 +51,7 @@ class BetaVAE(VAE):
         The VAE model
 
         Args:
-            inputs (BaseDataset): The training datasat with labels
+            inputs (BaseDataset): The training dataset with labels
 
         Returns:
             ModelOutput: An instance of ModelOutput containing all the relevant parameters

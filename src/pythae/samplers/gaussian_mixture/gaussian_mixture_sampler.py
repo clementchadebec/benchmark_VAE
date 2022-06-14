@@ -6,7 +6,7 @@ from torch.utils.data import DataLoader
 
 from ...data.preprocessors import DataProcessor
 from ...models import BaseAE
-from ...samplers import BaseSampler
+from ..base import BaseSampler
 from .gaussian_mixture_config import GaussianMixtureSamplerConfig
 
 logger = logging.getLogger(__name__)
@@ -43,7 +43,7 @@ class GaussianMixtureSampler(BaseSampler):
 
         self.n_components = sampler_config.n_components
 
-    def fit(self, train_data):
+    def fit(self, train_data, **kwargs):
         """Method to fit the sampler from the training data
 
         Args:
@@ -57,26 +57,35 @@ class GaussianMixtureSampler(BaseSampler):
             train_data.max() >= 1 and train_data.min() >= 0
         ), "Train data must in the range [0-1]"
 
+        dataset_type = (
+            "DoubleBatchDataset"
+            if self.model.model_name == "FactorVAE"
+            else "BaseDataset"
+        )
+
         data_processor = DataProcessor()
-        train_data = data_processor.process_data(train_data)
-        train_dataset = data_processor.to_dataset(train_data)
+        train_data = data_processor.process_data(train_data).to(self.device)
+        train_dataset = data_processor.to_dataset(train_data, dataset_type=dataset_type)
         train_loader = DataLoader(dataset=train_dataset, batch_size=100, shuffle=False)
 
-        mu = []
+        z = []
+        try:
+            with torch.no_grad():
+                for _, inputs in enumerate(train_loader):
+                    z_ = self.model(inputs).z
+                    z.append(z_)
 
-        with torch.no_grad():
+        except RuntimeError:
             for _, inputs in enumerate(train_loader):
-                mu_data = self.model.encoder(inputs["data"].to(self.device))[
-                    "embedding"
-                ]
-                mu.append(mu_data)
+                z_ = self.model(inputs).z.detach()
+                z.append(z_)
 
-        mu = torch.cat(mu)
+        z = torch.cat(z)
 
-        if self.n_components > mu.shape[0]:
-            self.n_components = mu.shape[0]
+        if self.n_components > z.shape[0]:
+            self.n_components = z.shape[0]
             logger.warning(
-                f"Setting the number of component to {mu.shape[0]} since"
+                f"Setting the number of component to {z.shape[0]} since"
                 "n_components > n_samples when fitting the gmm"
             )
 
@@ -87,7 +96,7 @@ class GaussianMixtureSampler(BaseSampler):
             verbose=0,
             tol=1e-3,
         )
-        gmm.fit(mu.cpu().detach())
+        gmm.fit(z.cpu().detach())
 
         self.gmm = gmm
 

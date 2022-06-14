@@ -4,19 +4,21 @@ import os
 from copy import deepcopy
 from typing import Any, Dict, List, Optional
 
-import numpy as np
 import torch
 import torch.optim as optim
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torch.utils.data import DataLoader
-from tqdm import tqdm
 
 from ...customexception import ModelError
 from ...data.datasets import BaseDataset
 from ...models import BaseAE
 from ..trainer_utils import set_seed
-from ..training_callbacks import (CallbackHandler,
-                                  MetricConsolePrinterCallback,
-                                  ProgressBarCallback, TrainingCallback)
+from ..training_callbacks import (
+    CallbackHandler,
+    MetricConsolePrinterCallback,
+    ProgressBarCallback,
+    TrainingCallback,
+)
 from .base_training_config import BaseTrainerConfig
 
 logger = logging.getLogger(__name__)
@@ -60,7 +62,7 @@ class BaseTrainer:
         eval_dataset: Optional[BaseDataset] = None,
         training_config: Optional[BaseTrainerConfig] = None,
         optimizer: Optional[torch.optim.Optimizer] = None,
-        scheduler: Optional = None,
+        scheduler: Optional[torch.optim.lr_scheduler.LambdaLR] = None,
         callbacks: List[TrainingCallback] = None,
     ):
 
@@ -223,6 +225,20 @@ class BaseTrainer:
 
         return inputs_on_device
 
+    def _optimizers_step(self, model_output=None):
+        loss = model_output.loss
+
+        self.optimizer.zero_grad()
+        loss.backward()
+        self.optimizer.step()
+
+    def _schedulers_step(self, metrics=None):
+        if isinstance(self.scheduler, ReduceLROnPlateau):
+            self.scheduler.step(metrics)
+
+        else:
+            self.scheduler.step()
+
     def train(self, log_output_dir: str = None):
         """This function is the main training function
 
@@ -318,17 +334,16 @@ class BaseTrainer:
             if self.eval_dataset is not None:
                 epoch_eval_loss = self.eval_step(epoch)
                 metrics["eval_epoch_loss"] = epoch_eval_loss
-                self.scheduler.step(epoch_eval_loss)
+                self._schedulers_step(epoch_eval_loss)
 
             else:
                 epoch_eval_loss = best_eval_loss
-                self.scheduler.step(epoch_train_loss)
+                self._schedulers_step(epoch_train_loss)
 
             if (
                 epoch_eval_loss < best_eval_loss
                 and not self.training_config.keep_best_on_train
             ):
-                best_model_epoch = epoch
                 best_eval_loss = epoch_eval_loss
                 best_model = deepcopy(self.model)
                 self._best_model = best_model
@@ -337,7 +352,6 @@ class BaseTrainer:
                 epoch_train_loss < best_train_loss
                 and self.training_config.keep_best_on_train
             ):
-                best_model_epoch = epoch
                 best_train_loss = epoch_train_loss
                 best_model = deepcopy(self.model)
                 self._best_model = best_model
@@ -346,12 +360,7 @@ class BaseTrainer:
                 self.training_config.steps_predict is not None
                 and epoch % self.training_config.steps_predict == 0
             ):
-                true_data, reconstructions, generations = self.predict(
-                    best_model,
-                    self.eval_loader.dataset.data[
-                        : min(self.eval_loader.dataset.data.shape[0], 10)
-                    ],
-                )
+                true_data, reconstructions, generations = self.predict(best_model)
 
                 self.callback_handler.on_prediction_step(
                     self.training_config,
@@ -398,23 +407,31 @@ class BaseTrainer:
             (torch.Tensor): The evaluation loss
         """
 
+        self.callback_handler.on_eval_step_begin(
+            training_config=self.training_config,
+            eval_loader=self.eval_loader,
+            epoch=epoch,
+        )
+
         self.model.eval()
 
         epoch_loss = 0
 
         for inputs in self.eval_loader:
 
-            self.callback_handler.on_eval_step_begin(
-                training_config=self.training_config,
-                eval_loader=self.eval_loader,
-                epoch=epoch,
-            )
-
             inputs = self._set_inputs_to_device(inputs)
 
-            model_output = self.model(
-                inputs, epoch=epoch, dataset_size=len(self.eval_loader.dataset)
-            )
+            try:
+                with torch.no_grad():
+
+                    model_output = self.model(
+                        inputs, epoch=epoch, dataset_size=len(self.eval_loader.dataset)
+                    )
+
+            except RuntimeError:
+                model_output = self.model(
+                    inputs, epoch=epoch, dataset_size=len(self.eval_loader.dataset)
+                )
 
             loss = model_output.loss
 
@@ -438,6 +455,12 @@ class BaseTrainer:
         Returns:
             (torch.Tensor): The step training loss
         """
+        self.callback_handler.on_train_step_begin(
+            training_config=self.training_config,
+            train_loader=self.train_loader,
+            epoch=epoch,
+        )
+
         # set model in train model
         self.model.train()
 
@@ -445,24 +468,15 @@ class BaseTrainer:
 
         for inputs in self.train_loader:
 
-            self.callback_handler.on_train_step_begin(
-                training_config=self.training_config,
-                train_loader=self.train_loader,
-                epoch=epoch,
-            )
-
             inputs = self._set_inputs_to_device(inputs)
-
-            self.optimizer.zero_grad()
 
             model_output = self.model(
                 inputs, epoch=epoch, dataset_size=len(self.train_loader.dataset)
             )
 
-            loss = model_output.loss
+            self._optimizers_step(model_output)
 
-            loss.backward()
-            self.optimizer.step()
+            loss = model_output.loss
 
             epoch_loss += loss.item()
 
@@ -529,17 +543,21 @@ class BaseTrainer:
         # save training config
         self.training_config.save_json(checkpoint_dir, "training_config")
 
-    def predict(self, model: BaseAE, eval_data: torch.Tensor):
+    def predict(self, model: BaseAE):
 
         model.eval()
 
-        with torch.no_grad():
-            true_data = eval_data
-            z = torch.randn(10, model.latent_dim)
-            if self.device == "cuda":
-                true_data = true_data.cuda()
-                z = z.cuda()
-            reconstructions = model({"data": true_data}).recon_x.cpu().detach()
-            normal_generation = model.decoder(z).reconstruction.detach().cpu()
+        # with torch.no_grad():
 
-        return true_data, reconstructions, normal_generation
+        inputs = self.eval_loader.dataset[
+            : min(self.eval_loader.dataset.data.shape[0], 10)
+        ]
+        inputs = self._set_inputs_to_device(inputs)
+
+        model_out = model(inputs)
+        reconstructions = model_out.recon_x.cpu().detach()
+        z_enc = model_out.z
+        z = torch.randn_like(z_enc)
+        normal_generation = model.decoder(z).reconstruction.detach().cpu()
+
+        return inputs["data"], reconstructions, normal_generation

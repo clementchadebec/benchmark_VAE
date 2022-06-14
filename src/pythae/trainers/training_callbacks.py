@@ -40,79 +40,66 @@ class TrainingCallback:
         """
         Event called at the end of the initialization of the [`Trainer`].
         """
-        pass
 
     def on_train_begin(self, training_config: BaseTrainerConfig, **kwargs):
         """
         Event called at the beginning of training.
         """
-        pass
 
     def on_train_end(self, training_config: BaseTrainerConfig, **kwargs):
         """
         Event called at the end of training.
         """
-        pass
 
     def on_epoch_begin(self, training_config: BaseTrainerConfig, **kwargs):
         """
         Event called at the beginning of an epoch.
         """
-        pass
 
     def on_epoch_end(self, training_config: BaseTrainerConfig, **kwargs):
         """
         Event called at the end of an epoch.
         """
-        pass
 
     def on_train_step_begin(self, training_config: BaseTrainerConfig, **kwargs):
         """
         Event called at the beginning of a training step.
         """
-        pass
 
     def on_train_step_end(self, training_config: BaseTrainerConfig, **kwargs):
         """
         Event called at the end of a training step.
         """
-        pass
 
     def on_eval_step_begin(self, training_config: BaseTrainerConfig, **kwargs):
         """
         Event called at the beginning of a evaluation step.
         """
-        pass
 
     def on_eval_step_end(self, training_config: BaseTrainerConfig, **kwargs):
         """
         Event called at the end of a evaluation step.
         """
-        pass
 
     def on_evaluate(self, training_config: BaseTrainerConfig, **kwargs):
         """
         Event called after an evaluation phase.
         """
-        pass
 
     def on_prediction_step(self, training_config: BaseTrainerConfig, **kwargs):
         """
         Event called after a prediction phase.
         """
-        pass
 
     def on_save(self, training_config: BaseTrainerConfig, **kwargs):
         """
         Event called after a checkpoint save.
         """
-        pass
 
     def on_log(self, training_config: BaseTrainerConfig, logs, **kwargs):
         """
         Event called after logging the last logs.
         """
-        pass
 
 
 class CallbackHandler:
@@ -229,21 +216,19 @@ class ProgressBarCallback(TrainingCallback):
         self.train_progress_bar = None
         self.eval_progress_bar = None
 
-    def on_epoch_begin(self, training_config, **kwargs):
+    def on_train_step_begin(self, training_config: BaseTrainerConfig, **kwargs):
         epoch = kwargs.pop("epoch", None)
         train_loader = kwargs.pop("train_loader", None)
-        eval_loader = kwargs.pop("eval_loader", None)
-
         if train_loader is not None:
             self.train_progress_bar = tqdm(
                 total=len(train_loader),
                 unit="batch",
                 desc=f"Training of epoch {epoch}/{training_config.num_epochs}",
             )
-            # self.train_progress_bar.set_description(
-            #    f"Training of epoch {epoch}/{training_config.num_epochs}"
-            # )
 
+    def on_eval_step_begin(self, training_config: BaseTrainerConfig, **kwargs):
+        epoch = kwargs.pop("epoch", None)
+        eval_loader = kwargs.pop("eval_loader", None)
         if eval_loader is not None:
             self.eval_progress_bar = tqdm(
                 total=len(eval_loader),
@@ -318,9 +303,9 @@ class WandbCallback(TrainingCallback):
         self._wandb.log({**logs, "train/global_step": global_step})
 
     def on_prediction_step(self, training_config, **kwargs):
-        global_step = kwargs.pop("global_step", None)
+        kwargs.pop("global_step", None)
 
-        column_names = ["images_id", "truth", "recontruction", "normal_generation"]
+        column_names = ["images_id", "truth", "reconstruction", "normal_generation"]
 
         true_data = kwargs.pop("true_data", None)
         reconstructions = kwargs.pop("reconstructions", None)
@@ -342,12 +327,22 @@ class WandbCallback(TrainingCallback):
                             np.moveaxis(true_data[i].cpu().detach().numpy(), 0, -1)
                         ),
                         self._wandb.Image(
-                            np.moveaxis(
-                                reconstructions[i].cpu().detach().numpy(), 0, -1
+                            np.clip(
+                                np.moveaxis(
+                                    reconstructions[i].cpu().detach().numpy(), 0, -1
+                                ),
+                                0,
+                                255.0,
                             )
                         ),
                         self._wandb.Image(
-                            np.moveaxis(generations[i].cpu().detach().numpy(), 0, -1)
+                            np.clip(
+                                np.moveaxis(
+                                    generations[i].cpu().detach().numpy(), 0, -1
+                                ),
+                                0,
+                                255.0,
+                            )
                         ),
                     ]
                 )

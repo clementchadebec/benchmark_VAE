@@ -9,7 +9,6 @@ import torch.nn.functional as F
 from ...data.datasets import BaseDataset
 from ..base.base_utils import ModelOutput
 from ..nn import BaseDecoder, BaseEncoder
-from ..nn.default_architectures import Encoder_VAE_MLP
 from ..vae import VAE
 from .vamp_config import VAMPConfig
 
@@ -70,7 +69,7 @@ class VAMP(VAE):
         The VAE model
 
         Args:
-            inputs (BaseDataset): The training datasat with labels
+            inputs (BaseDataset): The training dataset with labels
 
         Returns:
             ModelOutput: An instance of ModelOutput containing all the relevant parameters
@@ -91,7 +90,7 @@ class VAMP(VAE):
         )
 
         std = torch.exp(0.5 * log_var)
-        z, eps = self._sample_gauss(mu, std)
+        z, _ = self._sample_gauss(mu, std)
 
         recon_x = self.decoder(z)["reconstruction"]
 
@@ -127,9 +126,7 @@ class VAMP(VAE):
 
         log_p_z = self._log_p_z(z)
 
-        log_q_z = (-0.5 * (log_var + torch.pow(z - mu, 2) / torch.exp(log_var))).sum(
-            dim=1
-        )
+        log_q_z = (-0.5 * (log_var + torch.pow(z - mu, 2) / log_var.exp())).sum(dim=1)
         KLD = -(log_p_z - log_q_z)
 
         return (recon_loss + KLD).mean(dim=0), recon_loss.mean(dim=0), KLD.mean(dim=0)
@@ -147,17 +144,24 @@ class VAMP(VAE):
         encoder_output = self.encoder(x)
         prior_mu, prior_log_var = (
             encoder_output.embedding,
-            torch.tanh(encoder_output.log_covariance),
+            torch.tanh(
+                encoder_output.log_covariance
+            ),  # needed to avoid unbounded optim
         )
 
         z_expand = z.unsqueeze(1)
         prior_mu = prior_mu.unsqueeze(0)
         prior_log_var = prior_log_var.unsqueeze(0)
 
-        log_p_z = torch.sum(
-            -0.5 * (prior_log_var + (z_expand - prior_mu) ** 2) / prior_log_var.exp(),
-            dim=2,
-        ) - torch.log(torch.tensor(C).type(torch.float))
+        log_p_z = (
+            torch.sum(
+                -0.5
+                * (prior_log_var + (z_expand - prior_mu) ** 2)
+                / prior_log_var.exp(),
+                dim=2,
+            )
+            - torch.log(torch.tensor(C).type(torch.float))
+        )
 
         log_p_z = torch.logsumexp(log_p_z, dim=1)
 
@@ -172,7 +176,7 @@ class VAMP(VAE):
     def get_nll(self, data, n_samples=1, batch_size=100):
         """
         Function computed the estimate negative log-likelihood of the model. It uses importance
-        sampling method with the approximate posterior disctribution. This may take a while.
+        sampling method with the approximate posterior distribution. This may take a while.
 
         Args:
             data (torch.Tensor): The input data from which the log-likelihood should be estimated.

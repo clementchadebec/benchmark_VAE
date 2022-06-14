@@ -1,7 +1,8 @@
 import torch
 
 from ...models import BaseAE
-from ...samplers import BaseSampler, BaseSamplerConfig
+from ..base import BaseSampler
+from .hypersphere_uniform_config import HypersphereUniformSamplerConfig
 
 
 class HypersphereUniformSampler(BaseSampler):
@@ -14,7 +15,12 @@ class HypersphereUniformSampler(BaseSampler):
 
     """
 
-    def __init__(self, model: BaseAE, sampler_config: BaseSamplerConfig = None):
+    def __init__(
+        self, model: BaseAE, sampler_config: HypersphereUniformSamplerConfig = None
+    ):
+
+        if sampler_config is None:
+            sampler_config = HypersphereUniformSamplerConfig()
 
         BaseSampler.__init__(self, model=model, sampler_config=sampler_config)
 

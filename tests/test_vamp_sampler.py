@@ -5,7 +5,8 @@ import pytest
 import torch
 
 from pythae.models import VAMP, VAMPConfig
-from pythae.samplers import VAMPSampler, VAMPSamplerConfig
+from pythae.samplers import NormalSampler, NormalSamplerConfig, VAMPSampler, VAMPSamplerConfig
+from pythae.pipelines import GenerationPipeline
 
 PATH = os.path.dirname(os.path.abspath(__file__))
 
@@ -25,10 +26,19 @@ def dummy_data():
 def model(request):
     return request.param
 
+@pytest.fixture(
+    params=[
+        VAMPSamplerConfig(),
+        None,
+    ]
+)
+def sampler_config(request):
+    return request.param
+
 
 @pytest.fixture()
-def sampler(model):
-    return VAMPSampler(model=model, sampler_config=VAMPSamplerConfig())
+def sampler(model, sampler_config):
+    return VAMPSampler(model=model, sampler_config=sampler_config)
 
 
 @pytest.fixture(params=[(4, 2), (5, 5), (2, 3)])
@@ -117,18 +127,54 @@ class Test_VAMPSampler_Sampling:
         assert len(os.listdir(dir_path)) == num_samples + 1
         assert "sampler_config.json" in os.listdir(dir_path)
 
+    def test_generation_pipeline(
+        self, tmpdir, dummy_data, model, sampler_config, num_sample_and_batch_size
+    ):
 
-# class Test_Sampler_Set_up:
-#    @pytest.fixture(
-#        params=[# (target full batch number, target last full batch size, target_batch_number)
-#            NormalSamplerConfig(),
-#        ]
-#    )
-#    def sampler_config(self, tmpdir, request):
-#        return request.param
-#
-#    def test_sampler_set_up(self, model, sampler_config):
-#        sampler = NormalSampler(model=model, sampler_config=sampler_config)
-#
-#        assert sampler.batch_size == sampler_config.batch_size
-#        assert sampler.samples_per_save == sampler_config.samples_per_save
+        dir_path = os.path.join(tmpdir, "dummy_folder1")
+        num_samples, batch_size = (
+            num_sample_and_batch_size[0],
+            num_sample_and_batch_size[1],
+        )
+
+        pipe = GenerationPipeline(model=model, sampler_config=None)
+
+        assert isinstance(pipe.sampler, NormalSampler)
+        assert pipe.sampler.sampler_config == NormalSamplerConfig()
+
+        gen_data = pipe(num_samples=num_samples,
+            batch_size=batch_size,
+            output_dir=dir_path,
+            return_gen=True,
+            save_sampler_config=True,
+            train_data=dummy_data,
+            eval_data=None
+        )
+
+        assert tuple(gen_data.shape) == (num_samples,) + tuple(model.model_config.input_dim)
+        assert len(os.listdir(dir_path)) == num_samples + 1
+        assert "sampler_config.json" in os.listdir(dir_path)
+
+        dir_path = os.path.join(tmpdir, "dummy_folder2")
+
+        pipe = GenerationPipeline(model=model, sampler_config=sampler_config)
+
+        if sampler_config is None:
+            assert isinstance(pipe.sampler, NormalSampler)
+
+        else:
+            assert isinstance(pipe.sampler, VAMPSampler)
+            assert pipe.sampler.sampler_config == sampler_config
+
+        gen_data = pipe(num_samples=num_samples,
+            batch_size=batch_size,
+            output_dir=dir_path,
+            return_gen=False,
+            save_sampler_config=False,
+            train_data=dummy_data,
+            eval_data=dummy_data
+        )
+
+        assert gen_data is None
+        assert "sampler_config.json" not in os.listdir(dir_path)
+        assert len(os.listdir(dir_path)) == num_samples

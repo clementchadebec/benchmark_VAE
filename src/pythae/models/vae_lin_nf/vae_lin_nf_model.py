@@ -9,8 +9,12 @@ import torch.nn.functional as F
 from ...data.datasets import BaseDataset
 from ..base.base_utils import ModelOutput
 from ..nn import BaseDecoder, BaseEncoder
-from ..normalizing_flows import (PlanarFlow, PlanarFlowConfig, RadialFlow,
-                                 RadialFlowConfig)
+from ..normalizing_flows import (
+    PlanarFlow,
+    PlanarFlowConfig,
+    RadialFlow,
+    RadialFlowConfig,
+)
 from ..vae import VAE
 from .vae_lin_nf_config import VAE_LinNF_Config
 
@@ -70,7 +74,7 @@ class VAE_LinNF(VAE):
         The VAE with linear normalizing flows model
 
         Args:
-            inputs (BaseDataset): The training datasat with labels
+            inputs (BaseDataset): The training dataset with labels
 
         Returns:
             ModelOutput: An instance of ModelOutput containing all the relevant parameters
@@ -150,7 +154,7 @@ class VAE_LinNF(VAE):
     def get_nll(self, data, n_samples=1, batch_size=100):
         """
         Function computed the estimate negative log-likelihood of the model. It uses importance
-        sampling method with the approximate posterior disctribution. This may take a while.
+        sampling method with the approximate posterior distribution. This may take a while.
 
         Args:
             data (torch.Tensor): The input data from which the log-likelihood should be estimated.
@@ -198,7 +202,7 @@ class VAE_LinNF(VAE):
                 log_q_z_given_x = (
                     -0.5 * (log_var + torch.pow(z0 - mu, 2) / torch.exp(log_var))
                 ).sum(dim=1) - log_abs_det_jac
-                log_p_z = -0.5 * (z**2).sum(dim=-1)
+                log_p_z = -0.5 * (z ** 2).sum(dim=-1)
 
                 recon_x = self.decoder(z)["reconstruction"]
 

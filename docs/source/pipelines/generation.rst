@@ -1,8 +1,3 @@
-.. role:: hidden
-    :class: hidden-section
-.. currentmodule:: pythae.pipelines
-
-
 **********************************
 GenerationPipeline
 **********************************
@@ -10,3 +5,4 @@ GenerationPipeline
 .. autoclass::
     pythae.pipelines.GenerationPipeline
     :members: __call__
+   

@@ -66,11 +66,11 @@ class BaseNF(nn.Module):
 
         By default, it does nothing.
         """
-        pass
 
     def save(self, dir_path):
         """Method to save the model at a specific location. It saves, the model weights as a
         ``models.pt`` file along with the model config as a ``model_config.json`` file.
+
         Args:
             dir_path (str): The path where the model should be saved. If the path
                 path does not exist a folder will be created at the provided location.

@@ -13,4 +13,3 @@ class SVAEConfig(VAEConfig):
         latent_dim (int): The latent space dimension in which lives the hypersphere. Default: None.
         reconstruction_loss (str): The reconstruction loss to use ['bce', 'mse']. Default: 'mse'
     """
-    pass

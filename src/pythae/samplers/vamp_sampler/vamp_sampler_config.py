@@ -1,6 +1,6 @@
 from pydantic.dataclasses import dataclass
 
-from ...samplers import BaseSamplerConfig
+from ..base import BaseSamplerConfig
 
 
 @dataclass

@@ -2,19 +2,15 @@ import datetime
 import logging
 import os
 from copy import deepcopy
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
 
-import numpy as np
 import torch
 import torch.optim as optim
-from torch.utils.data import DataLoader
-from tqdm import tqdm
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 
-from ...customexception import ModelError
 from ...data.datasets import BaseDataset
 from ...models import BaseAE
 from ..base_trainer import BaseTrainer
-from ..trainer_utils import set_seed
 from ..training_callbacks import TrainingCallback
 from .coupled_optimizer_trainer_config import CoupledOptimizerTrainerConfig
 
@@ -56,8 +52,8 @@ class CoupledOptimizerTrainer(BaseTrainer):
         training_config: Optional[CoupledOptimizerTrainerConfig] = None,
         encoder_optimizer: Optional[torch.optim.Optimizer] = None,
         decoder_optimizer: Optional[torch.optim.Optimizer] = None,
-        encoder_scheduler: Optional = None,
-        decoder_scheduler: Optional = None,
+        encoder_scheduler: Optional[torch.optim.lr_scheduler.LambdaLR] = None,
+        decoder_scheduler: Optional[torch.optim.lr_scheduler.LambdaLR] = None,
         callbacks: List[TrainingCallback] = None,
     ):
 
@@ -93,7 +89,7 @@ class CoupledOptimizerTrainer(BaseTrainer):
             )
 
         if decoder_scheduler is None:
-            decoder_scheduler = self.set_default_scheduler(model, encoder_optimizer)
+            decoder_scheduler = self.set_default_scheduler(model, decoder_optimizer)
 
         self.encoder_optimizer = encoder_optimizer
         self.decoder_optimizer = decoder_optimizer
@@ -121,6 +117,31 @@ class CoupledOptimizerTrainer(BaseTrainer):
         )
 
         return optimizer
+
+    def _optimizers_step(self, model_output):
+
+        loss = model_output.loss
+
+        self.encoder_optimizer.zero_grad()
+        self.decoder_optimizer.zero_grad()
+
+        loss.backward()
+
+        self.encoder_optimizer.step()
+        self.decoder_optimizer.step()
+
+    def _schedulers_step(self, encoder_metrics=None, decoder_metrics=None):
+        if isinstance(self.encoder_scheduler, ReduceLROnPlateau):
+            self.encoder_scheduler.step(encoder_metrics)
+
+        else:
+            self.encoder_scheduler.step()
+
+        if isinstance(self.decoder_scheduler, ReduceLROnPlateau):
+            self.decoder_scheduler.step(decoder_metrics)
+
+        else:
+            self.decoder_scheduler.step()
 
     def train(self, log_output_dir: str = None):
         """This function is the main training function
@@ -217,19 +238,21 @@ class CoupledOptimizerTrainer(BaseTrainer):
             if self.eval_dataset is not None:
                 epoch_eval_loss = self.eval_step(epoch)
                 metrics["eval_epoch_loss"] = epoch_eval_loss
-                self.encoder_scheduler.step(epoch_eval_loss)
-                self.decoder_scheduler.step(epoch_eval_loss)
+
+                self._schedulers_step(
+                    encoder_metrics=epoch_eval_loss, decoder_metrics=epoch_eval_loss
+                )
 
             else:
                 epoch_eval_loss = best_eval_loss
-                self.encoder_scheduler.step(epoch_train_loss)
-                self.decoder_scheduler.step(epoch_eval_loss)
+                self._schedulers_step(
+                    encoder_metrics=epoch_train_loss, decoder_metrics=epoch_train_loss
+                )
 
             if (
                 epoch_eval_loss < best_eval_loss
                 and not self.training_config.keep_best_on_train
             ):
-                best_model_epoch = epoch
                 best_eval_loss = epoch_eval_loss
                 best_model = deepcopy(self.model)
                 self._best_model = best_model
@@ -238,7 +261,6 @@ class CoupledOptimizerTrainer(BaseTrainer):
                 epoch_train_loss < best_train_loss
                 and self.training_config.keep_best_on_train
             ):
-                best_model_epoch = epoch
                 best_train_loss = epoch_train_loss
                 best_model = deepcopy(self.model)
                 self._best_model = best_model
@@ -248,12 +270,7 @@ class CoupledOptimizerTrainer(BaseTrainer):
                 and epoch % self.training_config.steps_predict == 0
             ):
 
-                true_data, reconstructions, generations = self.predict(
-                    best_model,
-                    self.eval_loader.dataset.data[
-                        : min(self.eval_loader.dataset.data.shape[0], 10)
-                    ],
-                )
+                true_data, reconstructions, generations = self.predict(best_model)
 
                 self.callback_handler.on_prediction_step(
                     self.training_config,
@@ -299,6 +316,12 @@ class CoupledOptimizerTrainer(BaseTrainer):
         Returns:
             (torch.Tensor): The step training loss
         """
+        self.callback_handler.on_train_step_begin(
+            training_config=self.training_config,
+            train_loader=self.train_loader,
+            epoch=epoch,
+        )
+
         # set model in train model
         self.model.train()
 
@@ -306,26 +329,15 @@ class CoupledOptimizerTrainer(BaseTrainer):
 
         for inputs in self.train_loader:
 
-            self.callback_handler.on_train_step_begin(
-                training_config=self.training_config,
-                train_loader=self.train_loader,
-                epoch=epoch,
-            )
-
             inputs = self._set_inputs_to_device(inputs)
-
-            self.encoder_optimizer.zero_grad()
-            self.decoder_optimizer.zero_grad()
 
             model_output = self.model(
                 inputs, epoch=epoch, dataset_size=len(self.train_loader.dataset)
             )
 
-            loss = model_output.loss
+            self._optimizers_step(model_output)
 
-            loss.backward()
-            self.encoder_optimizer.step()
-            self.decoder_optimizer.step()
+            loss = model_output.loss
 
             epoch_loss += loss.item()
 

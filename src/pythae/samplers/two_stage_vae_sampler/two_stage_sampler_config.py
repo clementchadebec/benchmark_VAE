@@ -1,7 +1,7 @@
 from pydantic.dataclasses import dataclass
 from typing_extensions import Literal
 
-from ...samplers import BaseSamplerConfig
+from ..base import BaseSamplerConfig
 
 
 @dataclass

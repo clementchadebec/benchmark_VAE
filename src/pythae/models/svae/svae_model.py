@@ -1,5 +1,5 @@
 import os
-from typing import Optional, Union
+from typing import Optional
 
 import numpy as np
 import torch
@@ -50,14 +50,6 @@ class SVAE(VAE):
         self.model_name = "SVAE"
 
         if encoder is None:
-            if model_config.input_dim is None:
-                raise AttributeError(
-                    "No input dimension provided !"
-                    "'input_dim' parameter of BaseAEConfig instance must be set to 'data_shape' where "
-                    "the shape of the data is (C, H, W ..). Unable to build encoder "
-                    "automatically"
-                )
-
             encoder = Encoder_SVAE_MLP(model_config)
             self.model_config.uses_default_encoder = True
 
@@ -71,7 +63,7 @@ class SVAE(VAE):
         The VAE model
 
         Args:
-            inputs (BaseDataset): The training datasat with labels
+            inputs (BaseDataset): The training dataset with labels
 
         Returns:
             ModelOutput: An instance of ModelOutput containing all the relevant parameters
@@ -148,12 +140,6 @@ class SVAE(VAE):
 
         return (term1 + term2 + term3).squeeze(-1)
 
-    def _sample_gauss(self, mu, std):
-        # Reparametrization trick
-        # Sample N(0, I)
-        eps = torch.randn_like(std)
-        return mu + eps * std, eps
-
     def _sample_von_mises(self, loc, concentration):
 
         # Generate uniformly on sphere
@@ -162,7 +148,7 @@ class SVAE(VAE):
 
         w = self._acc_rej_steps(m=loc.shape[-1], k=concentration)
 
-        z = torch.cat((w, (1 - w**2).sqrt() * v), dim=-1)
+        z = torch.cat((w, (1 - w ** 2).sqrt() * v), dim=-1)
 
         return self._householder_rotation(loc, z)
 
@@ -178,7 +164,7 @@ class SVAE(VAE):
 
         batch_size = k.shape[0]
 
-        c = torch.sqrt(4 * k**2 + (m - 1) ** 2)
+        c = torch.sqrt(4 * k ** 2 + (m - 1) ** 2)
 
         b = (-2 * k + c) / (m - 1)
         a = (m - 1 + 2 * k + c) / 4
@@ -193,7 +179,7 @@ class SVAE(VAE):
 
         i = 0
 
-        while stopping_mask.sum() > 0:
+        while stopping_mask.sum() > 0 and i < 1000:
 
             i += 1
 
@@ -222,7 +208,7 @@ class SVAE(VAE):
     def get_nll(self, data, n_samples=1, batch_size=100):
         """
         Function computed the estimate negative log-likelihood of the model. It uses importance
-        sampling method with the approximate posterior disctribution. This may take a while.
+        sampling method with the approximate posterior distribution. This may take a while.
 
         Args:
             data (torch.Tensor): The input data from which the log-likelihood should be estimated.

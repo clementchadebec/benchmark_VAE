@@ -3,7 +3,7 @@ IAFSampler
 **********************************
 
 .. automodule::
-   pythae.samplers.maf_sampler
+   pythae.samplers.iaf_sampler
 
 .. autoclass:: pythae.samplers.IAFSamplerConfig
    :members:

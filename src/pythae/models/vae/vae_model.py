@@ -68,7 +68,7 @@ class VAE(BaseAE):
         The VAE model
 
         Args:
-            inputs (BaseDataset): The training datasat with labels
+            inputs (BaseDataset): The training dataset with labels
 
         Returns:
             ModelOutput: An instance of ModelOutput containing all the relevant parameters
@@ -128,7 +128,7 @@ class VAE(BaseAE):
     def get_nll(self, data, n_samples=1, batch_size=100):
         """
         Function computed the estimate negative log-likelihood of the model. It uses importance
-        sampling method with the approximate posterior disctribution. This may take a while.
+        sampling method with the approximate posterior distribution. This may take a while.
 
         Args:
             data (torch.Tensor): The input data from which the log-likelihood should be estimated.
@@ -158,12 +158,12 @@ class VAE(BaseAE):
                 mu, log_var = encoder_output.embedding, encoder_output.log_covariance
 
                 std = torch.exp(0.5 * log_var)
-                z, eps = self._sample_gauss(mu, std)
+                z, _ = self._sample_gauss(mu, std)
 
                 log_q_z_given_x = -0.5 * (
                     log_var + (z - mu) ** 2 / torch.exp(log_var)
                 ).sum(dim=-1)
-                log_p_z = -0.5 * (z**2).sum(dim=-1)
+                log_p_z = -0.5 * (z ** 2).sum(dim=-1)
 
                 recon_x = self.decoder(z)["reconstruction"]
 

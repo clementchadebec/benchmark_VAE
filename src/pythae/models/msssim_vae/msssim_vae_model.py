@@ -2,12 +2,10 @@ import os
 from typing import Optional
 
 import torch
-import torch.nn.functional as F
 
 from ...data.datasets import BaseDataset
 from ..base.base_utils import ModelOutput
 from ..nn import BaseDecoder, BaseEncoder
-from ..nn.default_architectures import Encoder_VAE_MLP
 from ..vae import VAE
 from .msssim_vae_config import MSSSIM_VAEConfig
 from .msssim_vae_utils import MSSSIM
@@ -54,7 +52,7 @@ class MSSSIM_VAE(VAE):
         The VAE model
 
         Args:
-            inputs (BaseDataset): The training datasat with labels
+            inputs (BaseDataset): The training dataset with labels
 
         Returns:
             ModelOutput: An instance of ModelOutput containing all the relevant parameters
@@ -68,7 +66,7 @@ class MSSSIM_VAE(VAE):
         mu, log_var = encoder_output.embedding, encoder_output.log_covariance
 
         std = torch.exp(0.5 * log_var)
-        z, eps = self._sample_gauss(mu, std)
+        z, _ = self._sample_gauss(mu, std)
         recon_x = self.decoder(z)["reconstruction"]
 
         loss, recon_loss, kld = self.loss_function(recon_x, x, mu, log_var, z)

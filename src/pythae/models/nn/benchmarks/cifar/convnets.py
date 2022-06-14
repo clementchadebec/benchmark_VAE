@@ -1,34 +1,32 @@
-"""Proposed neural nets architectures suited for MNIST"""
+"""Proposed Neural nets architectures suited for CIFAR"""
 
 from typing import List
 
-import numpy as np
 import torch
 import torch.nn as nn
-from pythae.models.nn import BaseDecoder, BaseDiscriminator, BaseEncoder
 
-from ....models import BaseAEConfig
-from ....models.base.base_utils import ModelOutput
-from ..base_architectures import BaseDecoder, BaseEncoder
+from ....base import BaseAEConfig
+from ....base.base_utils import ModelOutput
+from ...base_architectures import BaseDecoder, BaseDiscriminator, BaseEncoder
 
 
-class Encoder_AE_MNIST(BaseEncoder):
+class Encoder_Conv_AE_CIFAR(BaseEncoder):
     """
-    A proposed Convolutional encoder Neural net suited for MNIST and Autoencoder-based models.
+    A Convolutional encoder Neural net suited for CIFAR and Autoencoder-based models.
 
     It can be built as follows:
 
     .. code-block::
 
-            >>> from pythae.models.nn.benchmarks.mnist import Encoder_AE_MNIST
+            >>> from pythae.models.nn.benchmarks.cifar import Encoder_Conv_AE_CIFAR
             >>> from pythae.models import AEConfig
-            >>> model_config = AEConfig(input_dim=(1, 28, 28), latent_dim=16)
-            >>> encoder = Encoder_AE_MNIST(model_config)
+            >>> model_config = AEConfig(input_dim=(3, 32, 32), latent_dim=16)
+            >>> encoder = Encoder_Conv_AE_CIFAR(model_config)
             >>> encoder
-            ... Encoder_AE_MNIST(
+            ... Encoder_Conv_AE_CIFAR(
             ...   (layers): ModuleList(
             ...     (0): Sequential(
-            ...       (0): Conv2d(1, 128, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
+            ...       (0): Conv2d(3, 128, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
             ...       (1): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
             ...       (2): ReLU()
             ...     )
@@ -48,7 +46,7 @@ class Encoder_AE_MNIST(BaseEncoder):
             ...       (2): ReLU()
             ...     )
             ...   )
-            ...   (embedding): Linear(in_features=1024, out_features=16, bias=True)
+            ...   (embedding): Linear(in_features=4096, out_features=16, bias=True)
             ... )
 
 
@@ -67,20 +65,18 @@ class Encoder_AE_MNIST(BaseEncoder):
         .. code-block::
 
             >>> import torch
-            >>> input = torch.rand(2, 1, 28, 28)
+            >>> input = torch.rand(2, 3, 32, 32)
             >>> out = encoder(input)
             >>> out.embedding.shape
             ... torch.Size([2, 16])
-
-
     """
 
     def __init__(self, args: BaseAEConfig):
         BaseEncoder.__init__(self)
 
-        self.input_dim = (1, 28, 28)
+        self.input_dim = (3, 32, 32)
         self.latent_dim = args.latent_dim
-        self.n_channels = 1
+        self.n_channels = 3
 
         layers = nn.ModuleList()
 
@@ -113,7 +109,7 @@ class Encoder_AE_MNIST(BaseEncoder):
         self.layers = layers
         self.depth = len(layers)
 
-        self.embedding = nn.Linear(1024, args.latent_dim)
+        self.embedding = nn.Linear(1024 * 2 * 2, args.latent_dim)
 
     def forward(self, x: torch.Tensor, output_layer_levels: List[int] = None):
         """Forward method
@@ -137,7 +133,7 @@ class Encoder_AE_MNIST(BaseEncoder):
                 self.depth >= levels > 0 or levels == -1
                 for levels in output_layer_levels
             ), (
-                f"Cannot output layer deeper than depth ({self.depth})."
+                f"Cannot output layer deeper than depth ({self.depth}). "
                 f"Got ({output_layer_levels})."
             )
 
@@ -160,25 +156,24 @@ class Encoder_AE_MNIST(BaseEncoder):
         return output
 
 
-class Encoder_VAE_MNIST(BaseEncoder):
+class Encoder_Conv_VAE_CIFAR(BaseEncoder):
     """
-    A Convolutional encoder Neural net suited for MNIST and Variational Autoencoder-based
+    A Convolutional encoder Neural net suited for CIFAR and Variational Autoencoder-based
     models.
-
 
     It can be built as follows:
 
     .. code-block::
 
-            >>> from pythae.models.nn.benchmarks.mnist import Encoder_VAE_MNIST
+            >>> from pythae.models.nn.benchmarks.cifar import Encoder_Conv_VAE_CIFAR
             >>> from pythae.models import VAEConfig
-            >>> model_config = VAEConfig(input_dim=(1, 28, 28), latent_dim=16)
-            >>> encoder = Encoder_VAE_MNIST(model_config)
+            >>> model_config = VAEConfig(input_dim=(3, 32, 32), latent_dim=16)
+            >>> encoder = Encoder_Conv_VAE_CIFAR(model_config)
             >>> encoder
-            ... Encoder_VAE_MNIST(
+            ... Encoder_Conv_VAE_CIFAR(
             ...   (layers): ModuleList(
             ...     (0): Sequential(
-            ...       (0): Conv2d(1, 128, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
+            ...       (0): Conv2d(3, 128, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
             ...       (1): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
             ...       (2): ReLU()
             ...     )
@@ -198,9 +193,11 @@ class Encoder_VAE_MNIST(BaseEncoder):
             ...       (2): ReLU()
             ...     )
             ...   )
-            ...   (embedding): Linear(in_features=1024, out_features=16, bias=True)
-            ...   (log_var): Linear(in_features=1024, out_features=16, bias=True)
+            ...   (embedding): Linear(in_features=4096, out_features=16, bias=True)
+            ...   (log_var): Linear(in_features=4096, out_features=16, bias=True)
             ... )
+
+
 
     and then passed to a :class:`pythae.models` instance
 
@@ -209,7 +206,7 @@ class Encoder_VAE_MNIST(BaseEncoder):
         >>> model.encoder == encoder
         ... True
 
-    .. note::
+     .. note::
 
         Please note that this encoder is only suitable for Variational Autoencoder based models
         since it outputs the embeddings and the **log** of the covariance diagonal coefficients
@@ -218,22 +215,21 @@ class Encoder_VAE_MNIST(BaseEncoder):
         .. code-block::
 
             >>> import torch
-            >>> input = torch.rand(2, 1, 28, 28)
+            >>> input = torch.rand(2, 3, 32, 32)
             >>> out = encoder(input)
             >>> out.embedding.shape
             ... torch.Size([2, 16])
             >>> out.log_covariance.shape
             ... torch.Size([2, 16])
 
-
     """
 
     def __init__(self, args: BaseAEConfig):
         BaseEncoder.__init__(self)
 
-        self.input_dim = (1, 28, 28)
+        self.input_dim = (3, 32, 32)
         self.latent_dim = args.latent_dim
-        self.n_channels = 1
+        self.n_channels = 3
 
         layers = nn.ModuleList()
 
@@ -266,8 +262,8 @@ class Encoder_VAE_MNIST(BaseEncoder):
         self.layers = layers
         self.depth = len(layers)
 
-        self.embedding = nn.Linear(1024, args.latent_dim)
-        self.log_var = nn.Linear(1024, args.latent_dim)
+        self.embedding = nn.Linear(1024 * 2 * 2, args.latent_dim)
+        self.log_var = nn.Linear(1024 * 2 * 2, args.latent_dim)
 
     def forward(self, x: torch.Tensor, output_layer_levels: List[int] = None):
         """Forward method
@@ -281,7 +277,8 @@ class Encoder_VAE_MNIST(BaseEncoder):
             under the key `embedding` and the **log** of the diagonal coefficient of the covariance
             matrices under the key `log_covariance`. Optional: The outputs of the layers specified
             in `output_layer_levels` arguments are available under the keys `embedding_layer_i`
-            where i is the layer's level."""
+            where i is the layer's level.
+        """
         output = ModelOutput()
 
         max_depth = self.depth
@@ -292,8 +289,8 @@ class Encoder_VAE_MNIST(BaseEncoder):
                 self.depth >= levels > 0 or levels == -1
                 for levels in output_layer_levels
             ), (
-                f"Cannot output layer deeper than depth ({self.depth})."
-                f"Got ({output_layer_levels})"
+                f"Cannot output layer deeper than depth ({self.depth}). "
+                f"Got ({output_layer_levels})."
             )
 
             if -1 in output_layer_levels:
@@ -317,25 +314,25 @@ class Encoder_VAE_MNIST(BaseEncoder):
         return output
 
 
-class Encoder_SVAE_MNIST(BaseEncoder):
+class Encoder_Conv_SVAE_CIFAR(BaseEncoder):
     """
-    A Convolutional encoder Neural net suited for mnist and Hyperspherical autoencoder
-    Variational Autoencoder.
-
+    A Convolutional encoder Neural net suited for CIFAR and Hyperspherical Variational
+    Autoencoder.
+    models.
 
     It can be built as follows:
 
     .. code-block::
 
-            >>> from pythae.models.nn.benchmarks.mnist import Encoder_SVAE_MNIST
+            >>> from pythae.models.nn.benchmarks.cifar import Encoder_Conv_SVAE_CIFAR
             >>> from pythae.models import SVAEConfig
-            >>> model_config = SVAEConfig(input_dim=(1, 28, 28), latent_dim=16)
-            >>> encoder = Encoder_SVAE_MNIST(model_config)
+            >>> model_config = SVAEConfig(input_dim=(3, 32, 32), latent_dim=16)
+            >>> encoder = Encoder_Conv_SVAE_CIFAR(model_config)
             >>> encoder
-            ... Encoder_SVAE_MNIST(
+            ... Encoder_Conv_SVAE_CIFAR(
             ...   (layers): ModuleList(
             ...     (0): Sequential(
-            ...       (0): Conv2d(1, 128, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
+            ...       (0): Conv2d(3, 128, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
             ...       (1): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
             ...       (2): ReLU()
             ...     )
@@ -355,9 +352,11 @@ class Encoder_SVAE_MNIST(BaseEncoder):
             ...       (2): ReLU()
             ...     )
             ...   )
-            ...   (embedding): Linear(in_features=1024, out_features=16, bias=True)
-            ...   (log_concentration): Linear(in_features=1024, out_features=1, bias=True)
+            ...   (embedding): Linear(in_features=4096, out_features=16, bias=True)
+            ...   (log_concentration): Linear(in_features=4096, out_features=1, bias=True)
             ... )
+
+
 
     and then passed to a :class:`pythae.models` instance
 
@@ -366,31 +365,30 @@ class Encoder_SVAE_MNIST(BaseEncoder):
         >>> model.encoder == encoder
         ... True
 
-    .. note::
+     .. note::
 
-        Please note that this encoder is only suitable for Hyperspherical Variational Autoencoder
-        models since it outputs the embeddings and the **log** of the concentration in the
-        Von Mises Fisher distributions under the key `embedding` and `log_concentration`.
+        Please note that this encoder is only suitable for Variational Autoencoder based models
+        since it outputs the embeddings and the **log** of the covariance diagonal coefficients
+        of the input data under the key `embedding` and `log_covariance`.
 
         .. code-block::
 
             >>> import torch
-            >>> input = torch.rand(2, 1, 28, 28)
+            >>> input = torch.rand(2, 3, 32, 32)
             >>> out = encoder(input)
             >>> out.embedding.shape
             ... torch.Size([2, 16])
             >>> out.log_concentration.shape
             ... torch.Size([2, 1])
 
-
     """
 
     def __init__(self, args: BaseAEConfig):
         BaseEncoder.__init__(self)
 
-        self.input_dim = (1, 28, 28)
+        self.input_dim = (3, 32, 32)
         self.latent_dim = args.latent_dim
-        self.n_channels = 1
+        self.n_channels = 3
 
         layers = nn.ModuleList()
 
@@ -423,8 +421,8 @@ class Encoder_SVAE_MNIST(BaseEncoder):
         self.layers = layers
         self.depth = len(layers)
 
-        self.embedding = nn.Linear(1024, args.latent_dim)
-        self.log_concentration = nn.Linear(1024, 1)
+        self.embedding = nn.Linear(1024 * 2 * 2, args.latent_dim)
+        self.log_concentration = nn.Linear(1024 * 2 * 2, 1)
 
     def forward(self, x: torch.Tensor, output_layer_levels: List[int] = None):
         """Forward method
@@ -438,7 +436,8 @@ class Encoder_SVAE_MNIST(BaseEncoder):
             under the key `embedding` and the **log** of the diagonal coefficient of the covariance
             matrices under the key `log_covariance`. Optional: The outputs of the layers specified
             in `output_layer_levels` arguments are available under the keys `embedding_layer_i`
-            where i is the layer's level."""
+            where i is the layer's level.
+        """
         output = ModelOutput()
 
         max_depth = self.depth
@@ -449,8 +448,8 @@ class Encoder_SVAE_MNIST(BaseEncoder):
                 self.depth >= levels > 0 or levels == -1
                 for levels in output_layer_levels
             ), (
-                f"Cannot output layer deeper than depth ({self.depth})."
-                f"Got ({output_layer_levels})"
+                f"Cannot output layer deeper than depth ({self.depth}). "
+                f"Got ({output_layer_levels})."
             )
 
             if -1 in output_layer_levels:
@@ -476,33 +475,35 @@ class Encoder_SVAE_MNIST(BaseEncoder):
         return output
 
 
-class Decoder_AE_MNIST(BaseDecoder):
+class Decoder_Conv_AE_CIFAR(BaseDecoder):
     """
-    A proposed Convolutional decoder Neural net suited for MNIST and Autoencoder-based
+    A Convolutional decoder Neural net suited for CIFAR and Autoencoder-based
     models.
+
+    It can be built as follows:
 
     .. code-block::
 
-            >>> from pythae.models.nn.benchmarks.mnist import Decoder_AE_MNIST
+            >>> from pythae.models.nn.benchmarks.cifar import Decoder_Conv_AE_CIFAR
             >>> from pythae.models import VAEConfig
-            >>> model_config = VAEConfig(input_dim=(1, 28, 28), latent_dim=16)
-            >>> decoder = Decoder_AE_MNIST(model_config)
+            >>> model_config = VAEConfig(input_dim=(3, 32, 32), latent_dim=16)
+            >>> decoder = Decoder_Conv_AE_CIFAR(model_config)
             >>> decoder
-            ... Decoder_AE_MNIST(
+            ... Decoder_Conv_AE_CIFAR(
             ...   (layers): ModuleList(
-            ...     (0): Linear(in_features=16, out_features=16384, bias=True)
+            ...     (0): Linear(in_features=16, out_features=65536, bias=True)
             ...     (1): Sequential(
-            ...       (0): ConvTranspose2d(1024, 512, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1))
+            ...       (0): ConvTranspose2d(1024, 512, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
             ...       (1): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
             ...       (2): ReLU()
             ...     )
             ...     (2): Sequential(
-            ...       (0): ConvTranspose2d(512, 256, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1), output_padding=(1, 1))
+            ...       (0): ConvTranspose2d(512, 256, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1), output_padding=(1, 1))
             ...       (1): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
             ...       (2): ReLU()
             ...     )
             ...     (3): Sequential(
-            ...       (0): ConvTranspose2d(256, 1, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1), output_padding=(1, 1))
+            ...       (0): ConvTranspose2d(256, 3, kernel_size=(4, 4), stride=(1, 1), padding=(2, 2))
             ...       (1): Sigmoid()
             ...     )
             ...   )
@@ -516,6 +517,7 @@ class Decoder_AE_MNIST(BaseDecoder):
         >>> model.decoder == decoder
         ... True
 
+
     .. note::
 
         Please note that this decoder is suitable for **all** models.
@@ -526,22 +528,22 @@ class Decoder_AE_MNIST(BaseDecoder):
             >>> input = torch.randn(2, 16)
             >>> out = decoder(input)
             >>> out.reconstruction.shape
-            ... torch.Size([2, 1, 28, 28])
+            ... torch.Size([2, 3, 32, 32])
     """
 
     def __init__(self, args: dict):
         BaseDecoder.__init__(self)
-        self.input_dim = (1, 28, 28)
+        self.input_dim = (3, 32, 32)
         self.latent_dim = args.latent_dim
-        self.n_channels = 1
+        self.n_channels = 3
 
         layers = nn.ModuleList()
 
-        layers.append(nn.Linear(args.latent_dim, 1024 * 4 * 4))
+        layers.append(nn.Linear(args.latent_dim, 1024 * 8 * 8))
 
         layers.append(
             nn.Sequential(
-                nn.ConvTranspose2d(1024, 512, 3, 2, padding=1),
+                nn.ConvTranspose2d(1024, 512, 4, 2, padding=1),
                 nn.BatchNorm2d(512),
                 nn.ReLU(),
             )
@@ -549,7 +551,7 @@ class Decoder_AE_MNIST(BaseDecoder):
 
         layers.append(
             nn.Sequential(
-                nn.ConvTranspose2d(512, 256, 3, 2, padding=1, output_padding=1),
+                nn.ConvTranspose2d(512, 256, 4, 2, padding=1, output_padding=1),
                 nn.BatchNorm2d(256),
                 nn.ReLU(),
             )
@@ -557,10 +559,7 @@ class Decoder_AE_MNIST(BaseDecoder):
 
         layers.append(
             nn.Sequential(
-                nn.ConvTranspose2d(
-                    256, self.n_channels, 3, 2, padding=1, output_padding=1
-                ),
-                nn.Sigmoid(),
+                nn.ConvTranspose2d(256, self.n_channels, 4, 1, padding=2), nn.Sigmoid()
             )
         )
 
@@ -590,8 +589,8 @@ class Decoder_AE_MNIST(BaseDecoder):
                 self.depth >= levels > 0 or levels == -1
                 for levels in output_layer_levels
             ), (
-                f"Cannot output layer deeper than depth ({self.depth})."
-                f"Got ({output_layer_levels})"
+                f"Cannot output layer deeper than depth ({self.depth}). "
+                f"Got ({output_layer_levels})."
             )
 
             if -1 in output_layer_levels:
@@ -605,7 +604,7 @@ class Decoder_AE_MNIST(BaseDecoder):
             out = self.layers[i](out)
 
             if i == 0:
-                out = out.reshape(z.shape[0], 1024, 4, 4)
+                out = out.reshape(z.shape[0], 1024, 8, 8)
 
             if output_layer_levels is not None:
                 if i + 1 in output_layer_levels:
@@ -617,24 +616,24 @@ class Decoder_AE_MNIST(BaseDecoder):
         return output
 
 
-class Discriminator_MNIST(BaseDiscriminator):
+class Discriminator_Conv_CIFAR(BaseDiscriminator):
     """
-    A Convolutional discriminator Neural net suited for MNIST.
+    A Convolutional discriminator Neural net suited for CIFAR.
 
 
     It can be built as follows:
 
     .. code-block::
 
-            >>> from pythae.models.nn.benchmarks.mnist import Discriminator_MNIST
+            >>> from pythae.models.nn.benchmarks.cifar import Discriminator_Conv_CIFAR
             >>> from pythae.models import VAEGANConfig
-            >>> model_config = VAEGANConfig(input_dim=(1, 28, 28), latent_dim=16)
-            >>> discriminator = Discriminator_MNIST(model_config)
+            >>> model_config = VAEGANConfig(input_dim=(3, 32, 32), latent_dim=16)
+            >>> discriminator = Discriminator_Conv_CIFAR(model_config)
             >>> discriminator
-            ... Discriminator_MNIST(
+            ... Discriminator_Conv_CIFAR(
             ...   (layers): ModuleList(
             ...     (0): Sequential(
-            ...       (0): Conv2d(1, 128, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
+            ...       (0): Conv2d(3, 128, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
             ...       (1): ReLU()
             ...     )
             ...     (1): Sequential(
@@ -650,7 +649,7 @@ class Discriminator_MNIST(BaseDiscriminator):
             ...       (1): ReLU()
             ...     )
             ...     (4): Sequential(
-            ...       (0): Linear(in_features=1024, out_features=1, bias=True)
+            ...       (0): Linear(in_features=4096, out_features=1, bias=True)
             ...       (1): Sigmoid()
             ...     )
             ...   )
@@ -667,9 +666,9 @@ class Discriminator_MNIST(BaseDiscriminator):
     def __init__(self, args: dict):
         BaseDiscriminator.__init__(self)
 
-        self.input_dim = (1, 28, 28)
+        self.input_dim = (3, 32, 32)
         self.latent_dim = args.latent_dim
-        self.n_channels = 1
+        self.n_channels = 3
 
         layers = nn.ModuleList()
 
@@ -705,7 +704,7 @@ class Discriminator_MNIST(BaseDiscriminator):
             )
         )
 
-        layers.append(nn.Sequential(nn.Linear(1024, 1), nn.Sigmoid()))
+        layers.append(nn.Sequential(nn.Linear(1024 * 2 * 2, 1), nn.Sigmoid()))
 
         self.layers = layers
         self.depth = len(layers)

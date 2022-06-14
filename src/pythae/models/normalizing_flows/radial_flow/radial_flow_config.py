@@ -10,5 +10,3 @@ class RadialFlowConfig(BaseNFConfig):
     Parameters:
         input_dim (tuple): The input data dimension. Default: None.
     """
-
-    pass

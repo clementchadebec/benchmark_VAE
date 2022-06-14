@@ -1,7 +1,8 @@
 import torch
 
 from ...models import BaseAE
-from ...samplers import BaseSampler, BaseSamplerConfig
+from ..base import BaseSampler
+from .normal_config import NormalSamplerConfig
 
 
 class NormalSampler(BaseSampler):
@@ -14,7 +15,10 @@ class NormalSampler(BaseSampler):
 
     """
 
-    def __init__(self, model: BaseAE, sampler_config: BaseSamplerConfig = None):
+    def __init__(self, model: BaseAE, sampler_config: NormalSamplerConfig = None):
+
+        if sampler_config is None:
+            sampler_config = NormalSamplerConfig()
 
         BaseSampler.__init__(self, model=model, sampler_config=sampler_config)
 

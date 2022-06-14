@@ -1,14 +1,10 @@
-from dataclasses import field
-from typing import List, Tuple, Union
-
-from pydantic import validator
 from pydantic.dataclasses import dataclass
 
-from ...models.normalizing_flows import BaseNFConfig
+from ..base import BaseSamplerConfig
 
 
 @dataclass
-class IAFSamplerConfig(BaseNFConfig):
+class IAFSamplerConfig(BaseSamplerConfig):
     """This is the IAF sampler model configuration instance.
 
     Parameters:

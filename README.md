@@ -96,8 +96,8 @@ Below is the list of the models currently implemented in the library.
 | VAMP prior sampler (VAMPSampler)                   |    VAMP   		  | [link](https://arxiv.org/abs/1705.07120) 	  | [link](https://github.com/jmtomczak/vae_vampprior) |
 | Manifold sampler (RHVAESampler)                     |    RHVAE  		  | [link](https://arxiv.org/abs/2105.00026)      |	[link](https://github.com/clementchadebec/pyraug)|
 | Masked Autoregressive Flow Sampler (MAFSampler) | all models | [link](https://arxiv.org/abs/1705.07057v4)      |	[link](https://github.com/gpapamak/maf) |
-| Inverse Autoregressive Flow Sampler (IAFSampler) | all models | [link](https://arxiv.org/abs/1606.04934) |  [link](https://github.com/openai/iaf)             |                     
-
+| Inverse Autoregressive Flow Sampler (IAFSampler) | all models | [link](https://arxiv.org/abs/1606.04934) |  [link](https://github.com/openai/iaf)             |   
+| PixelCNN (PixelCNNSampler) | VQVAE | [link](https://arxiv.org/abs/1606.05328) |             |                     
 
 ## Launching a model training
 
@@ -150,13 +150,47 @@ See [README.md](https://github.com/clementchadebec/benchmark_VAE/tree/main/examp
 
 ## Launching data generation
 
-To launch the data generation process from a trained model, you only need to build your sampler. For instance, to generate new data with your sampler, run the following.
+### Using the `GeneationPipeline`
+
+The easiest way to launch a data generation from a trained model consists in using the built-in `GenerationPipeline` provided in Pythae. Say you want to generate 100 samples using a `MAFSampler` all you have to do is 1) relaod the trained model, 2) define the sampler's configuration and 3) create and launch the `GenerationPipeline` as follows
 
 ```python
->>> from pythae.models import VAE
+>>> from pythae.models import AutoModel
+>>> from pythae.samplers import MAFSamplerConfig
+>>> from pythae.pipelines import GenerationPipeline
+>>> # Retrieve the trained model
+>>> my_trained_vae = AutoModel.load_from_folder(
+...	'path/to/your/trained/model'
+... )
+>>> my_sampler_config = MAFSamplerConfig(
+...	n_made_blocks=2,
+...	n_hidden_in_made=3,
+...	hidden_size=128
+... )
+>>> # Build the pipeline
+>>> pipe = GenerationPipeline(
+...	model=my_trained_vae,
+...	sampler_config=my_sampler_config
+... )
+>>> # Launch data generation
+>>> generated_samples = pipe(
+...	num_samples=args.num_samples,
+...	return_gen=True, # If false returns nothing
+...	train_data=train_data, # Needed to fit the sampler
+...	eval_data=eval_data, # Needed to fit the sampler
+...	training_config=BaseTrainerConfig(num_epochs=200) # TrainingConfig to use to fit the sampler
+... )
+```
+
+### Using the Samplers
+
+Alternatively, you can launch the data generation process from a trained model directly with the sampler. For instance, to generate new data with your sampler, run the following.
+
+```python
+>>> from pythae.models import AutoModel
 >>> from pythae.samplers import NormalSampler
 >>> # Retrieve the trained model
->>> my_trained_vae = VAE.load_from_folder(
+>>> my_trained_vae = AutoModel.load_from_folder(
 ...	'path/to/your/trained/model'
 ... )
 >>> # Define your sampler
@@ -175,10 +209,10 @@ If you set `output_dir` to a specific path, the generated images will be saved a
 The samplers can be used with any model as long as it is suited. For instance, a `GaussianMixtureSampler` instance can be used to generate from any model but a `VAMPSampler` will only be usable with a `VAMP` model. Check [here](#available-samplers) to see which ones apply to your model. Be carefull that some samplers such as the `GaussianMixtureSampler` for instance may need to be fitted by calling the `fit` method before using. Below is an example for the `GaussianMixtureSampler`. 
 
 ```python
->>> from pythae.models import VAE
+>>> from pythae.models import AutoModel
 >>> from pythae.samplers import GaussianMixtureSampler, GaussianMixtureSamplerConfig
 >>> # Retrieve the trained model
->>> my_trained_vae = VAE.load_from_folder(
+>>> my_trained_vae = AutoModel.load_from_folder(
 ...	'path/to/your/trained/model'
 ... )
 >>> # Define your sampler
@@ -199,6 +233,7 @@ The samplers can be used with any model as long as it is suited. For instance, a
 ...	return_gen=True
 ... )
 ```
+
 
 ## Define you own Autoencoder architecture
  
@@ -264,9 +299,9 @@ You can also find predefined neural network architectures for the most common da
 
 ```python
 >>> for pythae.models.nn.benchmark.mnist import (
-...	Encoder_AE_MNIST, # For AE based model (only return embeddings)
-... 	Encoder_VAE_MNIST, # For VAE based model (return embeddings and log_covariances)
-... 	Decoder_AE_MNIST
+...	Encoder_Conv_AE_MNIST, # For AE based model (only return embeddings)
+...	Encoder_Conv_VAE_MNIST, # For VAE based model (return embeddings and log_covariances)
+...	Decoder_Conv_AE_MNIST
 ... )
 ```
 Replace *mnist* by cifar or celeba to access to other neural nets.

@@ -174,7 +174,7 @@ class RHVAE(VAE):
                 M.unsqueeze(0)
                 * torch.exp(
                     -torch.norm(mu.unsqueeze(0) - z.unsqueeze(1), dim=-1) ** 2
-                    / (self.temperature**2)
+                    / (self.temperature ** 2)
                 )
                 .unsqueeze(-1)
                 .unsqueeze(-1)
@@ -214,7 +214,7 @@ class RHVAE(VAE):
                     M.unsqueeze(0)
                     * torch.exp(
                         -torch.norm(mu.unsqueeze(0) - z.unsqueeze(1), dim=-1) ** 2
-                        / (self.temperature**2)
+                        / (self.temperature ** 2)
                     )
                     .unsqueeze(-1)
                     .unsqueeze(-1)
@@ -324,7 +324,7 @@ class RHVAE(VAE):
                             self.centroids_tens.unsqueeze(0) - z.unsqueeze(1), dim=-1
                         )
                         ** 2
-                        / (self.temperature**2)
+                        / (self.temperature ** 2)
                     )
                     .unsqueeze(-1)
                     .unsqueeze(-1)
@@ -340,7 +340,7 @@ class RHVAE(VAE):
                         self.centroids_tens.unsqueeze(0) - z.unsqueeze(1), dim=-1
                     )
                     ** 2
-                    / (self.temperature**2)
+                    / (self.temperature ** 2)
                 )
                 .unsqueeze(-1)
                 .unsqueeze(-1)
@@ -396,11 +396,14 @@ class RHVAE(VAE):
 
         if self.model_config.reconstruction_loss == "mse":
             # sigma is taken as I_D
-            recon_loss = -0.5 * F.mse_loss(
-                recon_x.reshape(x.shape[0], -1),
-                x.reshape(x.shape[0], -1),
-                reduction="none",
-            ).sum(dim=-1)
+            recon_loss = (
+                -0.5
+                * F.mse_loss(
+                    recon_x.reshape(x.shape[0], -1),
+                    x.reshape(x.shape[0], -1),
+                    reduction="none",
+                ).sum(dim=-1)
+            )
             -torch.log(torch.tensor([2 * np.pi]).to(x.device)) * np.prod(
                 self.input_dim
             ) / 2
@@ -438,7 +441,7 @@ class RHVAE(VAE):
     def get_nll(self, data, n_samples=1, batch_size=100):
         """
         Function computed the estimate negative log-likelihood of the model. It uses importance
-        sampling method with the approximate posterior disctribution. This may take a while.
+        sampling method with the approximate posterior distribution. This may take a while.
 
         Args:
             data (torch.Tensor): The input data from which the log-likelihood should be estimated.
@@ -484,9 +487,6 @@ class RHVAE(VAE):
                 G_log_det = -torch.logdet(G_inv)
                 L = torch.linalg.cholesky(G)
 
-                G_inv_0 = G_inv
-                G_log_det_0 = G_log_det
-
                 # initialization
                 gamma = torch.randn_like(z0, device=z.device)
                 rho = gamma / self.beta_zero_sqrt
@@ -495,8 +495,6 @@ class RHVAE(VAE):
                 rho = (L @ rho.unsqueeze(-1)).squeeze(
                     -1
                 )  # sample from the multivariate N(0, G)
-
-                rho0 = rho
 
                 recon_x = self.decoder(z)["reconstruction"]
 
@@ -526,7 +524,7 @@ class RHVAE(VAE):
                 log_q_z0_given_x = -0.5 * (
                     log_var + (z0 - mu) ** 2 / torch.exp(log_var)
                 ).sum(dim=-1)
-                log_p_z = -0.5 * (z**2).sum(dim=-1)
+                log_p_z = -0.5 * (z ** 2).sum(dim=-1)
 
                 log_p_rho0 = normal.log_prob(gamma) - torch.logdet(
                     L / self.beta_zero_sqrt

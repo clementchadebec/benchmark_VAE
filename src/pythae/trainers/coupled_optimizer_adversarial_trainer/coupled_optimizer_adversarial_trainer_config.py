@@ -1,5 +1,3 @@
-from typing import Union
-
 from pydantic.dataclasses import dataclass
 
 from ..base_trainer import BaseTrainerConfig

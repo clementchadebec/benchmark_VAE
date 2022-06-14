@@ -31,6 +31,23 @@ examples/scripts/reproducibility/*
 wandb
 examples/notebooks/dummy_output_dir/
 examples/notebooks/models_training/dummy_output_dir/
+logs/
+downloads_data/
+*wandb*
+*.slurm
+configs
+examples/scripts/generation_jz.py
+examples/scripts/classification_jz.py
+examples/scripts/latent_dim_sensi.py
+examples/scripts/reconstruction_jz.py
+examples/scripts/jz_array_training.py
+examples/scripts/interpolation_jz.py
+examples/scripts/kmeans_jz.py
+*.csv
+results.ipynb
+examples/scripts/artifacts/*
+examples/scripts/plots/*
+examples/notebooks/my_model_with_custom_archi/
 
 
 

@@ -113,7 +113,7 @@ class HVAE(VAE):
             rho = (beta_sqrt_old / beta_sqrt) * rho__
             beta_sqrt_old = beta_sqrt
 
-        loss = self.loss_function(recon_x, x, z0, z, rho, eps0, gamma, mu, log_var)
+        loss = self.loss_function(recon_x, x, z, rho, eps0, log_var)
 
         output = ModelOutput(
             loss=loss,
@@ -129,7 +129,7 @@ class HVAE(VAE):
 
         return output
 
-    def loss_function(self, recon_x, x, z0, zK, rhoK, eps0, gamma, mu, log_var):
+    def loss_function(self, recon_x, x, zK, rhoK, eps0, log_var):
 
         normal = torch.distributions.MultivariateNormal(
             loc=torch.zeros(self.model_config.latent_dim).to(x.device),
@@ -157,11 +157,14 @@ class HVAE(VAE):
 
         if self.model_config.reconstruction_loss == "mse":
             # sigma is taken as I_D
-            recon_loss = -0.5 * F.mse_loss(
-                recon_x.reshape(x.shape[0], -1),
-                x.reshape(x.shape[0], -1),
-                reduction="none",
-            ).sum(dim=-1)
+            recon_loss = (
+                -0.5
+                * F.mse_loss(
+                    recon_x.reshape(x.shape[0], -1),
+                    x.reshape(x.shape[0], -1),
+                    reduction="none",
+                ).sum(dim=-1)
+            )
             # - torch.log(torch.tensor([2 * np.pi]).to(x.device)) \
             #    * np.prod(self.input_dim) / 2
 
@@ -185,7 +188,7 @@ class HVAE(VAE):
             loc=torch.zeros(self.latent_dim).to(z.device),
             covariance_matrix=torch.eye(self.latent_dim).to(z.device),
         )
-        return -0.5 * torch.pow(z, 2).sum(dim=-1)
+        return normal.log_prob(z)
 
     def _log_p_xz(self, recon_x, x, z):
         """
@@ -195,7 +198,7 @@ class HVAE(VAE):
         logpz = self._log_z(z)
         return logpxz + logpz
 
-    def _hamiltonian(self, recon_x, x, z, rho, G_inv=None, G_log_det=None):
+    def _hamiltonian(self, recon_x, x, z):
         """
         Computes the Hamiltonian function.
         used for HVAE
@@ -205,7 +208,7 @@ class HVAE(VAE):
     def get_nll(self, data, n_samples=1, batch_size=100):
         """
         Function computed the estimate negative log-likelihood of the model. It uses importance
-        sampling method with the approximate posterior disctribution. This may take a while.
+        sampling method with the approximate posterior distribution. This may take a while.
 
         Args:
             data (torch.Tensor): The input data from which the log-likelihood should be estimated.
@@ -239,7 +242,7 @@ class HVAE(VAE):
                 mu, log_var = encoder_output.embedding, encoder_output.log_covariance
 
                 std = torch.exp(0.5 * log_var)
-                z0, eps = self._sample_gauss(mu, std)
+                z0, _ = self._sample_gauss(mu, std)
                 gamma = torch.randn_like(z0, device=x.device)
                 rho = gamma / self.beta_zero_sqrt
 
@@ -280,9 +283,9 @@ class HVAE(VAE):
                 log_q_z0_given_x = -0.5 * (
                     log_var + (z0 - mu) ** 2 / torch.exp(log_var)
                 ).sum(dim=-1)
-                log_p_z = -0.5 * (z**2).sum(dim=-1)
+                log_p_z = -0.5 * (z ** 2).sum(dim=-1)
 
-                log_p_rho0 = normal.log_prob(gamma) - 0.5 * self.latent_dim * torch.log(
+                log_p_rho0 = normal.log_prob(gamma) - self.latent_dim * torch.log(
                     1 / self.beta_zero_sqrt
                 )  # rho0 ~ N(0, 1/beta_0*I)
                 log_p_rho = normal.log_prob(rho)

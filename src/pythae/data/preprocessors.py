@@ -10,11 +10,13 @@ reproduce and account for this diversity. More advanced preprocessing is up to t
 """
 
 import logging
-from typing import List, Optional, Tuple, Union
+from typing import Optional, Union
 
 import numpy as np
 import torch
-from pythae.data.datasets import BaseDataset
+from typing_extensions import Literal
+
+from pythae.data.datasets import BaseDataset, DoubleBatchDataset
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +40,7 @@ class DataProcessor:
 
     def process_data(
         self, data: Union[np.ndarray, torch.Tensor], batch_size: int = 100
-    ) -> torch.tensor:
+    ) -> torch.Tensor:
         """This function detects potential check the data type, detects nan in input data and
         preprocessed the data so it can be handled by the models.
 
@@ -69,13 +71,19 @@ class DataProcessor:
         return data
 
     @staticmethod
-    def to_dataset(data: torch.Tensor, labels: Optional[torch.Tensor] = None):
+    def to_dataset(
+        data: torch.Tensor,
+        labels: Optional[torch.Tensor] = None,
+        dataset_type: Literal["BaseDataset", "DoubleBatchDataset"] = "BaseDataset",
+    ):
         """This method converts a set of ``torch.Tensor`` to a
         :class:`~pythae.data.datasets.BaseDataset`
 
         Args:
             data (torch.Tensor): The set of data as a big torch.Tensor
             labels (torch.Tensor): The targets labels as a big torch.Tensor
+            dataset_type (str): The dataset instance name to create. Choices =
+                ['BaseDataset', 'DoubleBatchDataset']. Default: 'BaseDataset'.
 
         Returns:
             (BaseDataset): The resulting dataset
@@ -86,7 +94,17 @@ class DataProcessor:
 
         labels = DataProcessor.to_tensor(labels)
 
-        dataset = BaseDataset(data, labels)
+        if dataset_type == "BaseDataset":
+            dataset = BaseDataset(data, labels)
+
+        elif dataset_type == "DoubleBatchDataset":
+            dataset = DoubleBatchDataset(data, labels)
+
+        else:
+            raise NotImplementedError(
+                f"Dataset of type {dataset_type} is not implemented. Current possible choices are "
+                "['BaseDataset', 'DoubleBatchDataset']"
+            )
 
         return dataset
 

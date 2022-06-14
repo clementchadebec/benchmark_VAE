@@ -1,11 +1,8 @@
 import os
-from copy import deepcopy
 
-import numpy as np
 import torch
 import torch.nn as nn
 
-from ....data.datasets import BaseDataset
 from ...base.base_utils import ModelOutput
 from ..base import BaseNF
 from ..layers import BatchNorm
@@ -31,7 +28,6 @@ class MAF(BaseNF):
         self.hidden_size = model_config.hidden_size
 
         self.model_name = "MAF"
-        self.net = []
 
         made_config = MADEConfig(
             input_dim=(self.input_dim,),
