@@ -20,8 +20,8 @@ setup(
     description="Unifying Generative Autoencoders in Python",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/clementchadebec/pythae",
-    project_urls={"Bug Tracker": "https://github.com/clementchadebec/pythae/issues"},
+    url="https://github.com/clementchadebec/benchmark_VAE",
+    project_urls={"Bug Tracker": "https://github.com/clementchadebec/benchmark_VAE/issues"},
     classifiers=[
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.6",
