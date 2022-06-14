@@ -11,6 +11,8 @@
 	<a href='https://opensource.org/licenses/Apache-2.0'>
 	    <img src='https://img.shields.io/github/license/clementchadebec/benchmark_VAE?color=blue' />
 	</a>
+</p>
+<p align="center">
     <a>
 	    <img src='https://img.shields.io/badge/code%20style-black-black' />
 	</a>
