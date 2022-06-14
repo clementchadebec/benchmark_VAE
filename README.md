@@ -1,22 +1,25 @@
 <p align="center">
+	<a href="https://pypi.org/project/pythae/">
+	    <img src='https://badge.fury.io/py/pythae.svg' alt='Python' />
+	</a>
     <a>
 	    <img src='https://img.shields.io/badge/python-3.6%7C3.7%7C3.8-blueviolet' alt='Python' />
 	</a>
 	<a href='https://pythae.readthedocs.io/en/latest/?badge=latest'>
-    <img src='https://readthedocs.org/projects/pythae/badge/?version=latest' alt='Documentation Status' />
-</a>
+    	<img src='https://readthedocs.org/projects/pythae/badge/?version=latest' alt='Documentation Status' />
+	</a>
 	<a href='https://opensource.org/licenses/Apache-2.0'>
 	    <img src='https://img.shields.io/github/license/clementchadebec/benchmark_VAE?color=blue' />
-	</a>
+	</a><br>
     <a>
 	    <img src='https://img.shields.io/badge/code%20style-black-black' />
 	</a>
 	<a href="https://codecov.io/gh/clementchadebec/benchmark_VAE">
-  <img src="https://codecov.io/gh/clementchadebec/benchmark_VAE/branch/main/graph/badge.svg?token=KEM7KKISXJ"/>
-</a>
-<a href="https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/notebooks/overview_notebook.ipynb">
-  <img src="https://colab.research.google.com/assets/colab-badge.svg"/>
-</a>
+  		<img src="https://codecov.io/gh/clementchadebec/benchmark_VAE/branch/main/graph/badge.svg?token=KEM7KKISXJ"/>
+	</a>
+	<a href="https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/notebooks/overview_notebook.ipynb">
+  		<img src="https://colab.research.google.com/assets/colab-badge.svg"/>
+	</a>
 	</a>
 </p>
 
@@ -36,7 +39,13 @@ allows you to train any of these models with your own data and own Encoder and D
 
 # Installation
 
-To install the latest version of this library run the following using ``pip``
+To install the latest stable release of this library run the following using ``pip``
+
+```bash
+$ pip install pythae
+``` 
+
+To install the latest github version of this library run the following using ``pip``
 
 ```bash
 $ pip install git+https://github.com/clementchadebec/benchmark_VAE.git
