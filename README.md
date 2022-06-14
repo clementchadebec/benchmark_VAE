@@ -163,9 +163,9 @@ The easiest way to launch a data generation from a trained model consists in usi
 ...	'path/to/your/trained/model'
 ... )
 >>> my_sampler_config = MAFSamplerConfig(
-...	n_made_blocks: int = 2
-...	n_hidden_in_made: int = 3
-...	hidden_size: int = 128
+...	n_made_blocks=2,
+...	n_hidden_in_made=3,
+...	hidden_size=128
 ... )
 >>> # Build the pipeline
 >>> pipe = GenerationPipeline(
