@@ -239,7 +239,7 @@ class HVAE(VAE):
                 mu, log_var = encoder_output.embedding, encoder_output.log_covariance
 
                 std = torch.exp(0.5 * log_var)
-                z0, eps = self._sample_gauss(mu, std)
+                z0, _ = self._sample_gauss(mu, std)
                 gamma = torch.randn_like(z0, device=x.device)
                 rho = gamma / self.beta_zero_sqrt
 
@@ -282,7 +282,7 @@ class HVAE(VAE):
                 ).sum(dim=-1)
                 log_p_z = -0.5 * (z**2).sum(dim=-1)
 
-                log_p_rho0 = normal.log_prob(gamma) - 0.5 * self.latent_dim * torch.log(
+                log_p_rho0 = normal.log_prob(gamma) - self.latent_dim * torch.log(
                     1 / self.beta_zero_sqrt
                 )  # rho0 ~ N(0, 1/beta_0*I)
                 log_p_rho = normal.log_prob(rho)
