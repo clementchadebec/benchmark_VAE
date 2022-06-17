@@ -159,7 +159,7 @@ See [README.md](https://github.com/clementchadebec/benchmark_VAE/tree/main/examp
 
 ## Launching data generation
 
-### Using the `GeneationPipeline`
+### Using the `GenerationPipeline`
 
 The easiest way to launch a data generation from a trained model consists in using the built-in `GenerationPipeline` provided in Pythae. Say you want to generate 100 samples using a `MAFSampler` all you have to do is 1) relaod the trained model, 2) define the sampler's configuration and 3) create and launch the `GenerationPipeline` as follows
 
@@ -396,3 +396,17 @@ Here, we show the generated samples using using each model implemented in the li
 | RAE_L2 + GaussianMixtureSampler | ![RAE L2 GMM](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/rae_l2_gmm_sampling_mnist.png)  |  ![RAE L2 GMM](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/rae_l2_gmm_sampling_celeba.png)
 | RAE_GP + GaussianMixtureSampler| ![RAE GMM](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/rae_gp_gmm_sampling_mnist.png)  |  ![RAE GMM](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/rae_gp_gmm_sampling_celeba.png)
 | Riemannian Hamiltonian VAE (RHVAE) + RHVAE Sampler| ![RHVAE RHVAE](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/rhvae_rhvae_sampling_mnist.png) | ![RHVAE RHVAE](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/showcases/rhvae_rhvae_sampling_celeba.png)
+
+
+# Citation
+
+If you find this work useful or use it in your research, please consider citing us
+
+```bibtex
+@article{chadebec2022pythae,
+	title={Pythae: Unifying Generative Autoencoders in Python -- A Benchmarking Use Case},
+  	author={Chadebec, Clément and Vincent, Louis J. and Allassonnière, Stéphanie},
+  	journal={arXiv preprint arXiv:2206.08309},
+  	year = {2022}
+}
+```
