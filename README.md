@@ -407,6 +407,7 @@ If you find this work useful or use it in your research, please consider citing 
 	title={Pythae: Unifying Generative Autoencoders in Python -- A Benchmarking Use Case},
   	author={Chadebec, Clément and Vincent, Louis J. and Allassonnière, Stéphanie},
   	journal={arXiv preprint arXiv:2206.08309},
+	url = {https://arxiv.org/abs/2206.08309},
   	year = {2022}
 }
 ```
