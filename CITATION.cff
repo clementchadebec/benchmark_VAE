@@ -5,20 +5,20 @@ title: "Pythae: Unifying Generative Autoencoders in Python -- A Benchmarking Use
 url: "https://github.com/clementchadebec/benchmark_VAE"
 authors:
 - family-names: Chadebec
-  given-names: Clément
+  given-names: Clement
 - family-names: Vincent
   given-names: Louis J.
-- family-names: Allassonnière
-  given-names: Stéphanie
+- family-names: Allassonniere
+  given-names: Stephanie
 preferred-citation:
   type: article
   authors:
   - family-names: Chadebec
-    given-names: Clément
+    given-names: Clement
   - family-names: Vincent
     given-names: Louis J.
-  - family-names: Allassonnière
-    given-names: Stéphanie
+  - family-names: Allassonniere
+    given-names: Stephanie
   journal: "arXiv preprint arXiv:2206.08309"
   year: 2022
   url: "https://arxiv.org/abs/2206.08309"
