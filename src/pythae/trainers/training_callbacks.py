@@ -351,6 +351,5 @@ class WandbCallback(TrainingCallback):  # pragma: no cover
 
             self._wandb.log({"my_val_table": val_table})
 
-
     def on_train_end(self, training_config: BaseTrainerConfig, **kwargs):
         self.run.finish()
