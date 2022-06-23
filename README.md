@@ -364,23 +364,23 @@ Launching an experiment monitoring with `wandb` in pythae is pretty simple. The 
 >>> wandb_cb = WandbCallback() # Build the callback 
 >>> # SetUp the callback 
 >>> wandb_cb.setup(
-...		training_config=config, # training config
-... 	model_config=model_config, # model config
-... 	project_name="your_wandb_project", # specify your wandb project
-... 	entity_name="your_wandb_entity", # specify your wandb entity
+...	training_config=config, # training config
+...	model_config=model_config, # model config
+...	project_name="your_wandb_project", # specify your wandb project
+...	entity_name="your_wandb_entity", # specify your wandb entity
 ... )
 >>> callbacks.append(wandb_cb) # Add it to the callbacks list
 ```
 ...and then pass it to the `TrainingPipeline`.
 ```python
 >>> pipeline = TrainingPipeline(
-... 	training_config=config,
-... 	model=model
+...	training_config=config,
+...	model=model
 ... )
 >>> pipeline(
-... 	train_data=train_dataset,
-... 	eval_data=eval_dataset,
-... 	callbacks=callbacks # pass the callbacks to the TrainingPipeline and you are done!
+...	train_data=train_dataset,
+...	eval_data=eval_dataset,
+...	callbacks=callbacks # pass the callbacks to the TrainingPipeline and you are done!
 ... )
 >>> # You can log to https://wandb.ai/your_wandb_entity/your_wandb_project to monitor your training
 ```
