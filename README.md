@@ -364,8 +364,8 @@ Launching an experiment monitoring with `wandb` in pythae is pretty simple. The 
 >>> wandb_cb = WandbCallback() # Build the callback 
 >>> # SetUp the callback 
 >>> wandb_cb.setup(
-...	training_config=config, # training config
-...	model_config=model_config, # model config
+...	training_config=your_training_config, # training config
+...	model_config=your_model_config, # model config
 ...	project_name="your_wandb_project", # specify your wandb project
 ...	entity_name="your_wandb_entity", # specify your wandb entity
 ... )
