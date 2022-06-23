@@ -176,7 +176,8 @@ class AutoModel(nn.Module):
 
     @classmethod
     def load_from_hf_hub(cls, hf_hub_path: str):  # pragma: no cover
-        """Class method to be used to load a automaticaly a pretrained model from the huggingface hub
+        """Class method to be used to load a automaticaly a pretrained model from the Hugging Face 
+            hub
 
         Args:
             hf_hub_path (str): The path where the model should have been be saved on the
@@ -195,7 +196,7 @@ class AutoModel(nn.Module):
 
         if not hf_hub_is_available():
             raise ModuleNotFoundError(
-                "`huggingface_hub` package must be installed to push you model to the HF hub. "
+                "`huggingface_hub` package must be installed to load models from the HF hub. "
                 "Run `python -m pip install huggingface_hub` and log in to your account with "
                 "`huggingface-cli login`."
             )

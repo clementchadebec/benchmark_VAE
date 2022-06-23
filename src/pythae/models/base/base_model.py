@@ -161,7 +161,7 @@ class BaseAE(nn.Module):
         """
         if not hf_hub_is_available():
             raise ModuleNotFoundError(
-                "`huggingface_hub` package must be installed to push you model to the HF hub. "
+                "`huggingface_hub` package must be installed to push your model to the HF hub. "
                 "Run `python -m pip install huggingface_hub` and log in to your account with "
                 "`huggingface-cli login`."
             )
@@ -357,7 +357,7 @@ class BaseAE(nn.Module):
 
         if not hf_hub_is_available():
             raise ModuleNotFoundError(
-                "`huggingface_hub` package must be installed to push you model to the HF hub. "
+                "`huggingface_hub` package must be installed to load models from the HF hub. "
                 "Run `python -m pip install huggingface_hub` and log in to your account with "
                 "`huggingface-cli login`."
             )
