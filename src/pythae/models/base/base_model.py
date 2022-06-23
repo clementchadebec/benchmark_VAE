@@ -143,7 +143,7 @@ class BaseAE(nn.Module):
 
     def push_to_hf_hub(self, hf_hub_path: str):  # pragma: no cover
         """Method allowing to save your model directly on the huggung face hub.
-        You will need to have the `huggingface_hub` package installed and a valid hugging face
+        You will need to have the `huggingface_hub` package installed and a valid Hugging Face
         account. You can install the package using
 
         .. code-block:: bash
@@ -157,7 +157,7 @@ class BaseAE(nn.Module):
             huggingface-cli login
 
         Args:
-            hf_hub_path (str): path to your repo on the hugging face hub.
+            hf_hub_path (str): path to your repo on the Hugging Face hub.
         """
         if not hf_hub_is_available():
             raise ModuleNotFoundError(
@@ -338,7 +338,7 @@ class BaseAE(nn.Module):
 
     @classmethod
     def load_from_hf_hub(cls, hf_hub_path: str):  # pragma: no cover
-        """Class method to be used to load a pretrained model from the hugging face hub
+        """Class method to be used to load a pretrained model from the Hugging Face hub
 
         Args:
             hf_hub_path (str): The path where the model should have been be saved on the

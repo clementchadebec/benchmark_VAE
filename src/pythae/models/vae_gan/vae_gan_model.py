@@ -354,7 +354,7 @@ class VAEGAN(VAE):
 
     @classmethod
     def load_from_hf_hub(cls, hf_hub_path: str):  # pragma: no cover
-        """Class method to be used to load a pretrained model from the hugging face hub
+        """Class method to be used to load a pretrained model from the Hugging Face hub
 
         Args:
             hf_hub_path (str): The path where the model should have been be saved on the
