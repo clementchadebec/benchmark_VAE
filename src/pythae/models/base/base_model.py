@@ -1,17 +1,28 @@
 import os
 from copy import deepcopy
 from typing import Optional
+from urllib.error import HTTPError
 
 import dill
 import torch
 import torch.nn as nn
+import tempfile
+import shutil
+import logging
 
 from ...customexception import BadInheritanceError
 from ...data.datasets import BaseDataset
 from ..nn import BaseDecoder, BaseEncoder
 from ..nn.default_architectures import Decoder_AE_MLP
 from .base_config import BaseAEConfig
-from .base_utils import CPU_Unpickler, ModelOutput
+from .base_utils import CPU_Unpickler, ModelOutput, hf_hub_is_available
+from ..auto_model import AutoConfig
+
+
+logger = logging.getLogger(__name__)
+console = logging.StreamHandler()
+logger.addHandler(console)
+logger.setLevel(logging.INFO)
 
 
 class BaseAE(nn.Module):
@@ -95,7 +106,7 @@ class BaseAE(nn.Module):
         By default, it does nothing.
         """
 
-    def save(self, dir_path):
+    def save(self, dir_path: str):
         """Method to save the model at a specific location. It saves, the model weights as a
         ``models.pt`` file along with the model config as a ``model_config.json`` file. If the
         model to save used custom encoder (resp. decoder) provided by the user, these are also
@@ -130,6 +141,74 @@ class BaseAE(nn.Module):
 
         torch.save(model_dict, os.path.join(model_path, "model.pt"))
 
+    def push_to_hf_hub(self, hf_hub_path: str):
+        """Method allowing to save your model directly on the huggung face hub. 
+        You will need to have the `huggingface_hub` package installed and a valid hugging face 
+        account. You can install the package using 
+
+        .. code-block:: bash
+
+            python -m pip install huggingface_hub
+
+        end then login using 
+
+        .. code-block:: bash
+
+            huggingface-cli login
+
+        Args:
+            hf_hub_path (str): path to your repo on the hugging face hub.
+        """
+        if not hf_hub_is_available():
+            raise ModuleNotFoundError(
+                "`huggingface_hub` package must be installed to push you model to the HF hub. "
+                "Run `python -m pip install huggingface_hub` and log in to your account with "
+                "`huggingface-cli login`."
+            )
+
+        else:
+            from huggingface_hub import HfApi, CommitOperationAdd
+
+        tempdir = tempfile.mkdtemp()
+
+        self.save(tempdir)
+
+        model_files = os.listdir(tempdir)
+
+        api = HfApi()
+        hf_operations = []
+
+        for file in model_files:
+            hf_operations.append(
+                CommitOperationAdd(
+                    path_in_repo=file,
+                    path_or_fileobj=f"{str(os.path.join(tempdir, file))}")
+            )
+
+        try:
+            logger.info(f"Uploading {self.model_name} model to {hf_hub_path} repo in HF hub...")
+            api.create_commit(
+                commit_message=f"Uploading {self.model_name} in {hf_hub_path}",
+                repo_id=hf_hub_path,
+                operations=hf_operations
+            )
+            logger.info(f"Successfully uploaded {self.model_name} to {hf_hub_path} repo in HF hub!")
+        
+        except:
+            from huggingface_hub import create_repo
+            repo_name = os.path.basename(os.path.normpath(hf_hub_path))
+            logger.info(f"Creating {repo_name} in the HF hub since it does not exist...")
+            create_repo(repo_id=repo_name)
+            logger.info(f"Successfully created {repo_name} in the HF hub!")
+
+            api.create_commit(
+                commit_message=f"Uploading {self.model_name} in {hf_hub_path}",
+                repo_id=hf_hub_path,
+                operations=hf_operations
+            )
+
+        shutil.rmtree(tempdir)
+
     @classmethod
     def _load_model_config_from_folder(cls, dir_path):
         file_list = os.listdir(dir_path)
@@ -141,7 +220,7 @@ class BaseAE(nn.Module):
             )
 
         path_to_model_config = os.path.join(dir_path, "model_config.json")
-        model_config = BaseAEConfig.from_json_file(path_to_model_config)
+        model_config = AutoConfig.from_json_file(path_to_model_config)
 
         return model_config
 
@@ -247,6 +326,67 @@ class BaseAE(nn.Module):
         model.load_state_dict(model_weights)
 
         return model
+
+    @classmethod
+    def load_from_hf_hub(cls, hf_hub_path: str):
+        """Class method to be used to load a pretrained model from the hugging face hub
+
+        Args:
+            hf_hub_path (str): The path where the model should have been be saved on the 
+                hugginface hub.
+
+        .. note::
+            This function requires the folder to contain:
+
+            - | a ``model_config.json`` and a ``model.pt`` if no custom architectures were provided
+
+            **or**
+
+            - | a ``model_config.json``, a ``model.pt`` and a ``encoder.pkl`` (resp.
+                ``decoder.pkl``) if a custom encoder (resp. decoder) was provided
+        """
+
+        if not hf_hub_is_available():
+            raise ModuleNotFoundError(
+                "`huggingface_hub` package must be installed to push you model to the HF hub. "
+                "Run `python -m pip install huggingface_hub` and log in to your account with "
+                "`huggingface-cli login`."
+            )
+
+        else:
+            from huggingface_hub import hf_hub_download
+
+        logger.info(f"Downloading {cls.__name__} files for rebuilding...")
+
+        config_path = hf_hub_download(repo_id=hf_hub_path, filename="model_config.json")
+        dir_path = os.path.dirname(config_path)
+
+        _ = hf_hub_download(repo_id=hf_hub_path, filename="model.pt")
+
+        model_config = cls._load_model_config_from_folder(dir_path)
+        model_weights = cls._load_model_weights_from_folder(dir_path)
+
+        if not model_config.uses_default_encoder:
+            _ = hf_hub_download(repo_id=hf_hub_path, filename="encoder.pkl")
+            encoder = cls._load_custom_encoder_from_folder(dir_path)
+
+        else:
+            encoder = None
+
+        if not model_config.uses_default_decoder:
+            _ = hf_hub_download(repo_id=hf_hub_path, filename="decoder.pkl")
+            decoder = cls._load_custom_decoder_from_folder(dir_path)
+
+        else:
+            decoder = None
+
+        logger.info(f"Successfully downloaded {cls.__name__} model!")
+
+        model = cls(model_config, encoder=encoder, decoder=decoder)
+        model.load_state_dict(model_weights)
+
+        return model
+        
 
     def set_encoder(self, encoder: BaseEncoder) -> None:
         """Set the encoder of the model"""

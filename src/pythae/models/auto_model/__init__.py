@@ -7,4 +7,5 @@ lines of code.
     >>> model = AutoModel.load_from_folder(dir_path='path/to/my_model') 
 """
 
+from .auto_config import AutoConfig
 from .auto_model import AutoModel
