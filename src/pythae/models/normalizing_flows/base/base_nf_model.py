@@ -6,9 +6,9 @@ import torch
 import torch.nn as nn
 
 from ....data.datasets import BaseDataset
+from ...auto_model import AutoConfig
 from ...base.base_utils import ModelOutput
 from .base_nf_config import BaseNFConfig
-from ...auto_model import AutoConfig
 
 
 class BaseNF(nn.Module):

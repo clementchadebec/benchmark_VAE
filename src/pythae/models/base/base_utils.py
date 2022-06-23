@@ -1,13 +1,15 @@
+import importlib
 import io
 from collections import OrderedDict
 from typing import Any, Tuple
 
 import dill
 import torch
-import importlib
+
 
 def hf_hub_is_available():
     return importlib.util.find_spec("huggingface_hub") is not None
+
 
 class ModelOutput(OrderedDict):
     """Base ModelOutput class fixing the output type from the models. This class is inspired from

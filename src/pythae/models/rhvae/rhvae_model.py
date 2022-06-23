@@ -1,4 +1,6 @@
+import logging
 import os
+import warnings
 from collections import deque
 from copy import deepcopy
 from typing import Optional
@@ -8,19 +10,16 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import warnings
 from torch.autograd import grad
-import logging
 
 from ...customexception import BadInheritanceError
 from ...data.datasets import BaseDataset
-from ..base.base_utils import CPU_Unpickler, ModelOutput
+from ..base.base_utils import CPU_Unpickler, ModelOutput, hf_hub_is_available
 from ..nn import BaseDecoder, BaseEncoder, BaseMetric
 from ..nn.default_architectures import Metric_MLP
 from ..vae import VAE
 from .rhvae_config import RHVAEConfig
 from .rhvae_utils import create_inverse_metric, create_metric
-from ..base.base_utils import hf_hub_is_available
 
 logger = logging.getLogger(__name__)
 console = logging.StreamHandler()
@@ -611,7 +610,6 @@ class RHVAE(VAE):
 
         torch.save(model_dict, os.path.join(model_path, "model.pt"))
 
-
     @classmethod
     def _load_custom_metric_from_folder(cls, dir_path):
 
@@ -712,13 +710,12 @@ class RHVAE(VAE):
 
         return model
 
-
     @classmethod
-    def load_from_hf_hub(cls, hf_hub_path: str): # pragma: no cover
+    def load_from_hf_hub(cls, hf_hub_path: str):  # pragma: no cover
         """Class method to be used to load a pretrained model from the hugging face hub
 
         Args:
-            hf_hub_path (str): The path where the model should have been be saved on the 
+            hf_hub_path (str): The path where the model should have been be saved on the
                 hugginface hub.
 
         .. note::
@@ -729,7 +726,7 @@ class RHVAE(VAE):
             **or**
 
             - | a ``model_config.json``, a ``model.pt`` and a ``encoder.pkl`` (resp.
-                ``decoder.pkl`` and ``metric.pkl``) if a custom encoder (resp. decoder and/or 
+                ``decoder.pkl`` and ``metric.pkl``) if a custom encoder (resp. decoder and/or
                 metric) was provided
         """
 
@@ -752,8 +749,10 @@ class RHVAE(VAE):
 
         model_config = cls._load_model_config_from_folder(dir_path)
 
-        if cls.__name__ + 'Config' != model_config.name and \
-            cls.__name__ + '_Config' != model_config.name:
+        if (
+            cls.__name__ + "Config" != model_config.name
+            and cls.__name__ + "_Config" != model_config.name
+        ):
             warnings.warn(
                 f"You are trying to load a "
                 f"`{ cls.__name__}` while a "

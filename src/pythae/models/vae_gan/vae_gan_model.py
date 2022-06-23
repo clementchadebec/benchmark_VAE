@@ -1,27 +1,26 @@
+import logging
 import os
+import warnings
 from copy import deepcopy
 from typing import Optional
 
 import dill
 import torch
 import torch.nn.functional as F
-import warnings
-import logging
 
 from ...customexception import BadInheritanceError
 from ...data.datasets import BaseDataset
-from ..base.base_utils import CPU_Unpickler, ModelOutput
+from ..base.base_utils import CPU_Unpickler, ModelOutput, hf_hub_is_available
 from ..nn import BaseDecoder, BaseDiscriminator, BaseEncoder
 from ..nn.default_architectures import Discriminator_MLP
 from ..vae import VAE
 from .vae_gan_config import VAEGANConfig
-from ..base.base_utils import hf_hub_is_available
-
 
 logger = logging.getLogger(__name__)
 console = logging.StreamHandler()
 logger.addHandler(console)
 logger.setLevel(logging.INFO)
+
 
 class VAEGAN(VAE):
     """Variational Autoencoder using Adversarial reconstruction loss model.
@@ -354,11 +353,11 @@ class VAEGAN(VAE):
         return model
 
     @classmethod
-    def load_from_hf_hub(cls, hf_hub_path: str): # pragma: no cover
+    def load_from_hf_hub(cls, hf_hub_path: str):  # pragma: no cover
         """Class method to be used to load a pretrained model from the hugging face hub
 
         Args:
-            hf_hub_path (str): The path where the model should have been be saved on the 
+            hf_hub_path (str): The path where the model should have been be saved on the
                 hugginface hub.
 
         .. note::
@@ -369,7 +368,7 @@ class VAEGAN(VAE):
             **or**
 
             - | a ``model_config.json``, a ``model.pt`` and a ``encoder.pkl`` (resp.
-                ``decoder.pkl`` and ``discriminator``) if a custom encoder (resp. decoder and/or 
+                ``decoder.pkl`` and ``discriminator``) if a custom encoder (resp. decoder and/or
                 discriminator) was provided
         """
 
@@ -392,8 +391,10 @@ class VAEGAN(VAE):
 
         model_config = cls._load_model_config_from_folder(dir_path)
 
-        if cls.__name__ + 'Config' != model_config.name and \
-            cls.__name__ + '_Config' != model_config.name:
+        if (
+            cls.__name__ + "Config" != model_config.name
+            and cls.__name__ + "_Config" != model_config.name
+        ):
             warnings.warn(
                 f"You are trying to load a "
                 f"`{ cls.__name__}` while a "

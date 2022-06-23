@@ -1,4 +1,8 @@
+import logging
 import os
+import shutil
+import tempfile
+import warnings
 from copy import deepcopy
 from typing import Optional
 from urllib.error import HTTPError
@@ -6,19 +10,14 @@ from urllib.error import HTTPError
 import dill
 import torch
 import torch.nn as nn
-import tempfile
-import shutil
-import logging
-import warnings
 
 from ...customexception import BadInheritanceError
 from ...data.datasets import BaseDataset
+from ..auto_model import AutoConfig
 from ..nn import BaseDecoder, BaseEncoder
 from ..nn.default_architectures import Decoder_AE_MLP
 from .base_config import BaseAEConfig
 from .base_utils import CPU_Unpickler, ModelOutput, hf_hub_is_available
-from ..auto_model import AutoConfig
-
 
 logger = logging.getLogger(__name__)
 console = logging.StreamHandler()
@@ -142,16 +141,16 @@ class BaseAE(nn.Module):
 
         torch.save(model_dict, os.path.join(model_path, "model.pt"))
 
-    def push_to_hf_hub(self, hf_hub_path: str): # pragma: no cover
-        """Method allowing to save your model directly on the huggung face hub. 
-        You will need to have the `huggingface_hub` package installed and a valid hugging face 
-        account. You can install the package using 
+    def push_to_hf_hub(self, hf_hub_path: str):  # pragma: no cover
+        """Method allowing to save your model directly on the huggung face hub.
+        You will need to have the `huggingface_hub` package installed and a valid hugging face
+        account. You can install the package using
 
         .. code-block:: bash
 
             python -m pip install huggingface_hub
 
-        end then login using 
+        end then login using
 
         .. code-block:: bash
 
@@ -168,9 +167,11 @@ class BaseAE(nn.Module):
             )
 
         else:
-            from huggingface_hub import HfApi, CommitOperationAdd
+            from huggingface_hub import CommitOperationAdd, HfApi
 
-        logger.info(f"Uploading {self.model_name} model to {hf_hub_path} repo in HF hub...")
+        logger.info(
+            f"Uploading {self.model_name} model to {hf_hub_path} repo in HF hub..."
+        )
 
         tempdir = tempfile.mkdtemp()
 
@@ -185,28 +186,34 @@ class BaseAE(nn.Module):
             hf_operations.append(
                 CommitOperationAdd(
                     path_in_repo=file,
-                    path_or_fileobj=f"{str(os.path.join(tempdir, file))}")
+                    path_or_fileobj=f"{str(os.path.join(tempdir, file))}",
+                )
             )
 
         try:
             api.create_commit(
                 commit_message=f"Uploading {self.model_name} in {hf_hub_path}",
                 repo_id=hf_hub_path,
-                operations=hf_operations
+                operations=hf_operations,
             )
-            logger.info(f"Successfully uploaded {self.model_name} to {hf_hub_path} repo in HF hub!")
-        
+            logger.info(
+                f"Successfully uploaded {self.model_name} to {hf_hub_path} repo in HF hub!"
+            )
+
         except:
             from huggingface_hub import create_repo
+
             repo_name = os.path.basename(os.path.normpath(hf_hub_path))
-            logger.info(f"Creating {repo_name} in the HF hub since it does not exist...")
+            logger.info(
+                f"Creating {repo_name} in the HF hub since it does not exist..."
+            )
             create_repo(repo_id=repo_name)
             logger.info(f"Successfully created {repo_name} in the HF hub!")
 
             api.create_commit(
                 commit_message=f"Uploading {self.model_name} in {hf_hub_path}",
                 repo_id=hf_hub_path,
-                operations=hf_operations
+                operations=hf_operations,
             )
 
         shutil.rmtree(tempdir)
@@ -330,11 +337,11 @@ class BaseAE(nn.Module):
         return model
 
     @classmethod
-    def load_from_hf_hub(cls, hf_hub_path: str): # pragma: no cover
+    def load_from_hf_hub(cls, hf_hub_path: str):  # pragma: no cover
         """Class method to be used to load a pretrained model from the hugging face hub
 
         Args:
-            hf_hub_path (str): The path where the model should have been be saved on the 
+            hf_hub_path (str): The path where the model should have been be saved on the
                 hugginface hub.
 
         .. note::
@@ -367,8 +374,10 @@ class BaseAE(nn.Module):
 
         model_config = cls._load_model_config_from_folder(dir_path)
 
-        if cls.__name__ + 'Config' != model_config.name and \
-            cls.__name__ + '_Config' != model_config.name:
+        if (
+            cls.__name__ + "Config" != model_config.name
+            and cls.__name__ + "_Config" != model_config.name
+        ):
             warnings.warn(
                 f"You are trying to load a "
                 f"`{ cls.__name__}` while a "
@@ -397,7 +406,6 @@ class BaseAE(nn.Module):
         model.load_state_dict(model_weights)
 
         return model
-        
 
     def set_encoder(self, encoder: BaseEncoder) -> None:
         """Set the encoder of the model"""

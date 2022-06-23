@@ -252,7 +252,7 @@ class ProgressBarCallback(TrainingCallback):
             self.eval_progress_bar.close()
 
 
-class WandbCallback(TrainingCallback): # pragma: no cover
+class WandbCallback(TrainingCallback):  # pragma: no cover
     def __init__(self):
         if not wandb_is_available():
             raise ModuleNotFoundError(
