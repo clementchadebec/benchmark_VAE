@@ -273,7 +273,7 @@ class WandbCallback(TrainingCallback):  # pragma: no cover
 
         training_config_dict = training_config.to_dict()
 
-        self._wandb.init(project=project_name, entity=entity_name)
+        self.run = self._wandb.init(project=project_name, entity=entity_name)
 
         if model_config is not None:
             model_config_dict = model_config.to_dict()
@@ -350,3 +350,7 @@ class WandbCallback(TrainingCallback):  # pragma: no cover
             val_table = self._wandb.Table(data=data_to_log, columns=column_names)
 
             self._wandb.log({"my_val_table": val_table})
+
+
+    def on_train_end(self, training_config: BaseTrainerConfig, **kwargs):
+        self.run.finish()
