@@ -354,7 +354,7 @@ class VAEGAN(VAE):
         return model
 
     @classmethod
-    def load_from_hf_hub(cls, hf_hub_path: str):
+    def load_from_hf_hub(cls, hf_hub_path: str): # pragma: no cover
         """Class method to be used to load a pretrained model from the hugging face hub
 
         Args:
@@ -369,7 +369,8 @@ class VAEGAN(VAE):
             **or**
 
             - | a ``model_config.json``, a ``model.pt`` and a ``encoder.pkl`` (resp.
-                ``decoder.pkl``) if a custom encoder (resp. decoder) was provided
+                ``decoder.pkl`` and ``discriminator``) if a custom encoder (resp. decoder and/or 
+                discriminator) was provided
         """
 
         if not hf_hub_is_available():

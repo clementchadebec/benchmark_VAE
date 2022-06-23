@@ -714,7 +714,7 @@ class RHVAE(VAE):
 
 
     @classmethod
-    def load_from_hf_hub(cls, hf_hub_path: str):
+    def load_from_hf_hub(cls, hf_hub_path: str): # pragma: no cover
         """Class method to be used to load a pretrained model from the hugging face hub
 
         Args:

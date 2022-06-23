@@ -142,7 +142,7 @@ class BaseAE(nn.Module):
 
         torch.save(model_dict, os.path.join(model_path, "model.pt"))
 
-    def push_to_hf_hub(self, hf_hub_path: str):
+    def push_to_hf_hub(self, hf_hub_path: str): # pragma: no cover
         """Method allowing to save your model directly on the huggung face hub. 
         You will need to have the `huggingface_hub` package installed and a valid hugging face 
         account. You can install the package using 
@@ -330,7 +330,7 @@ class BaseAE(nn.Module):
         return model
 
     @classmethod
-    def load_from_hf_hub(cls, hf_hub_path: str):
+    def load_from_hf_hub(cls, hf_hub_path: str): # pragma: no cover
         """Class method to be used to load a pretrained model from the hugging face hub
 
         Args:
