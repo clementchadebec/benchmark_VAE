@@ -31,10 +31,10 @@
     
 # pythae 
 
-This library implements some of the most common (Variational) Autoencoder models. In particular it 
+This library implements some of the most common (Variational) Autoencoder models under a unified implementation. In particular, it 
 provides the possibility to perform benchmark experiments and comparisons by training 
 the models with the same autoencoding neural network architecture. The feature *make your own autoencoder* 
-allows you to train any of these models with your own data and own Encoder and Decoder neural networks.
+allows you to train any of these models with your own data and own Encoder and Decoder neural networks. It integrates an experiment monitoring tool  [wandb](https://wandb.ai/) 🧪 and allows model sharing and loading from the [HuggingFace Hub](https://huggingface.co/models) 🤗 in a few lines of code.
 
 
 # Installation
@@ -244,7 +244,7 @@ The samplers can be used with any model as long as it is suited. For instance, a
 ```
 
 
-## Define you own Autoencoder architecture
+## Define you own Autoencoder architecture 
  
 Pythae provides you the possibility to define your own neural networks within the VAE models. For instance, say you want to train a Wassertstein AE with a specific encoder and decoder, you can do the following:
 
@@ -315,6 +315,77 @@ You can also find predefined neural network architectures for the most common da
 ```
 Replace *mnist* by cifar or celeba to access to other neural nets.
 
+## Sharing your models with the HuggingFace Hub 🤗
+Pythae also allows you to share your model on the [HuggingFace Hub](https://huggingface.co/models). To do so you need:
+- a valid HuggingFace account
+- the package `huggingface_hub` installed in your virtual env. If not you can install it with 
+```
+$ python -m pip install huggingface_hub
+```
+- to be logged in to your HuggingFace account using
+```
+$ huggingface-cli login
+```
+
+### Uploading a model to the Hub
+The pythae model can then be easily uploaded using the method `push_to_hf_hub`
+```python
+>>> my_vae_model.push_to_hf_hub(hf_hub_path="your_hf_username/your_hf_hub_repo")
+```
+**Note:** If `your_hf_hub_repo` already exists and is not empty, files will be overridden. In case, 
+the repo `your_hf_hub_repo` does not exist, a folder having the same name will be created.
+
+### Downloading models from the Hub
+Equivalently, you can download or reload pythae.models directly from the Hub using the method `load_from_hf_hub`
+```python
+>>> from pythae.models import AutoModel
+>>> my_downloaded_vae = AutoModel.load_from_hf_hub(hf_hub_path="path_to_hf_repo")
+```
+
+## Monitoing your experiments with **Wandb** 🧪
+Pythae also integrate the experiement tracking tool [wandb](https://wandb.ai/) allowing users to store their configs, monitor models' trainings and compare runs through a graphic interface. To be able use this feature you will need:
+- a valid wand account
+- the package `wandb` installed in your virtual env. If not you can install it with 
+```
+$ pip install wandb
+```
+- to be logged in to your wandb account using
+```
+$ wandb login
+```
+
+### Creating a `WandbCallback`
+Launching an experiment monitoring with `wandb` in pythae is pretty simple. The only thing a user needs to do is create a `WandbCallback` instance...
+
+```python
+>>> # Create you callback
+>>> from pythae.trainers.training_callbacks import WandbCallback
+>>> callbacks = [] # the TrainingPipeline expects a list of callbacks
+>>> wandb_cb = WandbCallback() # Build the callback 
+>>> # SetUp the callback 
+>>> wandb_cb.setup(
+...	training_config=config, # training config
+... model_config=model_config, # model config
+... project_name="your_wandb_project", # specify your wandb project
+... entity_name="your_wandb_entity", # specify your wandb entity
+... )
+>>> callbacks.append(wandb_cb) # Add it to the callbacks list
+```
+...and then pass it to the `TrainingPipeline`.
+```python
+>>> pipeline = TrainingPipeline(
+... training_config=config,
+... model=model
+... )
+>>> pipeline(
+... train_data=train_dataset,
+... eval_data=eval_dataset,
+... callbacks=callbacks # pass the callbacks to the TrainingPipeline and you are done!
+... )
+>>> # You can log to https://wandb.ai/your_wandb_entity/your_wandb_project to monitor your training
+```
+See a detailes tutorial 
+
 ## Getting your hands on the code
 
 To help you to understand the way pythae works and how you can train your models with this library we also
@@ -326,7 +397,7 @@ provide tutorials:
 
 - [scripts](https://github.com/clementchadebec/benchmark_VAE/tree/main/examples/scripts) folder provides in particular an example of a training script to train the models on benchmark data sets (mnist, cifar10, celeba ...)
 
-## Dealing with issues
+## Dealing with issues 🛠️
 
 If you are experiencing any issues while running the code or request new features/models to be implemented please [open an issue on github](https://github.com/clementchadebec/benchmark_VAE/issues).
 
