@@ -316,7 +316,7 @@ You can also find predefined neural network architectures for the most common da
 Replace *mnist* by cifar or celeba to access to other neural nets.
 
 ## Sharing your models with the HuggingFace Hub 🤗
-Pythae also allows you to share your model on the [HuggingFace Hub](https://huggingface.co/models). To do so you need:
+Pythae also allows you to share your models on the [HuggingFace Hub](https://huggingface.co/models). To do so you need:
 - a valid HuggingFace account
 - the package `huggingface_hub` installed in your virtual env. If not you can install it with 
 ```
@@ -328,7 +328,7 @@ $ huggingface-cli login
 ```
 
 ### Uploading a model to the Hub
-The pythae model can then be easily uploaded using the method `push_to_hf_hub`
+Any pythae model can be easily uploaded using the method `push_to_hf_hub`
 ```python
 >>> my_vae_model.push_to_hf_hub(hf_hub_path="your_hf_username/your_hf_hub_repo")
 ```
@@ -336,14 +336,14 @@ The pythae model can then be easily uploaded using the method `push_to_hf_hub`
 the repo `your_hf_hub_repo` does not exist, a folder having the same name will be created.
 
 ### Downloading models from the Hub
-Equivalently, you can download or reload pythae.models directly from the Hub using the method `load_from_hf_hub`
+Equivalently, you can download or reload any Pythae's model directly from the Hub using the method `load_from_hf_hub`
 ```python
 >>> from pythae.models import AutoModel
 >>> my_downloaded_vae = AutoModel.load_from_hf_hub(hf_hub_path="path_to_hf_repo")
 ```
 
 ## Monitoing your experiments with **Wandb** 🧪
-Pythae also integrate the experiement tracking tool [wandb](https://wandb.ai/) allowing users to store their configs, monitor models' trainings and compare runs through a graphic interface. To be able use this feature you will need:
+Pythae also integrates the experiement tracking tool [wandb](https://wandb.ai/) allowing users to store their configs, monitor their trainings and compare runs through a graphic interface. To be able use this feature you will need:
 - a valid wand account
 - the package `wandb` installed in your virtual env. If not you can install it with 
 ```
@@ -386,12 +386,16 @@ Launching an experiment monitoring with `wandb` in pythae is pretty simple. The 
 ```
 See a detailes tutorial 
 
-## Getting your hands on the code
+## Getting your hands on the code 
 
 To help you to understand the way pythae works and how you can train your models with this library we also
 provide tutorials:
 
 - [making_your_own_autoencoder.ipynb](https://github.com/clementchadebec/benchmark_VAE/tree/main/examples/notebooks) shows you how to pass your own networks to the models implemented in pythae [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/notebooks/making_your_own_autoencoder.ipynb)
+
+- [hf_hub_models_sharing.ipynb](https://github.com/clementchadebec/benchmark_VAE/tree/main/examples/notebooks) shows you how to upload and download models for the HuggingFace Hub [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/notebooks/hf_hub_models_sharing.ipynb)
+
+- [wandb_experiment_monitoring.ipynb](https://github.com/clementchadebec/benchmark_VAE/tree/main/examples/notebooks) shows you how to monitor you experiments using `wandb` [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/notebooks/wandb_experiment_monitoring.ipynb)
 
 - [models_training](https://github.com/clementchadebec/benchmark_VAE/tree/main/examples/notebooks/models_training) folder provides notebooks showing how to train each implemented model and how to sample from it using `pythae.samplers`.
 
