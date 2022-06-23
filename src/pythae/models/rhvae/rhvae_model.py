@@ -8,7 +8,9 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import warnings
 from torch.autograd import grad
+import logging
 
 from ...customexception import BadInheritanceError
 from ...data.datasets import BaseDataset
@@ -18,6 +20,12 @@ from ..nn.default_architectures import Metric_MLP
 from ..vae import VAE
 from .rhvae_config import RHVAEConfig
 from .rhvae_utils import create_inverse_metric, create_metric
+from ..base.base_utils import hf_hub_is_available
+
+logger = logging.getLogger(__name__)
+console = logging.StreamHandler()
+logger.addHandler(console)
+logger.setLevel(logging.INFO)
 
 
 class RHVAE(VAE):
@@ -603,20 +611,6 @@ class RHVAE(VAE):
 
         torch.save(model_dict, os.path.join(model_path, "model.pt"))
 
-    @classmethod
-    def _load_model_config_from_folder(cls, dir_path):
-        file_list = os.listdir(dir_path)
-
-        if "model_config.json" not in file_list:
-            raise FileNotFoundError(
-                f"Missing model config file ('model_config.json') in"
-                f"{dir_path}... Cannot perform model building."
-            )
-
-        path_to_model_config = os.path.join(dir_path, "model_config.json")
-        model_config = RHVAEConfig.from_json_file(path_to_model_config)
-
-        return model_config
 
     @classmethod
     def _load_custom_metric_from_folder(cls, dir_path):
@@ -703,6 +697,93 @@ class RHVAE(VAE):
 
         else:
             metric = None
+
+        model = cls(model_config, encoder=encoder, decoder=decoder, metric=metric)
+
+        metric_M, metric_centroids = cls._load_metric_matrices_and_centroids(dir_path)
+
+        model.M_tens = metric_M
+        model.centroids_tens = metric_centroids
+
+        model.G = create_metric(model)
+        model.G_inv = create_inverse_metric(model)
+
+        model.load_state_dict(model_weights)
+
+        return model
+
+
+    @classmethod
+    def load_from_hf_hub(cls, hf_hub_path: str):
+        """Class method to be used to load a pretrained model from the hugging face hub
+
+        Args:
+            hf_hub_path (str): The path where the model should have been be saved on the 
+                hugginface hub.
+
+        .. note::
+            This function requires the folder to contain:
+
+            - | a ``model_config.json`` and a ``model.pt`` if no custom architectures were provided
+
+            **or**
+
+            - | a ``model_config.json``, a ``model.pt`` and a ``encoder.pkl`` (resp.
+                ``decoder.pkl`` and ``metric.pkl``) if a custom encoder (resp. decoder and/or 
+                metric) was provided
+        """
+
+        if not hf_hub_is_available():
+            raise ModuleNotFoundError(
+                "`huggingface_hub` package must be installed to push you model to the HF hub. "
+                "Run `python -m pip install huggingface_hub` and log in to your account with "
+                "`huggingface-cli login`."
+            )
+
+        else:
+            from huggingface_hub import hf_hub_download
+
+        logger.info(f"Downloading {cls.__name__} files for rebuilding...")
+
+        config_path = hf_hub_download(repo_id=hf_hub_path, filename="model_config.json")
+        dir_path = os.path.dirname(config_path)
+
+        _ = hf_hub_download(repo_id=hf_hub_path, filename="model.pt")
+
+        model_config = cls._load_model_config_from_folder(dir_path)
+
+        if cls.__name__ + 'Config' != model_config.name and \
+            cls.__name__ + '_Config' != model_config.name:
+            warnings.warn(
+                f"You are trying to load a "
+                f"`{ cls.__name__}` while a "
+                f"`{model_config.name}` is given."
+            )
+
+        model_weights = cls._load_model_weights_from_folder(dir_path)
+
+        if not model_config.uses_default_encoder:
+            _ = hf_hub_download(repo_id=hf_hub_path, filename="encoder.pkl")
+            encoder = cls._load_custom_encoder_from_folder(dir_path)
+
+        else:
+            encoder = None
+
+        if not model_config.uses_default_decoder:
+            _ = hf_hub_download(repo_id=hf_hub_path, filename="decoder.pkl")
+            decoder = cls._load_custom_decoder_from_folder(dir_path)
+
+        else:
+            decoder = None
+
+        if not model_config.uses_default_metric:
+            _ = hf_hub_download(repo_id=hf_hub_path, filename="metric.pkl")
+            metric = cls._load_custom_metric_from_folder(dir_path)
+
+        else:
+            metric = None
+
+        logger.info(f"Successfully downloaded {cls.__name__} model!")
 
         model = cls(model_config, encoder=encoder, decoder=decoder, metric=metric)
 

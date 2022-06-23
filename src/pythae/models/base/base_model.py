@@ -9,6 +9,7 @@ import torch.nn as nn
 import tempfile
 import shutil
 import logging
+import warnings
 
 from ...customexception import BadInheritanceError
 from ...data.datasets import BaseDataset
@@ -169,6 +170,8 @@ class BaseAE(nn.Module):
         else:
             from huggingface_hub import HfApi, CommitOperationAdd
 
+        logger.info(f"Uploading {self.model_name} model to {hf_hub_path} repo in HF hub...")
+
         tempdir = tempfile.mkdtemp()
 
         self.save(tempdir)
@@ -186,7 +189,6 @@ class BaseAE(nn.Module):
             )
 
         try:
-            logger.info(f"Uploading {self.model_name} model to {hf_hub_path} repo in HF hub...")
             api.create_commit(
                 commit_message=f"Uploading {self.model_name} in {hf_hub_path}",
                 repo_id=hf_hub_path,
@@ -364,6 +366,15 @@ class BaseAE(nn.Module):
         _ = hf_hub_download(repo_id=hf_hub_path, filename="model.pt")
 
         model_config = cls._load_model_config_from_folder(dir_path)
+
+        if cls.__name__ + 'Config' != model_config.name and \
+            cls.__name__ + '_Config' != model_config.name:
+            warnings.warn(
+                f"You are trying to load a "
+                f"`{ cls.__name__}` while a "
+                f"`{model_config.name}` is given."
+            )
+
         model_weights = cls._load_model_weights_from_folder(dir_path)
 
         if not model_config.uses_default_encoder:

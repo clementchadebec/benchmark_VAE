@@ -8,6 +8,7 @@ import torch.nn as nn
 from ....data.datasets import BaseDataset
 from ...base.base_utils import ModelOutput
 from .base_nf_config import BaseNFConfig
+from ...auto_model import AutoConfig
 
 
 class BaseNF(nn.Module):
@@ -90,6 +91,21 @@ class BaseNF(nn.Module):
         self.model_config.save_json(model_path, "model_config")
 
         torch.save(model_dict, os.path.join(model_path, "model.pt"))
+
+    @classmethod
+    def _load_model_config_from_folder(cls, dir_path):
+        file_list = os.listdir(dir_path)
+
+        if "model_config.json" not in file_list:
+            raise FileNotFoundError(
+                f"Missing model config file ('model_config.json') in"
+                f"{dir_path}... Cannot perform model building."
+            )
+
+        path_to_model_config = os.path.join(dir_path, "model_config.json")
+        model_config = AutoConfig.from_json_file(path_to_model_config)
+
+        return model_config
 
     @classmethod
     def _load_model_weights_from_folder(cls, dir_path):
