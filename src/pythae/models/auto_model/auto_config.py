@@ -114,6 +114,22 @@ class AutoConfig(BaseConfig):
         elif config_name == "IAFConfig":
             from ..normalizing_flows import IAFConfig
             model_config = IAFConfig.from_json_file(json_path)
+            
+        elif config_name == "PlanarFlowConfig":
+            from ..normalizing_flows import PlanarFlowConfig
+            model_config = PlanarFlowConfig.from_json_file(json_path)
+
+        elif config_name == "RadialFlowConfig":
+            from ..normalizing_flows import RadialFlowConfig
+            model_config = RadialFlowConfig.from_json_file(json_path)
+
+        elif config_name == "MADEConfig":
+            from ..normalizing_flows import MADEConfig
+            model_config = MADEConfig.from_json_file(json_path)
+
+        elif config_name == "PixelCNNConfig":
+            from ..normalizing_flows import PixelCNNConfig
+            model_config = PixelCNNConfig.from_json_file(json_path)
 
         else:
             raise NameError(
