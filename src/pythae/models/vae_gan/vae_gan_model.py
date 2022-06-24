@@ -4,7 +4,7 @@ import warnings
 from copy import deepcopy
 from typing import Optional
 
-import dill
+import cloudpickle
 import torch
 import torch.nn.functional as F
 
@@ -283,7 +283,7 @@ class VAEGAN(VAE):
 
         if not self.model_config.uses_default_discriminator:
             with open(os.path.join(model_path, "discriminator.pkl"), "wb") as fp:
-                dill.dump(self.discriminator, fp)
+                cloudpickle.dump(self.discriminator, fp)
 
         torch.save(model_dict, os.path.join(model_path, "model.pt"))
 

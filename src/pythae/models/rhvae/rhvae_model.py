@@ -5,7 +5,7 @@ from collections import deque
 from copy import deepcopy
 from typing import Optional
 
-import dill
+import cloudpickle
 import numpy as np
 import torch
 import torch.nn as nn
@@ -606,7 +606,7 @@ class RHVAE(VAE):
 
         if not self.model_config.uses_default_metric:
             with open(os.path.join(model_path, "metric.pkl"), "wb") as fp:
-                dill.dump(self.metric, fp)
+                cloudpickle.dump(self.metric, fp)
 
         torch.save(model_dict, os.path.join(model_path, "model.pt"))
 

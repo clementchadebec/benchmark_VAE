@@ -3,7 +3,7 @@ import io
 from collections import OrderedDict
 from typing import Any, Tuple
 
-import dill
+import pickle
 import torch
 
 
@@ -37,7 +37,7 @@ class ModelOutput(OrderedDict):
         return tuple(self[k] for k in self.keys())
 
 
-class CPU_Unpickler(dill.Unpickler):
+class CPU_Unpickler(pickle.Unpickler):
     def find_class(self, module, name):
         if module == "torch.storage" and name == "_load_from_bytes":
             return lambda b: torch.load(io.BytesIO(b), map_location="cpu")

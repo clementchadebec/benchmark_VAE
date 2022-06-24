@@ -7,7 +7,7 @@ from copy import deepcopy
 from typing import Optional
 from urllib.error import HTTPError
 
-import dill
+import cloudpickle
 import torch
 import torch.nn as nn
 
@@ -133,11 +133,11 @@ class BaseAE(nn.Module):
         # only save .pkl if custom architecture provided
         if not self.model_config.uses_default_encoder:
             with open(os.path.join(model_path, "encoder.pkl"), "wb") as fp:
-                dill.dump(self.encoder, fp)
+                cloudpickle.dump(self.encoder, fp)
 
         if not self.model_config.uses_default_decoder:
             with open(os.path.join(model_path, "decoder.pkl"), "wb") as fp:
-                dill.dump(self.decoder, fp)
+                cloudpickle.dump(self.decoder, fp)
 
         torch.save(model_dict, os.path.join(model_path, "model.pt"))
 

@@ -34,7 +34,7 @@ setup(
     package_dir={"": "src"},
     packages=find_packages(where="src"),
     install_requires=[
-        "dill>=0.3.3",
+        "cloudpickle>=2.1.0",
         "imageio",
         "numpy>=1.19",
         "pydantic>=1.8.2",
