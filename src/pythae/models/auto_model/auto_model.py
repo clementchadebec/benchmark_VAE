@@ -1,10 +1,15 @@
 import json
 import os
+import logging
 
 import torch.nn as nn
 
 from ..base.base_utils import hf_hub_is_available
 
+logger = logging.getLogger(__name__)
+console = logging.StreamHandler()
+logger.addHandler(console)
+logger.setLevel(logging.INFO)
 
 class AutoModel(nn.Module):
     def __init__(self) -> None:
@@ -203,6 +208,8 @@ class AutoModel(nn.Module):
 
         else:
             from huggingface_hub import hf_hub_download
+
+        logger.info(f"Downloading config file ...")
 
         config_path = hf_hub_download(repo_id=hf_hub_path, filename="model_config.json")
         dir_path = os.path.dirname(config_path)
