@@ -4,7 +4,7 @@ import logging
 
 import torch.nn as nn
 
-from ..base.base_utils import hf_hub_is_available
+from ..base.base_utils import hf_hub_is_available, ModelOutput # needed to reload custom archi
 
 logger = logging.getLogger(__name__)
 console = logging.StreamHandler()
