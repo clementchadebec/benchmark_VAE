@@ -3,7 +3,7 @@ import io
 from collections import OrderedDict
 from typing import Any, Tuple
 
-import pickle
+import pickle5 as pickle
 import torch
 
 

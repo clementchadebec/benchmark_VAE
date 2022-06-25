@@ -43,7 +43,8 @@ setup(
         "torch>=1.10.1",
         "tqdm",
         "typing_extensions",
-        "dataclasses>=0.6"
+        "dataclasses>=0.6",
+        "pickle5"
     ],
     python_requires=">=3.6",
 )
