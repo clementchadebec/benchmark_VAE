@@ -1,6 +1,7 @@
 import logging
 import os
 import shutil
+import warnings
 import tempfile
 import warnings
 from copy import deepcopy
@@ -337,7 +338,7 @@ class BaseAE(nn.Module):
         return model
 
     @classmethod
-    def load_from_hf_hub(cls, hf_hub_path: str):  # pragma: no cover
+    def load_from_hf_hub(cls, hf_hub_path: str, allow_pickle=False):  # pragma: no cover
         """Class method to be used to load a pretrained model from the Hugging Face hub
 
         Args:
@@ -386,26 +387,33 @@ class BaseAE(nn.Module):
 
         model_weights = cls._load_model_weights_from_folder(dir_path)
 
-        if not model_config.uses_default_encoder:
-            _ = hf_hub_download(repo_id=hf_hub_path, filename="encoder.pkl")
-            encoder = cls._load_custom_encoder_from_folder(dir_path)
-
+        if (not model_config.uses_default_encoder or not model_config.uses_default_decoder) and not allow_pickle:
+            warnings.warn("You are about to download pickled files from the HF hub that may have "
+            "been created by a third party and so could potentially harm your computer. If you are "
+            "sure that you want to download them set `allow_pickle=true`.")
+            
         else:
-            encoder = None
 
-        if not model_config.uses_default_decoder:
-            _ = hf_hub_download(repo_id=hf_hub_path, filename="decoder.pkl")
-            decoder = cls._load_custom_decoder_from_folder(dir_path)
+            if not model_config.uses_default_encoder:
+                _ = hf_hub_download(repo_id=hf_hub_path, filename="encoder.pkl")
+                encoder = cls._load_custom_encoder_from_folder(dir_path)
 
-        else:
-            decoder = None
+            else:
+                encoder = None
 
-        logger.info(f"Successfully downloaded {cls.__name__} model!")
+            if not model_config.uses_default_decoder:
+                _ = hf_hub_download(repo_id=hf_hub_path, filename="decoder.pkl")
+                decoder = cls._load_custom_decoder_from_folder(dir_path)
 
-        model = cls(model_config, encoder=encoder, decoder=decoder)
-        model.load_state_dict(model_weights)
+            else:
+                decoder = None
 
-        return model
+            logger.info(f"Successfully downloaded {cls.__name__} model!")
+
+            model = cls(model_config, encoder=encoder, decoder=decoder)
+            model.load_state_dict(model_weights)
+
+            return model
 
     def set_encoder(self, encoder: BaseEncoder) -> None:
         """Set the encoder of the model"""
