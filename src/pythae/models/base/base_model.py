@@ -11,6 +11,7 @@ from urllib.error import HTTPError
 import cloudpickle
 import torch
 import torch.nn as nn
+import inspect
 
 from ...customexception import BadInheritanceError
 from ...data.datasets import BaseDataset
@@ -134,10 +135,12 @@ class BaseAE(nn.Module):
         # only save .pkl if custom architecture provided
         if not self.model_config.uses_default_encoder:
             with open(os.path.join(model_path, "encoder.pkl"), "wb") as fp:
+                cloudpickle.register_pickle_by_value(inspect.getmodule(self.encoder))
                 cloudpickle.dump(self.encoder, fp)
 
         if not self.model_config.uses_default_decoder:
             with open(os.path.join(model_path, "decoder.pkl"), "wb") as fp:
+                cloudpickle.register_pickle_by_value(inspect.getmodule(self.decoder))
                 cloudpickle.dump(self.decoder, fp)
 
         torch.save(model_dict, os.path.join(model_path, "model.pt"))

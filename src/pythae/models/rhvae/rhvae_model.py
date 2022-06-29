@@ -11,6 +11,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd import grad
+import inspect
 
 from ...customexception import BadInheritanceError
 from ...data.datasets import BaseDataset
@@ -606,6 +607,7 @@ class RHVAE(VAE):
 
         if not self.model_config.uses_default_metric:
             with open(os.path.join(model_path, "metric.pkl"), "wb") as fp:
+                cloudpickle.register_pickle_by_value(inspect.getmodule(self.metric))
                 cloudpickle.dump(self.metric, fp)
 
         torch.save(model_dict, os.path.join(model_path, "model.pt"))

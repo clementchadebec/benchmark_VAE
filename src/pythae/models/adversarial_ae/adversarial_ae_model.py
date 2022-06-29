@@ -5,6 +5,7 @@ from typing import Optional
 import cloudpickle
 import torch
 import torch.nn.functional as F
+import inspect
 
 from ...customexception import BadInheritanceError
 from ...data.datasets import BaseDataset
@@ -208,6 +209,7 @@ class Adversarial_AE(VAE):
 
         if not self.model_config.uses_default_discriminator:
             with open(os.path.join(model_path, "discriminator.pkl"), "wb") as fp:
+                cloudpickle.register_pickle_by_value(inspect.getmodule(self.discriminator))
                 cloudpickle.dump(self.discriminator, fp)
 
         torch.save(model_dict, os.path.join(model_path, "model.pt"))
