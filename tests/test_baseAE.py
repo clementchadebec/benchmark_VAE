@@ -85,7 +85,7 @@ class Test_Model_Saving:
 
         model.save(dir_path=dir_path)
 
-        assert set(os.listdir(dir_path)) == set(["model_config.json", "model.pt"])
+        assert set(os.listdir(dir_path)) == set(["model_config.json", "model.pt", "environnement.json"])
 
         # reload model
         model_rec = BaseAE.load_from_folder(dir_path)
@@ -112,7 +112,7 @@ class Test_Model_Saving:
         model.save(dir_path=dir_path)
 
         assert set(os.listdir(dir_path)) == set(
-            ["model_config.json", "model.pt", "decoder.pkl"]
+            ["model_config.json", "model.pt", "decoder.pkl", "environnement.json"]
         )
 
         # reload model

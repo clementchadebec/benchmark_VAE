@@ -1,4 +1,5 @@
 import os
+import sys
 from copy import deepcopy
 
 import numpy as np
@@ -9,6 +10,7 @@ from ....data.datasets import BaseDataset
 from ...auto_model import AutoConfig
 from ...base.base_utils import ModelOutput
 from .base_nf_config import BaseNFConfig
+from ...base.base_config import EnvironnementConfig
 
 
 class BaseNF(nn.Module):
@@ -77,20 +79,20 @@ class BaseNF(nn.Module):
                 path does not exist a folder will be created at the provided location.
         """
 
-        model_path = dir_path
-
+        env_spec = EnvironnementConfig(python_version=f"{sys.version_info[0]}.{sys.version_info[1]}")
         model_dict = {"model_state_dict": deepcopy(self.state_dict())}
 
-        if not os.path.exists(model_path):
+        if not os.path.exists(dir_path):
             try:
-                os.makedirs(model_path)
+                os.makedirs(dir_path)
 
             except (FileNotFoundError, TypeError) as e:
                 raise e
 
-        self.model_config.save_json(model_path, "model_config")
+        env_spec.save_json(dir_path, "environnement")
+        self.model_config.save_json(dir_path, "model_config")
 
-        torch.save(model_dict, os.path.join(model_path, "model.pt"))
+        torch.save(model_dict, os.path.join(dir_path, "model.pt"))
 
     @classmethod
     def _load_model_config_from_folder(cls, dir_path):

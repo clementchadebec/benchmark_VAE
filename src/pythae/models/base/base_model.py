@@ -375,6 +375,7 @@ class BaseAE(nn.Module):
 
         logger.info(f"Downloading {cls.__name__} files for rebuilding...")
 
+        _ = hf_hub_download(repo_id=hf_hub_path, filename="environnement.json")
         config_path = hf_hub_download(repo_id=hf_hub_path, filename="model_config.json")
         dir_path = os.path.dirname(config_path)
 
