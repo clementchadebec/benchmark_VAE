@@ -171,7 +171,7 @@ class Test_Model_Saving:
 
         model.save(dir_path=dir_path)
 
-        assert set(os.listdir(dir_path)) == set(["model_config.json", "model.pt", "environnement.json"])
+        assert set(os.listdir(dir_path)) == set(["model_config.json", "model.pt", "environment.json"])
 
         # reload model
         model_rec = AutoModel.load_from_folder(dir_path)
@@ -198,7 +198,7 @@ class Test_Model_Saving:
         model.save(dir_path=dir_path)
 
         assert set(os.listdir(dir_path)) == set(
-            ["model_config.json", "model.pt", "encoder.pkl", "environnement.json"]
+            ["model_config.json", "model.pt", "encoder.pkl", "environment.json"]
         )
 
         # reload model
@@ -226,7 +226,7 @@ class Test_Model_Saving:
         model.save(dir_path=dir_path)
 
         assert set(os.listdir(dir_path)) == set(
-            ["model_config.json", "model.pt", "decoder.pkl", "environnement.json"]
+            ["model_config.json", "model.pt", "decoder.pkl", "environment.json"]
         )
 
         # reload model
@@ -256,7 +256,7 @@ class Test_Model_Saving:
         model.save(dir_path=dir_path)
 
         assert set(os.listdir(dir_path)) == set(
-            ["model_config.json", "model.pt", "discriminator.pkl", "environnement.json"]
+            ["model_config.json", "model.pt", "discriminator.pkl", "environment.json"]
         )
 
         # reload model
@@ -302,7 +302,7 @@ class Test_Model_Saving:
                 "encoder.pkl",
                 "decoder.pkl",
                 "discriminator.pkl",
-                "environnement.json"
+                "environment.json"
             ]
         )
 
