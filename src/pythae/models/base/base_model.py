@@ -1,7 +1,7 @@
+import inspect
 import logging
 import os
 import shutil
-import warnings
 import tempfile
 import warnings
 from copy import deepcopy
@@ -11,7 +11,6 @@ from urllib.error import HTTPError
 import cloudpickle
 import torch
 import torch.nn as nn
-import inspect
 
 from ...customexception import BadInheritanceError
 from ...data.datasets import BaseDataset
@@ -69,8 +68,8 @@ class BaseAE(nn.Module):
             if model_config.input_dim is None:
                 raise AttributeError(
                     "No input dimension provided !"
-                    "'input_dim' parameter of BaseAEConfig instance must be set to 'data_shape' where "
-                    "the shape of the data is (C, H, W ..)]. Unable to build decoder"
+                    "'input_dim' parameter of BaseAEConfig instance must be set to 'data_shape' "
+                    "where the shape of the data is (C, H, W ..)]. Unable to build decoder"
                     "automatically"
                 )
 
@@ -341,7 +340,9 @@ class BaseAE(nn.Module):
         return model
 
     @classmethod
-    def load_from_hf_hub(cls, hf_hub_path: str, allow_pickle=False):  # pragma: no cover
+    def load_from_hf_hub(
+        cls, hf_hub_path: str, allow_pickle: bool = False
+    ):  # pragma: no cover
         """Class method to be used to load a pretrained model from the Hugging Face hub
 
         Args:
@@ -390,11 +391,16 @@ class BaseAE(nn.Module):
 
         model_weights = cls._load_model_weights_from_folder(dir_path)
 
-        if (not model_config.uses_default_encoder or not model_config.uses_default_decoder) and not allow_pickle:
-            warnings.warn("You are about to download pickled files from the HF hub that may have "
-            "been created by a third party and so could potentially harm your computer. If you are "
-            "sure that you want to download them set `allow_pickle=true`.")
-            
+        if (
+            not model_config.uses_default_encoder
+            or not model_config.uses_default_decoder
+        ) and not allow_pickle:
+            warnings.warn(
+                "You are about to download pickled files from the HF hub that may have "
+                "been created by a third party and so could potentially harm your computer. If you"
+                "are sure that you want to download them set `allow_pickle=true`."
+            )
+
         else:
 
             if not model_config.uses_default_encoder:
