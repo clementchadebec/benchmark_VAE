@@ -126,18 +126,3 @@ class WAE_MMD(AE):
         k = torch.exp(-torch.norm(z1.unsqueeze(1) - z2.unsqueeze(0), dim=-1) ** 2 / C)
 
         return k
-
-    @classmethod
-    def _load_model_config_from_folder(cls, dir_path):
-        file_list = os.listdir(dir_path)
-
-        if "model_config.json" not in file_list:
-            raise FileNotFoundError(
-                f"Missing model config file ('model_config.json') in"
-                f"{dir_path}... Cannot perform model building."
-            )
-
-        path_to_model_config = os.path.join(dir_path, "model_config.json")
-        model_config = WAE_MMD_Config.from_json_file(path_to_model_config)
-
-        return model_config

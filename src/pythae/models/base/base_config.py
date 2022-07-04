@@ -19,3 +19,8 @@ class BaseAEConfig(BaseConfig):
     latent_dim: int = 10
     uses_default_encoder: bool = True
     uses_default_decoder: bool = True
+
+
+@dataclass
+class EnvironmentConfig(BaseConfig):
+    python_version: str = "3.8"

@@ -6,6 +6,14 @@ import numpy as np
 from typing import List
 from pythae.models.nn import *
 from pythae.models.base.base_utils import ModelOutput
+import torch.nn as nn
+
+class Layer(nn.Module):
+    def __init__(self) -> None:
+        nn.Module.__init__(self)
+
+    def forward(self, x):
+        return x
 
 
 class Encoder_AE_Conv(BaseEncoder):
@@ -357,7 +365,7 @@ class Encoder_AE_MLP_Custom(BaseEncoder):
         self.input_dim = args.input_dim
         self.latent_dim = args.latent_dim
 
-        self.layers = nn.Sequential(nn.Linear(np.prod(args.input_dim), 10), nn.ReLU())
+        self.layers = nn.Sequential(nn.Linear(np.prod(args.input_dim), 10), nn.ReLU(), Layer())
         self.mu = nn.Linear(10, self.latent_dim)
 
     def forward(self, x):
@@ -382,7 +390,7 @@ class Encoder_VAE_MLP_Custom(BaseEncoder):
         self.input_dim = args.input_dim
         self.latent_dim = args.latent_dim
 
-        self.layers = nn.Sequential(nn.Linear(np.prod(args.input_dim), 10), nn.ReLU())
+        self.layers = nn.Sequential(nn.Linear(np.prod(args.input_dim), 10), nn.ReLU(), Layer())
         self.mu = nn.Linear(10, self.latent_dim)
         self.std = nn.Linear(10, self.latent_dim)
 

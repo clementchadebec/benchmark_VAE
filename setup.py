@@ -1,20 +1,11 @@
-import pathlib
-
-import pkg_resources
 from setuptools import find_packages, setup
-
-with pathlib.Path("requirements.txt").open() as requirements_txt:
-    install_requires = [
-        str(requirement)
-        for requirement in pkg_resources.parse_requirements(requirements_txt)
-    ]
 
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 setup(
     name="pythae",
-    version="0.0.1",
+    version="0.0.2",
     author="Clement Chadebec (HekA team INRIA)",
     author_email="clement.chadebec@inria.fr",
     description="Unifying Generative Autoencoders in Python",
@@ -34,7 +25,7 @@ setup(
     package_dir={"": "src"},
     packages=find_packages(where="src"),
     install_requires=[
-        "dill>=0.3.3",
+        "cloudpickle>=2.1.0",
         "imageio",
         "numpy>=1.19",
         "pydantic>=1.8.2",
@@ -43,7 +34,8 @@ setup(
         "torch>=1.10.1",
         "tqdm",
         "typing_extensions",
-        "dataclasses>=0.6"
+        "dataclasses>=0.6",
+        "pickle5"
     ],
     python_requires=">=3.6",
 )
