@@ -11,7 +11,6 @@ console = logging.StreamHandler()
 logger.addHandler(console)
 logger.setLevel(logging.INFO)
 
-
 class AutoModel(nn.Module):
     def __init__(self) -> None:
         super().__init__()
@@ -181,10 +180,8 @@ class AutoModel(nn.Module):
         return model
 
     @classmethod
-    def load_from_hf_hub(
-        cls, hf_hub_path: str, allow_pickle: bool = False
-    ):  # pragma: no cover
-        """Class method to be used to load a automaticaly a pretrained model from the Hugging Face
+    def load_from_hf_hub(cls, hf_hub_path: str, allow_pickle: bool=False):  # pragma: no cover
+        """Class method to be used to load a automaticaly a pretrained model from the Hugging Face 
             hub
 
         Args:
@@ -223,191 +220,137 @@ class AutoModel(nn.Module):
         if model_name == "Adversarial_AE_Config":
             from ..adversarial_ae import Adversarial_AE
 
-            model = Adversarial_AE.load_from_hf_hub(
-                hf_hub_path=hf_hub_path, allow_pickle=allow_pickle
-            )
+            model = Adversarial_AE.load_from_hf_hub(hf_hub_path=hf_hub_path, allow_pickle=allow_pickle)
 
         elif model_name == "AEConfig":
             from ..ae import AE
 
-            model = AE.load_from_hf_hub(
-                hf_hub_path=hf_hub_path, allow_pickle=allow_pickle
-            )
+            model = AE.load_from_hf_hub(hf_hub_path=hf_hub_path, allow_pickle=allow_pickle)
 
         elif model_name == "BetaTCVAEConfig":
             from ..beta_tc_vae import BetaTCVAE
 
-            model = BetaTCVAE.load_from_hf_hub(
-                hf_hub_path=hf_hub_path, allow_pickle=allow_pickle
-            )
+            model = BetaTCVAE.load_from_hf_hub(hf_hub_path=hf_hub_path, allow_pickle=allow_pickle)
 
         elif model_name == "BetaVAEConfig":
             from ..beta_vae import BetaVAE
 
-            model = BetaVAE.load_from_hf_hub(
-                hf_hub_path=hf_hub_path, allow_pickle=allow_pickle
-            )
+            model = BetaVAE.load_from_hf_hub(hf_hub_path=hf_hub_path, allow_pickle=allow_pickle)
 
         elif model_name == "DisentangledBetaVAEConfig":
             from ..disentangled_beta_vae import DisentangledBetaVAE
 
-            model = DisentangledBetaVAE.load_from_hf_hub(
-                hf_hub_path=hf_hub_path, allow_pickle=allow_pickle
-            )
+            model = DisentangledBetaVAE.load_from_hf_hub(hf_hub_path=hf_hub_path, allow_pickle=allow_pickle)
 
         elif model_name == "FactorVAEConfig":
             from ..factor_vae import FactorVAE
 
-            model = FactorVAE.load_from_hf_hub(
-                hf_hub_path=hf_hub_path, allow_pickle=allow_pickle
-            )
+            model = FactorVAE.load_from_hf_hub(hf_hub_path=hf_hub_path, allow_pickle=allow_pickle)
 
         elif model_name == "HVAEConfig":
             from ..hvae import HVAE
 
-            model = HVAE.load_from_hf_hub(
-                hf_hub_path=hf_hub_path, allow_pickle=allow_pickle
-            )
+            model = HVAE.load_from_hf_hub(hf_hub_path=hf_hub_path, allow_pickle=allow_pickle)
 
         elif model_name == "INFOVAE_MMD_Config":
             from ..info_vae import INFOVAE_MMD
 
-            model = INFOVAE_MMD.load_from_hf_hub(
-                hf_hub_path=hf_hub_path, allow_pickle=allow_pickle
-            )
+            model = INFOVAE_MMD.load_from_hf_hub(hf_hub_path=hf_hub_path, allow_pickle=allow_pickle)
 
         elif model_name == "IWAEConfig":
             from ..iwae import IWAE
 
-            model = IWAE.load_from_hf_hub(
-                hf_hub_path=hf_hub_path, allow_pickle=allow_pickle
-            )
+            model = IWAE.load_from_hf_hub(hf_hub_path=hf_hub_path, allow_pickle=allow_pickle)
 
         elif model_name == "MSSSIM_VAEConfig":
             from ..msssim_vae import MSSSIM_VAE
 
-            model = MSSSIM_VAE.load_from_hf_hub(
-                hf_hub_path=hf_hub_path, allow_pickle=allow_pickle
-            )
+            model = MSSSIM_VAE.load_from_hf_hub(hf_hub_path=hf_hub_path, allow_pickle=allow_pickle)
 
         elif model_name == "RAE_GP_Config":
             from ..rae_gp import RAE_GP
 
-            model = RAE_GP.load_from_hf_hub(
-                hf_hub_path=hf_hub_path, allow_pickle=allow_pickle
-            )
+            model = RAE_GP.load_from_hf_hub(hf_hub_path=hf_hub_path, allow_pickle=allow_pickle)
 
         elif model_name == "RAE_L2_Config":
             from ..rae_l2 import RAE_L2
 
-            model = RAE_L2.load_from_hf_hub(
-                hf_hub_path=hf_hub_path, allow_pickle=allow_pickle
-            )
+            model = RAE_L2.load_from_hf_hub(hf_hub_path=hf_hub_path, allow_pickle=allow_pickle)
 
         elif model_name == "RHVAEConfig":
             from ..rhvae import RHVAE
 
-            model = RHVAE.load_from_hf_hub(
-                hf_hub_path=hf_hub_path, allow_pickle=allow_pickle
-            )
+            model = RHVAE.load_from_hf_hub(hf_hub_path=hf_hub_path, allow_pickle=allow_pickle)
 
         elif model_name == "SVAEConfig":
             from ..svae import SVAE
 
-            model = SVAE.load_from_hf_hub(
-                hf_hub_path=hf_hub_path, allow_pickle=allow_pickle
-            )
+            model = SVAE.load_from_hf_hub(hf_hub_path=hf_hub_path, allow_pickle=allow_pickle)
 
         elif model_name == "VAEConfig":
             from ..vae import VAE
 
-            model = VAE.load_from_hf_hub(
-                hf_hub_path=hf_hub_path, allow_pickle=allow_pickle
-            )
+            model = VAE.load_from_hf_hub(hf_hub_path=hf_hub_path, allow_pickle=allow_pickle)
 
         elif model_name == "VAEGANConfig":
             from ..vae_gan import VAEGAN
 
-            model = VAEGAN.load_from_hf_hub(
-                hf_hub_path=hf_hub_path, allow_pickle=allow_pickle
-            )
+            model = VAEGAN.load_from_hf_hub(hf_hub_path=hf_hub_path, allow_pickle=allow_pickle)
 
         elif model_name == "VAE_IAF_Config":
             from ..vae_iaf import VAE_IAF
 
-            model = VAE_IAF.load_from_hf_hub(
-                hf_hub_path=hf_hub_path, allow_pickle=allow_pickle
-            )
+            model = VAE_IAF.load_from_hf_hub(hf_hub_path=hf_hub_path, allow_pickle=allow_pickle)
 
         elif model_name == "VAE_LinNF_Config":
             from ..vae_lin_nf import VAE_LinNF
 
-            model = VAE_LinNF.load_from_hf_hub(
-                hf_hub_path=hf_hub_path, allow_pickle=allow_pickle
-            )
+            model = VAE_LinNF.load_from_hf_hub(hf_hub_path=hf_hub_path, allow_pickle=allow_pickle)
 
         elif model_name == "VAMPConfig":
             from ..vamp import VAMP
 
-            model = VAMP.load_from_hf_hub(
-                hf_hub_path=hf_hub_path, allow_pickle=allow_pickle
-            )
+            model = VAMP.load_from_hf_hub(hf_hub_path=hf_hub_path, allow_pickle=allow_pickle)
 
         elif model_name == "VQVAEConfig":
             from ..vq_vae import VQVAE
 
-            model = VQVAE.load_from_hf_hub(
-                hf_hub_path=hf_hub_path, allow_pickle=allow_pickle
-            )
+            model = VQVAE.load_from_hf_hub(hf_hub_path=hf_hub_path, allow_pickle=allow_pickle)
 
         elif model_name == "WAE_MMD_Config":
             from ..wae_mmd import WAE_MMD
 
-            model = WAE_MMD.load_from_hf_hub(
-                hf_hub_path=hf_hub_path, allow_pickle=allow_pickle
-            )
+            model = WAE_MMD.load_from_hf_hub(hf_hub_path=hf_hub_path, allow_pickle=allow_pickle)
 
         elif model_name == "MAFConfig":
             from ..normalizing_flows import MAF
 
-            model = MAF.load_from_hf_hub(
-                hf_hub_path=hf_hub_path, allow_pickle=allow_pickle
-            )
+            model = MAF.load_from_hf_hub(hf_hub_path=hf_hub_path, allow_pickle=allow_pickle)
 
         elif model_name == "IAFConfig":
             from ..normalizing_flows import IAF
 
-            model = IAF.load_from_hf_hub(
-                hf_hub_path=hf_hub_path, allow_pickle=allow_pickle
-            )
+            model = IAF.load_from_hf_hub(hf_hub_path=hf_hub_path, allow_pickle=allow_pickle)
 
         elif model_name == "PlanarFlowConfig":
             from ..normalizing_flows import PlanarFlow
 
-            model = PlanarFlow.load_from_hf_hub(
-                hf_hub_path=hf_hub_path, allow_pickle=allow_pickle
-            )
+            model = PlanarFlow.load_from_hf_hub(hf_hub_path=hf_hub_path, allow_pickle=allow_pickle)
 
         elif model_name == "RadialFlowConfig":
             from ..normalizing_flows import RadialFlow
 
-            model = RadialFlow.load_from_hf_hub(
-                hf_hub_path=hf_hub_path, allow_pickle=allow_pickle
-            )
+            model = RadialFlow.load_from_hf_hub(hf_hub_path=hf_hub_path, allow_pickle=allow_pickle)
 
         elif model_name == "MADEConfig":
             from ..normalizing_flows import MADE
 
-            model = MADE.load_from_hf_hub(
-                hf_hub_path=hf_hub_path, allow_pickle=allow_pickle
-            )
+            model = MADE.load_from_hf_hub(hf_hub_path=hf_hub_path, allow_pickle=allow_pickle)
 
         elif model_name == "PixelCNNConfig":
             from ..normalizing_flows import PixelCNN
 
-            model = PixelCNN.load_from_hf_hub(
-                hf_hub_path=hf_hub_path, allow_pickle=allow_pickle
-            )
+            model = PixelCNN.load_from_hf_hub(hf_hub_path=hf_hub_path, allow_pickle=allow_pickle)
 
         else:
             raise NameError(

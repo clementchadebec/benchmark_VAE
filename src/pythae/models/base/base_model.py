@@ -1,23 +1,25 @@
-import inspect
+from http.cookiejar import LoadError
 import logging
 import os
 import shutil
+import sys
+import warnings
 import tempfile
 import warnings
 from copy import deepcopy
 from typing import Optional
-from urllib.error import HTTPError
 
 import cloudpickle
 import torch
 import torch.nn as nn
+import inspect
 
 from ...customexception import BadInheritanceError
 from ...data.datasets import BaseDataset
 from ..auto_model import AutoConfig
 from ..nn import BaseDecoder, BaseEncoder
 from ..nn.default_architectures import Decoder_AE_MLP
-from .base_config import BaseAEConfig
+from .base_config import BaseAEConfig, EnvironnementConfig
 from .base_utils import CPU_Unpickler, ModelOutput, hf_hub_is_available
 
 logger = logging.getLogger(__name__)
@@ -68,8 +70,8 @@ class BaseAE(nn.Module):
             if model_config.input_dim is None:
                 raise AttributeError(
                     "No input dimension provided !"
-                    "'input_dim' parameter of BaseAEConfig instance must be set to 'data_shape' "
-                    "where the shape of the data is (C, H, W ..)]. Unable to build decoder"
+                    "'input_dim' parameter of BaseAEConfig instance must be set to 'data_shape' where "
+                    "the shape of the data is (C, H, W ..)]. Unable to build decoder"
                     "automatically"
                 )
 
@@ -118,31 +120,31 @@ class BaseAE(nn.Module):
                 path does not exist a folder will be created at the provided location.
         """
 
-        model_path = dir_path
-
+        env_spec = EnvironnementConfig(python_version=f"{sys.version_info[0]}.{sys.version_info[1]}")
         model_dict = {"model_state_dict": deepcopy(self.state_dict())}
 
-        if not os.path.exists(model_path):
+        if not os.path.exists(dir_path):
             try:
-                os.makedirs(model_path)
+                os.makedirs(dir_path)
 
             except FileNotFoundError as e:
                 raise e
 
-        self.model_config.save_json(model_path, "model_config")
+        env_spec.save_json(dir_path, "environnement")
+        self.model_config.save_json(dir_path, "model_config")
 
         # only save .pkl if custom architecture provided
         if not self.model_config.uses_default_encoder:
-            with open(os.path.join(model_path, "encoder.pkl"), "wb") as fp:
+            with open(os.path.join(dir_path, "encoder.pkl"), "wb") as fp:
                 cloudpickle.register_pickle_by_value(inspect.getmodule(self.encoder))
                 cloudpickle.dump(self.encoder, fp)
 
         if not self.model_config.uses_default_decoder:
-            with open(os.path.join(model_path, "decoder.pkl"), "wb") as fp:
+            with open(os.path.join(dir_path, "decoder.pkl"), "wb") as fp:
                 cloudpickle.register_pickle_by_value(inspect.getmodule(self.decoder))
                 cloudpickle.dump(self.decoder, fp)
 
-        torch.save(model_dict, os.path.join(model_path, "model.pt"))
+        torch.save(model_dict, os.path.join(dir_path, "model.pt"))
 
     def push_to_hf_hub(self, hf_hub_path: str):  # pragma: no cover
         """Method allowing to save your model directly on the huggung face hub.
@@ -270,6 +272,8 @@ class BaseAE(nn.Module):
     def _load_custom_encoder_from_folder(cls, dir_path):
 
         file_list = os.listdir(dir_path)
+        cls._check_python_version_from_folder(dir_path=dir_path)
+
         if "encoder.pkl" not in file_list:
             raise FileNotFoundError(
                 f"Missing encoder pkl file ('encoder.pkl') in"
@@ -287,7 +291,8 @@ class BaseAE(nn.Module):
     def _load_custom_decoder_from_folder(cls, dir_path):
 
         file_list = os.listdir(dir_path)
-
+        cls._check_python_version_from_folder(dir_path=dir_path)
+        
         if "decoder.pkl" not in file_list:
             raise FileNotFoundError(
                 f"Missing decoder pkl file ('decoder.pkl') in"
@@ -340,9 +345,7 @@ class BaseAE(nn.Module):
         return model
 
     @classmethod
-    def load_from_hf_hub(
-        cls, hf_hub_path: str, allow_pickle: bool = False
-    ):  # pragma: no cover
+    def load_from_hf_hub(cls, hf_hub_path: str, allow_pickle=False):  # pragma: no cover
         """Class method to be used to load a pretrained model from the Hugging Face hub
 
         Args:
@@ -391,16 +394,11 @@ class BaseAE(nn.Module):
 
         model_weights = cls._load_model_weights_from_folder(dir_path)
 
-        if (
-            not model_config.uses_default_encoder
-            or not model_config.uses_default_decoder
-        ) and not allow_pickle:
-            warnings.warn(
-                "You are about to download pickled files from the HF hub that may have "
-                "been created by a third party and so could potentially harm your computer. If you"
-                "are sure that you want to download them set `allow_pickle=true`."
-            )
-
+        if (not model_config.uses_default_encoder or not model_config.uses_default_decoder) and not allow_pickle:
+            warnings.warn("You are about to download pickled files from the HF hub that may have "
+            "been created by a third party and so could potentially harm your computer. If you are "
+            "sure that you want to download them set `allow_pickle=true`.")
+            
         else:
 
             if not model_config.uses_default_encoder:
@@ -445,3 +443,18 @@ class BaseAE(nn.Module):
                 )
             )
         self.decoder = decoder
+
+    @classmethod
+    def _check_python_version_from_folder(cls, dir_path:str):
+        if "environnement.json" in os.listdir(dir_path):
+            env_spec = EnvironnementConfig.from_json_file(os.path.join(dir_path, "environnement.json"))
+            python_version = env_spec.python_version
+            python_version_minor = python_version.split('.')[1]
+
+            if python_version_minor == '7' and sys.version_info[1] > 7:
+                raise LoadError("Trying to reload a model saved with python3.7 with python3.8+. "
+                "Please create a virtual env with python 3.7 to reload this model.")
+                
+            elif int(python_version_minor) >=8 and sys.version_info[1] == 7:
+                raise LoadError("Trying to reload a model saved with python3.8+ with python3.7. "
+                "Please create a virtual env with python 3.8+ to reload this model.")
