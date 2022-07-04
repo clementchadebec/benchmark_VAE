@@ -295,6 +295,7 @@ class VAEGAN(VAE):
     def _load_custom_discriminator_from_folder(cls, dir_path):
 
         file_list = os.listdir(dir_path)
+        cls._check_python_version_from_folder(dir_path=dir_path)
 
         if "discriminator.pkl" not in file_list:
             raise FileNotFoundError(

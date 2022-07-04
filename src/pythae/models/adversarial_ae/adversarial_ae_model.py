@@ -11,7 +11,7 @@ import torch.nn.functional as F
 
 from ...customexception import BadInheritanceError
 from ...data.datasets import BaseDataset
-from ..base.base_utils import CPU_Unpickler, ModelOutput
+from ..base.base_utils import CPU_Unpickler, ModelOutput, hf_hub_is_available
 from ..nn import BaseDecoder, BaseDiscriminator, BaseEncoder
 from ..nn.default_architectures import Discriminator_MLP
 from ..vae import VAE
@@ -227,6 +227,7 @@ class Adversarial_AE(VAE):
     def _load_custom_discriminator_from_folder(cls, dir_path):
 
         file_list = os.listdir(dir_path)
+        cls._check_python_version_from_folder(dir_path=dir_path)
 
         if "discriminator.pkl" not in file_list:
             raise FileNotFoundError(
