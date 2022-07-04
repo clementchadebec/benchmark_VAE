@@ -417,7 +417,7 @@ class VAEGAN(VAE):
         ) and not allow_pickle:
             warnings.warn(
                 "You are about to download pickled files from the HF hub that may have "
-                "been created by a third party and so could potentially harm your computer. If you"
+                "been created by a third party and so could potentially harm your computer. If you "
                 "are sure that you want to download them set `allow_pickle=true`."
             )
 
