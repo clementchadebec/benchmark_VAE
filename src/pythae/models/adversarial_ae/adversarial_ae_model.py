@@ -386,4 +386,3 @@ class Adversarial_AE(VAE):
             model.load_state_dict(model_weights)
 
             return model
-

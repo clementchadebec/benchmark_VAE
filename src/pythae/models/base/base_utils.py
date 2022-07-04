@@ -1,7 +1,6 @@
 import importlib
 import io
 import logging
-
 from collections import OrderedDict
 from typing import Any, Tuple
 
@@ -13,8 +12,10 @@ console = logging.StreamHandler()
 logger.addHandler(console)
 logger.setLevel(logging.INFO)
 
+
 def hf_hub_is_available():
     return importlib.util.find_spec("huggingface_hub") is not None
+
 
 class ModelOutput(OrderedDict):
     """Base ModelOutput class fixing the output type from the models. This class is inspired from

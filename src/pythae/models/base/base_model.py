@@ -1,18 +1,17 @@
-from http.cookiejar import LoadError
+import inspect
 import logging
 import os
 import shutil
 import sys
-import warnings
 import tempfile
 import warnings
 from copy import deepcopy
+from http.cookiejar import LoadError
 from typing import Optional
 
 import cloudpickle
 import torch
 import torch.nn as nn
-import inspect
 
 from ...customexception import BadInheritanceError
 from ...data.datasets import BaseDataset
@@ -120,7 +119,9 @@ class BaseAE(nn.Module):
                 path does not exist a folder will be created at the provided location.
         """
 
-        env_spec = EnvironnementConfig(python_version=f"{sys.version_info[0]}.{sys.version_info[1]}")
+        env_spec = EnvironnementConfig(
+            python_version=f"{sys.version_info[0]}.{sys.version_info[1]}"
+        )
         model_dict = {"model_state_dict": deepcopy(self.state_dict())}
 
         if not os.path.exists(dir_path):
@@ -292,7 +293,7 @@ class BaseAE(nn.Module):
 
         file_list = os.listdir(dir_path)
         cls._check_python_version_from_folder(dir_path=dir_path)
-        
+
         if "decoder.pkl" not in file_list:
             raise FileNotFoundError(
                 f"Missing decoder pkl file ('decoder.pkl') in"
@@ -395,11 +396,16 @@ class BaseAE(nn.Module):
 
         model_weights = cls._load_model_weights_from_folder(dir_path)
 
-        if (not model_config.uses_default_encoder or not model_config.uses_default_decoder) and not allow_pickle:
-            warnings.warn("You are about to download pickled files from the HF hub that may have "
-            "been created by a third party and so could potentially harm your computer. If you are "
-            "sure that you want to download them set `allow_pickle=true`.")
-            
+        if (
+            not model_config.uses_default_encoder
+            or not model_config.uses_default_decoder
+        ) and not allow_pickle:
+            warnings.warn(
+                "You are about to download pickled files from the HF hub that may have "
+                "been created by a third party and so could potentially harm your computer. If you are "
+                "sure that you want to download them set `allow_pickle=true`."
+            )
+
         else:
 
             if not model_config.uses_default_encoder:
@@ -446,16 +452,22 @@ class BaseAE(nn.Module):
         self.decoder = decoder
 
     @classmethod
-    def _check_python_version_from_folder(cls, dir_path:str):
+    def _check_python_version_from_folder(cls, dir_path: str):
         if "environnement.json" in os.listdir(dir_path):
-            env_spec = EnvironnementConfig.from_json_file(os.path.join(dir_path, "environnement.json"))
+            env_spec = EnvironnementConfig.from_json_file(
+                os.path.join(dir_path, "environnement.json")
+            )
             python_version = env_spec.python_version
-            python_version_minor = python_version.split('.')[1]
+            python_version_minor = python_version.split(".")[1]
 
-            if python_version_minor == '7' and sys.version_info[1] > 7:
-                raise LoadError("Trying to reload a model saved with python3.7 with python3.8+. "
-                "Please create a virtual env with python 3.7 to reload this model.")
-                
-            elif int(python_version_minor) >=8 and sys.version_info[1] == 7:
-                raise LoadError("Trying to reload a model saved with python3.8+ with python3.7. "
-                "Please create a virtual env with python 3.8+ to reload this model.")
+            if python_version_minor == "7" and sys.version_info[1] > 7:
+                raise LoadError(
+                    "Trying to reload a model saved with python3.7 with python3.8+. "
+                    "Please create a virtual env with python 3.7 to reload this model."
+                )
+
+            elif int(python_version_minor) >= 8 and sys.version_info[1] == 7:
+                raise LoadError(
+                    "Trying to reload a model saved with python3.8+ with python3.7. "
+                    "Please create a virtual env with python 3.8+ to reload this model."
+                )
