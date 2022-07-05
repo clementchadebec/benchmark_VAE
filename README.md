@@ -3,7 +3,7 @@
 	    <img src='https://badge.fury.io/py/pythae.svg' alt='Python' />
 	</a>
     <a>
-	    <img src='https://img.shields.io/badge/python-3.6%7C3.7%7C3.8-blueviolet' alt='Python' />
+	    <img src='https://img.shields.io/badge/python-3.7%7C3.8%7C3.9%2B-blueviolet' alt='Python' />
 	</a>
 	<a href='https://pythae.readthedocs.io/en/latest/?badge=latest'>
     	<img src='https://readthedocs.org/projects/pythae/badge/?version=latest' alt='Documentation Status' />
