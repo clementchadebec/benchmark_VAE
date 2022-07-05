@@ -11,6 +11,7 @@ from pythae.models.base.base_utils import ModelOutput
 from pythae.models.normalizing_flows import RadialFlow, RadialFlowConfig
 from pythae.models.normalizing_flows import NFModel
 from pythae.data.datasets import BaseDataset
+from pythae.models import AutoModel
 
 
 from pythae.trainers import BaseTrainer, BaseTrainerConfig
@@ -72,10 +73,10 @@ class Test_Model_Saving:
 
         model.save(dir_path=dir_path)
 
-        assert set(os.listdir(dir_path)) == set(["model_config.json", "model.pt"])
+        assert set(os.listdir(dir_path)) == set(["model_config.json", "model.pt", "environment.json"])
 
         # reload model
-        model_rec = RadialFlow.load_from_folder(dir_path)
+        model_rec = AutoModel.load_from_folder(dir_path)
 
         # check configs are the same
         assert model_rec.model_config.__dict__ == model.model_config.__dict__
@@ -105,18 +106,18 @@ class Test_Model_Saving:
 
         # check raises model.pt is missing
         with pytest.raises(FileNotFoundError):
-            model_rec = RadialFlow.load_from_folder(dir_path)
+            model_rec = AutoModel.load_from_folder(dir_path)
 
         torch.save({"wrong_key": 0.0}, os.path.join(dir_path, "model.pt"))
         # check raises wrong key in model.pt
         with pytest.raises(KeyError):
-            model_rec = RadialFlow.load_from_folder(dir_path)
+            model_rec = AutoModel.load_from_folder(dir_path)
 
         os.remove(os.path.join(dir_path, "model_config.json"))
 
         # check raises model_config.json is missing
         with pytest.raises(FileNotFoundError):
-            model_rec = RadialFlow.load_from_folder(dir_path)
+            model_rec = AutoModel.load_from_folder(dir_path)
 
 
 class Test_Model_forward:
@@ -329,7 +330,7 @@ class Test_RadialFlow_Training:
         )
 
         # check reload full model
-        model_rec = RadialFlow.load_from_folder(os.path.join(checkpoint_dir))
+        model_rec = AutoModel.load_from_folder(os.path.join(checkpoint_dir))
 
         assert all(
             [
@@ -445,7 +446,7 @@ class Test_RadialFlow_Training:
         )
 
         # check reload full model
-        model_rec = RadialFlow.load_from_folder(os.path.join(final_dir))
+        model_rec = AutoModel.load_from_folder(os.path.join(final_dir))
 
         assert all(
             [
@@ -492,7 +493,7 @@ class Test_RadialFlow_Training:
         )
 
         # check reload full model
-        model_rec = RadialFlow.load_from_folder(os.path.join(final_dir))
+        model_rec = AutoModel.load_from_folder(os.path.join(final_dir))
 
         assert all(
             [

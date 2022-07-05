@@ -1,4 +1,3 @@
-import os
 from typing import Optional
 
 import numpy as np
@@ -155,9 +154,10 @@ class VAMP(VAE):
 
         log_p_z = (
             torch.sum(
-                -0.5
-                * (prior_log_var + (z_expand - prior_mu) ** 2)
-                / prior_log_var.exp(),
+                -0.5 * (
+                    prior_log_var + (z_expand - prior_mu) ** 2
+                    / torch.exp(prior_log_var)
+                ),
                 dim=2,
             )
             - torch.log(torch.tensor(C).type(torch.float))
@@ -248,18 +248,3 @@ class VAMP(VAE):
             if i % 1000 == 0:
                 print(f"Current nll at {i}: {np.mean(log_p)}")
         return np.mean(log_p)
-
-    @classmethod
-    def _load_model_config_from_folder(cls, dir_path):
-        file_list = os.listdir(dir_path)
-
-        if "model_config.json" not in file_list:
-            raise FileNotFoundError(
-                f"Missing model config file ('model_config.json') in"
-                f"{dir_path}... Cannot perform model building."
-            )
-
-        path_to_model_config = os.path.join(dir_path, "model_config.json")
-        model_config = VAMPConfig.from_json_file(path_to_model_config)
-
-        return model_config

@@ -105,18 +105,3 @@ class RAE_GP(AE):
         )[0].reshape(recon_x.shape[0], -1)
 
         return grads.norm(dim=-1) ** 2
-
-    @classmethod
-    def _load_model_config_from_folder(cls, dir_path):
-        file_list = os.listdir(dir_path)
-
-        if "model_config.json" not in file_list:
-            raise FileNotFoundError(
-                f"Missing model config file ('model_config.json') in"
-                f"{dir_path}... Cannot perform model building."
-            )
-
-        path_to_model_config = os.path.join(dir_path, "model_config.json")
-        model_config = RAE_GP_Config.from_json_file(path_to_model_config)
-
-        return model_config

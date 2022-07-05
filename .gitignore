@@ -33,7 +33,7 @@ examples/notebooks/dummy_output_dir/
 examples/notebooks/models_training/dummy_output_dir/
 logs/
 downloads_data/
-*wandb*
+*wandb
 *.slurm
 configs
 examples/scripts/generation_jz.py
@@ -48,6 +48,8 @@ results.ipynb
 examples/scripts/artifacts/*
 examples/scripts/plots/*
 examples/notebooks/my_model_with_custom_archi/
+examples/notebooks/my_model/
+examples/net.py
 
 
 

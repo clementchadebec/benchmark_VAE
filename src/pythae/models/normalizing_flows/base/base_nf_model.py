@@ -1,4 +1,5 @@
 import os
+import sys
 from copy import deepcopy
 
 import numpy as np
@@ -6,6 +7,8 @@ import torch
 import torch.nn as nn
 
 from ....data.datasets import BaseDataset
+from ...auto_model import AutoConfig
+from ...base.base_config import EnvironmentConfig
 from ...base.base_utils import ModelOutput
 from .base_nf_config import BaseNFConfig
 
@@ -76,20 +79,37 @@ class BaseNF(nn.Module):
                 path does not exist a folder will be created at the provided location.
         """
 
-        model_path = dir_path
-
+        env_spec = EnvironmentConfig(
+            python_version=f"{sys.version_info[0]}.{sys.version_info[1]}"
+        )
         model_dict = {"model_state_dict": deepcopy(self.state_dict())}
 
-        if not os.path.exists(model_path):
+        if not os.path.exists(dir_path):
             try:
-                os.makedirs(model_path)
+                os.makedirs(dir_path)
 
             except (FileNotFoundError, TypeError) as e:
                 raise e
 
-        self.model_config.save_json(model_path, "model_config")
+        env_spec.save_json(dir_path, "environment")
+        self.model_config.save_json(dir_path, "model_config")
 
-        torch.save(model_dict, os.path.join(model_path, "model.pt"))
+        torch.save(model_dict, os.path.join(dir_path, "model.pt"))
+
+    @classmethod
+    def _load_model_config_from_folder(cls, dir_path):
+        file_list = os.listdir(dir_path)
+
+        if "model_config.json" not in file_list:
+            raise FileNotFoundError(
+                f"Missing model config file ('model_config.json') in"
+                f"{dir_path}... Cannot perform model building."
+            )
+
+        path_to_model_config = os.path.join(dir_path, "model_config.json")
+        model_config = AutoConfig.from_json_file(path_to_model_config)
+
+        return model_config
 
     @classmethod
     def _load_model_weights_from_folder(cls, dir_path):

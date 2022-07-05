@@ -252,7 +252,7 @@ class ProgressBarCallback(TrainingCallback):
             self.eval_progress_bar.close()
 
 
-class WandbCallback(TrainingCallback):
+class WandbCallback(TrainingCallback):  # pragma: no cover
     def __init__(self):
         if not wandb_is_available():
             raise ModuleNotFoundError(
@@ -273,7 +273,7 @@ class WandbCallback(TrainingCallback):
 
         training_config_dict = training_config.to_dict()
 
-        self._wandb.init(project=project_name, entity=entity_name)
+        self.run = self._wandb.init(project=project_name, entity=entity_name)
 
         if model_config is not None:
             model_config_dict = model_config.to_dict()
@@ -350,3 +350,6 @@ class WandbCallback(TrainingCallback):
             val_table = self._wandb.Table(data=data_to_log, columns=column_names)
 
             self._wandb.log({"my_val_table": val_table})
+
+    def on_train_end(self, training_config: BaseTrainerConfig, **kwargs):
+        self.run.finish()
