@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="pythae",
-    version="0.0.2",
+    version="0.0.3",
     author="Clement Chadebec (HekA team INRIA)",
     author_email="clement.chadebec@inria.fr",
     description="Unifying Generative Autoencoders in Python",
@@ -15,7 +15,6 @@ setup(
     project_urls={"Bug Tracker": "https://github.com/clementchadebec/benchmark_VAE/issues"},
     classifiers=[
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
@@ -37,5 +36,5 @@ setup(
         "dataclasses>=0.6",
         "pickle5"
     ],
-    python_requires=">=3.6",
+    python_requires=">=3.7",
 )
