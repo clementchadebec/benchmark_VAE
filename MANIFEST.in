@@ -1,0 +1,28 @@
+# Declare all files and folders to include/exclude
+
+include README.md
+include src/pythae/py.typed  # marker file for PEP 561
+
+include LICENSE
+# Include all citation (*.cff) files
+include *.cff  # citation info
+
+include MANIFEST.in
+include pyproject.toml
+include setup.py
+include setup.cfg
+
+# include requirements.txt
+
+recursive-exclude tests *
+recursive-exclude docs *
+recursive-exclude examples *
+
+recursive-exclude .github *
+recursive-exclude dist *
+
+exclude .gitignore
+exclude .readthedocs.yml
+exclude codecov.yml
+
+exclude CONTRIBUTING.md
