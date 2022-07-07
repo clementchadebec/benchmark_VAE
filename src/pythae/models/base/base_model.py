@@ -147,7 +147,9 @@ class BaseAE(nn.Module):
 
         torch.save(model_dict, os.path.join(dir_path, "model.pt"))
 
-    def push_to_hf_hub(self, hf_hub_path: str, path_to_model_card: str=None):  # pragma: no cover
+    def push_to_hf_hub(
+        self, hf_hub_path: str, path_to_model_card: str = None
+    ):  # pragma: no cover
         """Method allowing to save your model directly on the huggung face hub.
         You will need to have the `huggingface_hub` package installed and a valid Hugging Face
         account. You can install the package using
@@ -189,14 +191,15 @@ class BaseAE(nn.Module):
         api = HfApi()
         hf_operations = []
         if path_to_model_card is None:
-            print('in')
             hf_operations.append(
                 CommitOperationAdd(
                     path_in_repo="README.md",
-                    path_or_fileobj=os.path.join(os.path.dirname(os.path.abspath(__file__)),"model_card.md"),
+                    path_or_fileobj=os.path.join(
+                        os.path.dirname(os.path.abspath(__file__)), "model_card.md"
+                    ),
                 )
             )
-        
+
         else:
             hf_operations.append(
                 CommitOperationAdd(
@@ -204,7 +207,6 @@ class BaseAE(nn.Module):
                     path_or_fileobj=path_to_model_card,
                 )
             )
-                
 
         for file in model_files:
             hf_operations.append(
