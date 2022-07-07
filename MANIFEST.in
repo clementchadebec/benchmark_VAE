@@ -12,6 +12,8 @@ include pyproject.toml
 include setup.py
 include setup.cfg
 
+recursive-include src *.md
+
 # include requirements.txt
 
 recursive-exclude tests *
