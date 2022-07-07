@@ -188,6 +188,15 @@ class BaseAE(nn.Module):
         api = HfApi()
         hf_operations = []
 
+        hf_operations.append(
+            CommitOperationAdd(
+                path_in_repo="README.md",
+                path_or_fileobj=os.path.join(
+                    os.path.dirname(os.path.abspath(__file__)), "model_card.md"
+                ),
+            )
+        )
+
         for file in model_files:
             hf_operations.append(
                 CommitOperationAdd(
