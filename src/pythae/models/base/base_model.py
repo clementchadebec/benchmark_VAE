@@ -19,7 +19,7 @@ from ..auto_model import AutoConfig
 from ..nn import BaseDecoder, BaseEncoder
 from ..nn.default_architectures import Decoder_AE_MLP
 from .base_config import BaseAEConfig, EnvironmentConfig
-from .base_utils import CPU_Unpickler, ModelOutput, hf_hub_is_available
+from .base_utils import CPU_Unpickler, ModelOutput, hf_hub_is_available, model_card_template
 
 logger = logging.getLogger(__name__)
 console = logging.StreamHandler()
@@ -188,15 +188,6 @@ class BaseAE(nn.Module):
         api = HfApi()
         hf_operations = []
 
-        hf_operations.append(
-            CommitOperationAdd(
-                path_in_repo="README.md",
-                path_or_fileobj=os.path.join(
-                    os.path.dirname(os.path.abspath(__file__)), "model_card.md"
-                ),
-            )
-        )
-
         for file in model_files:
             hf_operations.append(
                 CommitOperationAdd(
@@ -204,6 +195,16 @@ class BaseAE(nn.Module):
                     path_or_fileobj=f"{str(os.path.join(tempdir, file))}",
                 )
             )
+
+        with open(os.path.join(tempdir, "model_card.md"), "w") as f:
+            f.write(model_card_template)
+
+        hf_operations.append(
+            CommitOperationAdd(
+                path_in_repo="README.md",
+                path_or_fileobj=os.path.join(tempdir, "model_card.md"),
+            )
+        )
 
         try:
             api.create_commit(
