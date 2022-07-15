@@ -1,23 +1,23 @@
-import os
 from typing import Optional
 
+import numpy as np
 import torch
 import torch.nn.functional as F
 
 from ...data.datasets import BaseDataset
-from ..ae import AE
+from ..vae import VAE
 from ..base.base_utils import ModelOutput
 from ..nn import BaseDecoder, BaseEncoder
-from .vq_vae_config import VQVAEConfig
-from .vq_vae_utils import Quantizer, QuantizerEMA
+from .sq_vae_config import SQVAEConfig
+from .sq_vae_utils import Quantizer
 
 
-class VQVAE(AE):
+class SQVAE(VAE):
     r"""
-    Vector Quantized-VAE model.
+    Stochastically Quantized-VAE model.
 
     Args:
-        model_config (VQVAEConfig): The Variational Autoencoder configuration setting the main
+        model_config (SQVAEConfig): The Variational Autoencoder configuration setting the main
             parameters of the model.
 
         encoder (BaseEncoder): An instance of BaseEncoder (inheriting from `torch.nn.Module` which
@@ -37,16 +37,16 @@ class VQVAE(AE):
 
     def __init__(
         self,
-        model_config: VQVAEConfig,
+        model_config: SQVAEConfig,
         encoder: Optional[BaseEncoder] = None,
         decoder: Optional[BaseDecoder] = None,
     ):
 
-        AE.__init__(self, model_config=model_config, encoder=encoder, decoder=decoder)
+        VAE.__init__(self, model_config=model_config, encoder=encoder, decoder=decoder)
 
         self._set_quantizer(model_config)
 
-        self.model_name = "VQVAE"
+        self.model_name = "SQVAE"
 
     def _set_quantizer(self, model_config):
 
@@ -65,11 +65,7 @@ class VQVAE(AE):
         z = z.permute(0, 2, 3, 1)
 
         self.model_config.embedding_dim = z.shape[-1]
-        if model_config.use_ema:
-            self.quantizer = QuantizerEMA(model_config=model_config)
-
-        else:
-            self.quantizer = Quantizer(model_config=model_config)
+        self.quantizer = Quantizer(model_config=model_config)
 
     def forward(self, inputs: BaseDataset, **kwargs):
         """
@@ -85,19 +81,26 @@ class VQVAE(AE):
 
         x = inputs["data"]
 
+        epoch = kwargs.pop("epoch", 0)
+
+        temperarure = np.max([self.model_config.temperature_init * np.exp(-self.model_config.temperature_decay*epoch), 0])
+
         encoder_output = self.encoder(x)
 
-        embeddings = encoder_output.embedding
+        embeddings, log_var = encoder_output.embedding, encoder_output.log_covariance
+        var = log_var.exp()
+
 
         reshape_for_decoding = False
 
         if len(embeddings.shape) == 2:
             embeddings = embeddings.reshape(embeddings.shape[0], 1, 1, -1)
+            var = var.reshape(embeddings.shape[0], 1, 1, -1)
             reshape_for_decoding = True
 
         embeddings = embeddings.permute(0, 2, 3, 1)
 
-        quantizer_output = self.quantizer(embeddings)
+        quantizer_output = self.quantizer(embeddings, var, temperarure)
 
         quantized_embed = quantizer_output.quantized_vector
         quantized_indices = quantizer_output.quantized_indices

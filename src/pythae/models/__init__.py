@@ -29,6 +29,7 @@ from .msssim_vae import MSSSIM_VAE, MSSSIM_VAEConfig
 from .rae_gp import RAE_GP, RAE_GP_Config
 from .rae_l2 import RAE_L2, RAE_L2_Config
 from .rhvae import RHVAE, RHVAEConfig
+from .sq_vae import SQVAE, SQVAEConfig
 from .svae import SVAE, SVAEConfig
 from .vae import VAE, VAEConfig
 from .vae_gan import VAEGAN, VAEGANConfig
@@ -84,4 +85,6 @@ __all__ = [
     "VAE_LinNF_Config",
     "VAE_IAF",
     "VAE_IAF_Config",
+    "SQVAE",
+    "SQVAEConfig"
 ]
