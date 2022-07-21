@@ -303,7 +303,10 @@ class Test_Model_interpolate:
     @pytest.fixture(
         params=[
             torch.randn(3, 2, 3, 1),
-            torch.randn(3, 2, 2)
+            torch.randn(3, 2, 2),
+            torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))[
+            :
+        ]['data']
         ]
     )
     def demo_data(self, request):
@@ -331,7 +334,10 @@ class Test_Model_reconstruct:
     @pytest.fixture(
         params=[
             torch.randn(3, 2, 3, 1),
-            torch.randn(3, 2, 2)
+            torch.randn(3, 2, 2),
+            torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))[
+            :
+        ]['data']
         ]
     )
     def demo_data(self, request):

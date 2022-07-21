@@ -293,7 +293,10 @@ class Test_Model_interpolate:
     @pytest.fixture(
         params=[
             torch.randn(3, 2, 3, 1),
-            torch.randn(3, 2, 2)
+            torch.randn(3, 2, 2),
+            torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))[
+            :
+        ]['data']
         ]
     )
     def demo_data(self, request):
@@ -303,7 +306,7 @@ class Test_Model_interpolate:
     def granularity(self):
         return int(torch.randint(1, 10, (1,)))
 
-    @pytest.fixture
+    @pytest.fixture()
     def ae(self, model_configs, demo_data):
         model_configs.input_dim = tuple(demo_data[0].shape)
         return AE(model_configs)
@@ -321,13 +324,16 @@ class Test_Model_reconstruct:
     @pytest.fixture(
         params=[
             torch.randn(3, 2, 3, 1),
-            torch.randn(3, 2, 2)
+            torch.randn(3, 2, 2),
+            torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))[
+            :
+        ]['data']
         ]
     )
     def demo_data(self, request):
         return request.param
 
-    @pytest.fixture
+    @pytest.fixture()
     def ae(self, model_configs, demo_data):
         model_configs.input_dim = tuple(demo_data[0].shape)
         return AE(model_configs)
