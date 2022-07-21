@@ -100,6 +100,65 @@ class BaseAE(nn.Module):
             ``loss = model_output.loss``"""
         raise NotImplementedError()
 
+    def reconstruct(self, inputs: torch.Tensor):
+        """This function returns the reconstructions of given input data.
+
+        Args:
+            inputs (torch.Tensor): The inputs data to be reconstructed of shape [B x input_dim]
+            ending_inputs (torch.Tensor): The starting inputs in the interpolation of shape 
+
+        Returns:
+            torch.Tensor: A tensor of shape [B x input_dim] containing the reconstructed sampless.
+        """
+        return self({'data': inputs,'data_bis': inputs}).recon_x
+
+
+    def interpolate(
+        self,
+        starting_inputs: torch.Tensor,
+        ending_inputs: torch.Tensor,
+        granularity: int=10
+    ):
+        """This function performs a linear interpolation in the latent space of the autoencoder 
+        from starting inputs to ending inputs. It returns the interpolation trajectories.
+
+        Args:
+            starting_inputs (torch.Tensor): The starting inputs in the interpolation of shape 
+                [B x input_dim]
+            ending_inputs (torch.Tensor): The starting inputs in the interpolation of shape 
+                [B x input_dim]
+            granularity (int): The granularity of the interpolation. 
+
+        Returns:
+            torch.Tensor: A tensor of shape [B x granularity x input_dim] containing the 
+                interpolation trajectories.
+        """
+        assert starting_inputs.shape[0] == ending_inputs.shape[0], (
+            "The number of starting_inputs should equal the number of ending_inputs. Got "
+            f"{starting_inputs.shape[0]} sampler for starting_inputs and {ending_inputs.shape[0]} "
+            "for endinging_inputs."
+        )
+
+        starting_z = self({'data': starting_inputs, 'data_bis': starting_inputs}).z
+        ending_z = self({'data': ending_inputs, 'data_bis': ending_inputs}).z
+        t = torch.linspace(0, 1, granularity).to(starting_inputs.device)
+        intep_line = (
+            torch.kron(
+                starting_z.reshape(starting_z.shape[0], -1),
+                (1-t).unsqueeze(-1)
+                ) + 
+                torch.kron(
+                    ending_z.reshape(ending_z.shape[0], -1),
+                    t.unsqueeze(-1)
+                )
+            ).reshape((starting_z.shape[0] * t.shape[0],) + (starting_z.shape[1:]))
+
+        decoded_line = self.decoder(intep_line).reconstruction.reshape(
+            (starting_inputs.shape[0], t.shape[0],) + (starting_inputs.shape[1:])
+            )
+        
+        return decoded_line
+
     def update(self):
         """Method that allows model update during the training (at the end of a training epoch)
 
