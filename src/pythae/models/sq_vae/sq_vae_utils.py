@@ -76,7 +76,7 @@ class Quantizer(nn.Module):
         quantized_indices = indices.reshape(mu.shape[0], mu.shape[1], mu.shape[2])
 
         # Latent loss
-        kld_discrete = torch.sum(probabilities * log_probabilities, dim=(0,1)) / mu.shape[0]
+        kld_discrete = torch.sum(probabilities * log_probabilities, dim=-1).mean(dim=0)
         kld_continous = ((quantized.reshape(-1, self.embedding_dim) - mu.reshape(-1, self.embedding_dim)) ** 2 * weight.reshape(-1, self.embedding_dim)).sum(dim=-1).mean(dim=0)
         loss = kld_discrete + kld_continous
 
