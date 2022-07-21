@@ -108,7 +108,7 @@ class BaseAE(nn.Module):
             ending_inputs (torch.Tensor): The starting inputs in the interpolation of shape 
 
         Returns:
-            torch.Tensor: A tensor of shape [B x input_dim] containing the reconstructed sampless.
+            torch.Tensor: A tensor of shape [B x input_dim] containing the reconstructed samples.
         """
         return self({'data': inputs,'data_bis': inputs}).recon_x
 
@@ -131,7 +131,7 @@ class BaseAE(nn.Module):
 
         Returns:
             torch.Tensor: A tensor of shape [B x granularity x input_dim] containing the 
-                interpolation trajectories.
+            interpolation trajectories.
         """
         assert starting_inputs.shape[0] == ending_inputs.shape[0], (
             "The number of starting_inputs should equal the number of ending_inputs. Got "
