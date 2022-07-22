@@ -1,4 +1,4 @@
-"""Utils class allowing to reload any :class:`pythae.models` automatically witht the following 
+"""Utils class allowing to reload any :class:`pythae.models` automatically with the following 
 lines of code.
 
 .. code-block::

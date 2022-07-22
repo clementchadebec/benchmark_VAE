@@ -307,7 +307,7 @@ And now build the model
 You can also find predefined neural network architectures for the most common data sets (*i.e.* MNIST, CIFAR, CELEBA ...) that can be loaded as follows
 
 ```python
->>> for pythae.models.nn.benchmark.mnist import (
+>>> from pythae.models.nn.benchmark.mnist import (
 ...	Encoder_Conv_AE_MNIST, # For AE based model (only return embeddings)
 ...	Encoder_Conv_VAE_MNIST, # For VAE based model (return embeddings and log_covariances)
 ...	Decoder_Conv_AE_MNIST

@@ -23,6 +23,12 @@ we can conduct benchmark analysis and reproducible research!
 Setup
 ~~~~~~~~~~~~~
 
+To install the latest stable release of this library run the following using ``pip``
+
+.. code-block:: bash
+
+   $ pip install pythae
+
 To install the latest version of this library run the following using ``pip``
 
 .. code-block:: bash

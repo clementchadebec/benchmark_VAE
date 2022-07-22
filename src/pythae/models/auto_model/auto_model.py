@@ -13,6 +13,8 @@ logger.setLevel(logging.INFO)
 
 
 class AutoModel(nn.Module):
+    "Utils class allowing to reload any :class:`pythae.models` automatically"
+
     def __init__(self) -> None:
         super().__init__()
 
@@ -185,7 +187,7 @@ class AutoModel(nn.Module):
         cls, hf_hub_path: str, allow_pickle: bool = False
     ):  # pragma: no cover
         """Class method to be used to load a automaticaly a pretrained model from the Hugging Face
-            hub
+        hub
 
         Args:
             hf_hub_path (str): The path where the model should have been be saved on the
