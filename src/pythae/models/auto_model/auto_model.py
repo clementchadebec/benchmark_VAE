@@ -14,6 +14,7 @@ logger.setLevel(logging.INFO)
 
 class AutoModel(nn.Module):
     "Utils class allowing to reload any :class:`pythae.models` automatically"
+
     def __init__(self) -> None:
         super().__init__()
 
