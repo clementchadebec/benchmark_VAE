@@ -36,3 +36,7 @@ class BadInheritanceError(Exception):
 
 class ModelError(Exception):
     pass
+
+
+class DatasetError(Exception):
+    pass

@@ -4,7 +4,8 @@ from typing import List, Optional, Union
 import numpy as np
 import torch
 
-from ..data.preprocessors import DataProcessor
+from ..customexception import DatasetError
+from ..data.preprocessors import DataProcessor, BaseDataset
 from ..models import VAE, BaseAE, VAEConfig
 from ..trainers import *
 from ..trainers.training_callbacks import TrainingCallback
@@ -42,82 +43,115 @@ class TrainingPipeline(Pipeline):
 
     def __init__(
         self,
-        model: Optional[BaseAE] = None,
+        model: Optional[BaseAE],
         training_config: Optional[BaseTrainerConfig] = None,
     ):
 
-        if model is not None:
-            if training_config is None:
-                if model.model_name == "RAE_L2":
-                    training_config = CoupledOptimizerTrainerConfig(
-                        encoder_optim_decay=0,
-                        decoder_optim_decay=model.model_config.reg_weight,
-                    )
-
-                elif (
-                    model.model_name == "Adversarial_AE"
-                    or model.model_name == "FactorVAE"
-                ):
-                    training_config = AdversarialTrainerConfig()
-
-                elif model.model_name == "VAEGAN":
-                    training_config = CoupledOptimizerAdversarialTrainerConfig()
-
-                else:
-                    training_config = BaseTrainerConfig()
-
-            elif model.model_name == "RAE_L2":
-                if not isinstance(training_config, CoupledOptimizerTrainerConfig):
-
-                    raise AssertionError(
-                        "A 'CoupledOptimizerTrainerConfig' "
-                        "is expected for training a RAE_L2"
-                    )
-
-                training_config.encoder_optim_decay = 0.0
-                training_config.decoder_optim_decay = model.model_config.reg_weight
-
-            elif (
-                model.model_name == "Adversarial_AE" or model.model_name == "FactorVAE"
-            ):
-                if not isinstance(training_config, AdversarialTrainerConfig):
-
-                    raise AssertionError(
-                        "A 'AdversarialTrainer' "
-                        f"is expected for training a {model.model_name}"
-                    )
-
-            elif model.model_name == "VAEGAN":
-                if not isinstance(
-                    training_config, CoupledOptimizerAdversarialTrainerConfig
-                ):
-
-                    raise AssertionError(
-                        "A 'CoupledOptimizerAdversarialTrainer' "
-                        "is expected for training a VAEGAN"
-                    )
-
-            if not isinstance(training_config, BaseTrainerConfig):
-                raise AssertionError(
-                    "A 'BaseTrainerConfig' " "is expected for the pipeline"
+        if training_config is None:
+            if model.model_name == "RAE_L2":
+                training_config = CoupledOptimizerTrainerConfig(
+                    encoder_optim_decay=0,
+                    decoder_optim_decay=model.model_config.reg_weight,
                 )
 
-        else:
-            training_config = BaseTrainerConfig()
+            elif (
+                model.model_name == "Adversarial_AE"
+                or model.model_name == "FactorVAE"
+            ):
+                training_config = AdversarialTrainerConfig()
+
+            elif model.model_name == "VAEGAN":
+                training_config = CoupledOptimizerAdversarialTrainerConfig()
+
+            else:
+                training_config = BaseTrainerConfig()
+
+        elif model.model_name == "RAE_L2":
+            if not isinstance(training_config, CoupledOptimizerTrainerConfig):
+
+                raise AssertionError(
+                    "A 'CoupledOptimizerTrainerConfig' "
+                    "is expected for training a RAE_L2"
+                )
+
+            training_config.encoder_optim_decay = 0.0
+            training_config.decoder_optim_decay = model.model_config.reg_weight
+
+        elif (
+            model.model_name == "Adversarial_AE" or model.model_name == "FactorVAE"
+        ):
+            if not isinstance(training_config, AdversarialTrainerConfig):
+
+                raise AssertionError(
+                    "A 'AdversarialTrainer' "
+                    f"is expected for training a {model.model_name}"
+                )
+
+        elif model.model_name == "VAEGAN":
+            if not isinstance(
+                training_config, CoupledOptimizerAdversarialTrainerConfig
+            ):
+
+                raise AssertionError(
+                    "A 'CoupledOptimizerAdversarialTrainer' "
+                    "is expected for training a VAEGAN"
+                )
+
+        if not isinstance(training_config, BaseTrainerConfig):
+            raise AssertionError(
+                "A 'BaseTrainerConfig' " "is expected for the pipeline"
+            )
 
         self.data_processor = DataProcessor()
         self.model = model
         self.training_config = training_config
 
-    def _set_default_model(self, data):
-        model_config = VAEConfig(input_dim=data.shape[1:])
-        model = VAE(model_config)
-        self.model = model
+    #def _set_default_model(self, data):
+    #    model_config = VAEConfig(input_dim=data.shape[1:])
+    #    model = VAE(model_config)
+    #    self.model = model
+
+    def _check_dataset(self, dataset: BaseDataset):
+        index = torch.tensor([1, 2])
+
+        try:
+            dataset_output = dataset[index]
+        
+        except Exception as e:
+            raise DatasetError(
+                "Error when trying to collect data from the dataset. Check `__getitem__` method. "
+                "The Dataset should output a dictionnary with keys at least ['data'] and "
+                "`data_bis` if you train a `FactorVAE`. Please check documentation.\n"
+                f"Exception raised: {type(e)} with message: " + str(e)
+            ) from e
+
+        if 'data' not in dataset_output.keys():
+            raise DatasetError(
+                "The Dataset should output a dictionnary with keys ['data']"
+            )
+
+        if self.model.model_name == "FactorVAE":
+            if 'data_bis' not in dataset_output.keys():
+                raise DatasetError(
+                    "When training a `FactorVAE`, the Dataset should output a dictionnary with keys "
+                    "['data', 'data_bis']"
+                )
+
+        try:
+            len(dataset)
+        
+        except Exception as e:
+            raise DatasetError(
+                "Error when trying to get dataset len. Check `__len__` method. "
+                "Please check documentation.\n"
+                f"Exception raised: {type(e)} with message: " + str(e)
+            ) from e
+
 
     def __call__(
         self,
-        train_data: Union[np.ndarray, torch.Tensor],
-        eval_data: Union[np.ndarray, torch.Tensor] = None,
+        train_data: Union[np.ndarray, torch.Tensor, torch.utils.data.Dataset],
+        eval_data: Union[np.ndarray, torch.Tensor, torch.utils.data.Dataset] = None,
         callbacks: List[TrainingCallback] = None,
     ):
         """
@@ -136,29 +170,40 @@ class TrainingPipeline(Pipeline):
                 A list of callbacks to use during training.
         """
 
-        if self.model is None:
-            self._set_default_model(train_data)
-
         dataset_type = (
-            "DoubleBatchDataset"
-            if self.model.model_name == "FactorVAE"
-            else "BaseDataset"
-        )
+                "DoubleBatchDataset"
+                if self.model.model_name == "FactorVAE"
+                else "BaseDataset"
+            )
 
-        logger.info("Preprocessing train data...")
-        train_data = self.data_processor.process_data(train_data)
-        train_dataset = self.data_processor.to_dataset(
-            train_data, dataset_type=dataset_type
-        )
+        if isinstance(train_data, np.ndarray) or isinstance(train_data, torch.Tensor):
 
-        self.train_data = train_data
+            logger.info("Preprocessing train data...")
+            train_data = self.data_processor.process_data(train_data)
+            train_dataset = self.data_processor.to_dataset(
+                train_data, dataset_type=dataset_type
+            )
+
+        else:
+            train_dataset = train_data
+
+        logger.info("Checking train dataset...")
+        self._check_dataset(train_dataset)
+        #self.train_data = train_data
 
         if eval_data is not None:
-            logger.info("Preprocessing eval data...\n")
-            eval_data = self.data_processor.process_data(eval_data)
-            eval_dataset = self.data_processor.to_dataset(
-                eval_data, dataset_type=dataset_type
-            )
+            if isinstance(eval_data, np.ndarray) or isinstance(eval_data, torch.Tensor):
+                logger.info("Preprocessing eval data...\n")
+                eval_data = self.data_processor.process_data(eval_data)
+                eval_dataset = self.data_processor.to_dataset(
+                    eval_data, dataset_type=dataset_type
+                )
+            
+            else:
+                eval_dataset = eval_data
+
+            logger.info("Checking eval dataset...")
+            self._check_dataset(eval_dataset)
 
         else:
             eval_dataset = None
