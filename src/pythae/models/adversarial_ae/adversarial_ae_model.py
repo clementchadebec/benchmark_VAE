@@ -121,7 +121,7 @@ class Adversarial_AE(VAE):
 
         mu, log_var = encoder_output.embedding, encoder_output.log_covariance
 
-        std = torch.exp(0.5 * log_var)
+        std = 0*torch.exp(0.5 * log_var)
         z, _ = self._sample_gauss(mu, std)
         recon_x = self.decoder(z)["reconstruction"]
 
@@ -174,19 +174,30 @@ class Adversarial_AE(VAE):
             F.binary_cross_entropy(
                 gen_adversarial_score, true_labels
             )  # generated are true
-        ) + (1 - self.adversarial_loss_scale) * (recon_loss)
+        ) + (recon_loss * 0.05)#+ (1 - self.adversarial_loss_scale) * 
 
         gen_adversarial_score_ = self.discriminator(z.detach()).embedding.flatten()
 
-        discriminator_loss = 0.5 * (
+        discriminator_loss = (
             F.binary_cross_entropy(
                 prior_adversarial_score, true_labels
             )  # prior is true
-        ) + 0.5 * (
+        ) + (
             F.binary_cross_entropy(
                 gen_adversarial_score_, fake_labels
             )  # generated are false
         )
+
+
+       # discriminator_loss = 0.5 * (
+       #     F.binary_cross_entropy(
+       #         prior_adversarial_score, true_labels
+       #     )  # prior is true
+       # ) + 0.5 * (
+       #     F.binary_cross_entropy(
+       #         gen_adversarial_score_, fake_labels
+       #     )  # generated are false
+       # )
 
         return (
             (recon_loss).mean(dim=0),

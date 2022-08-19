@@ -36,6 +36,9 @@ class BaseDataset(Dataset):
         # Select sample
         X = self.data[index]
 
+        #X = torch.bernoulli(X)
+
+
         # Load data and get label
         # X = torch.load('data/' + DATA + '.pt')
         y = self.labels[index]

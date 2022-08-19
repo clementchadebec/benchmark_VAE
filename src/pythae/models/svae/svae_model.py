@@ -72,6 +72,10 @@ class SVAE(VAE):
 
         x = inputs["data"]
 
+        x = (x > torch.distributions.Uniform(0, 1).sample(x.shape).to(x.device)).float()
+
+        epoch = kwargs.pop("epoch", 100)
+
         encoder_output = self.encoder(x)
 
         loc, log_concentration = (
@@ -82,11 +86,11 @@ class SVAE(VAE):
         # normalize mean
         loc = loc / loc.norm(dim=-1, keepdim=True)
 
-        concentration = torch.nn.functional.softplus(log_concentration)
+        concentration = torch.nn.functional.softplus(log_concentration) + 1
         z = self._sample_von_mises(loc, concentration)
         recon_x = self.decoder(z)["reconstruction"]
 
-        loss, recon_loss, kld = self.loss_function(recon_x, x, loc, concentration, z)
+        loss, recon_loss, kld = self.loss_function(recon_x, x, loc, concentration, z, epoch)
 
         output = ModelOutput(
             reconstruction_loss=recon_loss,
@@ -98,7 +102,7 @@ class SVAE(VAE):
 
         return output
 
-    def loss_function(self, recon_x, x, loc, concentration, z):
+    def loss_function(self, recon_x, x, loc, concentration, z, epoch):
 
         if self.model_config.reconstruction_loss == "mse":
 
@@ -118,7 +122,11 @@ class SVAE(VAE):
 
         KLD = self._compute_kl(m=loc.shape[-1], concentration=concentration)
 
-        return (recon_loss + KLD).mean(dim=0), recon_loss.mean(dim=0), KLD.mean(dim=0)
+        beta = 1.# * epoch / 100
+        if beta > 1 or not self.training:
+            beta = 1.
+
+        return (recon_loss + beta * KLD).mean(dim=0), recon_loss.mean(dim=0), KLD.mean(dim=0)
 
     def _compute_kl(self, m, concentration):
         term1 = concentration * (
@@ -179,7 +187,7 @@ class SVAE(VAE):
 
         i = 0
 
-        while stopping_mask.sum() > 0 and i < 1000:
+        while stopping_mask.sum() > 0 and i < 100:
 
             i += 1
 
@@ -228,11 +236,16 @@ class SVAE(VAE):
         for i in range(len(data)):
             x = data[i].unsqueeze(0)
 
+            x = (x > torch.distributions.Uniform(0, 1).sample(x.shape).to(x.device)).float()
+
             log_p_x = []
 
             for j in range(n_full_batch):
 
                 x_rep = torch.cat(batch_size * [x])
+
+                
+            
 
                 encoder_output = self.encoder(x_rep)
                 loc, log_concentration = (

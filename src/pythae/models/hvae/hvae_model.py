@@ -13,7 +13,6 @@ from ..nn import BaseDecoder, BaseEncoder
 from ..vae import VAE
 from .hvae_config import HVAEConfig
 
-
 class HVAE(VAE):
     r"""
     Hamiltonian VAE.
@@ -74,7 +73,7 @@ class HVAE(VAE):
         encoder_output = self.encoder(x)
         mu, log_var = encoder_output.embedding, encoder_output.log_covariance
 
-        std = torch.exp(0.5 * log_var)
+        std = F.softplus(log_var)#torch.exp(0.5 * log_var)
         z0, eps0 = self._sample_gauss(mu, std)
         gamma = torch.randn_like(z0, device=x.device)
         rho = gamma / self.beta_zero_sqrt
@@ -82,38 +81,47 @@ class HVAE(VAE):
         z = z0
         beta_sqrt_old = self.beta_zero_sqrt
 
-        recon_x = self.decoder(z)["reconstruction"]
+        #recon_x = self.decoder(z)["reconstruction"].reshape(x.shape[0], -1)
 
         for k in range(self.n_lf):
 
             # perform leapfrog steps
 
             # computes potential energy
-            U = -self._log_p_xz(recon_x, x, z).sum()
+            #U = -self._log_p_xz(recon_x, x, z).sum()
+
+            recon_x = self.decoder(z)["reconstruction"].reshape(x.shape[0], -1)
 
             # Compute its gradient
-            g = grad(U, z, create_graph=True)[0]
+            #g = grad(recon_x.sum(dim=-1), z, torch.ones(z.shape[0]).to(z.device), create_graph=True)[0] + z
 
             # 1st leapfrog step
-            rho_ = rho - (self.eps_lf / 2) * g
+            rho_ = rho - (self.eps_lf / 2) * self._dU_dz(z, x)
 
             # 2nd leapfrog step
-            z = z + self.eps_lf * rho_
+            z_ = z + self.eps_lf * rho
+           #recon_x = self.decoder(z)["reconstruction"]
 
-            recon_x = self.decoder(z)["reconstruction"]
+            #U = -self._log_p_xz(recon_x, x, z).sum()
 
-            U = -self._log_p_xz(recon_x, x, z).sum()
-            g = grad(U, z, create_graph=True)[0]
+            #recon_x = self.decoder(z)["reconstruction"].reshape(x.shape[0], -1)
+            #g = grad(recon_x.sum(dim=-1), z, torch.ones(z.shape[0]).to(z.device), create_graph=True)[0] + z
+            #g = grad(U, z, create_graph=True)[0] + z
 
             # 3rd leapfrog step
-            rho__ = rho_ - (self.eps_lf / 2) * g
+            rho__ = rho_ - (self.eps_lf / 2) * self._dU_dz(z_, x)
 
             # tempering steps
-            beta_sqrt = self._tempering(k + 1, self.n_lf)
-            rho = (beta_sqrt_old / beta_sqrt) * rho__
-            beta_sqrt_old = beta_sqrt
+            #beta_sqrt = self._tempering(k + 1, self.n_lf)
+            #rho = (beta_sqrt_old / beta_sqrt) * rho__
+            #beta_sqrt_old = beta_sqrt
 
-        loss = self.loss_function(recon_x, x, z, rho, eps0, log_var)
+            z = z_
+            rho = rho__
+
+        loss = self.loss_function(x, z, rho, z0, mu, log_var)
+
+        #print(loss)
 
         output = ModelOutput(
             loss=loss,
@@ -129,18 +137,29 @@ class HVAE(VAE):
 
         return output
 
-    def loss_function(self, recon_x, x, zK, rhoK, eps0, log_var):
+    def _dU_dz(self, z, x):
+        net_out = self.decoder(z)['reconstruction'].reshape(x.shape[0], -1)
+        U = -torch.distributions.Bernoulli(logits=net_out.reshape(x.shape[0], -1)).log_prob(x.reshape(x.shape[0], -1)).sum()
 
-        normal = torch.distributions.MultivariateNormal(
-            loc=torch.zeros(self.model_config.latent_dim).to(x.device),
-            covariance_matrix=torch.eye(self.model_config.latent_dim).to(x.device),
-        )
+        g = grad(U, z)[0]
 
-        logpxz = self._log_p_xz(recon_x.reshape(x.shape[0], -1), x, zK)  # log p(x, z_K)
+        return g + z
+
+    def loss_function(self, x, zK, rhoK, z0, mu, log_var):
+
+        recon_x = self.decoder(zK)['reconstruction']
+
+        logpx_given_z = self._log_p_x_given_z(recon_x, x)  # log p(x|z_K)
+
+        log_zk = -0.5 * torch.pow(zK, 2).sum(dim=-1)  # log p(\z_K)
         logrhoK = -0.5 * torch.pow(rhoK, 2).sum(dim=-1)  # log p(\rho_K)
-        logp = logpxz + logrhoK
+        logp = logpx_given_z + logrhoK + log_zk
 
-        logq = normal.log_prob(eps0) - 0.5 * log_var.sum(dim=1)  # q(z_0|x)
+        logq = -0.5 * log_var.sum(dim=-1)#(-0.5 * (log_var + torch.pow(z0 - mu, 2) / log_var.exp())).sum(dim=1)  # q(z_0|x)
+
+       # print(logpx_given_z.mean(), log_zk.mean(), logrhoK.mean(), logq.mean())
+
+        return -(logp - logq).mean(dim=0)
 
         return -(logp - logq).mean(dim=0)
 
@@ -157,7 +176,7 @@ class HVAE(VAE):
 
         if self.model_config.reconstruction_loss == "mse":
             # sigma is taken as I_D
-            recon_loss = (
+            logp_x_given_z = (
                 -0.5
                 * F.mse_loss(
                     recon_x.reshape(x.shape[0], -1),
@@ -170,40 +189,15 @@ class HVAE(VAE):
 
         elif self.model_config.reconstruction_loss == "bce":
 
-            recon_loss = -F.binary_cross_entropy(
-                recon_x.reshape(x.shape[0], -1),
-                x.reshape(x.shape[0], -1),
-                reduction="none",
-            ).sum(dim=-1)
+            logp_x_given_z = torch.distributions.Bernoulli(logits=recon_x.reshape(x.shape[0], -1)).log_prob(x.reshape(x.shape[0], -1)).sum(dim=-1)
 
-        return recon_loss
+            #recon_loss = -F.binary_cross_entropy(
+            #    recon_x.reshape(x.shape[0], -1),
+            #    x.reshape(x.shape[0], -1),
+            #    reduction="none",
+            #).sum(dim=-1)
 
-    def _log_z(self, z):
-        """
-        Return Normal density function as prior on z
-        """
-
-        # define a N(0, I) distribution
-        normal = torch.distributions.MultivariateNormal(
-            loc=torch.zeros(self.latent_dim).to(z.device),
-            covariance_matrix=torch.eye(self.latent_dim).to(z.device),
-        )
-        return normal.log_prob(z)
-
-    def _log_p_xz(self, recon_x, x, z):
-        """
-        Estimate log(p(x, z)) using Bayes rule
-        """
-        logpxz = self._log_p_x_given_z(recon_x, x)
-        logpz = self._log_z(z)
-        return logpxz + logpz
-
-    def _hamiltonian(self, recon_x, x, z):
-        """
-        Computes the Hamiltonian function.
-        used for HVAE
-        """
-        return -self.log_p_xz(recon_x.reshape(x.shape[0], -1), x, z).sum()
+        return logp_x_given_z
 
     def get_nll(self, data, n_samples=1, batch_size=100):
         """
@@ -236,7 +230,7 @@ class HVAE(VAE):
 
             for j in range(n_full_batch):
 
-                x_rep = torch.cat(batch_size * [x])
+                x_rep = torch.cat(batch_size * [x]).reshape(-1, 1, 28, 28)
 
                 encoder_output = self.encoder(x_rep)
                 mu, log_var = encoder_output.embedding, encoder_output.log_covariance
@@ -249,31 +243,36 @@ class HVAE(VAE):
                 z = z0
                 beta_sqrt_old = self.beta_zero_sqrt
 
-                recon_x = self.decoder(z)["reconstruction"]
+                #recon_x = self.decoder(z)["reconstruction"]
 
                 for k in range(self.n_lf):
 
                     # perform leapfrog steps
 
                     # computes potential energy
-                    U = -self._log_p_xz(recon_x, x_rep, z).sum()
+                    #U = -self._log_p_xz(recon_x, x_rep, z).sum()
+
+                    #recon_x = self.decoder(z)["reconstruction"].reshape(x.shape[0], -1)
 
                     # Compute its gradient
-                    g = grad(U, z, create_graph=True)[0]
+                    #g = grad(recon_x.sum(dim=-1), z, torch.ones(z.shape[0]).to(z.device), create_graph=True)[0] + z
 
                     # 1st leapfrog step
-                    rho_ = rho - (self.eps_lf / 2) * g
+                    rho_ = rho - (self.eps_lf / 2) * self._dU_dz(z, x_rep)
 
                     # 2nd leapfrog step
                     z = z + self.eps_lf * rho_
 
-                    recon_x = self.decoder(z)["reconstruction"]
+                    #recon_x = self.decoder(z)["reconstruction"]
 
-                    U = -self._log_p_xz(recon_x, x_rep, z).sum()
-                    g = grad(U, z, create_graph=True)[0]
+                    #U = -self._log_p_xz(recon_x, x, z).sum()
+
+                    #recon_x = self.decoder(z)["reconstruction"].reshape(x.shape[0], -1)
+                    #g = grad(recon_x.sum(dim=-1), z, torch.ones(z.shape[0]).to(z.device), create_graph=True)[0] + z
+                    #g = grad(U, z, create_graph=True)[0] + z
 
                     # 3rd leapfrog step
-                    rho__ = rho_ - (self.eps_lf / 2) * g
+                    rho__ = rho_ - (self.eps_lf / 2) * self._dU_dz(z, x_rep)
 
                     # tempering steps
                     beta_sqrt = self._tempering(k + 1, self.n_lf)
@@ -284,31 +283,38 @@ class HVAE(VAE):
                     log_var + (z0 - mu) ** 2 / torch.exp(log_var)
                 ).sum(dim=-1)
                 log_p_z = -0.5 * (z ** 2).sum(dim=-1)
+                log_p_rho = -0.5 * (rho ** 2).sum(dim=-1)
 
-                log_p_rho0 = normal.log_prob(gamma) - self.latent_dim * torch.log(
-                    1 / self.beta_zero_sqrt
-                )  # rho0 ~ N(0, 1/beta_0*I)
-                log_p_rho = normal.log_prob(rho)
+                log_p_rho0 = -0.5 * (rho ** 2).sum(dim=-1) * self.beta_zero_sqrt
 
-                if self.model_config.reconstruction_loss == "mse":
+                #log_p_rho0 = normal.log_prob(gamma) #+ self.latent_dim * torch.log(
+                #    1 / self.beta_zero_sqrt
+                #)  # rho0 ~ N(0, 1/beta_0*I)
+                #log_p_rho = normal.log_prob(rho)
 
-                    log_p_x_given_z = -0.5 * F.mse_loss(
-                        recon_x.reshape(x_rep.shape[0], -1),
-                        x_rep.reshape(x_rep.shape[0], -1),
-                        reduction="none",
-                    ).sum(dim=-1) - torch.tensor(
-                        [np.prod(self.input_dim) / 2 * np.log(np.pi * 2)]
-                    ).to(
-                        data.device
-                    )  # decoding distribution is assumed unit variance  N(mu, I)
+                recon_x = self.decoder(z)['reconstruction']
 
-                elif self.model_config.reconstruction_loss == "bce":
+                log_p_x_given_z = self._log_p_x_given_z(recon_x, x_rep)
 
-                    log_p_x_given_z = -F.binary_cross_entropy(
-                        recon_x.reshape(x_rep.shape[0], -1),
-                        x_rep.reshape(x_rep.shape[0], -1),
-                        reduction="none",
-                    ).sum(dim=-1)
+                #if self.model_config.reconstruction_loss == "mse":
+#
+                #    log_p_x_given_z = -0.5 * F.mse_loss(
+                #        recon_x.reshape(x_rep.shape[0], -1),
+                #        x_rep.reshape(x_rep.shape[0], -1),
+                #        reduction="none",
+                #    ).sum(dim=-1) - torch.tensor(
+                #        [np.prod(self.input_dim) / 2 * np.log(np.pi * 2)]
+                #    ).to(
+                #        data.device
+                #    )  # decoding distribution is assumed unit variance  N(mu, I)
+#
+                #elif self.model_config.reconstruction_loss == "bce":
+#
+                #    log_p_x_given_z = -F.binary_cross_entropy(
+                #        recon_x.reshape(x_rep.shape[0], -1),
+                #        x_rep.reshape(x_rep.shape[0], -1),
+                #        reduction="none",
+                #    ).sum(dim=-1)
 
                 log_p_x.append(
                     log_p_x_given_z
@@ -321,5 +327,8 @@ class HVAE(VAE):
             log_p_x = torch.cat(log_p_x)
 
             log_p.append((torch.logsumexp(log_p_x, 0) - np.log(len(log_p_x))).item())
+
+            if i % 50 == 0:
+                print(f"Current nll at {i}: {np.mean(log_p)}")
 
         return np.mean(log_p)

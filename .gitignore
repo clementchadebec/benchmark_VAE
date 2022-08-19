@@ -35,7 +35,7 @@ logs/
 downloads_data/
 *wandb
 *.slurm
-configs
+#configs
 examples/scripts/generation_jz.py
 examples/scripts/classification_jz.py
 examples/scripts/latent_dim_sensi.py
