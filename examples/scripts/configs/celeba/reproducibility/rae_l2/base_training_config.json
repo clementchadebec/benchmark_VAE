@@ -1,9 +1,9 @@
 {
   "name": "BaseTrainerConfig",
-  "output_dir": "my_models_on_cifar",
+  "output_dir": "my_models_on_celeba",
   "batch_size": 100,
-  "num_epochs": 100,
-  "learning_rate": 1e-4,
+  "num_epochs": 55,
+  "learning_rate": 0.001,
   "steps_saving": null,
   "steps_predict": 100,
   "no_cuda": false

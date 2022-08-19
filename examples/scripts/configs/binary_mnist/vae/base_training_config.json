@@ -5,6 +5,6 @@
   "num_epochs": 500,
   "learning_rate": 1e-4,
   "steps_saving": null,
-  "steps_predict": 20,
+  "steps_predict": null,
   "no_cuda": false
 }
