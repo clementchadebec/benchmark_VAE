@@ -1,0 +1,7 @@
+{
+    "name": "WAE_MMD_Config",
+    "latent_dim": 64,
+    "kernel_choice": "imq",
+    "reg_weight": 100,
+    "kernel_bandwidth": 2.0
+}

@@ -1,0 +1,6 @@
+{
+    "name": "AdversarialAEConfig",
+    "latent_dim": 64,
+    "reconstruction_loss": "mse",
+    "adversarial_loss_scale": 0.5
+  }

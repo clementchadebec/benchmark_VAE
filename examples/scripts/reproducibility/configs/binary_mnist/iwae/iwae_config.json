@@ -1,0 +1,6 @@
+{
+    "name": "IWAEConfig",
+    "latent_dim": 50,
+    "reconstruction_loss": "bce",
+    "number_samples": 50
+}
