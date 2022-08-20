@@ -1,4 +1,3 @@
-import os
 from typing import Optional
 
 import numpy as np
@@ -298,8 +297,6 @@ class SVAE(VAE):
                         x_rep.reshape(x_rep.shape[0], -1),
                         reduction="none",
                     ).sum(dim=-1)
-
-                # assert 0, (log_p_x_given_z.shape, log_p_z.shape, log_q_z_given_x.shape)
 
                 log_p_x.append(
                     log_p_x_given_z + log_p_z - log_q_z_given_x

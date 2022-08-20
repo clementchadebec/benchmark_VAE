@@ -153,9 +153,6 @@ class BetaTCVAE(VAE):
         TC_loss = log_q_z - log_prod_q_z
         dimension_wise_KL = log_prod_q_z - log_prior
 
-        #print(recon_loss.mean(), mutual_info_loss.mean(), TC_loss.mean(), dimension_wise_KL.mean())
-
-
         return (
             (
                 recon_loss

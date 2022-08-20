@@ -3,5 +3,6 @@
     "latent_dim": 64,
     "kernel_choice": "imq",
     "reg_weight": 100,
-    "kernel_bandwidth": 2.0
+    "kernel_bandwidth": 2.0,
+    "reconstruction_loss_scale": 0.05
 }

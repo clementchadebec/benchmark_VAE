@@ -2,5 +2,6 @@
     "name": "VAMPConfig",
     "latent_dim": 40,
     "reconstruction_loss": "bce",
-    "number_components": 500
+    "number_components": 500,
+    "linear_scheduling_steps": 100
 }

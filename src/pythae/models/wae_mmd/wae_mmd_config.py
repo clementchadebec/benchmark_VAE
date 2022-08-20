@@ -21,6 +21,7 @@ class WAE_MMD_Config(AEConfig):
         kernel_bandwidth (float): The kernel bandwidth. Default: 1
         scales (list): The scales to apply if using multi-scale imq kernels. If None, use a unique
             imq kernel. Default: [.1, .2, .5, 1., 2., 5, 10.].
+        reconstruction_loss_scale (float): Parameter scaling the reconstruction loss. Default: 1
     """
 
     kernel_choice: Literal["rbf", "imq"] = "imq"
@@ -29,3 +30,4 @@ class WAE_MMD_Config(AEConfig):
     scales: Union[List[float], None] = field(
         default_factory=lambda: [0.1, 0.2, 0.5, 1.0, 2.0, 5, 10.0]
     )
+    reconstruction_loss_scale: float = 1.

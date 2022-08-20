@@ -86,6 +86,8 @@ class Adversarial_AE(VAE):
         ), "adversarial_loss_scale must be in [0, 1]"
 
         self.adversarial_loss_scale = self.model_config.adversarial_loss_scale
+        self.reconstruction_loss_scale = self.model_config.reconstruction_loss_scale
+        self.deterministic_posterior = 1 if self.model_config.deterministic_posterior else 0 
 
     def set_discriminator(self, discriminator: BaseDiscriminator) -> None:
         r"""This method is called to set the discriminator network
@@ -121,7 +123,7 @@ class Adversarial_AE(VAE):
 
         mu, log_var = encoder_output.embedding, encoder_output.log_covariance
 
-        std = 0*torch.exp(0.5 * log_var)
+        std = (1 - self.deterministic_posterior) * torch.exp(0.5 * log_var)
         z, _ = self._sample_gauss(mu, std)
         recon_x = self.decoder(z)["reconstruction"]
 
@@ -174,7 +176,7 @@ class Adversarial_AE(VAE):
             F.binary_cross_entropy(
                 gen_adversarial_score, true_labels
             )  # generated are true
-        ) + (recon_loss * 0.05)#+ (1 - self.adversarial_loss_scale) * 
+        ) + (recon_loss * self.reconstruction_loss_scale) 
 
         gen_adversarial_score_ = self.discriminator(z.detach()).embedding.flatten()
 
@@ -187,17 +189,6 @@ class Adversarial_AE(VAE):
                 gen_adversarial_score_, fake_labels
             )  # generated are false
         )
-
-
-       # discriminator_loss = 0.5 * (
-       #     F.binary_cross_entropy(
-       #         prior_adversarial_score, true_labels
-       #     )  # prior is true
-       # ) + 0.5 * (
-       #     F.binary_cross_entropy(
-       #         gen_adversarial_score_, fake_labels
-       #     )  # generated are false
-       # )
 
         return (
             (recon_loss).mean(dim=0),

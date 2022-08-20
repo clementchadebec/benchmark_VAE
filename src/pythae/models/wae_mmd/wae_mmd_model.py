@@ -47,6 +47,7 @@ class WAE_MMD(AE):
 
         self.kernel_choice = model_config.kernel_choice
         self.scales = model_config.scales if model_config.scales is not None else [1.0]
+        self.reconstruction_loss_scale = self.model_config.reconstruction_loss_scale
 
     def forward(self, inputs: BaseDataset, **kwargs) -> ModelOutput:
         """The input data is encoded and decoded
@@ -77,7 +78,7 @@ class WAE_MMD(AE):
 
         N = z.shape[0]  # batch size
 
-        recon_loss = 0.05 * F.mse_loss(
+        recon_loss = self.reconstruction_loss_scale * F.mse_loss(
             recon_x.reshape(x.shape[0], -1), x.reshape(x.shape[0], -1), reduction="none"
         ).sum(dim=-1)
 
