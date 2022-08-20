@@ -49,7 +49,7 @@ Below are gathered the results we were able to reproduce
 
 | Model | Dataset | Metric | Obtained value | Reference value | Trained model
 |:---:|:---:|:---:|:---:|:---:|:---:|
-| VAE | Binary MNIST | NLL (200 IS) | 89.78 (0.01) | 89.9 (0.31) | [link](https://huggingface.co/clementchadebec/reproduced_vae)
+| VAE | Binary MNIST | NLL (200 IS) | 89.78 (0.01) | 89.9 | [link](https://huggingface.co/clementchadebec/reproduced_vae)
 | VAMP (K=500) | Binary MNIST | NLL (5000 IS) | 85.79 (0.00) | 85.57 | [link](https://huggingface.co/clementchadebec/reproduced_vamp)
 | SVAE | Dyn. Binarized MNIST | NLL (500 IS) | 93.27 (0.69) | 93.16 (0.31) | [link](https://huggingface.co/clementchadebec/reproduced_svae)
 | IWAE (n_samples=50) | Binary MNIST | NLL (5000 IS) | 86.82 (0.01) | 87.1 | [link](https://huggingface.co/clementchadebec/reproduced_iwae)
