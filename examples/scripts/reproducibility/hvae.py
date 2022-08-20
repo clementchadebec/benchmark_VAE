@@ -233,7 +233,7 @@ def main(args):
     with torch.no_grad():
         nll = []
         for i in range(5):
-            nll_i = trained_model.get_nll(test_data[:10], n_samples=200)
+            nll_i = trained_model.get_nll(test_data, n_samples=1000)
             logger.info(f"Round {i+1} nll: {nll_i}")
             nll.append(nll_i)
     
