@@ -18,7 +18,7 @@ class Adversarial_AE_Config(VAEConfig):
     """
 
     adversarial_loss_scale: float = 0.5
-    reconstruction_loss_scale: float = 1.
+    reconstruction_loss_scale: float = 1.0
     deterministic_posterior: bool = False
     uses_default_discriminator: bool = True
     discriminator_input_dim: int = None

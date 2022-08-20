@@ -87,7 +87,9 @@ class Adversarial_AE(VAE):
 
         self.adversarial_loss_scale = self.model_config.adversarial_loss_scale
         self.reconstruction_loss_scale = self.model_config.reconstruction_loss_scale
-        self.deterministic_posterior = 1 if self.model_config.deterministic_posterior else 0 
+        self.deterministic_posterior = (
+            1 if self.model_config.deterministic_posterior else 0
+        )
 
     def set_discriminator(self, discriminator: BaseDiscriminator) -> None:
         r"""This method is called to set the discriminator network
@@ -176,7 +178,7 @@ class Adversarial_AE(VAE):
             F.binary_cross_entropy(
                 gen_adversarial_score, true_labels
             )  # generated are true
-        ) + (recon_loss * self.reconstruction_loss_scale) 
+        ) + (recon_loss * self.reconstruction_loss_scale)
 
         gen_adversarial_score_ = self.discriminator(z.detach()).embedding.flatten()
 

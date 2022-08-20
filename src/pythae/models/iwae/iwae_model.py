@@ -70,7 +70,9 @@ class IWAE(VAE):
 
         z, _ = self._sample_gauss(mu, std)
 
-        recon_x = self.decoder(z.reshape(-1, self.latent_dim))["reconstruction"].reshape(x.shape[0], self.n_samples, -1)
+        recon_x = self.decoder(z.reshape(-1, self.latent_dim))[
+            "reconstruction"
+        ].reshape(x.shape[0], self.n_samples, -1)
 
         loss, recon_loss, kld = self.loss_function(recon_x, x, mu, log_var, z)
 
@@ -81,7 +83,9 @@ class IWAE(VAE):
             recon_x=recon_x.reshape(x.shape[0], self.n_samples, -1)[:, 0, :].reshape_as(
                 x
             ),
-            z=z.reshape(x.shape[0], self.n_samples, -1)[:, 0, :].reshape(-1, self.latent_dim),
+            z=z.reshape(x.shape[0], self.n_samples, -1)[:, 0, :].reshape(
+                -1, self.latent_dim
+            ),
         )
 
         return output
@@ -90,28 +94,26 @@ class IWAE(VAE):
 
         if self.model_config.reconstruction_loss == "mse":
 
-            recon_loss = (
-                F.mse_loss(
-                    recon_x.reshape(recon_x.shape[0], -1),
-                    x.unsqueeze(1).repeat(1, self.n_samples, 1),
-                    reduction="none",
-                )
-                .sum(dim=-1)
-            )
+            recon_loss = F.mse_loss(
+                recon_x,
+                x.reshape(recon_x.shape[0], -1)
+                .unsqueeze(1)
+                .repeat(1, self.n_samples, 1),
+                reduction="none",
+            ).sum(dim=-1)
 
         elif self.model_config.reconstruction_loss == "bce":
 
-            recon_loss = (
-                F.binary_cross_entropy(
-                    recon_x,
-                    x.unsqueeze(1).repeat(1, self.n_samples, 1),
-                    reduction="none",
-                )
-                .sum(dim=-1)
-            )
+            recon_loss = F.binary_cross_entropy(
+                recon_x,
+                x.reshape(recon_x.shape[0], -1)
+                .unsqueeze(1)
+                .repeat(1, self.n_samples, 1),
+                reduction="none",
+            ).sum(dim=-1)
 
         log_q_z = (-0.5 * (log_var + torch.pow(z - mu, 2) / log_var.exp())).sum(dim=-1)
-        log_p_z = -0.5 * (z ** 2).sum(dim=-1) 
+        log_p_z = -0.5 * (z ** 2).sum(dim=-1)
 
         KLD = -(log_p_z - log_q_z)
 
@@ -120,7 +122,7 @@ class IWAE(VAE):
         log_w_minus_max = log_w - log_w.max(1, keepdim=True)[0]
         w = log_w_minus_max.exp()
         w_tilde = (w / w.sum(axis=1, keepdim=True)).detach()
-        
+
         return (
             -(w_tilde * log_w).sum(1).mean(),
             recon_loss.mean(),

@@ -1,6 +1,6 @@
+import warnings
 from typing import Optional
 
-import warnings
 import numpy as np
 import torch
 import torch.nn as nn
@@ -12,6 +12,7 @@ from ..base.base_utils import ModelOutput
 from ..nn import BaseDecoder, BaseEncoder
 from ..vae import VAE
 from .hvae_config import HVAEConfig
+
 
 class HVAE(VAE):
     r"""
@@ -59,7 +60,8 @@ class HVAE(VAE):
         if model_config.reconstruction_loss == "bce":
             warnings.warn(
                 "Carefull, this model expects the encoder to give the *logits* of the Bernouilli "
-                "distribution. Make sure the encoder actually outputs the logits.")
+                "distribution. Make sure the encoder actually outputs the logits."
+            )
 
     def forward(self, inputs: BaseDataset, **kwargs) -> ModelOutput:
         r"""
@@ -86,7 +88,6 @@ class HVAE(VAE):
         z = z0
         beta_sqrt_old = self.beta_zero_sqrt
 
-
         for k in range(self.n_lf):
 
             # perform leapfrog steps
@@ -96,7 +97,7 @@ class HVAE(VAE):
 
             # 2nd leapfrog step
             z_ = z + self.eps_lf * rho
-           
+
             # 3rd leapfrog step
             rho__ = rho_ - (self.eps_lf / 2) * self._dU_dz(z_, x)
 
@@ -108,7 +109,7 @@ class HVAE(VAE):
             z = z_
             rho = rho__
 
-        recon_x = self.decoder(z)["reconstruction"].reshape(x.shape[0], -1)
+        recon_x = self.decoder(z)["reconstruction"].reshape_as(x)
 
         loss = self.loss_function(x, z, rho, z0, mu, log_var)
 
@@ -127,8 +128,8 @@ class HVAE(VAE):
         return output
 
     def _dU_dz(self, z, x):
-        net_out = self.decoder(z)['reconstruction'].reshape(x.shape[0], -1)
-        U = -torch.distributions.Bernoulli(logits=net_out.reshape(x.shape[0], -1)).log_prob(x.reshape(x.shape[0], -1)).sum()
+        net_out = self.decoder(z)["reconstruction"].reshape(x.shape[0], -1)
+        U = -self._log_p_x_given_z(net_out, x).sum()
 
         g = grad(U, z)[0]
 
@@ -136,7 +137,7 @@ class HVAE(VAE):
 
     def loss_function(self, x, zK, rhoK, z0, mu, log_var):
 
-        recon_x = self.decoder(zK)['reconstruction']
+        recon_x = self.decoder(zK)["reconstruction"]
 
         logpx_given_z = self._log_p_x_given_z(recon_x, x)  # log p(x|z_K)
 
@@ -144,7 +145,9 @@ class HVAE(VAE):
         logrhoK = -0.5 * torch.pow(rhoK, 2).sum(dim=-1)  # log p(\rho_K)
         logp = logpx_given_z + logrhoK + log_zk
 
-        logq = -0.5 * log_var.sum(dim=-1)#(-0.5 * (log_var + torch.pow(z0 - mu, 2) / log_var.exp())).sum(dim=1)  # q(z_0|x)
+        logq = -0.5 * log_var.sum(
+            dim=-1
+        )  # (-0.5 * (log_var + torch.pow(z0 - mu, 2) / log_var.exp())).sum(dim=1)  # q(z_0|x)
 
         return -(logp - logq).mean(dim=0)
 
@@ -174,7 +177,11 @@ class HVAE(VAE):
 
         elif self.model_config.reconstruction_loss == "bce":
 
-            logp_x_given_z = torch.distributions.Bernoulli(logits=recon_x.reshape(x.shape[0], -1)).log_prob(x.reshape(x.shape[0], -1)).sum(dim=-1)
+            logp_x_given_z = (
+                torch.distributions.Bernoulli(logits=recon_x.reshape(x.shape[0], -1))
+                .log_prob(x.reshape(x.shape[0], -1))
+                .sum(dim=-1)
+            )
 
         return logp_x_given_z
 
@@ -242,7 +249,7 @@ class HVAE(VAE):
 
                 log_p_rho0 = -0.5 * (rho ** 2).sum(dim=-1) * self.beta_zero_sqrt
 
-                recon_x = self.decoder(z)['reconstruction']
+                recon_x = self.decoder(z)["reconstruction"]
 
                 log_p_x_given_z = self._log_p_x_given_z(recon_x, x_rep)
 

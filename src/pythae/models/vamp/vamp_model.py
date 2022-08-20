@@ -123,17 +123,20 @@ class VAMP(VAE):
         log_q_z = (-0.5 * (log_var + torch.pow(z - mu, 2) / log_var.exp())).sum(dim=1)
         KLD = -(log_p_z - log_q_z)
 
-
         if self.linear_scheduling > 0:
-            beta = 1. * epoch / self.linear_scheduling
+            beta = 1.0 * epoch / self.linear_scheduling
             if beta > 1 or not self.training:
-                beta = 1.
+                beta = 1.0
 
         else:
-            beta = 1.
+            beta = 1.0
 
-        return (recon_loss + beta * KLD).mean(dim=0), recon_loss.mean(dim=0), KLD.mean(dim=0)
-    
+        return (
+            (recon_loss + beta * KLD).mean(dim=0),
+            recon_loss.mean(dim=0),
+            KLD.mean(dim=0),
+        )
+
     def _log_p_z(self, z):
         """Computation of the log prob of the VAMP"""
 
@@ -147,7 +150,7 @@ class VAMP(VAE):
         encoder_output = self.encoder(x)
         prior_mu, prior_log_var = (
             encoder_output.embedding,
-            encoder_output.log_covariance
+            encoder_output.log_covariance,
         )
 
         z_expand = z.unsqueeze(1)

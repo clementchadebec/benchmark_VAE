@@ -30,4 +30,4 @@ class WAE_MMD_Config(AEConfig):
     scales: Union[List[float], None] = field(
         default_factory=lambda: [0.1, 0.2, 0.5, 1.0, 2.0, 5, 10.0]
     )
-    reconstruction_loss_scale: float = 1.
+    reconstruction_loss_scale: float = 1.0
