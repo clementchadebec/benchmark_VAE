@@ -54,7 +54,7 @@ Below are gathered the results we were able to reproduce
 | SVAE | Dyn. Binarized MNIST | NLL (500 IS) | 93.27 (0.69) | 93.16 (0.31) | [link](https://huggingface.co/clementchadebec/reproduced_svae)
 | IWAE (n_samples=50) | Binary MNIST | NLL (5000 IS) | 86.82 (0.01) | 87.1 | [link](https://huggingface.co/clementchadebec/reproduced_iwae)
 | HVAE (n_lf=4) | Binary MNIST | NLL (1000 IS) | 86.21 (0.01) | 86.40 | [link](https://huggingface.co/clementchadebec/reproduced_hvae)
-| BetaTCVAE | DSPRITES | ELBO/Modified ELBO (after 50 epochs) | 710.41/85.54 | 712.26/86.40 | [link](https://huggingface.co/clementchadebec/reproduced_beta_tc_vae)
+| BetaTCVAE | DSPRITES | Modified ELBO/ELBO (after 50 epochs) | 710.41/85.54 | 712.26/86.40 | [link](https://huggingface.co/clementchadebec/reproduced_beta_tc_vae)
 | RAE_L2 | MNIST | FID | 9.1 | 9.9 | [link](https://huggingface.co/clementchadebec/reproduced_rae_l2)
 | RAE_GP | MNIST | FID | 9.7 | 9.4 | [link](https://huggingface.co/clementchadebec/reproduced_rae_gp)
 | WAE | CELEBA 64 | FID | 56.5 | 55 | [link](https://huggingface.co/clementchadebec/reproduced_wae)
