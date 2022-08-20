@@ -73,8 +73,6 @@ class SVAE(VAE):
 
         x = (x > torch.distributions.Uniform(0, 1).sample(x.shape).to(x.device)).float()
 
-        epoch = kwargs.pop("epoch", 100)
-
         encoder_output = self.encoder(x)
 
         loc, log_concentration = (
@@ -89,7 +87,7 @@ class SVAE(VAE):
         z = self._sample_von_mises(loc, concentration)
         recon_x = self.decoder(z)["reconstruction"]
 
-        loss, recon_loss, kld = self.loss_function(recon_x, x, loc, concentration, z, epoch)
+        loss, recon_loss, kld = self.loss_function(recon_x, x, loc, concentration, z)
 
         output = ModelOutput(
             reconstruction_loss=recon_loss,
@@ -101,7 +99,7 @@ class SVAE(VAE):
 
         return output
 
-    def loss_function(self, recon_x, x, loc, concentration, z, epoch):
+    def loss_function(self, recon_x, x, loc, concentration, z):
 
         if self.model_config.reconstruction_loss == "mse":
 
@@ -121,11 +119,7 @@ class SVAE(VAE):
 
         KLD = self._compute_kl(m=loc.shape[-1], concentration=concentration)
 
-        beta = 1.# * epoch / 100
-        if beta > 1 or not self.training:
-            beta = 1.
-
-        return (recon_loss + beta * KLD).mean(dim=0), recon_loss.mean(dim=0), KLD.mean(dim=0)
+        return (recon_loss + KLD).mean(dim=0), recon_loss.mean(dim=0), KLD.mean(dim=0)
 
     def _compute_kl(self, m, concentration):
         term1 = concentration * (
