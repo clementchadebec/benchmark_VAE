@@ -47,15 +47,15 @@ where `train_data` and `eval_data` have now the shape (n_img x im_channel x heig
 
 Below are gathered the results we were able to reproduce
 
-| Model | Dataset | Metric | Obtained value | Reference value |
-|:---:|:---:|:---:|:---:|:---:|
-| VAE | Binary MNIST | NLL (200 IS) | 89.78 (0.01) | 89.9 (0.31) |
-| VAMP (K=500) | Binary MNIST | NLL (5000 IS) | 85.79 (0.00) | 85.57 |
-| SVAE | Dyn. Binarized MNIST | NLL (500 IS) | 93.27 (0.69) | 93.16 (0.31) |
-| WAE (n_samples=50) | Binary MNIST | NLL (5000 IS) | 86.82 (0.01) | 87.1 |
-| HVAE (n_lf=4) | Binary MNIST | NLL (1000 IS) | 86.21 (0.01) | 86.40 |
-| BetaTCVAE | DSPRITES | ELBO/Modified ELBO (after 50 epochs) | 710.41/85.54 | 712.26/86.40 |
-| RAE_L2 | MNIST | FID | 9.1 | 9.9 |
-| RAE_GP | MNIST | FID | 9.7 | 9.4 |
-| WAE | CELEBA 64 | FID | 56.5 | 55 |
-| AAE | CELEBA 64 | FID | 43.3 | 42 |
+| Model | Dataset | Metric | Obtained value | Reference value | Trained model
+|:---:|:---:|:---:|:---:|:---:|:---:|
+| VAE | Binary MNIST | NLL (200 IS) | 89.78 (0.01) | 89.9 (0.31) | [link](https://huggingface.co/clementchadebec/reproduced_vae)
+| VAMP (K=500) | Binary MNIST | NLL (5000 IS) | 85.79 (0.00) | 85.57 | [link](https://huggingface.co/clementchadebec/reproduced_vamp)
+| SVAE | Dyn. Binarized MNIST | NLL (500 IS) | 93.27 (0.69) | 93.16 (0.31) | [link](https://huggingface.co/clementchadebec/reproduced_svae)
+| IWAE (n_samples=50) | Binary MNIST | NLL (5000 IS) | 86.82 (0.01) | 87.1 | [link](https://huggingface.co/clementchadebec/reproduced_iwae)
+| HVAE (n_lf=4) | Binary MNIST | NLL (1000 IS) | 86.21 (0.01) | 86.40 | [link](https://huggingface.co/clementchadebec/reproduced_hvae)
+| BetaTCVAE | DSPRITES | ELBO/Modified ELBO (after 50 epochs) | 710.41/85.54 | 712.26/86.40 | [link](https://huggingface.co/clementchadebec/reproduced_beta_tc_vae)
+| RAE_L2 | MNIST | FID | 9.1 | 9.9 | [link](https://huggingface.co/clementchadebec/reproduced_rae_l2)
+| RAE_GP | MNIST | FID | 9.7 | 9.4 | [link](https://huggingface.co/clementchadebec/reproduced_rae_gp)
+| WAE | CELEBA 64 | FID | 56.5 | 55 | [link](https://huggingface.co/clementchadebec/reproduced_wae)
+| AAE | CELEBA 64 | FID | 43.3 | 42 | [link](https://huggingface.co/clementchadebec/reproduced_aae)
