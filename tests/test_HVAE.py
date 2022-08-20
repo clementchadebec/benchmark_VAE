@@ -31,11 +31,11 @@ def model_configs_no_input_dim(request):
         HVAEConfig(
             input_dim=(1, 28, 28),
             latent_dim=10,
-            reconstruction_loss="bce",
+            reconstruction_loss="mse",
             learn_beta_zero=True,
         ),
         HVAEConfig(
-            input_dim=(1, 2, 18), latent_dim=5, eps_lf=0.0001, learn_eps_lf=True
+            input_dim=(1, 2, 18), latent_dim=5, eps_lf=0.0001, learn_eps_lf=True,
         ),
     ]
 )

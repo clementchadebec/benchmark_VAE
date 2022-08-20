@@ -108,6 +108,10 @@ Below is the list of the models currently implemented in the library.
 | Inverse Autoregressive Flow Sampler (IAFSampler) | all models | [link](https://arxiv.org/abs/1606.04934) |  [link](https://github.com/openai/iaf)             |   
 | PixelCNN (PixelCNNSampler) | VQVAE | [link](https://arxiv.org/abs/1606.05328) |             |                     
 
+## Reproducibility
+
+We validate the implementations by reproducing some results presented in the original publications when the official code has been released or when enough details about the experimental section of the papers were available. See [reproducibility](https://github.com/clementchadebec/benchmark_VAE/tree/main/examples/scripts/reproducibility) for more details.
+
 ## Launching a model training
 
 To launch a model training, you only need to call a `TrainingPipeline` instance. 

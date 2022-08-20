@@ -35,9 +35,6 @@ class BaseDataset(Dataset):
         """
         # Select sample
         X = self.data[index]
-
-        # Load data and get label
-        # X = torch.load('data/' + DATA + '.pt')
         y = self.labels[index]
 
         return {"data": X, "labels": y}
@@ -73,13 +70,9 @@ class DoubleBatchDataset(BaseDataset):
         """
         # Select sample
         X = self.data[index]
-        # n_sample = 1 if isinstance(index, int) else len(index)
 
         index_bis = torch.randperm(self.length)[index]
         X_bis = self.data[index_bis]
-
-        # Load data and get label
-        # X = torch.load('data/' + DATA + '.pt')
         y = self.labels[index]
         y_bis = self.labels[index_bis]
 
