@@ -72,11 +72,6 @@ class VAMP(VAE):
             ModelOutput: An instance of ModelOutput containing all the relevant parameters
 
         """
-
-        # need to put model in train mode to make it work for some model. If you have a solution 
-        # to this issue please open a pull request at 
-        # (https://github.com/clementchadebec/benchmark_VAE/pulls)
-        self.train()
         x = inputs["data"]
 
         epoch = kwargs.pop("epoch", 100)
