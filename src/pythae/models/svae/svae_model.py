@@ -233,9 +233,6 @@ class SVAE(VAE):
 
                 x_rep = torch.cat(batch_size * [x])
 
-                
-            
-
                 encoder_output = self.encoder(x_rep)
                 loc, log_concentration = (
                     encoder_output.embedding,
