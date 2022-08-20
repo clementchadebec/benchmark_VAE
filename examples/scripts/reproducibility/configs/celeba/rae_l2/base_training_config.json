@@ -2,7 +2,7 @@
   "name": "BaseTrainerConfig",
   "output_dir": "my_models_on_celeba",
   "batch_size": 100,
-  "num_epochs": 55,
+  "num_epochs": 100,
   "learning_rate": 0.001,
   "steps_saving": null,
   "steps_predict": 100,
