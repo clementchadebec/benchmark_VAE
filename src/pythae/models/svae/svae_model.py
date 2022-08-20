@@ -71,8 +71,6 @@ class SVAE(VAE):
 
         x = inputs["data"]
 
-        x = (x > torch.distributions.Uniform(0, 1).sample(x.shape).to(x.device)).float()
-
         encoder_output = self.encoder(x)
 
         loc, log_concentration = (
@@ -228,8 +226,6 @@ class SVAE(VAE):
 
         for i in range(len(data)):
             x = data[i].unsqueeze(0)
-
-            x = (x > torch.distributions.Uniform(0, 1).sample(x.shape).to(x.device)).float()
 
             log_p_x = []
 
