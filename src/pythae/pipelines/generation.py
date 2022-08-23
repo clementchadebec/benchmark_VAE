@@ -70,6 +70,11 @@ class GenerationPipeline(Pipeline):
                 model=model, sampler_config=sampler_config
             )
 
+        elif sampler_config.name == "UnifManVAESamplerConfig":
+            sampler = UnifManVAESampler(
+                model=model, sampler_config=sampler_config
+            )
+
         else:
             raise NotImplementedError(
                 "Unrecognized sampler config name... Check that that the sampler_config name "
