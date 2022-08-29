@@ -3,7 +3,6 @@ https://github.com/huggingface/transformers/blob/master/src/transformers/trainer
 
 import importlib
 import logging
-from matplotlib.pyplot import step
 
 import numpy as np
 from tqdm.auto import tqdm
@@ -379,8 +378,7 @@ class MLFlowCallback(TrainingCallback):  # pragma: no cover
 
         self._mlflow.start_run(run_name=run_name)
 
-        logger.debug(f"MLflow run started with run_id={self._mlflow.active_run().info.run_id}")
-
+        logger.info(f"MLflow run started with run_id={self._mlflow.active_run().info.run_id}")
         if model_config is not None:
             model_config_dict = model_config.to_dict()
 
