@@ -40,10 +40,10 @@ allows you to train any of these models with your own data and own Encoder and D
 - [Installation](#installation)
 - [Implemented models](#available-models) / [Implemented samplers](#available-samplers)
 - [Reproducibility statement](#reproducibility) / [Results flavor](#results)
-- [Model training](#launching-a-model-training) / [Data generation](#launching-data-generation) / [Custom network architrectures](#define-you-own-autoencoder-architecture)
+- [Model training](#launching-a-model-training) / [Data generation](#launching-data-generation) / [Custom network architectures](#define-you-own-autoencoder-architecture)
 - [Model sharing with 🤗 Hub](#sharing-your-models-with-the-huggingface-hub-) / [Experiment tracking with `wandb`](#monitoring-your-experiments-with-wandb-) / [Experiment tracking with `mlflow`](#monitoring-your-experiments-with-mlflow-)
 - [Tutorials](#getting-your-hands-on-the-code) / [Documentation](https://pythae.readthedocs.io/en/latest/)
-- [Contributing 🚀](#contributing-🚀) / [Issues 🛠️](#dealing-with-issues-🛠️)
+- [Contributing 🚀](#contributing-) / [Issues 🛠️](#dealing-with-issues-)
 - [Citing this repository](#citation)
 
 # Installation
