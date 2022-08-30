@@ -79,10 +79,19 @@ class FactorVAE(VAE):
             ModelOutput: An instance of ModelOutput containing all the relevant parameters
 
         """
+        x_in = inputs["data"] 
+        if x_in.shape[0] <= 1:
+            raise ArithmeticError(
+                "At least 2 samples in a batch are required for the `FactorVAE` model"
+            )
+
+        idx = torch.randperm(x_in.shape[0])
+        idx_1 = idx[int(x_in.shape[0] / 2):]
+        idx_2 = idx[:int(x_in.shape[0] / 2)]
 
         # first batch
-        x = inputs["data"]
-
+        x = inputs["data"][idx_1]
+        
         encoder_output = self.encoder(x)
 
         mu, log_var = encoder_output.embedding, encoder_output.log_covariance
@@ -92,7 +101,7 @@ class FactorVAE(VAE):
         recon_x = self.decoder(z)["reconstruction"]
 
         # second batch
-        x_bis = inputs["data_bis"]
+        x_bis = inputs["data"][idx_2]
 
         encoder_output = self.encoder(x_bis)
 
@@ -152,10 +161,10 @@ class FactorVAE(VAE):
         permuted_latent_adversarial_score = self.discriminator(z_bis_permuted)
 
         true_labels = (
-            torch.ones(N, requires_grad=False).type(torch.LongTensor).to(z.device)
+            torch.ones(z_bis_permuted.shape[0], requires_grad=False).type(torch.LongTensor).to(z.device)
         )
         fake_labels = (
-            torch.zeros(N, requires_grad=False).type(torch.LongTensor).to(z.device)
+            torch.zeros(z.shape[0], requires_grad=False).type(torch.LongTensor).to(z.device)
         )
 
         TC_permuted = F.cross_entropy(
