@@ -154,8 +154,8 @@ To launch a model training, you only need to call a `TrainingPipeline` instance.
 ... )
 >>> # Launch the Pipeline
 >>> pipeline(
-...	train_data=your_train_data, # must be torch.Tensor or np.array 
-...	eval_data=your_eval_data # must be torch.Tensor or np.array
+...	train_data=your_train_data, # must be torch.Tensor, np.array or torch datasets
+...	eval_data=your_eval_data # must be torch.Tensor, np.array or torch datasets
 ... )
 ```
 
