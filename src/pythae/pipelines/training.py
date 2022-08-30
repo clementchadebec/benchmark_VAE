@@ -106,22 +106,16 @@ class TrainingPipeline(Pipeline):
         self.model = model
         self.training_config = training_config
 
-    #def _set_default_model(self, data):
-    #    model_config = VAEConfig(input_dim=data.shape[1:])
-    #    model = VAE(model_config)
-    #    self.model = model
-
     def _check_dataset(self, dataset: BaseDataset):
-        index = torch.tensor([1, 2])
 
         try:
-            dataset_output = dataset[index]
+            dataset_output = dataset[0]
         
         except Exception as e:
             raise DatasetError(
                 "Error when trying to collect data from the dataset. Check `__getitem__` method. "
-                "The Dataset should output a dictionnary with keys at least ['data'] and "
-                "`data_bis` if you train a `FactorVAE`. Please check documentation.\n"
+                "The Dataset should output a dictionnary with keys at least ['data']. "
+                "Please check documentation.\n"
                 f"Exception raised: {type(e)} with message: " + str(e)
             ) from e
 
@@ -129,13 +123,6 @@ class TrainingPipeline(Pipeline):
             raise DatasetError(
                 "The Dataset should output a dictionnary with keys ['data']"
             )
-
-        if self.model.model_name == "FactorVAE":
-            if 'data_bis' not in dataset_output.keys():
-                raise DatasetError(
-                    "When training a `FactorVAE`, the Dataset should output a dictionnary with keys "
-                    "['data', 'data_bis']"
-                )
 
         try:
             len(dataset)
@@ -146,6 +133,18 @@ class TrainingPipeline(Pipeline):
                 "Please check documentation.\n"
                 f"Exception raised: {type(e)} with message: " + str(e)
             ) from e
+
+
+        # check everything if fine when combined with data loader
+        from torch.utils.data import DataLoader
+        dataloader = DataLoader(
+            dataset=dataset,
+            batch_size=min(len(dataset), 2)
+            )
+        loader_out = next(iter(dataloader))
+        assert loader_out.data.shape[0] == min(len(dataset), 2), (
+            "Error when combining dataset wih loader."
+        )
 
 
     def __call__(
@@ -170,11 +169,7 @@ class TrainingPipeline(Pipeline):
                 A list of callbacks to use during training.
         """
 
-        dataset_type = (
-                "DoubleBatchDataset"
-                if self.model.model_name == "FactorVAE"
-                else "BaseDataset"
-            )
+        dataset_type = "BaseDataset"
 
         if isinstance(train_data, np.ndarray) or isinstance(train_data, torch.Tensor):
 
@@ -189,7 +184,6 @@ class TrainingPipeline(Pipeline):
 
         logger.info("Checking train dataset...")
         self._check_dataset(train_dataset)
-        #self.train_data = train_data
 
         if eval_data is not None:
             if isinstance(eval_data, np.ndarray) or isinstance(eval_data, torch.Tensor):
