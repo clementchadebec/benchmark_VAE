@@ -3,6 +3,7 @@ import os
 import torch
 
 from torch.utils.data import Dataset
+from pythae.data.datasets import DatasetOutput
 from pythae.pipelines import *
 from pythae.models import VAE, VAEConfig, FactorVAE, FactorVAEConfig
 from pythae.trainers import BaseTrainerConfig
@@ -22,7 +23,9 @@ class CustomWrongOutputDataset(Dataset):
 
     def __getitem__(self, index) -> dict:
         data = torch.load(self.img_path).data[index]
-        return {'wrong_key': data}
+        return DatasetOutput(
+            wrong_key=data
+        )
 
 class CustomNoLenDataset(Dataset):
 
@@ -31,7 +34,9 @@ class CustomNoLenDataset(Dataset):
 
     def __getitem__(self, index) -> dict:
         data = torch.load(self.img_path).data[index]
-        return {'data': data}
+        return DatasetOutput(
+            data=data
+        )
 
 class CustomDataset(Dataset):
 
@@ -43,7 +48,9 @@ class CustomDataset(Dataset):
 
     def __getitem__(self, index) -> dict:
         data = torch.load(self.img_path).data[index]
-        return {'data': data}
+        return DatasetOutput(
+            data=data
+        )
 
 
 class Test_Pipeline_Standalone:
@@ -119,19 +126,6 @@ class Test_Pipeline_Standalone:
 
 
     def test_training_pipleine_custom_dataset(self, tmpdir, training_pipeline, train_dataset, custom_train_dataset):
-
-
-        with pytest.raises(DatasetError):
-            vae_config = FactorVAEConfig(input_dim=tuple(train_dataset.data[0].shape), latent_dim=2)
-            vae = FactorVAE(vae_config)
-            pipe = TrainingPipeline(model=vae)
-            pipe(train_data=custom_train_dataset)
-
-        with pytest.raises(DatasetError):
-            vae_config = FactorVAEConfig(input_dim=tuple(train_dataset.data[0].shape), latent_dim=2)
-            vae = FactorVAE(vae_config)
-            pipe = TrainingPipeline(model=vae)
-            pipe(train_data=train_dataset.data, eval_data=custom_train_dataset)
 
         tmpdir.mkdir("dummy_folder")
         dir_path = os.path.join(tmpdir, "dummy_folder")
