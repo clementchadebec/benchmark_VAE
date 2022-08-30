@@ -1,4 +1,3 @@
-import os
 from typing import Optional
 
 import numpy as np
@@ -82,7 +81,7 @@ class SVAE(VAE):
         # normalize mean
         loc = loc / loc.norm(dim=-1, keepdim=True)
 
-        concentration = torch.nn.functional.softplus(log_concentration)
+        concentration = torch.nn.functional.softplus(log_concentration) + 1
         z = self._sample_von_mises(loc, concentration)
         recon_x = self.decoder(z)["reconstruction"]
 
@@ -179,7 +178,7 @@ class SVAE(VAE):
 
         i = 0
 
-        while stopping_mask.sum() > 0 and i < 1000:
+        while stopping_mask.sum() > 0 and i < 100:
 
             i += 1
 
@@ -285,8 +284,6 @@ class SVAE(VAE):
                         x_rep.reshape(x_rep.shape[0], -1),
                         reduction="none",
                     ).sum(dim=-1)
-
-                # assert 0, (log_p_x_given_z.shape, log_p_z.shape, log_q_z_given_x.shape)
 
                 log_p_x.append(
                     log_p_x_given_z + log_p_z - log_q_z_given_x

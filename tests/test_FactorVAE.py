@@ -335,6 +335,61 @@ class Test_Model_forward:
         
         assert not torch.equal(out.z, out.z_bis_permuted)
 
+class Test_Model_interpolate:
+    @pytest.fixture(
+        params=[
+            torch.randn(3, 2, 3, 1),
+            torch.randn(3, 2, 2),
+            torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))[
+            :
+        ]['data']
+        ]
+    )
+    def demo_data(self, request):
+        return request.param
+
+    @pytest.fixture()
+    def granularity(self):
+        return int(torch.randint(1, 10, (1,)))
+
+    @pytest.fixture
+    def ae(self, model_configs, demo_data):
+        model_configs.input_dim = tuple(demo_data[0].shape)
+        return FactorVAE(model_configs)
+
+
+    def test_interpolate(self, ae, demo_data, granularity):
+        with pytest.raises(AssertionError):
+            ae.interpolate(demo_data, demo_data[1:], granularity)
+
+        interp = ae.interpolate(demo_data, demo_data, granularity)
+
+        assert tuple(interp.shape) == (demo_data.shape[0], granularity,) + (demo_data.shape[1:])
+
+class Test_Model_reconstruct:
+    @pytest.fixture(
+        params=[
+            torch.randn(3, 2, 3, 1),
+            torch.randn(3, 2, 2),
+            torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))[
+            :
+        ]['data']
+        ]
+    )
+    def demo_data(self, request):
+        return request.param
+
+    @pytest.fixture
+    def ae(self, model_configs, demo_data):
+        model_configs.input_dim = tuple(demo_data[0].shape)
+        return FactorVAE(model_configs)
+
+
+    def test_reconstruct(self, ae, demo_data):
+      
+        recon = ae.reconstruct(demo_data)
+        assert tuple(recon.shape) == demo_data.shape
+
 
 class Test_NLL_Compute:
     @pytest.fixture

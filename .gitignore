@@ -19,7 +19,6 @@ examples/models_training/my_model/*
 examples/notebooks/models_training/model_generation.ipynb
 examples/notebooks/models_training/generated/*
 examples/scripts/my_models*
-examples/scripts/reproducibility
 examples/notebooks/models_training/my_model/
 examples/showcases copy/*
 examples/notebooks/models_training/generate.py
@@ -27,7 +26,8 @@ dummy_output_dir/*
 examples/notebooks/models_training/my_model/*
 examples/notebooks/test.ipynb
 examples/notebooks/dummy_output_dir/*
-examples/scripts/reproducibility/*
+examples/scripts/reproducibility/my_models
+examples/scripts/reproducibility/data
 wandb
 examples/notebooks/dummy_output_dir/
 examples/notebooks/models_training/dummy_output_dir/
@@ -35,7 +35,7 @@ logs/
 downloads_data/
 *wandb
 *.slurm
-configs
+#configs
 examples/scripts/generation_jz.py
 examples/scripts/classification_jz.py
 examples/scripts/latent_dim_sensi.py
@@ -54,6 +54,7 @@ examples/notebooks/mlruns/*
 mlruns/*
 examples/notebooks/data_folders/*
 
+examples/scripts/configs/*
 
 
 

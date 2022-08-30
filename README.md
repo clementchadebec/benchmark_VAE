@@ -108,6 +108,10 @@ Below is the list of the models currently implemented in the library.
 | Inverse Autoregressive Flow Sampler (IAFSampler) | all models | [link](https://arxiv.org/abs/1606.04934) |  [link](https://github.com/openai/iaf)             |   
 | PixelCNN (PixelCNNSampler) | VQVAE | [link](https://arxiv.org/abs/1606.05328) |             |                     
 
+## Reproducibility
+
+We validate the implementations by reproducing some results presented in the original publications when the official code has been released or when enough details about the experimental section of the papers were available. See [reproducibility](https://github.com/clementchadebec/benchmark_VAE/tree/main/examples/scripts/reproducibility) for more details.
+
 ## Launching a model training
 
 To launch a model training, you only need to call a `TrainingPipeline` instance. 
@@ -307,7 +311,7 @@ And now build the model
 You can also find predefined neural network architectures for the most common data sets (*i.e.* MNIST, CIFAR, CELEBA ...) that can be loaded as follows
 
 ```python
->>> for pythae.models.nn.benchmark.mnist import (
+>>> from pythae.models.nn.benchmark.mnist import (
 ...	Encoder_Conv_AE_MNIST, # For AE based model (only return embeddings)
 ...	Encoder_Conv_VAE_MNIST, # For VAE based model (return embeddings and log_covariances)
 ...	Decoder_Conv_AE_MNIST

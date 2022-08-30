@@ -7,6 +7,7 @@ Autoencoders
     :maxdepth: 1
 
     baseAE
+    auto_model
     ae
     vae
     betavae
@@ -37,6 +38,7 @@ Available Models
 
 .. autosummary::
     ~pythae.models.BaseAE
+    ~pythae.models.AutoModel
     ~pythae.models.AE
     ~pythae.models.VAE
     ~pythae.models.BetaVAE

@@ -56,12 +56,10 @@ class VAMP(VAE):
 
         self.pseudo_inputs = nn.Sequential(linear_layer, nn.Hardtanh(0.0, 1.0))
 
-        # init weights
-        # linear_layer.weight.data.normal_(0, 0.0)
-
         self.idle_input = torch.eye(
             model_config.number_components, requires_grad=False
         ).to(self.device)
+        self.linear_scheduling = self.model_config.linear_scheduling_steps
 
     def forward(self, inputs: BaseDataset, **kwargs):
         """
@@ -74,18 +72,15 @@ class VAMP(VAE):
             ModelOutput: An instance of ModelOutput containing all the relevant parameters
 
         """
-
-        # need to put model in train mode to make it work. If you have a solution to this issue
-        # please open a pull request at (https://github.com/clementchadebec/benchmark_VAE/pulls)
-        self.train()
         x = inputs["data"]
+
+        epoch = kwargs.pop("epoch", 100)
 
         encoder_output = self.encoder(x)
 
-        # we bound log_var to avoid unbounded optim
         mu, log_var = (
             encoder_output.embedding,
-            torch.tanh(encoder_output.log_covariance),
+            encoder_output.log_covariance,
         )
 
         std = torch.exp(0.5 * log_var)
@@ -93,7 +88,7 @@ class VAMP(VAE):
 
         recon_x = self.decoder(z)["reconstruction"]
 
-        loss, recon_loss, kld = self.loss_function(recon_x, x, mu, log_var, z)
+        loss, recon_loss, kld = self.loss_function(recon_x, x, mu, log_var, z, epoch)
 
         output = ModelOutput(
             reconstruction_loss=recon_loss,
@@ -105,7 +100,7 @@ class VAMP(VAE):
 
         return output
 
-    def loss_function(self, recon_x, x, mu, log_var, z):
+    def loss_function(self, recon_x, x, mu, log_var, z, epoch):
 
         if self.model_config.reconstruction_loss == "mse":
 
@@ -128,7 +123,19 @@ class VAMP(VAE):
         log_q_z = (-0.5 * (log_var + torch.pow(z - mu, 2) / log_var.exp())).sum(dim=1)
         KLD = -(log_p_z - log_q_z)
 
-        return (recon_loss + KLD).mean(dim=0), recon_loss.mean(dim=0), KLD.mean(dim=0)
+        if self.linear_scheduling > 0:
+            beta = 1.0 * epoch / self.linear_scheduling
+            if beta > 1 or not self.training:
+                beta = 1.0
+
+        else:
+            beta = 1.0
+
+        return (
+            (recon_loss + beta * KLD).mean(dim=0),
+            recon_loss.mean(dim=0),
+            KLD.mean(dim=0),
+        )
 
     def _log_p_z(self, z):
         """Computation of the log prob of the VAMP"""
@@ -143,9 +150,7 @@ class VAMP(VAE):
         encoder_output = self.encoder(x)
         prior_mu, prior_log_var = (
             encoder_output.embedding,
-            torch.tanh(
-                encoder_output.log_covariance
-            ),  # needed to avoid unbounded optim
+            encoder_output.log_covariance,
         )
 
         z_expand = z.unsqueeze(1)

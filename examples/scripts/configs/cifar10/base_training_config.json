@@ -3,7 +3,7 @@
   "output_dir": "my_models_on_cifar",
   "batch_size": 100,
   "num_epochs": 100,
-  "learning_rate": 1e-3,
+  "learning_rate": 1e-4,
   "steps_saving": null,
   "steps_predict": 100,
   "no_cuda": false
