@@ -12,7 +12,7 @@ def create_metric(model):
                         dim=-1,
                     )
                     ** 2
-                    / (model.temperature ** 2)
+                    / (model.temperature**2)
                 )
                 .unsqueeze(-1)
                 .unsqueeze(-1)
@@ -33,7 +33,7 @@ def create_inverse_metric(model):
                     dim=-1,
                 )
                 ** 2
-                / (model.temperature ** 2)
+                / (model.temperature**2)
             )
             .unsqueeze(-1)
             .unsqueeze(-1)

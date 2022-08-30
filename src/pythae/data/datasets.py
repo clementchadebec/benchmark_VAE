@@ -3,10 +3,11 @@
 training. As of today, it only contains the :class:`pythae.data.BaseDatset` useful to train a
 VAE model but other Datatsets will be added as models are added.
 """
+from collections import OrderedDict
+from typing import Any, Tuple
+
 import torch
 from torch.utils.data import Dataset
-from typing import Any, Tuple
-from collections import OrderedDict
 
 
 class DatasetOutput(OrderedDict):
@@ -33,6 +34,7 @@ class DatasetOutput(OrderedDict):
         Convert self to a tuple containing all the attributes/keys that are not ``None``.
         """
         return tuple(self[k] for k in self.keys())
+
 
 class BaseDataset(Dataset):
     """This class is the Base class for pythae's dataset
@@ -64,10 +66,7 @@ class BaseDataset(Dataset):
         X = self.data[index]
         y = self.labels[index]
 
-        return DatasetOutput(
-            data=X,
-            labels=y
-        )
+        return DatasetOutput(data=X, labels=y)
 
 
 class DoubleBatchDataset(BaseDataset):

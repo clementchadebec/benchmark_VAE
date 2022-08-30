@@ -5,7 +5,7 @@ import numpy as np
 import torch
 
 from ..customexception import DatasetError
-from ..data.preprocessors import DataProcessor, BaseDataset
+from ..data.preprocessors import BaseDataset, DataProcessor
 from ..models import VAE, BaseAE, VAEConfig
 from ..trainers import *
 from ..trainers.training_callbacks import TrainingCallback
@@ -55,8 +55,7 @@ class TrainingPipeline(Pipeline):
                 )
 
             elif (
-                model.model_name == "Adversarial_AE"
-                or model.model_name == "FactorVAE"
+                model.model_name == "Adversarial_AE" or model.model_name == "FactorVAE"
             ):
                 training_config = AdversarialTrainerConfig()
 
@@ -77,9 +76,7 @@ class TrainingPipeline(Pipeline):
             training_config.encoder_optim_decay = 0.0
             training_config.decoder_optim_decay = model.model_config.reg_weight
 
-        elif (
-            model.model_name == "Adversarial_AE" or model.model_name == "FactorVAE"
-        ):
+        elif model.model_name == "Adversarial_AE" or model.model_name == "FactorVAE":
             if not isinstance(training_config, AdversarialTrainerConfig):
 
                 raise AssertionError(
@@ -110,7 +107,7 @@ class TrainingPipeline(Pipeline):
 
         try:
             dataset_output = dataset[0]
-        
+
         except Exception as e:
             raise DatasetError(
                 "Error when trying to collect data from the dataset. Check `__getitem__` method. "
@@ -119,14 +116,14 @@ class TrainingPipeline(Pipeline):
                 f"Exception raised: {type(e)} with message: " + str(e)
             ) from e
 
-        if 'data' not in dataset_output.keys():
+        if "data" not in dataset_output.keys():
             raise DatasetError(
                 "The Dataset should output a dictionnary with keys ['data']"
             )
 
         try:
             len(dataset)
-        
+
         except Exception as e:
             raise DatasetError(
                 "Error when trying to get dataset len. Check `__len__` method. "
@@ -134,18 +131,14 @@ class TrainingPipeline(Pipeline):
                 f"Exception raised: {type(e)} with message: " + str(e)
             ) from e
 
-
         # check everything if fine when combined with data loader
         from torch.utils.data import DataLoader
-        dataloader = DataLoader(
-            dataset=dataset,
-            batch_size=min(len(dataset), 2)
-            )
-        loader_out = next(iter(dataloader))
-        assert loader_out.data.shape[0] == min(len(dataset), 2), (
-            "Error when combining dataset wih loader."
-        )
 
+        dataloader = DataLoader(dataset=dataset, batch_size=min(len(dataset), 2))
+        loader_out = next(iter(dataloader))
+        assert loader_out.data.shape[0] == min(
+            len(dataset), 2
+        ), "Error when combining dataset wih loader."
 
     def __call__(
         self,
@@ -192,7 +185,7 @@ class TrainingPipeline(Pipeline):
                 eval_dataset = self.data_processor.to_dataset(
                     eval_data, dataset_type=dataset_type
                 )
-            
+
             else:
                 eval_dataset = eval_data
 

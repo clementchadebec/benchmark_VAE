@@ -79,15 +79,15 @@ class FactorVAE(VAE):
             ModelOutput: An instance of ModelOutput containing all the relevant parameters
 
         """
-        x_in = inputs["data"] 
+        x_in = inputs["data"]
         if x_in.shape[0] <= 1:
             raise ArithmeticError(
                 "At least 2 samples in a batch are required for the `FactorVAE` model"
             )
 
         idx = torch.randperm(x_in.shape[0])
-        idx_1 = idx[int(x_in.shape[0] / 2):]
-        idx_2 = idx[:int(x_in.shape[0] / 2)]
+        idx_1 = idx[int(x_in.shape[0] / 2) :]
+        idx_2 = idx[: int(x_in.shape[0] / 2)]
 
         # first batch
         x = inputs["data"][idx_1]
@@ -161,10 +161,14 @@ class FactorVAE(VAE):
         permuted_latent_adversarial_score = self.discriminator(z_bis_permuted)
 
         true_labels = (
-            torch.ones(z_bis_permuted.shape[0], requires_grad=False).type(torch.LongTensor).to(z.device)
+            torch.ones(z_bis_permuted.shape[0], requires_grad=False)
+            .type(torch.LongTensor)
+            .to(z.device)
         )
         fake_labels = (
-            torch.zeros(z.shape[0], requires_grad=False).type(torch.LongTensor).to(z.device)
+            torch.zeros(z.shape[0], requires_grad=False)
+            .type(torch.LongTensor)
+            .to(z.device)
         )
 
         TC_permuted = F.cross_entropy(
@@ -233,7 +237,7 @@ class FactorVAE(VAE):
         mu, log_var = encoder_output.embedding, encoder_output.log_covariance
         std = torch.exp(0.5 * log_var)
         ending_z, _ = self._sample_gauss(mu, std)
-       
+
         t = torch.linspace(0, 1, granularity).to(starting_inputs.device)
         intep_line = (
             torch.kron(
@@ -251,7 +255,6 @@ class FactorVAE(VAE):
         )
 
         return decoded_line
-
 
     def _sample_gauss(self, mu, std):
         # Reparametrization trick
