@@ -36,6 +36,15 @@ provides the possibility to perform benchmark experiments and comparisons by tra
 the models with the same autoencoding neural network architecture. The feature *make your own autoencoder* 
 allows you to train any of these models with your own data and own Encoder and Decoder neural networks. It integrates an experiment monitoring tool  [wandb](https://wandb.ai/) 🧪 and allows model sharing and loading from the [HuggingFace Hub](https://huggingface.co/models) 🤗 in a few lines of code.
 
+## Quick access:
+- [Installation](#installation)
+- [Implemented models](#available-models) / [Implemented samplers](#available-samplers)
+- [Reproducibility statement](#reproducibility) / [Results flavor](#results)
+- [Model training](#launching-a-model-training) / [Data generation](#launching-data-generation) / [Custom network architectures](#define-you-own-autoencoder-architecture)
+- [Model sharing with 🤗 Hub](#sharing-your-models-with-the-huggingface-hub-) / [Experiment tracking with `wandb`](#monitoring-your-experiments-with-wandb-)
+- [Tutorials](#getting-your-hands-on-the-code) / [Documentation](https://pythae.readthedocs.io/en/latest/)
+- [Contributing 🚀](#contributing-) / [Issues 🛠️](#dealing-with-issues-%EF%B8%8F)
+- [Citing this repository](#citation)
 
 # Installation
 
@@ -396,6 +405,8 @@ To help you to understand the way pythae works and how you can train your models
 provide tutorials:
 
 - [making_your_own_autoencoder.ipynb](https://github.com/clementchadebec/benchmark_VAE/tree/main/examples/notebooks) shows you how to pass your own networks to the models implemented in pythae [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/notebooks/making_your_own_autoencoder.ipynb)
+
+- [custom_dataset.ipynb](https://github.com/clementchadebec/benchmark_VAE/tree/main/examples/notebooks) shows you how to  use custom datasets with any of the models implemented in pythae [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/notebooks/custom_dataset.ipynb)
 
 - [hf_hub_models_sharing.ipynb](https://github.com/clementchadebec/benchmark_VAE/tree/main/examples/notebooks) shows you how to upload and download models for the HuggingFace Hub [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/notebooks/hf_hub_models_sharing.ipynb)
 
