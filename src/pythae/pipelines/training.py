@@ -6,7 +6,7 @@ import torch
 
 from ..customexception import DatasetError
 from ..data.preprocessors import BaseDataset, DataProcessor
-from ..models import VAE, BaseAE, VAEConfig
+from ..models import BaseAE
 from ..trainers import *
 from ..trainers.training_callbacks import TrainingCallback
 from .base_pipeline import Pipeline
