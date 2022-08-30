@@ -5,7 +5,34 @@ VAE model but other Datatsets will be added as models are added.
 """
 import torch
 from torch.utils.data import Dataset
+from typing import Any, Tuple
+from collections import OrderedDict
 
+
+class DatasetOutput(OrderedDict):
+    """Base DatasetOutput class fixing the output type from the dataset. This class is inspired from
+    the ``ModelOutput`` class from hugginface transformers library"""
+
+    def __getitem__(self, k):
+        if isinstance(k, str):
+            self_dict = {k: v for (k, v) in self.items()}
+            return self_dict[k]
+        else:
+            return self.to_tuple()[k]
+
+    def __setattr__(self, name, value):
+        super().__setitem__(name, value)
+        super().__setattr__(name, value)
+
+    def __setitem__(self, key, value):
+        super().__setitem__(key, value)
+        super().__setattr__(key, value)
+
+    def to_tuple(self) -> Tuple[Any]:
+        """
+        Convert self to a tuple containing all the attributes/keys that are not ``None``.
+        """
+        return tuple(self[k] for k in self.keys())
 
 class BaseDataset(Dataset):
     """This class is the Base class for pythae's dataset
@@ -40,7 +67,10 @@ class BaseDataset(Dataset):
         # X = torch.load('data/' + DATA + '.pt')
         y = self.labels[index]
 
-        return {"data": X, "labels": y}
+        return DatasetOutput(
+            data=X,
+            labels=y
+        )
 
 
 class DoubleBatchDataset(BaseDataset):
