@@ -4,15 +4,17 @@
 
 """
 import math
-from scipy.fftpack import cs_diff
 import torch
 import torch.distributions as dist
 from torch.nn import functional as F
-from torch.distributions import Normal, Independent
+from torch.distributions import Normal
 from numbers import Number
 from torch.distributions.utils import _standard_normal, broadcast_all
 from torch.autograd import grad, Function
 from typing import Tuple, Optional
+
+MIN_NORM = 1e-15
+BALL_EPS = {torch.float32: 4e-3, torch.float64: 1e-5}
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -27,7 +29,6 @@ def lexpand(A, *dimensions):
     """Expand tensor, adding new dimensions on left."""
     return A.expand(tuple(dimensions) + A.shape)
 
-
 def rexpand(A, *dimensions):
     """Expand tensor, adding new dimensions on right."""
     return A.view(A.shape + (1,)*len(dimensions)).expand(A.shape + tuple(dimensions))
@@ -36,18 +37,18 @@ def logsinh(x):
     # torch.log(sinh(x))
     return x + torch.log(1 - torch.exp(-2 * x)) - math.log(2)
 
-def tanh(x):
+def tanh(x): ## OK
     return x.clamp(-15, 15).tanh()
 
-def arsinh(x: torch.Tensor):
-    return (x + torch.sqrt(1 + x.pow(2))).clamp_min(1e-15).log().to(x.dtype)
+def arsinh(x: torch.Tensor): ## OK
+    return (x + torch.sqrt(1 + x.pow(2))).clamp_min(MIN_NORM).log().to(x.dtype)
 
-def artanh(x: torch.Tensor):
-    x = x.clamp(-1 + 1e-7, 1 - 1e-7)
-    return (torch.log(1 + x).sub(torch.log(1 - x))).mul(0.5)
+def artanh(x: torch.Tensor): ## OK
+    x = x.clamp(-1 + 1e-5, 1 - 1e-5)
+    return (torch.log_(1 + x).sub_(torch.log_(1 - x))).mul_(0.5)
 
-def _lambda_x(x: torch.Tensor, k: torch.Tensor, keepdim: bool = False, dim: int = -1): ## OK
-    return 2 / (1 + k * x.pow(2).sum(dim=dim, keepdim=keepdim)).clamp_min(1e-15)
+def _lambda_x(x, c, keepdim: bool = False, dim: int = -1): ## OK
+    return 2 / (1 - c * x.pow(2).sum(dim=dim, keepdim=keepdim)).clamp_min(MIN_NORM)
 
 def sabs(x, eps: float = 1e-15):
     return x.abs().add_(eps)
@@ -59,103 +60,39 @@ def abs_zero_grad(x):
     # this op has derivative equal to 1 at zero
     return x * sign(x)
 
-def artan_k_zero_taylor(x: torch.Tensor, k: torch.Tensor, order: int = -1):
-    if order == 0:
-        return x
-    k = abs_zero_grad(k)
-    if order == -1 or order == 5:
-        return (
-            x
-            - 1 / 3 * k * x**3
-            + 1 / 5 * k**2 * x**5
-            - 1 / 7 * k**3 * x**7
-            + 1 / 9 * k**4 * x**9
-            - 1 / 11 * k**5 * x**11
-            # + o(k**6)
-        )
-    elif order == 1:
-        return x - 1 / 3 * k * x**3
-    elif order == 2:
-        return x - 1 / 3 * k * x**3 + 1 / 5 * k**2 * x**5
-    elif order == 3:
-        return (
-            x - 1 / 3 * k * x**3 + 1 / 5 * k**2 * x**5 - 1 / 7 * k**3 * x**7
-        )
-    elif order == 4:
-        return (
-            x
-            - 1 / 3 * k * x**3
-            + 1 / 5 * k**2 * x**5
-            - 1 / 7 * k**3 * x**7
-            + 1 / 9 * k**4 * x**9
-        )
-    else:
-        raise RuntimeError("order not in [-1, 5]")
-
-def artan_k(x: torch.Tensor, k: torch.Tensor):
-    k_sign = k.sign()
-    zero = torch.zeros((), device=k.device, dtype=k.dtype)
-    k_zero = k.isclose(zero)
-    # shrink sign
-    k_sign = torch.masked_fill(k_sign, k_zero, zero.to(k_sign.dtype))
-    if torch.all(k_zero):
-        return artan_k_zero_taylor(x, k, order=1)
-    k_sqrt = sabs(k).sqrt()
-    scaled_x = x * k_sqrt
-
-    if torch.all(k_sign.lt(0)):
-        return k_sqrt.reciprocal() * artanh(scaled_x)
-    elif torch.all(k_sign.gt(0)):
-        return k_sqrt.reciprocal() * scaled_x.atan()
-    else:
-        artan_k_nonzero = (
-            torch.where(k_sign.gt(0), scaled_x.atan(), artanh(scaled_x))
-            * k_sqrt.reciprocal()
-        )
-        return torch.where(k_zero, artan_k_zero_taylor(x, k, order=1), artan_k_nonzero)
-
-def _mobius_add(x: torch.Tensor, y: torch.Tensor, k: torch.Tensor, dim: int = -1): ## OK
+def _mobius_add(x, y, c, dim=-1): ## OK
     x2 = x.pow(2).sum(dim=dim, keepdim=True)
     y2 = y.pow(2).sum(dim=dim, keepdim=True)
     xy = (x * y).sum(dim=dim, keepdim=True)
-    num = (1 - 2 * k * xy - k * y2) * x + (1 + k * x2) * y
-    denom = 1 - 2 * k * xy + k**2 * x2 * y2
-    return num / denom.clamp_min(1e-15)
+    num = (1 + 2 * c * xy + c * y2) * x + (1 - c * x2) * y
+    denom = 1 + 2 * c * xy + c ** 2 * x2 * y2
+    return num / denom.clamp_min(MIN_NORM)
 
-def _project(x, k, dim: int = -1, eps: float = -1.0):
-    if eps < 0:
-        if x.dtype == torch.float32:
-            eps = 4e-3
-        else:
-            eps = 1e-5
-    maxnorm = (1 - eps) / (sabs(k) ** 0.5)
-    maxnorm = torch.where(k.lt(0), maxnorm, k.new_full((), 1e15))
-    norm = x.norm(dim=dim, keepdim=True, p=2).clamp_min(1e-15)
+def _project(x, c, dim: int = -1, eps: float = None): ## OK
+    norm = x.norm(dim=dim, keepdim=True, p=2).clamp_min(MIN_NORM)
+    if eps is None:
+        eps = BALL_EPS[x.dtype]
+    maxnorm = (1 - eps) / (c ** 0.5)
     cond = norm > maxnorm
     projected = x / norm * maxnorm
     return torch.where(cond, projected, x)
 
-def _gyration(
-    u: torch.Tensor, v: torch.Tensor, w: torch.Tensor, k: torch.Tensor, dim: int = -1
-):
+def _gyration(u, v, w, c, dim: int = -1): ## OK
     u2 = u.pow(2).sum(dim=dim, keepdim=True)
     v2 = v.pow(2).sum(dim=dim, keepdim=True)
     uv = (u * v).sum(dim=dim, keepdim=True)
     uw = (u * w).sum(dim=dim, keepdim=True)
     vw = (v * w).sum(dim=dim, keepdim=True)
-    K2 = k**2
-    a = -K2 * uw * v2 - k * vw + 2 * K2 * uv * vw
-    b = -K2 * vw * u2 + k * uw
-    d = 1 - 2 * k * uv + K2 * u2 * v2
-    return w + 2 * (a * u + b * v) / d.clamp_min(1e-15)
+    c2 = c ** 2
+    a = -c2 * uw * v2 + c * vw + 2 * c2 * uv * vw
+    b = -c2 * vw * u2 - c * uw
+    d = 1 + 2 * c * uv + c2 * u2 * v2
+    return w + 2 * (a * u + b * v) / d.clamp_min(MIN_NORM)
 
-
-MIN_NORM = 1e-15
 
 class PoincareBall:
 
     def __init__(self, dim, c=1.0):
-        self.k = -torch.tensor([c])
         self.c = torch.tensor([c])
         self.dim = dim
 
@@ -173,45 +110,59 @@ class PoincareBall:
 
     def norm(self, x: torch.Tensor, u: torch.Tensor, *, keepdim=False, dim=-1
     ) -> torch.Tensor: ## OK
-        return _lambda_x(x, k=self.k, keepdim=keepdim, dim=dim) * u.norm(
+        return _lambda_x(x, c=self.c, keepdim=keepdim, dim=dim) * u.norm(
         dim=dim, keepdim=keepdim, p=2
     )
 
     def dist( ## OK
         self, x: torch.Tensor, y: torch.Tensor, *, keepdim=False, dim=-1
-    ) -> torch.Tensor:
-        return 2.0 * artan_k(
-        _mobius_add(-x, y, self.k, dim=dim).norm(dim=dim, p=2, keepdim=keepdim), self.k
-    )
+    ) -> torch.Tensor: ## OK
+        sqrt_c = self.c ** 0.5
+        dist_c = artanh(
+            sqrt_c * _mobius_add(-x, y, self.c, dim=dim).norm(dim=dim, p=2, keepdim=keepdim)
+        )
+        return dist_c * 2 / sqrt_c
 
     def lambda_x(self, x: torch.Tensor, *, dim=-1, keepdim=False) -> torch.Tensor: ## OK
-        return _lambda_x(x, k=self.k, dim=dim, keepdim=keepdim)
+        return _lambda_x(x, c=self.c, dim=dim, keepdim=keepdim)
     
-    def mobius_add( ## OK
+    def mobius_add(
         self, x: torch.Tensor, y: torch.Tensor, *, dim=-1, project=True
-    ) -> torch.Tensor:
-        res = _mobius_add(x, y, k=self.k, dim=dim)
+    ) -> torch.Tensor: ## OK
+        res = _mobius_add(x, y, c=self.c, dim=dim)
         if project:
-            return _project(res, k=self.k, dim=dim)
+            return _project(res, c=self.c, dim=dim)
         else:
             return res
 
-    def logmap(self, x: torch.Tensor, y: torch.Tensor, *, dim=-1) -> torch.Tensor:
-        sub = _mobius_add(-x, y, self.k, dim=dim)
-        sub_norm = sub.norm(dim=dim, p=2, keepdim=True).clamp_min(1e-15)
-        lam = _lambda_x(x, self.k, keepdim=True, dim=dim)
-        return 2.0 * artan_k(sub_norm, self.k) * (sub / (lam * sub_norm))
+    def logmap(self, x: torch.Tensor, y: torch.Tensor, *, dim=-1) -> torch.Tensor: ## OK
+        sub = _mobius_add(-x, y, self.c, dim=dim)
+        sub_norm = sub.norm(dim=dim, p=2, keepdim=True).clamp_min(MIN_NORM)
+        lam = _lambda_x(x, self.c, keepdim=True, dim=dim)
+        sqrt_c = self.c ** 0.5
+        return 2 / sqrt_c / lam * artanh(sqrt_c * sub_norm) * sub / sub_norm
 
-    def transp(self, x: torch.Tensor, y: torch.Tensor, v: torch.Tensor, *, dim=-1):
+    def transp(self, x: torch.Tensor, y: torch.Tensor, v: torch.Tensor, *, dim=-1): ## OK
         return (
-        _gyration(y, -x, v, self.k, dim=dim)
-        * _lambda_x(x, self.k, keepdim=True, dim=dim)
-        / _lambda_x(y, self.k, keepdim=True, dim=dim)
+        _gyration(y, -x, v, self.c, dim=dim)
+        * _lambda_x(x, self.c, keepdim=True, dim=dim)
+        / _lambda_x(y, self.c, keepdim=True, dim=dim)
     )
 
     def logdetexp(self, x, y, is_vector=False, keepdim=False): ## OK
         d = self.norm(x, y, keepdim=keepdim) if is_vector else self.dist(x, y, keepdim=keepdim)
         return (self.dim - 1) * (torch.sinh(self.c.sqrt()*d) / self.c.sqrt() / d).log()
+
+    def expmap(self, x, u, dim: int = -1):
+        sqrt_c = self.c ** 0.5
+        u_norm = u.norm(dim=dim, p=2, keepdim=True).clamp_min(MIN_NORM)
+        second_term = (
+            tanh(sqrt_c / 2 * _lambda_x(x, self.c, keepdim=True, dim=dim) * u_norm)
+            * u
+            / (sqrt_c * u_norm)
+        )
+        gamma_1 = _mobius_add(x, second_term, self.c, dim=dim)
+        return gamma_1
 
     def expmap_polar(self, x, u, r, dim: int = -1): ## OK
         sqrt_c = self.c ** 0.5
@@ -226,8 +177,8 @@ class PoincareBall:
 
     def _check_point_on_manifold(
         self, x: torch.Tensor, *, atol=1e-5, rtol=1e-5, dim=-1
-    ) -> Tuple[bool, Optional[str]]:
-        px = _project(x, k=self.k, dim=dim)
+    ) -> Tuple[bool, Optional[str]]: ## OK
+        px = _project(x, c=self.c, dim=dim)
         ok = torch.allclose(x, px, atol=atol, rtol=rtol)
         if not ok:
             reason = "'x' norm lies out of the bounds [-1/sqrt(c)+eps, 1/sqrt(c)-eps]"
@@ -237,11 +188,11 @@ class PoincareBall:
 
     def _check_vector_on_tangent(
         self, x: torch.Tensor, u: torch.Tensor, *, atol=1e-5, rtol=1e-5, dim=-1
-    ) -> Tuple[bool, Optional[str]]:
+    ) -> Tuple[bool, Optional[str]]: 
         return True, None
 
 
-class WrappedNormal(dist.Distribution):
+class WrappedNormal(dist.Distribution): ## OK
     """Wrapped Normal distribution
     """
 
@@ -277,20 +228,20 @@ class WrappedNormal(dist.Distribution):
             event_shape = torch.Size([self.manifold.dim])
         super(WrappedNormal, self).__init__(batch_shape, event_shape, validate_args=validate_args)
 
-    def sample(self, shape=torch.Size()):
+    def sample(self, shape=torch.Size()): ## OK
         with torch.no_grad():
             return self.rsample(shape)
 
-    def rsample(self, sample_shape=torch.Size()):
+    def rsample(self, sample_shape=torch.Size()): ## OK
         shape = self._extended_shape(sample_shape)
         v = self.scale * _standard_normal(shape, dtype=self.loc.dtype, device=self.loc.device)
-        self.manifold.check_vector_on_tangent(self.manifold.zero, v)
+        self.manifold._check_vector_on_tangent(self.manifold.zero, v)
         v = v / self.manifold.lambda_x(self.manifold.zero, keepdim=True)
         u = self.manifold.transp(self.manifold.zero, self.loc, v)
         z = self.manifold.expmap(self.loc, u)
         return z
 
-    def log_prob(self, x):
+    def log_prob(self, x): ## OK
         shape = x.shape
         loc = self.loc.unsqueeze(0).expand(x.shape[0], *self.batch_shape, self.manifold.coord_dim)
         if len(shape) < len(loc.shape): x = x.unsqueeze(1)
@@ -768,7 +719,7 @@ class HypersphericalUniform(dist.Distribution):
             torch.Tensor([(self._dim + 1) / 2]))
 
 
-class RiemannianNormal(dist.Distribution):
+class RiemannianNormal(dist.Distribution): ## OK
     arg_constraints = {'loc': dist.constraints.interval(-1, 1), 'scale': dist.constraints.positive}
     support = dist.constraints.interval(-1, 1)
     has_rsample = True
@@ -781,7 +732,7 @@ class RiemannianNormal(dist.Distribution):
         assert not (torch.isnan(loc).any() or torch.isnan(scale).any())
         self.manifold = manifold
         self.loc = loc
-        self.manifold.assert_check_point_on_manifold(self.loc)
+        self.manifold._check_point_on_manifold(self.loc)
         self.scale = scale.clamp(min=0.1, max=7.)
         self.radius = HyperbolicRadius(manifold.dim, manifold.c, self.scale)
         self.direction = HypersphericalUniform(manifold.dim - 1, device=loc.device)
@@ -804,7 +755,7 @@ class RiemannianNormal(dist.Distribution):
         res = self.manifold.expmap_polar(self.loc, alpha, radius)
         return res
 
-    def log_prob(self, value):
+    def log_prob(self, value): ## OK
         loc = self.loc.expand(value.shape)
         radius_sq = self.manifold.dist(loc, value, keepdim=True).pow(2)
         res = - radius_sq / 2 / self.scale.pow(2) - self.direction._log_normalizer() - self.radius.log_normalizer
