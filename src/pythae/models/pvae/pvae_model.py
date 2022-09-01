@@ -103,8 +103,6 @@ class PoincareVAE(VAE):
         else:
             mu, log_var = encoder_output.embedding, encoder_output.log_covariance
 
-        mu = self.latent_manifold.expmap0(mu)
-        print(mu)
         std = torch.exp(0.5 * log_var) + 1e-5
 
         qz_x = self.posterior(loc=mu, scale=std, manifold=self.latent_manifold)
