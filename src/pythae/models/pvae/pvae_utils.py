@@ -35,8 +35,8 @@ def logsinh(x):
 def tanh(x): ## OK
     return x.clamp(-15, 15).tanh()
 
-#def arsinh(x: torch.Tensor): ## OK
-#    return (x + torch.sqrt(1 + x.pow(2))).clamp_min(MIN_NORM).log().to(x.dtype)
+def arsinh(x: torch.Tensor): ## OK
+    return (x + torch.sqrt(1 + x.pow(2))).clamp_min(MIN_NORM).log().to(x.dtype)
 
 def artanh(x: torch.Tensor): ## OK
     x = x.clamp(-1 + 1e-5, 1 - 1e-5)
@@ -122,12 +122,20 @@ class PoincareBall:
         else:
             return res
 
+    def logmap0(self, x: torch.Tensor, y: torch.Tensor, *, dim=-1) -> torch.Tensor:
+        sqrt_c = self.c ** 0.5
+        y_norm = y.norm(dim=dim, p=2, keepdim=True).clamp_min(MIN_NORM)
+        return y / y_norm / sqrt_c * artanh(sqrt_c * y_norm)
+
     def logmap(self, x: torch.Tensor, y: torch.Tensor, *, dim=-1) -> torch.Tensor: ## OK
         sub = _mobius_add(-x, y, self.c, dim=dim)
         sub_norm = sub.norm(dim=dim, p=2, keepdim=True).clamp_min(MIN_NORM)
         lam = _lambda_x(x, self.c, keepdim=True, dim=dim)
         sqrt_c = self.c ** 0.5
         return 2 / sqrt_c / lam * artanh(sqrt_c * sub_norm) * sub / sub_norm
+
+    def transp0(self, y: torch.Tensor, v: torch.Tensor, *, dim=-1) -> torch.Tensor:
+        return v * (1 - self.c * y.pow(2).sum(dim=dim, keepdim=True)).clamp_min(MIN_NORM)
 
     def transp(self, x: torch.Tensor, y: torch.Tensor, v: torch.Tensor, *, dim=-1): ## OK
         return (
@@ -174,6 +182,22 @@ class PoincareBall:
         gamma_t = _mobius_add(x, tv, self.c, dim=dim)
         return gamma_t
 
+    def normdist2plane(self, x, a, p, keepdim: bool = False, signed: bool = False, dim: int = -1, norm: bool = False):
+        c = self.c
+        sqrt_c = c ** 0.5
+        diff = self.mobius_add(-p, x, dim=dim)
+        diff_norm2 = diff.pow(2).sum(dim=dim, keepdim=keepdim).clamp_min(MIN_NORM)
+        sc_diff_a = (diff * a).sum(dim=dim, keepdim=keepdim)
+        if not signed:
+            sc_diff_a = sc_diff_a.abs()
+        a_norm = a.norm(dim=dim, keepdim=keepdim, p=2).clamp_min(MIN_NORM)
+        num = 2 * sqrt_c * sc_diff_a
+        denom = (1 - c * diff_norm2) * a_norm
+        res = arsinh(num / denom.clamp_min(MIN_NORM)) / sqrt_c
+        if norm:
+            res = res * a_norm# * self.lambda_x(a, dim=dim, keepdim=keepdim)
+        return res
+
     def _check_point_on_manifold(
         self, x: torch.Tensor, *, atol=1e-5, rtol=1e-5, dim=-1
     ) -> Tuple[bool, Optional[str]]: ## OK
@@ -200,14 +224,6 @@ class WrappedNormal(dist.Distribution): ## OK
     support = dist.constraints.real
     has_rsample = True
     _mean_carrier_measure = 0
-
-#    @property
-#    def mean(self):
-#        return self.loc
-#
-#    @property
-#    def stddev(self):
-#        raise NotImplementedError
 
     @property
     def scale(self):
@@ -352,16 +368,6 @@ class ARS():
         '''
         Update hulls with new point(s) if none given, just recalculate hull from existing x,h,hprime
         # '''
-        # if xnew is not None:
-        #     self.x[:, self.K:self.K+nbnew] = xnew
-        #     self.x, idx = self.x.sort()
-        #     self.h[:, self.K:self.K+nbnew] = hnew
-        #     self.h = self.h.gather(1, idx)
-        #     self.hprime[:, self.K:self.K+nbnew] = hprimenew
-        #     self.hprime = self.hprime.gather(1, idx)
-
-        #     self.K += xnew.size(-1)
-
         self.z = torch.zeros(self.B, self.K + 1).to(self.device)
         self.z[:, 0] = self.lb; self.z[:, self.K] = self.ub
         self.z[:, 1:self.K] = (diff(self.h[:, :self.K]) - diff(self.x[:, :self.K] * self.hprime[:, :self.K])) / -diff(self.hprime[:, :self.K]) 
@@ -591,21 +597,6 @@ class HyperbolicRadius(dist.Distribution):
             ars = ARS(self.log_prob, self.grad_log_prob, self.device, xi=xi, ns=20, lb=0)
             value = ars.sample(sample_shape)
         return value
-
-    #def __while_loop(self, logM, proposal, sample_shape):
-    #    shape = self._extended_shape(sample_shape)
-    #    r, bool_mask = torch.ones(shape).to(self.device), (torch.ones(shape) == 1).to(self.device)
-    #    count = 0
-    #    while bool_mask.sum() != 0:
-    #        count += 1
-    #        r_ = proposal.sample(sample_shape).to(self.device)
-    #        u = torch.rand(shape).to(self.device)
-    #        log_ratio = self.log_prob(r_) - proposal.log_prob(r_) - logM
-    #        accept = log_ratio > torch.log(u)
-    #        reject = 1 - accept
-    #        r[bool_mask * accept] = r_[bool_mask * accept]
-    #        bool_mask[bool_mask * accept] = reject[bool_mask * accept]
-    #    return r
 
     def log_prob(self, value):
         res = - value.pow(2) / (2 * self.scale.pow(2)) + (self.dim - 1) * logsinh(math.sqrt(self.c) * value) \
