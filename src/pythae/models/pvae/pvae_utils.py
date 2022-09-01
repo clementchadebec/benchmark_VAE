@@ -161,7 +161,7 @@ class PoincareBall:
         sqrt_c = self.c ** 0.5
         u_norm = u.norm(dim=dim, p=2, keepdim=True).clamp_min(MIN_NORM)
         second_term = (
-            tanh(sqrt_c / 2 * r)
+            tanh(torch.tensor([sqrt_c]).to(x.device) / 2 * r)
             * u
             / (sqrt_c * u_norm)
         )
