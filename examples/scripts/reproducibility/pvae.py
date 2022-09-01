@@ -1,7 +1,6 @@
 import argparse
 import logging
 import os
-from black import out
 import numpy as np
 import math
 from typing import List
@@ -120,7 +119,8 @@ class Decoder(BaseDecoder):
         self.dec = nn.Sequential(
             GeodesicLayer(model_config.latent_dim, 600, self.manifold),
             nn.ReLU(),
-            nn.Linear(600, np.prod(model_config.input_dim))
+            nn.Linear(600, np.prod(model_config.input_dim)),
+            nn.Sigmoid()
         )
 
     def forward(self, z):

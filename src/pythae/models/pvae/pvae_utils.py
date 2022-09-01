@@ -198,10 +198,8 @@ class PoincareBall:
             res = res * a_norm# * self.lambda_x(a, dim=dim, keepdim=keepdim)
         return res
 
-    def _check_point_on_manifold(
-        self, x: torch.Tensor, *, atol=1e-5, rtol=1e-5, dim=-1
-    ) -> Tuple[bool, Optional[str]]: ## OK
-        px = _project(x, c=self.c, dim=dim)
+    def _check_point_on_manifold(self, x, *, atol=1e-5, rtol=1e-5):
+        px = _project(x, c=self.c)
         ok = torch.allclose(x, px, atol=atol, rtol=rtol)
         if not ok:
             reason = "'x' norm lies out of the bounds [-1/sqrt(c)+eps, 1/sqrt(c)-eps]"
@@ -710,7 +708,7 @@ class HypersphericalUniform(dist.Distribution):
 
 
 class RiemannianNormal(dist.Distribution): ## OK
-    arg_constraints = {'loc': dist.constraints.interval(-1, 1), 'scale': dist.constraints.positive}
+    #arg_constraints = {'loc': dist.constraints.interval(-1, 1), 'scale': dist.constraints.positive}
     support = dist.constraints.interval(-1, 1)
     has_rsample = True
 

@@ -103,12 +103,12 @@ class PoincareVAE(VAE):
         else:
             mu, log_var = encoder_output.embedding, encoder_output.log_covariance
 
-        std = torch.exp(0.5 * log_var) + 1e-5
+        std = torch.exp(0.5 * log_var)
 
         qz_x = self.posterior(loc=mu, scale=std, manifold=self.latent_manifold)
-        z = qz_x.rsample(torch.Size([1])).squeeze(0)
+        z = qz_x.rsample(torch.Size([1]))
 
-        recon_x = self.decoder(z)["reconstruction"]
+        recon_x = self.decoder(z.squeeze(0))["reconstruction"]
 
         loss, recon_loss, kld = self.loss_function(recon_x, x, z, qz_x)
         
@@ -231,9 +231,9 @@ class PoincareVAE(VAE):
                 std = torch.exp(0.5 * log_var)
 
                 qz_x = self.posterior(loc=mu, scale=std, manifold=self.latent_manifold)
-                z = qz_x.rsample(torch.Size([1])).squeeze(0)
+                z = qz_x.rsample(torch.Size([1]))
 
-                recon_x = self.decoder(z)["reconstruction"]
+                recon_x = self.decoder(z.squeeze(0))["reconstruction"]
 
                 pz = self.prior(
                     loc=self._pz_mu,
@@ -241,7 +241,7 @@ class PoincareVAE(VAE):
                     manifold=self.latent_manifold
                 )
 
-                log_q_z_given_x = qz_x.log_prob(z).reshape(z.shape[0], -1).sum(dim=1)
+                log_q_z_given_x = qz_x.log_prob(z).sum(dim=1)
                 log_p_z = pz.log_prob(z).reshape(z.shape[0], -1).sum(dim=-1)
 
                 recon_x = self.decoder(z)["reconstruction"]
