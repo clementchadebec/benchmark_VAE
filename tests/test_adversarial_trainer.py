@@ -87,7 +87,7 @@ class Test_Set_Training_config:
         params=[
             AdversarialTrainerConfig(autoencoder_optim_decay=0),
             AdversarialTrainerConfig(
-                batch_size=10, learning_rate=1e-5, autoencoder_optim_decay=0
+                batch_size=10, learning_rate=1e-3, autoencoder_optim_decay=0
             ),
         ]
     )

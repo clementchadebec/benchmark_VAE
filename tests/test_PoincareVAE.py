@@ -2,12 +2,14 @@ import os
 from copy import deepcopy
 
 import pytest
+from sklearn import manifold
 import torch
 from torch.optim import Adam
 
 from pythae.customexception import BadInheritanceError
 from pythae.models.base.base_utils import ModelOutput
 from pythae.models import PoincareVAE, PoincareVAEConfig, AutoModel
+from pythae.models.pvae.pvae_utils import PoincareBall
 from pythae.samplers import NormalSamplerConfig, GaussianMixtureSamplerConfig, MAFSamplerConfig, TwoStageVAESamplerConfig, IAFSamplerConfig
 from pythae.trainers import BaseTrainer, BaseTrainerConfig
 from pythae.pipelines import TrainingPipeline, GenerationPipeline
@@ -105,6 +107,18 @@ class Test_Model_Building:
         assert model.model_config.uses_default_encoder
         assert model.decoder == custom_decoder
         assert not model.model_config.uses_default_decoder
+
+    def test_misc_manifold_func(self):
+        
+        manifold = PoincareBall(dim=2, c=0.7)
+        x = torch.randn(10, 2)
+        y = torch.randn(10, 2)
+        manifold.logmap0(x, y)
+        manifold.expmap0(x)
+        manifold.transp0(x, y)
+        manifold.normdist2plane(x, x, x)
+        manifold.normdist2plane(x, x, x, signed=True, norm=True)
+
 
 
 class Test_Model_Saving:
