@@ -25,10 +25,6 @@ def log_sum_exp_signs(value, signs, dim=0, keepdim=False):
         m = m.squeeze(dim)
     return m + torch.log(torch.sum(signs * torch.exp(value0), dim=dim, keepdim=keepdim))
 
-def lexpand(A, *dimensions):
-    """Expand tensor, adding new dimensions on left."""
-    return A.expand(tuple(dimensions) + A.shape)
-
 def rexpand(A, *dimensions):
     """Expand tensor, adding new dimensions on right."""
     return A.view(A.shape + (1,)*len(dimensions)).expand(A.shape + tuple(dimensions))
@@ -40,8 +36,8 @@ def logsinh(x):
 def tanh(x): ## OK
     return x.clamp(-15, 15).tanh()
 
-def arsinh(x: torch.Tensor): ## OK
-    return (x + torch.sqrt(1 + x.pow(2))).clamp_min(MIN_NORM).log().to(x.dtype)
+#def arsinh(x: torch.Tensor): ## OK
+#    return (x + torch.sqrt(1 + x.pow(2))).clamp_min(MIN_NORM).log().to(x.dtype)
 
 def artanh(x: torch.Tensor): ## OK
     x = x.clamp(-1 + 1e-5, 1 - 1e-5)
@@ -50,15 +46,15 @@ def artanh(x: torch.Tensor): ## OK
 def _lambda_x(x, c, keepdim: bool = False, dim: int = -1): ## OK
     return 2 / (1 - c * x.pow(2).sum(dim=dim, keepdim=keepdim)).clamp_min(MIN_NORM)
 
-def sabs(x, eps: float = 1e-15):
-    return x.abs().add_(eps)
+#def sabs(x, eps: float = 1e-15):
+#    return x.abs().add_(eps)
 
-def sign(x):
-    return torch.sign(x.sign() + 0.5)
-
-def abs_zero_grad(x):
-    # this op has derivative equal to 1 at zero
-    return x * sign(x)
+#def sign(x):
+#    return torch.sign(x.sign() + 0.5)
+#
+#def abs_zero_grad(x):
+#    # this op has derivative equal to 1 at zero
+#    return x * sign(x)
 
 def _mobius_add(x, y, c, dim=-1): ## OK
     x2 = x.pow(2).sum(dim=dim, keepdim=True)
@@ -114,11 +110,11 @@ class PoincareBall:
     def zero(self):
         return torch.zeros(1, self.dim).to(self.device)
 
-    def norm(self, x: torch.Tensor, u: torch.Tensor, *, keepdim=False, dim=-1
-    ) -> torch.Tensor: ## OK
-        return _lambda_x(x, c=self.c, keepdim=keepdim, dim=dim) * u.norm(
-        dim=dim, keepdim=keepdim, p=2
-    )
+    #def norm(self, x: torch.Tensor, u: torch.Tensor, *, keepdim=False, dim=-1
+    #) -> torch.Tensor: ## OK
+    #    return _lambda_x(x, c=self.c, keepdim=keepdim, dim=dim) * u.norm(
+    #    dim=dim, keepdim=keepdim, p=2
+    #)
 
     def dist( ## OK
         self, x: torch.Tensor, y: torch.Tensor, *, keepdim=False, dim=-1
@@ -220,13 +216,13 @@ class WrappedNormal(dist.Distribution): ## OK
     has_rsample = True
     _mean_carrier_measure = 0
 
-    @property
-    def mean(self):
-        return self.loc
-
-    @property
-    def stddev(self):
-        raise NotImplementedError
+#    @property
+#    def mean(self):
+#        return self.loc
+#
+#    @property
+#    def stddev(self):
+#        raise NotImplementedError
 
     @property
     def scale(self):
@@ -611,20 +607,20 @@ class HyperbolicRadius(dist.Distribution):
             value = ars.sample(sample_shape)
         return value
 
-    def __while_loop(self, logM, proposal, sample_shape):
-        shape = self._extended_shape(sample_shape)
-        r, bool_mask = torch.ones(shape).to(self.device), (torch.ones(shape) == 1).to(self.device)
-        count = 0
-        while bool_mask.sum() != 0:
-            count += 1
-            r_ = proposal.sample(sample_shape).to(self.device)
-            u = torch.rand(shape).to(self.device)
-            log_ratio = self.log_prob(r_) - proposal.log_prob(r_) - logM
-            accept = log_ratio > torch.log(u)
-            reject = 1 - accept
-            r[bool_mask * accept] = r_[bool_mask * accept]
-            bool_mask[bool_mask * accept] = reject[bool_mask * accept]
-        return r
+    #def __while_loop(self, logM, proposal, sample_shape):
+    #    shape = self._extended_shape(sample_shape)
+    #    r, bool_mask = torch.ones(shape).to(self.device), (torch.ones(shape) == 1).to(self.device)
+    #    count = 0
+    #    while bool_mask.sum() != 0:
+    #        count += 1
+    #        r_ = proposal.sample(sample_shape).to(self.device)
+    #        u = torch.rand(shape).to(self.device)
+    #        log_ratio = self.log_prob(r_) - proposal.log_prob(r_) - logM
+    #        accept = log_ratio > torch.log(u)
+    #        reject = 1 - accept
+    #        r[bool_mask * accept] = r_[bool_mask * accept]
+    #        bool_mask[bool_mask * accept] = reject[bool_mask * accept]
+    #    return r
 
     def log_prob(self, value):
         res = - value.pow(2) / (2 * self.scale.pow(2)) + (self.dim - 1) * logsinh(self.c.sqrt() * value) \
