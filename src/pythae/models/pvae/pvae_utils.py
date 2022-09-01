@@ -5,6 +5,7 @@
 """
 import math
 import torch
+import numpy as np
 import torch.distributions as dist
 from torch.nn import functional as F
 from torch.distributions import Normal
@@ -15,8 +16,6 @@ from typing import Tuple, Optional
 
 MIN_NORM = 1e-15
 BALL_EPS = {torch.float32: 4e-3, torch.float64: 1e-5}
-
-device = "cuda" if torch.cuda.is_available() else "cpu"
 
 def log_sum_exp_signs(value, signs, dim=0, keepdim=False):
     m, _ = torch.max(value, dim=dim, keepdim=True)
@@ -45,16 +44,6 @@ def artanh(x: torch.Tensor): ## OK
 
 def _lambda_x(x, c, keepdim: bool = False, dim: int = -1): ## OK
     return 2 / (1 - c * x.pow(2).sum(dim=dim, keepdim=keepdim)).clamp_min(MIN_NORM)
-
-#def sabs(x, eps: float = 1e-15):
-#    return x.abs().add_(eps)
-
-#def sign(x):
-#    return torch.sign(x.sign() + 0.5)
-#
-#def abs_zero_grad(x):
-#    # this op has derivative equal to 1 at zero
-#    return x * sign(x)
 
 def _mobius_add(x, y, c, dim=-1): ## OK
     x2 = x.pow(2).sum(dim=dim, keepdim=True)
@@ -95,16 +84,12 @@ def _gyration(u, v, w, c, dim: int = -1): ## OK
 class PoincareBall:
 
     def __init__(self, dim, c=1.0):
-        self.c = torch.tensor([c])
+        self.c = c
         self.dim = dim
 
     @property
     def coord_dim(self):
         return int(self.dim)
-
-    @property
-    def device(self):
-        return self.c.device
 
     @property
     def zero(self):
@@ -153,7 +138,7 @@ class PoincareBall:
 
     def logdetexp(self, x, y, is_vector=False, keepdim=False): ## OK
         d = self.norm(x, y, keepdim=keepdim) if is_vector else self.dist(x, y, keepdim=keepdim)
-        return (self.dim - 1) * (torch.sinh(self.c.sqrt()*d) / self.c.sqrt() / d).log()
+        return (self.dim - 1) * (torch.sinh(math.sqrt(self.c)*d) / math.sqrt(self.c) / d).log()
 
     def expmap0(self, u, dim: int = -1):
         sqrt_c = self.c ** 0.5
@@ -249,9 +234,9 @@ class WrappedNormal(dist.Distribution): ## OK
     def rsample(self, sample_shape=torch.Size()): ## OK
         shape = self._extended_shape(sample_shape)
         v = self.scale * _standard_normal(shape, dtype=self.loc.dtype, device=self.loc.device)
-        self.manifold._check_vector_on_tangent(self.manifold.zero, v)
-        v = v / self.manifold.lambda_x(self.manifold.zero, keepdim=True)
-        u = self.manifold.transp(self.manifold.zero, self.loc, v)
+        self.manifold._check_vector_on_tangent(torch.zeros(1, self.manifold.dim).to(v.device), v)
+        v = v / self.manifold.lambda_x(torch.zeros(1, self.manifold.dim).to(v.device), keepdim=True)
+        u = self.manifold.transp(torch.zeros(1, self.manifold.dim).to(v.device), self.loc, v)
         z = self.manifold.expmap(self.loc, u)
         return z
 
@@ -260,8 +245,8 @@ class WrappedNormal(dist.Distribution): ## OK
         loc = self.loc.unsqueeze(0).expand(x.shape[0], *self.batch_shape, self.manifold.coord_dim)
         if len(shape) < len(loc.shape): x = x.unsqueeze(1)
         v = self.manifold.logmap(loc, x)
-        v = self.manifold.transp(loc, self.manifold.zero, v)
-        u = v * self.manifold.lambda_x(self.manifold.zero, keepdim=True)
+        v = self.manifold.transp(loc, torch.zeros(1, self.manifold.dim).to(v.device), v)
+        u = v * self.manifold.lambda_x(torch.zeros(1, self.manifold.dim).to(v.device), keepdim=True)
         norm_pdf = Normal(torch.zeros_like(self.scale), self.scale).log_prob(u).sum(-1, keepdim=True)
         logdetexp = self.manifold.logdetexp(loc, x, keepdim=True)
         result = norm_pdf - logdetexp
@@ -406,12 +391,12 @@ class ARS():
 def cdf_r(value, scale, c, dim):
     value = value.double()
     scale = scale.double()
-    c = c.double()
+    c = np.double(c)
 
     if dim == 2:
-        return 1 / torch.erf(c.sqrt() * scale / math.sqrt(2)) * .5 * \
-    (2 * torch.erf(c.sqrt() * scale / math.sqrt(2)) + torch.erf((value - c.sqrt() * scale.pow(2)) / math.sqrt(2) / scale) - \
-        torch.erf((c.sqrt() * scale.pow(2) + value) / math.sqrt(2) / scale))
+        return 1 / torch.erf(math.sqrt(c) * scale / math.sqrt(2)) * .5 * \
+    (2 * torch.erf(math.sqrt(c) * scale / math.sqrt(2)) + torch.erf((value - math.sqrt(c) * scale.pow(2)) / math.sqrt(2) / scale) - \
+        torch.erf((math.sqrt(c) * scale.pow(2) + value) / math.sqrt(2) / scale))
     else:
         device = value.device
 
@@ -421,12 +406,12 @@ def cdf_r(value, scale, c, dim):
         s1 = torch.lgamma(dim) - torch.lgamma(k_float + 1) - torch.lgamma(dim - k_float) \
             + (dim - 1 - 2 * k_float).pow(2) * c * scale.pow(2) / 2 \
             + torch.log( \
-                torch.erf((value - (dim - 1 - 2 * k_float) * c.sqrt() * scale.pow(2)) / scale / math.sqrt(2)) \
-                + torch.erf((dim - 1 - 2 * k_float) * c.sqrt() * scale / math.sqrt(2)) \
+                torch.erf((value - (dim - 1 - 2 * k_float) * math.sqrt(c) * scale.pow(2)) / scale / math.sqrt(2)) \
+                + torch.erf((dim - 1 - 2 * k_float) * math.sqrt(c) * scale / math.sqrt(2)) \
                 )
         s2 = torch.lgamma(dim) - torch.lgamma(k_float + 1) - torch.lgamma(dim - k_float) \
             + (dim - 1 - 2 * k_float).pow(2) * c * scale.pow(2) / 2 \
-            + torch.log1p(torch.erf((dim - 1 - 2 * k_float) * c.sqrt() * scale / math.sqrt(2)))
+            + torch.log1p(torch.erf((dim - 1 - 2 * k_float) * math.sqrt(c) * scale / math.sqrt(2)))
 
         signs = torch.tensor([1., -1.]).double().to(device).repeat(((int(dim)+1) // 2)*2)[:int(dim)]
         signs = rexpand(signs, *value.size())
@@ -451,13 +436,13 @@ def grad_cdf_value_scale(value, scale, c, dim):
 
     log_arg1 = (dim - 1 - 2 * k_float).pow(2) * c * scale * \
     (\
-        torch.erf((value - (dim - 1 - 2 * k_float) * c.sqrt() * scale.pow(2)) / scale / math.sqrt(2)) \
-        + torch.erf((dim - 1 - 2 * k_float) * c.sqrt() * scale / math.sqrt(2)) \
+        torch.erf((value - (dim - 1 - 2 * k_float) * math.sqrt(c) * scale.pow(2)) / scale / math.sqrt(2)) \
+        + torch.erf((dim - 1 - 2 * k_float) * math.sqrt(c) * scale / math.sqrt(2)) \
     )
     
     log_arg2 = math.sqrt(2 / math.pi) * ( \
-        (dim - 1 - 2 * k_float) * c.sqrt() * torch.exp(-(dim - 1 - 2 * k_float).pow(2) * c * scale.pow(2) / 2) \
-        - ((value / scale.pow(2) + (dim - 1 - 2 * k_float) * c.sqrt()) * torch.exp(-(value - (dim - 1 - 2 * k_float) * c.sqrt() * scale.pow(2)).pow(2) / (2 * scale.pow(2)))) \
+        (dim - 1 - 2 * k_float) * math.sqrt(c) * torch.exp(-(dim - 1 - 2 * k_float).pow(2) * c * scale.pow(2) / 2) \
+        - ((value / scale.pow(2) + (dim - 1 - 2 * k_float) * math.sqrt(c)) * torch.exp(-(value - (dim - 1 - 2 * k_float) * math.sqrt(c) * scale.pow(2)).pow(2) / (2 * scale.pow(2)))) \
         )
 
     log_arg = log_arg1 + log_arg2
@@ -473,13 +458,13 @@ def grad_cdf_value_scale(value, scale, c, dim):
     s1 = torch.lgamma(dim) - torch.lgamma(k_float + 1) - torch.lgamma(dim - k_float) \
         + (dim - 1 - 2 * k_float).pow(2) * c * scale.pow(2) / 2 \
         + torch.log( \
-            torch.erf((value - (dim - 1 - 2 * k_float) * c.sqrt() * scale.pow(2)) / scale / math.sqrt(2)) \
-            + torch.erf((dim - 1 - 2 * k_float) * c.sqrt() * scale / math.sqrt(2)) \
+            torch.erf((value - (dim - 1 - 2 * k_float) * math.sqrt(c) * scale.pow(2)) / scale / math.sqrt(2)) \
+            + torch.erf((dim - 1 - 2 * k_float) * math.sqrt(c) * scale / math.sqrt(2)) \
         )
 
     S1 = log_sum_exp_signs(s1, signs, dim=0)
     grad_log_cdf_scale = grad_sum_sigma / S1.exp()
-    log_unormalised_prob = - value.pow(2) / (2 * scale.pow(2)) + (dim - 1) * logsinh(c.sqrt() * value) - (dim - 1) / 2 * c.log()
+    log_unormalised_prob = - value.pow(2) / (2 * scale.pow(2)) + (dim - 1) * logsinh(math.sqrt(c) * value) - (dim - 1) / 2 * math.log(c)
     
     with torch.autograd.enable_grad():
         scale = scale.float()
@@ -487,7 +472,7 @@ def grad_cdf_value_scale(value, scale, c, dim):
         grad_logZ_scale = grad(logZ, scale, grad_outputs=torch.ones_like(scale))
 
     grad_log_cdf_scale = - grad_logZ_scale[0] + 1 / scale + grad_log_cdf_scale.float()
-    cdf = cdf_r(value.double(), scale.double(), c.double(), int(dim)).float().squeeze(0)
+    cdf = cdf_r(value.double(), scale.double(), np.double(c), int(dim)).float().squeeze(0)
     grad_scale = cdf * grad_log_cdf_scale
 
     grad_value = (log_unormalised_prob.float() - logZ).exp()
@@ -498,19 +483,19 @@ class _log_normalizer_closed_grad(Function):
     @staticmethod 
     def forward(ctx, scale, c, dim):
         scale = scale.double()
-        c = c.double()
+        c = np.double(c)
         ctx.scale = scale.clone().detach()
-        ctx.c = c.clone().detach()
+        ctx.c = torch.tensor([c]).to(scale.device)
         ctx.dim = dim
 
         device = scale.device
-        output = .5 * (math.log(math.pi) - math.log(2)) + scale.log() -(int(dim) - 1) * (c.log() / 2 + math.log(2))
+        output = .5 * (math.log(math.pi) - math.log(2)) + scale.log() -(int(dim) - 1) * (math.log(c) / 2 + math.log(2))
         dim = torch.tensor(int(dim)).to(device).double()
 
         k_float = rexpand(torch.arange(int(dim)), *scale.size()).double().to(device)
         s = torch.lgamma(dim) - torch.lgamma(k_float + 1) - torch.lgamma(dim - k_float) \
             + (dim - 1 - 2 * k_float).pow(2) * c * scale.pow(2) / 2 \
-            + torch.log1p(torch.erf((dim - 1 - 2 * k_float) * c.sqrt() * scale / math.sqrt(2)))
+            + torch.log1p(torch.erf((dim - 1 - 2 * k_float) * math.sqrt(c) * scale / math.sqrt(2)))
         signs = torch.tensor([1., -1.]).double().to(device).repeat(((int(dim)+1) // 2)*2)[:int(dim)]
         signs = rexpand(signs, *scale.size())
         ctx.log_sum_term = log_sum_exp_signs(s, signs, dim=0)
@@ -531,8 +516,8 @@ class _log_normalizer_closed_grad(Function):
         signs = torch.tensor([1., -1.]).double().to(device).repeat(((int(dim)+1) // 2)*2)[:int(dim)]
         signs = rexpand(signs, *scale.size())
 
-        log_arg = (dim - 1 - 2 * k_float).pow(2) * c * scale * (1+torch.erf((dim - 1 - 2 * k_float) * c.sqrt() * scale / math.sqrt(2))) + \
-            torch.exp(-(dim - 1 - 2 * k_float).pow(2) * c * scale.pow(2) / 2) * 2 / math.sqrt(math.pi) * (dim - 1 - 2 * k_float) * c.sqrt() / math.sqrt(2)
+        log_arg = (dim - 1 - 2 * k_float).pow(2) * c * scale * (1+torch.erf((dim - 1 - 2 * k_float) * math.sqrt(c) * scale / math.sqrt(2))) + \
+            torch.exp(-(dim - 1 - 2 * k_float).pow(2) * c * scale.pow(2) / 2) * 2 / math.sqrt(math.pi) * (dim - 1 - 2 * k_float) * math.sqrt(c) / math.sqrt(2)
         log_arg_signs = torch.sign(log_arg)
         s = torch.lgamma(dim) - torch.lgamma(k_float + 1) - torch.lgamma(dim - k_float) \
             + (dim - 1 - 2 * k_float).pow(2) * c * scale.pow(2) / 2 \
@@ -551,7 +536,7 @@ class impl_rsample(Function):
     def forward(ctx, value, scale, c, dim):
         ctx.scale = scale.clone().detach().double().requires_grad_(True)
         ctx.value = value.clone().detach().double().requires_grad_(True)
-        ctx.c = c.clone().detach().double().requires_grad_(True)
+        ctx.c = torch.tensor([c]).to(scale.device).double().requires_grad_(True)
         ctx.dim = dim
         return value
 
@@ -598,7 +583,7 @@ class HyperbolicRadius(dist.Distribution):
             mean = self.mean
             stddev = self.stddev
             if torch.isnan(stddev).any(): stddev[torch.isnan(stddev)] = self.scale[torch.isnan(stddev)]
-            if torch.isnan(mean).any(): mean[torch.isnan(mean)] = ((self.dim - 1) * self.scale.pow(2) * self.c.sqrt())[torch.isnan(mean)]
+            if torch.isnan(mean).any(): mean[torch.isnan(mean)] = ((self.dim - 1) * self.scale.pow(2) * math.sqrt(self.c))[torch.isnan(mean)]
             steps = torch.linspace(0.1, 3, 10).to(self.device)
             steps = torch.cat((-steps.flip(0), steps))
             xi = [mean + s * torch.min(stddev, .95 * mean / 3) for s in steps]
@@ -623,13 +608,13 @@ class HyperbolicRadius(dist.Distribution):
     #    return r
 
     def log_prob(self, value):
-        res = - value.pow(2) / (2 * self.scale.pow(2)) + (self.dim - 1) * logsinh(self.c.sqrt() * value) \
-            - (self.dim - 1) / 2 * self.c.log() - self.log_normalizer#.expand(value.shape)
+        res = - value.pow(2) / (2 * self.scale.pow(2)) + (self.dim - 1) * logsinh(math.sqrt(self.c) * value) \
+            - (self.dim - 1) / 2 * math.log(self.c) - self.log_normalizer#.expand(value.shape)
         assert not torch.isnan(res).any()
         return res
 
     def grad_log_prob(self, value):
-        res = - value / self.scale.pow(2) + (self.dim - 1) * self.c.sqrt() * torch.cosh(self.c.sqrt() * value) / torch.sinh(self.c.sqrt() * value) 
+        res = - value / self.scale.pow(2) + (self.dim - 1) * math.sqrt(self.c) * torch.cosh(math.sqrt(self.c) * value) / torch.sinh(math.sqrt(self.c) * value) 
         return res
 
     def cdf(self, value):
@@ -637,7 +622,7 @@ class HyperbolicRadius(dist.Distribution):
 
     @property
     def mean(self):
-        c = self.c.double()
+        c = np.double(self.c)
         scale = self.scale.double()
         dim = torch.tensor(int(self.dim)).double().to(self.device)
         signs = torch.tensor([1., -1.]).double().to(self.device).repeat(((self.dim+1) // 2)*2)[:self.dim].unsqueeze(-1).unsqueeze(-1).expand(self.dim, *self.scale.size())
@@ -645,10 +630,10 @@ class HyperbolicRadius(dist.Distribution):
         k_float = rexpand(torch.arange(self.dim), *self.scale.size()).double().to(self.device)
         s2 = torch.lgamma(dim) - torch.lgamma(k_float + 1) - torch.lgamma(dim - k_float) \
                 + (dim - 1 - 2 * k_float).pow(2) * c * scale.pow(2) / 2 \
-                + torch.log1p(torch.erf((dim - 1 - 2 * k_float) * c.sqrt() * scale / math.sqrt(2)))
+                + torch.log1p(torch.erf((dim - 1 - 2 * k_float) * math.sqrt(c) * scale / math.sqrt(2)))
         S2 = log_sum_exp_signs(s2, signs, dim=0)
 
-        log_arg = (dim - 1 - 2 * k_float) * c.sqrt() * scale.pow(2) * (1 + torch.erf((dim - 1 - 2 * k_float) * c.sqrt() * scale / math.sqrt(2))) + \
+        log_arg = (dim - 1 - 2 * k_float) * math.sqrt(c) * scale.pow(2) * (1 + torch.erf((dim - 1 - 2 * k_float) * math.sqrt(c) * scale / math.sqrt(2))) + \
                 torch.exp(-(dim - 1 - 2 * k_float).pow(2) * c * scale.pow(2) / 2) * scale * math.sqrt(2 / math.pi)
         log_arg_signs = torch.sign(log_arg)
         s1 = torch.lgamma(dim) - torch.lgamma(k_float + 1) - torch.lgamma(dim - k_float) \
@@ -661,7 +646,7 @@ class HyperbolicRadius(dist.Distribution):
 
     @property
     def variance(self):
-        c = self.c.double()
+        c = np.double(self.c)
         scale = self.scale.double()
         dim = torch.tensor(int(self.dim)).double().to(self.device)
         signs = torch.tensor([1., -1.]).double().to(self.device).repeat(((int(dim)+1) // 2)*2)[:int(dim)].unsqueeze(-1).unsqueeze(-1).expand(int(dim), *self.scale.size())
@@ -669,11 +654,11 @@ class HyperbolicRadius(dist.Distribution):
         k_float = rexpand(torch.arange(self.dim), *self.scale.size()).double().to(self.device)
         s2 = torch.lgamma(dim) - torch.lgamma(k_float + 1) - torch.lgamma(dim - k_float) \
                 + (dim - 1 - 2 * k_float).pow(2) * c * scale.pow(2) / 2 \
-                + torch.log1p(torch.erf((dim - 1 - 2 * k_float) * c.sqrt() * scale / math.sqrt(2)))
+                + torch.log1p(torch.erf((dim - 1 - 2 * k_float) * math.sqrt(c) * scale / math.sqrt(2)))
         S2 = log_sum_exp_signs(s2, signs, dim=0)
 
-        log_arg = (1 + (dim - 1 - 2 * k_float).pow(2) * c * scale.pow(2)) * (1 + torch.erf((dim - 1 - 2 * k_float) * c.sqrt() * scale / math.sqrt(2))) + \
-               (dim - 1 - 2 * k_float) * c.sqrt() * torch.exp(-(dim - 1 - 2 * k_float).pow(2) * c * scale.pow(2) / 2) * scale * math.sqrt(2 / math.pi)
+        log_arg = (1 + (dim - 1 - 2 * k_float).pow(2) * c * scale.pow(2)) * (1 + torch.erf((dim - 1 - 2 * k_float) * math.sqrt(c) * scale / math.sqrt(2))) + \
+               (dim - 1 - 2 * k_float) * math.sqrt(c) * torch.exp(-(dim - 1 - 2 * k_float).pow(2) * c * scale.pow(2) / 2) * scale * math.sqrt(2 / math.pi)
         log_arg_signs = torch.sign(log_arg)
         s1 = torch.lgamma(dim) - torch.lgamma(k_float + 1) - torch.lgamma(dim - k_float) \
                 + (dim - 1 - 2 * k_float).pow(2) * c * scale.pow(2) / 2 \

@@ -48,7 +48,8 @@ class PoincareVAE(VAE):
 
         self.model_name = "PoincareVAE"
 
-        self.latent_manifold = PoincareBall(dim=model_config.latent_dim, c=model_config.curvature)
+        self.latent_manifold = PoincareBall(
+            dim=model_config.latent_dim, c=model_config.curvature)
 
         if model_config.prior_distribution == "riemannian_normal":
             self.prior = RiemannianNormal
@@ -101,8 +102,7 @@ class PoincareVAE(VAE):
             mu, log_var = encoder_output.embedding, encoder_output.log_concentration
         else:
             mu, log_var = encoder_output.embedding, encoder_output.log_covariance
-        
-        assert (mu != mu).sum() == 0, "here befire"
+
         mu = self.latent_manifold.expmap0(mu)
         print(mu)
         std = torch.exp(0.5 * log_var) + 1e-5
