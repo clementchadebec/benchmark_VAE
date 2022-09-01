@@ -1,0 +1,1 @@
+{"name": "BaseTrainerConfig", "output_dir": "reproducibility/mnist", "batch_size": 128, "num_epochs": 80, "learning_rate": 0.0005, "steps_saving": 100, "steps_predict": null, "keep_best_on_train": true, "seed": 8, "no_cuda": false}

@@ -117,7 +117,7 @@ class PoincareVAE(VAE):
             reg_loss=kld,
             loss=loss,
             recon_x=recon_x,
-            z=z,
+            z=z.squeeze(0),
         )
 
         return output
@@ -146,7 +146,7 @@ class PoincareVAE(VAE):
             manifold=self.latent_manifold
         )
 
-        KLD = (qz_x.log_prob(z) - pz.log_prob(z)).reshape(z.shape[0], -1).sum(-1)
+        KLD = (qz_x.log_prob(z) - pz.log_prob(z)).sum(-1).squeeze(0)
 
         return (recon_loss + KLD).mean(dim=0), recon_loss.mean(dim=0), KLD.mean(dim=0)
 
@@ -233,18 +233,16 @@ class PoincareVAE(VAE):
                 qz_x = self.posterior(loc=mu, scale=std, manifold=self.latent_manifold)
                 z = qz_x.rsample(torch.Size([1]))
 
-                recon_x = self.decoder(z.squeeze(0))["reconstruction"]
-
                 pz = self.prior(
                     loc=self._pz_mu,
                     scale=self._pz_logvar.exp(),
                     manifold=self.latent_manifold
                 )
 
-                log_q_z_given_x = qz_x.log_prob(z).sum(dim=1)
-                log_p_z = pz.log_prob(z).reshape(z.shape[0], -1).sum(dim=-1)
+                log_q_z_given_x = qz_x.log_prob(z).sum(-1).squeeze(0)
+                log_p_z = pz.log_prob(z).sum(-1).squeeze(0)
 
-                recon_x = self.decoder(z)["reconstruction"]
+                recon_x = self.decoder(z.squeeze(0))["reconstruction"]
 
                 if self.model_config.reconstruction_loss == "mse":
 
