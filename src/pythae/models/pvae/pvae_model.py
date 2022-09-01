@@ -1,19 +1,21 @@
-import os
+import warnings
 from typing import Optional
 
 import numpy as np
 import torch
+import torch.nn as nn
 import torch.nn.functional as F
 
 from ...data.datasets import BaseDataset
-from ..base import BaseAE
+from ..vae import VAE
 from ..base.base_utils import ModelOutput
 from ..nn import BaseDecoder, BaseEncoder
-from ..nn.default_architectures import Encoder_VAE_MLP
+from ..nn.default_architectures import Encoder_SVAE_MLP, Encoder_VAE_MLP
 from .pvae_config import PoincareVAEConfig
+from .pvae_utils import PoincareBall, RiemannianNormal, WrappedNormal
 
 
-class PoincareVAE(BaseAE):
+class PoincareVAE(VAE):
     """Poincaré Variational Autoencoder model.
 
     Args:
@@ -42,26 +44,42 @@ class PoincareVAE(BaseAE):
         decoder: Optional[BaseDecoder] = None,
     ):
 
-        BaseAE.__init__(self, model_config=model_config, decoder=decoder)
+        VAE.__init__(self, model_config=model_config, encoder=encoder, decoder=decoder)
 
-        self.model_name = "VAE"
+        self.model_name = "PoincareVAE"
+
+        self.latent_manifold = PoincareBall(dim=model_config.latent_dim, c=model_config.curvature)
+
+        if model_config.prior_distribution == "riemannian_normal":
+            self.prior = RiemannianNormal
+        else:
+            self.prior = WrappedNormal
+
+        if model_config.posterior_distribution == "riemannian_normal":
+            warnings.warn(
+                "Carefull, this model expects the encoder to give a one dimensional "
+                "`log_concentration` tensor for the Riemannian normal distribution. "
+                "Make sure the encoder actually outputs this."
+            )
+            self.posterior = RiemannianNormal
+        else:
+            self.posterior = WrappedNormal
 
         if encoder is None:
-            if model_config.input_dim is None:
-                raise AttributeError(
-                    "No input dimension provided !"
-                    "'input_dim' parameter of BaseAEConfig instance must be set to 'data_shape' "
-                    "where the shape of the data is (C, H, W ..). Unable to build encoder "
-                    "automatically"
-                )
-
-            encoder = Encoder_VAE_MLP(model_config)
+            if model_config.posterior_distribution == "riemannian_normal":
+                encoder = Encoder_SVAE_MLP(model_config)
+            else:
+                encoder = Encoder_VAE_MLP(model_config)
             self.model_config.uses_default_encoder = True
 
         else:
             self.model_config.uses_default_encoder = False
 
         self.set_encoder(encoder)
+
+        self._pz_mu = nn.Parameter(torch.zeros(1, model_config.latent_dim), requires_grad=False)
+        self._pz_logvar = nn.Parameter(torch.zeros(1, 1), requires_grad=False)
+
 
     def forward(self, inputs: BaseDataset, **kwargs):
         """
@@ -79,14 +97,23 @@ class PoincareVAE(BaseAE):
 
         encoder_output = self.encoder(x)
 
-        mu, log_var = encoder_output.embedding, encoder_output.log_covariance
+        if self.model_config.posterior_distribution == "riemannian_normal":
+            mu, log_var = encoder_output.embedding, encoder_output.log_concentration
+        else:
+            mu, log_var = encoder_output.embedding, encoder_output.log_covariance
+        
+        assert (mu != mu).sum() == 0, "here befire"
+        mu = self.latent_manifold.expmap0(mu)
+        print(mu)
+        std = torch.exp(0.5 * log_var) + 1e-5
 
-        std = torch.exp(0.5 * log_var)
-        z, eps = self._sample_gauss(mu, std)
+        qz_x = self.posterior(loc=mu, scale=std, manifold=self.latent_manifold)
+        z = qz_x.rsample(torch.Size([1])).squeeze(0)
+
         recon_x = self.decoder(z)["reconstruction"]
 
-        loss, recon_loss, kld = self.loss_function(recon_x, x, mu, log_var, z)
-
+        loss, recon_loss, kld = self.loss_function(recon_x, x, z, qz_x)
+        
         output = ModelOutput(
             reconstruction_loss=recon_loss,
             reg_loss=kld,
@@ -97,7 +124,7 @@ class PoincareVAE(BaseAE):
 
         return output
 
-    def loss_function(self, recon_x, x, mu, log_var, z):
+    def loss_function(self, recon_x, x, z, qz_x):
 
         if self.model_config.reconstruction_loss == "mse":
 
@@ -115,15 +142,58 @@ class PoincareVAE(BaseAE):
                 reduction="none",
             ).sum(dim=-1)
 
-        KLD = -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp(), dim=-1)
+        pz = self.prior(
+            loc=self._pz_mu,
+            scale=self._pz_logvar.exp(),
+            manifold=self.latent_manifold
+        )
+
+        KLD = (qz_x.log_prob(z) - pz.log_prob(z)).reshape(z.shape[0], -1).sum(-1)
 
         return (recon_loss + KLD).mean(dim=0), recon_loss.mean(dim=0), KLD.mean(dim=0)
 
-    def _sample_gauss(self, mu, std):
-        # Reparametrization trick
-        # Sample N(0, I)
-        eps = torch.randn_like(std)
-        return mu + eps * std, eps
+    def interpolate(self, starting_inputs: torch.Tensor, ending_inputs: torch.Tensor, granularity: int = 10):
+        """This function performs a geodesic interpolation in the poincaré disk of the autoencoder
+        from starting inputs to ending inputs. It returns the interpolation trajectories.
+
+        Args:
+            starting_inputs (torch.Tensor): The starting inputs in the interpolation of shape
+                [B x input_dim]
+            ending_inputs (torch.Tensor): The starting inputs in the interpolation of shape
+                [B x input_dim]
+            granularity (int): The granularity of the interpolation.
+
+        Returns:
+            torch.Tensor: A tensor of shape [B x granularity x input_dim] containing the
+            interpolation trajectories.
+        """
+        assert starting_inputs.shape[0] == ending_inputs.shape[0], (
+            "The number of starting_inputs should equal the number of ending_inputs. Got "
+            f"{starting_inputs.shape[0]} sampler for starting_inputs and {ending_inputs.shape[0]} "
+            "for endinging_inputs."
+        )
+
+        starting_z = self.encoder(starting_inputs).embedding
+        ending_z = self.encoder(ending_inputs).embedding
+        t = torch.linspace(0, 1, granularity).to(starting_inputs.device)
+
+        inter_geo = torch.zeros(
+            starting_inputs.shape[0], granularity, starting_z.shape[-1]).to(starting_z.device)
+
+        for i, t_i in enumerate(t):
+            z_i = self.latent_manifold.geodesic(t_i, starting_z, ending_z)
+            inter_geo[:, i, :] = z_i
+
+        decoded_geo = self.decoder(
+            inter_geo.reshape((starting_z.shape[0] * t.shape[0],) + (starting_z.shape[1:]))
+            ).reconstruction.reshape(
+                (
+                starting_inputs.shape[0],
+                t.shape[0],
+            )
+            + (starting_inputs.shape[1:])
+            )
+        return decoded_geo
 
     def get_nll(self, data, n_samples=1, batch_size=100):
         """
@@ -155,15 +225,26 @@ class PoincareVAE(BaseAE):
                 x_rep = torch.cat(batch_size * [x])
 
                 encoder_output = self.encoder(x_rep)
-                mu, log_var = encoder_output.embedding, encoder_output.log_covariance
-
+                if self.model_config.posterior_distribution == "riemannian_normal":
+                    mu, log_var = encoder_output.embedding, encoder_output.log_concentration
+                else:
+                    mu, log_var = encoder_output.embedding, encoder_output.log_covariance
+                    
                 std = torch.exp(0.5 * log_var)
-                z, _ = self._sample_gauss(mu, std)
 
-                log_q_z_given_x = -0.5 * (
-                    log_var + (z - mu) ** 2 / torch.exp(log_var)
-                ).sum(dim=-1)
-                log_p_z = -0.5 * (z ** 2).sum(dim=-1)
+                qz_x = self.posterior(loc=mu, scale=std, manifold=self.latent_manifold)
+                z = qz_x.rsample(torch.Size([1])).squeeze(0)
+
+                recon_x = self.decoder(z)["reconstruction"]
+
+                pz = self.prior(
+                    loc=self._pz_mu,
+                    scale=self._pz_logvar.exp(),
+                    manifold=self.latent_manifold
+                )
+
+                log_q_z_given_x = qz_x.log_prob(z).reshape(z.shape[0], -1).sum(dim=1)
+                log_p_z = pz.log_prob(z).reshape(z.shape[0], -1).sum(dim=-1)
 
                 recon_x = self.decoder(z)["reconstruction"]
 
@@ -189,7 +270,7 @@ class PoincareVAE(BaseAE):
 
                 log_p_x.append(
                     log_p_x_given_z + log_p_z - log_q_z_given_x
-                )  # log(2*pi) simplifies
+                )
 
             log_p_x = torch.cat(log_p_x)
 

@@ -68,6 +68,12 @@ def _mobius_add(x, y, c, dim=-1): ## OK
     denom = 1 + 2 * c * xy + c ** 2 * x2 * y2
     return num / denom.clamp_min(MIN_NORM)
 
+def _mobius_scalar_mul(r, x, c, dim: int = -1): ## OK
+    x_norm = x.norm(dim=dim, keepdim=True, p=2).clamp_min(MIN_NORM)
+    sqrt_c = c ** 0.5
+    res_c = tanh(r * artanh(sqrt_c * x_norm)) * x / (x_norm * sqrt_c)
+    return res_c
+
 def _project(x, c, dim: int = -1, eps: float = None): ## OK
     norm = x.norm(dim=dim, keepdim=True, p=2).clamp_min(MIN_NORM)
     if eps is None:
@@ -153,6 +159,12 @@ class PoincareBall:
         d = self.norm(x, y, keepdim=keepdim) if is_vector else self.dist(x, y, keepdim=keepdim)
         return (self.dim - 1) * (torch.sinh(self.c.sqrt()*d) / self.c.sqrt() / d).log()
 
+    def expmap0(self, u, dim: int = -1):
+        sqrt_c = self.c ** 0.5
+        u_norm = u.norm(dim=dim, p=2, keepdim=True).clamp_min(MIN_NORM)
+        gamma_1 = tanh(sqrt_c * u_norm) * u / (sqrt_c * u_norm)
+        return gamma_1
+
     def expmap(self, x, u, dim: int = -1):
         sqrt_c = self.c ** 0.5
         u_norm = u.norm(dim=dim, p=2, keepdim=True).clamp_min(MIN_NORM)
@@ -174,6 +186,12 @@ class PoincareBall:
         )
         gamma_1 = self.mobius_add(x, second_term, dim=dim)
         return gamma_1
+
+    def geodesic(self, t, x, y, dim: int = -1): ## OK
+        v = _mobius_add(-x, y, self.c, dim=dim)
+        tv = _mobius_scalar_mul(t, v, self.c, dim=dim)
+        gamma_t = _mobius_add(x, tv, self.c, dim=dim)
+        return gamma_t
 
     def _check_point_on_manifold(
         self, x: torch.Tensor, *, atol=1e-5, rtol=1e-5, dim=-1
