@@ -22,6 +22,7 @@ Autoencoders
     infovae
     vamp
     svae
+    pvae
     aae
     vaegan
     vqvae
