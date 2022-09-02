@@ -138,18 +138,18 @@ def main(args):
             "data"
         ]
         / 255.0
-    )
+    ).clamp(1e-5, 1-1e-5)
     eval_data = torch.tensor(
         np.load(os.path.join(PATH, f"data/mnist", "eval_data.npz"))["data"]
         / 255.0
-    )
+    ).clamp(1e-5, 1-1e-5)
 
     train_data = torch.cat((train_data, eval_data))
 
-    test_data = (
+    test_data = torch.tensor(
         np.load(os.path.join(PATH, f"data/mnist", "test_data.npz"))["data"]
         / 255.0
-    )
+    ).clamp(1e-5, 1-1e-5)
 
     data_input_dim = tuple(train_data.shape[1:])
 
