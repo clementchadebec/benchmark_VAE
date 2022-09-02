@@ -6,7 +6,7 @@ from .pvae_sampler_config import PoincareDiskSamplerConfig
 
 
 class PoincareDiskSampler(BaseSampler):
-    """Sampling from the Poincaré Disk using either a Wrapped Riemannian or Riemannian Gaussian 
+    """Sampling from the Poincaré Disk using either a Wrapped Riemannian or Riemannian Gaussian
     distribution.
 
     Args:
@@ -16,9 +16,13 @@ class PoincareDiskSampler(BaseSampler):
 
     """
 
-    def __init__(self, model: PoincareVAE, sampler_config: PoincareDiskSamplerConfig = None):
+    def __init__(
+        self, model: PoincareVAE, sampler_config: PoincareDiskSamplerConfig = None
+    ):
 
-        assert isinstance(model, PoincareVAE), "This sampler is only suitable for PoincareVAE model"
+        assert isinstance(
+            model, PoincareVAE
+        ), "This sampler is only suitable for PoincareVAE model"
 
         if sampler_config is None:
             sampler_config = PoincareDiskSamplerConfig()
@@ -26,10 +30,10 @@ class PoincareDiskSampler(BaseSampler):
         BaseSampler.__init__(self, model=model, sampler_config=sampler_config)
 
         self.gen_distribution = self.model.prior(
-                loc=self.model._pz_mu,
-                scale=self.model._pz_logvar.exp(),
-                manifold=self.model.latent_manifold
-            )
+            loc=self.model._pz_mu,
+            scale=self.model._pz_logvar.exp(),
+            manifold=self.model.latent_manifold,
+        )
 
     def sample(
         self,
@@ -60,8 +64,10 @@ class PoincareDiskSampler(BaseSampler):
         x_gen_list = []
 
         for i in range(full_batch_nbr):
-            
-            z = self.gen_distribution.rsample(torch.Size([batch_size])).reshape(batch_size, -1)
+
+            z = self.gen_distribution.rsample(torch.Size([batch_size])).reshape(
+                batch_size, -1
+            )
             x_gen = self.model.decoder(z)["reconstruction"].detach()
 
             if output_dir is not None:
@@ -75,7 +81,8 @@ class PoincareDiskSampler(BaseSampler):
         if last_batch_samples_nbr > 0:
 
             z = self.gen_distribution.rsample(
-                torch.Size([last_batch_samples_nbr])).reshape(last_batch_samples_nbr, -1)
+                torch.Size([last_batch_samples_nbr])
+            ).reshape(last_batch_samples_nbr, -1)
             x_gen = self.model.decoder(z)["reconstruction"].detach()
 
             if output_dir is not None:
