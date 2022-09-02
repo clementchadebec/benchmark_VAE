@@ -71,9 +71,7 @@ class GenerationPipeline(Pipeline):
             )
 
         elif sampler_config.name == "PoincareDiskSamplerConfig":
-            sampler = PoincareDiskSampler(
-                model=model, sampler_config=sampler_config
-            )
+            sampler = PoincareDiskSampler(model=model, sampler_config=sampler_config)
 
         else:
             raise NotImplementedError(
