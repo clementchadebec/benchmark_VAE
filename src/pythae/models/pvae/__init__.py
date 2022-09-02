@@ -1,10 +1,11 @@
-"""This module is the implementation of a Vanilla Variational Autoencoder
-(https://arxiv.org/abs/1312.6114).
+"""This module is the implementation of a Poincaré Disk Variational Autoencoder
+(https://arxiv.org/abs/1901.06033).
 
 Available samplers
 -------------------
 
 .. autosummary::
+    ~pythae.samplers.PoincareDiskSampler
     ~pythae.samplers.NormalSampler
     ~pythae.samplers.GaussianMixtureSampler
     ~pythae.samplers.TwoStageVAESampler

@@ -10,7 +10,7 @@ from pythae.customexception import BadInheritanceError
 from pythae.models.base.base_utils import ModelOutput
 from pythae.models import PoincareVAE, PoincareVAEConfig, AutoModel
 from pythae.models.pvae.pvae_utils import PoincareBall
-from pythae.samplers import NormalSamplerConfig, GaussianMixtureSamplerConfig, MAFSamplerConfig, TwoStageVAESamplerConfig, IAFSamplerConfig
+from pythae.samplers import PoincareDiskSamplerConfig, NormalSamplerConfig, GaussianMixtureSamplerConfig, MAFSamplerConfig, TwoStageVAESamplerConfig, IAFSamplerConfig
 from pythae.trainers import BaseTrainer, BaseTrainerConfig
 from pythae.pipelines import TrainingPipeline, GenerationPipeline
 from tests.data.custom_architectures import (
@@ -824,12 +824,20 @@ class Test_VAE_Generation:
     def train_data(self):
         return torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample")).data
 
-    @pytest.fixture()
-    def ae_model(self):
-        return PoincareVAE(PoincareVAEConfig(input_dim=(1, 28, 28), latent_dim=7))
+    @pytest.fixture(params=[
+        PoincareVAEConfig(input_dim=(1, 28, 28), latent_dim=7, prior_distribution="wrapped_normal", curvature=0.2),
+        PoincareVAEConfig(input_dim=(1, 28, 28), latent_dim=2, prior_distribution="riemannian_normal", curvature=0.7)
+    ])
+    def ae_config(self, request):
+        return request.param
+
+    @pytest.fixture
+    def ae_model(self, ae_config):
+        return PoincareVAE(ae_config)
 
     @pytest.fixture(
         params=[
+            PoincareDiskSamplerConfig(),
             NormalSamplerConfig(),
             GaussianMixtureSamplerConfig(),
             MAFSamplerConfig(),
