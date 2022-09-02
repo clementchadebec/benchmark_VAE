@@ -61,7 +61,7 @@ class PoincareDiskSampler(BaseSampler):
 
         for i in range(full_batch_nbr):
             
-            z = self.gen_distribution.rsample(torch.Size([batch_size])).squeeze(0)
+            z = self.gen_distribution.rsample(torch.Size([batch_size])).reshape(batch_size, -1)
             x_gen = self.model.decoder(z)["reconstruction"].detach()
 
             if output_dir is not None:
@@ -74,7 +74,8 @@ class PoincareDiskSampler(BaseSampler):
 
         if last_batch_samples_nbr > 0:
 
-            z = self.gen_distribution.rsample(torch.Size([last_batch_samples_nbr])).squeeze(0)
+            z = self.gen_distribution.rsample(
+                torch.Size([last_batch_samples_nbr])).reshape(last_batch_samples_nbr, -1)
             x_gen = self.model.decoder(z)["reconstruction"].detach()
 
             if output_dir is not None:
