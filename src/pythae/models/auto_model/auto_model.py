@@ -174,6 +174,11 @@ class AutoModel(nn.Module):
 
             model = PixelCNN.load_from_folder(dir_path=dir_path)
 
+        elif model_name == "PoincareVAEConfig":
+            from ..pvae import PoincareVAE
+
+            model = PoincareVAE.load_from_folder(dir_path=dir_path)
+
         else:
             raise NameError(
                 "Cannot reload automatically the model... "
@@ -408,6 +413,13 @@ class AutoModel(nn.Module):
             from ..normalizing_flows import PixelCNN
 
             model = PixelCNN.load_from_hf_hub(
+                hf_hub_path=hf_hub_path, allow_pickle=allow_pickle
+            )
+
+        elif model_name == "PoincareVAEConfig":
+            from ..pvae import PoincareVAE
+
+            model = PoincareVAE.load_from_hf_hub(
                 hf_hub_path=hf_hub_path, allow_pickle=allow_pickle
             )
 

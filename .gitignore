@@ -51,6 +51,8 @@ examples/notebooks/my_model_with_custom_archi/
 examples/notebooks/my_model/
 examples/net.py
 examples/scripts/configs/*
+examples/scripts/reproducibility/reproducibility/*
+
 
 
 

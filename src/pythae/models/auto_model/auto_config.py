@@ -160,6 +160,11 @@ class AutoConfig(BaseConfig):
 
             model_config = PixelCNNConfig.from_json_file(json_path)
 
+        elif config_name == "PoincareVAEConfig":
+            from ..pvae import PoincareVAEConfig
+
+            model_config = PoincareVAEConfig.from_json_file(json_path)
+
         else:
             raise NameError(
                 "Cannot reload automatically the model configuration... "
