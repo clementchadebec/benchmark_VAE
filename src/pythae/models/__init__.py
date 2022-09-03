@@ -26,6 +26,7 @@ from .hvae import HVAE, HVAEConfig
 from .info_vae import INFOVAE_MMD, INFOVAE_MMD_Config
 from .iwae import IWAE, IWAEConfig
 from .msssim_vae import MSSSIM_VAE, MSSSIM_VAEConfig
+from .pvae import PoincareVAE, PoincareVAEConfig
 from .rae_gp import RAE_GP, RAE_GP_Config
 from .rae_l2 import RAE_L2, RAE_L2_Config
 from .rhvae import RHVAE, RHVAEConfig
@@ -37,7 +38,6 @@ from .vae_lin_nf import VAE_LinNF, VAE_LinNF_Config
 from .vamp import VAMP, VAMPConfig
 from .vq_vae import VQVAE, VQVAEConfig
 from .wae_mmd import WAE_MMD, WAE_MMD_Config
-from .pvae import PoincareVAE, PoincareVAEConfig
 
 __all__ = [
     "AutoModel",
@@ -86,5 +86,5 @@ __all__ = [
     "VAE_IAF",
     "VAE_IAF_Config",
     "PoincareVAE",
-    "PoincareVAEConfig"
+    "PoincareVAEConfig",
 ]
