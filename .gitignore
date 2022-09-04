@@ -52,6 +52,8 @@ examples/notebooks/my_model/
 examples/net.py
 examples/scripts/configs/*
 examples/scripts/reproducibility/reproducibility/*
+examples/scripts/reproducibility/sync.ipynb
+
 
 
 

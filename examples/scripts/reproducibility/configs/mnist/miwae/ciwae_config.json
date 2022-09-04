@@ -1,0 +1,7 @@
+{
+    "name": "MIWAEConfig",
+    "latent_dim": 50,
+    "reconstruction_loss": "bce",
+    "number_samples": 8,
+    "number_gradient_estimates": 8
+}

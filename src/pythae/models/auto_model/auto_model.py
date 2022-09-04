@@ -179,6 +179,16 @@ class AutoModel(nn.Module):
 
             model = PoincareVAE.load_from_folder(dir_path=dir_path)
 
+        elif model_name == "CIWAEConfig":
+            from ..ciwae import CIWAE
+
+            model = CIWAE.load_from_folder(dir_path=dir_path)
+        
+        elif model_name == "MIWAEConfig":
+            from ..miwae import MIWAE
+
+            model = MIWAE.load_from_folder(dir_path=dir_path)
+
         else:
             raise NameError(
                 "Cannot reload automatically the model... "
