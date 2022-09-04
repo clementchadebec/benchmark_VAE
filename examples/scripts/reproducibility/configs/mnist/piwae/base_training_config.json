@@ -1,6 +1,6 @@
 {
   "name": "BaseTrainerConfig",
-  "output_dir": "reproducibility/binary_mnist",
+  "output_dir": "reproducibility/mnist",
   "batch_size": 20,
   "num_epochs": 3280,
   "learning_rate": 1e-3,
