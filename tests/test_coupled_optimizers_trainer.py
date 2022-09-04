@@ -6,7 +6,7 @@ import torch
 from torch.optim import SGD, Adadelta, Adagrad, Adam, RMSprop
 from torch.optim.lr_scheduler import StepLR, LinearLR, ExponentialLR
 
-from pythae.models import AE, AEConfig, VAE, VAEConfig
+from pythae.models import RAE_L2, RAE_L2_Config
 from pythae.trainers import CoupledOptimizerTrainer, CoupledOptimizerTrainerConfig
 from tests.data.custom_architectures import *
 
@@ -20,7 +20,7 @@ def train_dataset():
 
 @pytest.fixture()
 def model_sample():
-    return AE(AEConfig(input_dim=(1, 28, 28)))
+    return RAE_L2(RAE_L2_Config(input_dim=(1, 28, 28)))
 
 
 @pytest.fixture
@@ -271,19 +271,12 @@ class Test_Main_Training:
         request.param.output_dir = dir_path
         return request.param
 
-    @pytest.fixture(
-        params=[
-            AEConfig(input_dim=(1, 28, 28)),
-            VAEConfig(input_dim=(1, 28, 28), latent_dim=5),
-        ]
-    )
+    @pytest.fixture
     def ae_config(self, request):
-        return request.param
+        return RAE_L2_Config(input_dim=(1, 28, 28), latent_dim=5)
 
     @pytest.fixture
     def custom_encoder(self, ae_config):
-        if isinstance(ae_config, VAEConfig):
-            return Encoder_VAE_MLP_Custom(ae_config)
         return Encoder_AE_MLP_Custom(ae_config)
 
     @pytest.fixture
@@ -305,28 +298,16 @@ class Test_Main_Training:
         alpha = request.param
 
         if alpha < 0.25:
-            if isinstance(ae_config, VAEConfig):
-                model = VAE(ae_config)
-            else:
-                model = AE(ae_config)
+            model = RAE_L2(ae_config)
 
         elif 0.25 <= alpha < 0.5:
-            if isinstance(ae_config, VAEConfig):
-                model = VAE(ae_config, encoder=custom_encoder)
-            else:
-                model = AE(ae_config, encoder=custom_encoder)
+            model = RAE_L2(ae_config, encoder=custom_encoder)
 
         elif 0.5 <= alpha < 0.75:
-            if isinstance(ae_config, VAEConfig):
-                model = VAE(ae_config, decoder=custom_decoder)
-            else:
-                model = AE(ae_config, decoder=custom_decoder)
+            model = RAE_L2(ae_config, decoder=custom_decoder)
 
         else:
-            if isinstance(ae_config, VAEConfig):
-                model = VAE(ae_config, encoder=custom_encoder, decoder=custom_decoder)
-            else:
-                model = AE(ae_config, encoder=custom_encoder, decoder=custom_decoder)
+            model = RAE_L2(ae_config, encoder=custom_encoder, decoder=custom_decoder)
 
         return model
 
@@ -460,7 +441,7 @@ class Test_Logging:
 
     @pytest.fixture
     def model_sample(self):
-        return VAE(VAEConfig(input_dim=(1, 28, 28)))
+        return RAE_L2(RAE_L2_Config(input_dim=(1, 28, 28)))
 
     def test_create_log_file(
         self, tmpdir, model_sample, train_dataset, training_config

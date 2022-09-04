@@ -63,6 +63,10 @@ class RAE_L2(AE):
 
         output = ModelOutput(
             loss=loss,
+            encoder_loss=loss,
+            decoder_loss=loss,
+            update_encoder=True,
+            update_decoder=True,
             recon_loss=recon_loss,
             embedding_loss=embedding_loss,
             recon_x=recon_x,
