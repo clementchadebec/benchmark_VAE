@@ -9,7 +9,7 @@ import torch
 from pythae.data.preprocessors import DataProcessor
 from pythae.models import AutoModel
 from pythae.models import PIWAE, PIWAEConfig
-from pythae.trainers import BaseTrainer, BaseTrainerConfig
+from pythae.trainers import CoupledOptimizerTrainerConfig, CoupledOptimizerTrainer
 
 from pythae.models.nn import BaseEncoder, BaseDecoder
 import torch.nn as nn
@@ -142,7 +142,7 @@ def main(args):
     )
 
     ### Set training config
-    training_config = BaseTrainerConfig.from_json_file(args.training_config)
+    training_config = CoupledOptimizerTrainerConfig.from_json_file(args.training_config)
 
     ### Process data
     data_processor = DataProcessor()
@@ -154,12 +154,16 @@ def main(args):
     #ieval_data = data_processor.process_data(eval_data)
     eval_dataset = data_processor.to_dataset(eval_data)
 
-    ### Optimizer
-    optimizer = torch.optim.Adam(model.parameters(), lr=training_config.learning_rate, eps=1e-4)
+    ### Optimizers
+    enc_optimizer = torch.optim.Adam(model.encoder.parameters(), lr=training_config.learning_rate, eps=1e-4)
+    dec_optimizer = torch.optim.Adam(model.decoder.parameters(), lr=training_config.learning_rate, eps=1e-4)
 
-    ### Scheduler
-    scheduler = torch.optim.lr_scheduler.MultiStepLR(
-        optimizer, milestones=[2, 5, 14, 28, 41, 122, 365, 1094], gamma=10**(-1/7), verbose=True
+    ### Schedulers
+    enc_scheduler = torch.optim.lr_scheduler.MultiStepLR(
+        enc_optimizer, milestones=[2, 5, 14, 28, 41, 122, 365, 1094], gamma=10**(-1/7), verbose=True
+    )
+    dec_scheduler = torch.optim.lr_scheduler.MultiStepLR(
+        dec_optimizer, milestones=[2, 5, 14, 28, 41, 122, 365, 1094], gamma=10**(-1/7), verbose=True
     )
 
     seed = 123
@@ -171,14 +175,15 @@ def main(args):
     print(eval_dataset.data.shape)
     print(test_data.shape)
 
-    logger.info("Using Base Trainer\n")
-    trainer = BaseTrainer(
+    trainer = CoupledOptimizerTrainer(
         model=model,
         train_dataset=train_dataset,
         eval_dataset=eval_dataset,
         training_config=training_config,
-        optimizer=optimizer,
-        scheduler=scheduler,
+        encoder_optimizer=enc_optimizer,
+        decoder_optimizer=dec_optimizer,
+        encoder_scheduler=enc_scheduler,
+        decoder_scheduler=dec_scheduler,
         callbacks=None,
     )
 
