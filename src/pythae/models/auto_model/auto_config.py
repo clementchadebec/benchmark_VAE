@@ -175,6 +175,11 @@ class AutoConfig(BaseConfig):
 
             model_config = MIWAEConfig.from_json_file(json_path)
 
+        elif config_name == "PIWAEConfig":
+            from ..piwae import PIWAEConfig
+
+            model_config = PIWAEConfig.from_json_file(json_path)
+
         else:
             raise NameError(
                 "Cannot reload automatically the model configuration... "

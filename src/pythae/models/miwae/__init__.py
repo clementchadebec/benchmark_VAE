@@ -1,4 +1,4 @@
-"""This module is the implementation of the M-estimate Importance Weighted Autoencoder
+"""This module is the implementation of the Multiply Importance Weighted Autoencoder
 proposed in (https://arxiv.org/abs/1802.04537).
 
 Available samplers

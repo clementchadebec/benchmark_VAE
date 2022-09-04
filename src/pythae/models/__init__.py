@@ -28,6 +28,7 @@ from .info_vae import INFOVAE_MMD, INFOVAE_MMD_Config
 from .iwae import IWAE, IWAEConfig
 from .miwae import MIWAE, MIWAEConfig
 from .msssim_vae import MSSSIM_VAE, MSSSIM_VAEConfig
+from .piwae import PIWAE, PIWAEConfig
 from .pvae import PoincareVAE, PoincareVAEConfig
 from .rae_gp import RAE_GP, RAE_GP_Config
 from .rae_l2 import RAE_L2, RAE_L2_Config
@@ -92,5 +93,7 @@ __all__ = [
     "CIWAE",
     "CIWAEConfig",
     "MIWAE",
-    "MIWAEConfig"
+    "MIWAEConfig",
+    "PIWAE",
+    "PIWAEConfig"
 ]

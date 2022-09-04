@@ -12,10 +12,10 @@ from .miwae_config import MIWAEConfig
 
 class MIWAE(VAE):
     """
-    M-estimate Importance Weighted Autoencoder model.
+    Multiply Importance Weighted Autoencoder model.
 
     Args:
-        model_config (MIWAEConfig): The IWAE configuration setting the main
+        model_config (MIWAEConfig): The MIWAE configuration setting the main
             parameters of the model.
 
         encoder (BaseEncoder): An instance of BaseEncoder (inheriting from `torch.nn.Module` which

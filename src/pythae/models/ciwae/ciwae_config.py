@@ -5,7 +5,7 @@ from ..vae import VAEConfig
 
 @dataclass
 class CIWAEConfig(VAEConfig):
-    """CIWAE model config class.
+    """Combination IWAE model config class.
 
     Parameters:
         input_dim (tuple): The input_data dimension.

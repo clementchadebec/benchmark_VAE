@@ -1,4 +1,4 @@
-"""This module is the implementation of the Combination Importance Weighted Autoencoder
+"""This module is the implementation of the Partially Importance Weighted Autoencoder
 proposed in (https://arxiv.org/abs/1802.04537).
 
 Available samplers
@@ -14,7 +14,7 @@ Available samplers
 
 """
 
-from .ciwae_config import CIWAEConfig
-from .ciwae_model import CIWAE
+from .piwae_config import PIWAEConfig
+from .piwae_model import PIWAE
 
-__all__ = ["CIWAE", "CIWAEConfig"]
+__all__ = ["PIWAE", "PIWAEConfig"]

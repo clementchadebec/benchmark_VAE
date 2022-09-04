@@ -7,15 +7,15 @@ from ...data.datasets import BaseDataset
 from ..base.base_utils import ModelOutput
 from ..nn import BaseDecoder, BaseEncoder
 from ..vae import VAE
-from .ciwae_config import CIWAEConfig
+from .piwae_config import PIWAEConfig
 
 
-class CIWAE(VAE):
+class PIWAE(VAE):
     """
-    Combination Importance Weighted Autoencoder model.
+    Partially Importance Weighted Autoencoder model.
 
     Args:
-        model_config (CIWAEConfig): The CIWAE configuration setting the main
+        model_config (PIWAEConfig): The PIWAE configuration setting the main
             parameters of the model.
 
         encoder (BaseEncoder): An instance of BaseEncoder (inheriting from `torch.nn.Module` which
@@ -35,16 +35,16 @@ class CIWAE(VAE):
 
     def __init__(
         self,
-        model_config: CIWAEConfig,
+        model_config: PIWAEConfig,
         encoder: Optional[BaseEncoder] = None,
         decoder: Optional[BaseDecoder] = None,
     ):
 
         VAE.__init__(self, model_config=model_config, encoder=encoder, decoder=decoder)
 
-        self.model_name = "CIWAE"
+        self.model_name = "PIWAE"
+        self.gradient_n_estimates = model_config.number_gradient_estimates
         self.n_samples = model_config.number_samples
-        self.beta = model_config.beta
 
     def forward(self, inputs: BaseDataset, **kwargs):
         """
@@ -60,14 +60,16 @@ class CIWAE(VAE):
 
         x = inputs["data"]
 
-        x = (x > torch.distributions.Uniform(0, 1).sample(x.shape).cuda()).float()
-
         encoder_output = self.encoder(x)
 
         mu, log_var = encoder_output.embedding, encoder_output.log_covariance
 
-        mu = mu.unsqueeze(1).repeat(1, self.n_samples, 1)
-        log_var = log_var.unsqueeze(1).repeat(1, self.n_samples, 1)
+        mu = mu.unsqueeze(1).unsqueeze(1).repeat(
+            1, self.gradient_n_estimates, self.n_samples, 1
+        )
+        log_var = log_var.unsqueeze(1).unsqueeze(1).repeat(
+            1, self.gradient_n_estimates, self.n_samples, 1
+        )
 
         std = torch.exp(0.5 * log_var)
 
@@ -75,19 +77,29 @@ class CIWAE(VAE):
 
         recon_x = self.decoder(z.reshape(-1, self.latent_dim))[
             "reconstruction"
-        ].reshape(x.shape[0], self.n_samples, -1)
+        ].reshape(x.shape[0], self.gradient_n_estimates, self.n_samples, -1)
 
-        loss, recon_loss, kld = self.loss_function(recon_x, x, mu, log_var, z)
+        miwae_loss, iwae_loss, recon_loss, kld = self.loss_function(recon_x, x, mu, log_var, z)
+
+        loss = miwae_loss + iwae_loss
 
         output = ModelOutput(
             reconstruction_loss=recon_loss,
             reg_loss=kld,
             loss=loss,
-            recon_x=recon_x.reshape(x.shape[0], self.n_samples, -1)[:, 0, :].reshape_as(
-                x
-            ),
-            z=z.reshape(x.shape[0], self.n_samples, -1)[:, 0, :].reshape(
-                -1, self.latent_dim
+            encoder_loss=miwae_loss,
+            decoder_loss=iwae_loss,
+            update_encoder=True,
+            update_decoder=True,
+            recon_x=recon_x.reshape(
+                x.shape[0], self.gradient_n_estimates, self.n_samples, -1
+                )[:, 0, 0, :].reshape_as(
+                    x
+                ),
+            z=z.reshape(
+                x.shape[0], self.gradient_n_estimates, self.n_samples, -1
+                )[:, 0, 0, :].reshape(
+                    -1, self.latent_dim
             ),
         )
 
@@ -100,8 +112,8 @@ class CIWAE(VAE):
             recon_loss = F.mse_loss(
                 recon_x,
                 x.reshape(recon_x.shape[0], -1)
-                .unsqueeze(1)
-                .repeat(1, self.n_samples, 1),
+                .unsqueeze(1).unsqueeze(1)
+                .repeat(1, self.gradient_n_estimates, self.n_samples, 1),
                 reduction="none",
             ).sum(dim=-1)
 
@@ -110,8 +122,8 @@ class CIWAE(VAE):
             recon_loss = F.binary_cross_entropy(
                 recon_x,
                 x.reshape(recon_x.shape[0], -1)
-                .unsqueeze(1)
-                .repeat(1, self.n_samples, 1),
+                .unsqueeze(1).unsqueeze(1)
+                .repeat(1, self.gradient_n_estimates, self.n_samples, 1),
                 reduction="none",
             ).sum(dim=-1)
 
@@ -120,17 +132,27 @@ class CIWAE(VAE):
 
         KLD = -(log_p_z - log_q_z)
 
+        # MIWAE loss
         log_w = -(recon_loss + KLD)
 
         log_w_minus_max = log_w - log_w.max(1, keepdim=True)[0]
         w = log_w_minus_max.exp()
         w_tilde = (w / w.sum(axis=1, keepdim=True)).detach()
 
-        iwae_elbo = -(w_tilde * log_w).sum(1)
-        vae_elbo = -log_w.mean(dim=-1) # avg on importance samples
+        miwae_loss = -(w_tilde * log_w).sum(1).mean(dim=-1)
+        
+        # IWAE loss (K=ML)
+        log_w_iwae = log_w.reshape(x.shape[0], self.gradient_n_estimates *self.n_samples)
+        
+        log_w_iwae_minus_max = log_w_iwae - log_w_iwae.max(1, keepdim=True)[0]
+        w_iwae = log_w_iwae_minus_max.exp()
+        w_iwae_tilde = (w_iwae / w_iwae.sum(axis=1, keepdim=True)).detach()
+        
+        iwae_loss = -(w_iwae_tilde * log_w_iwae).sum(1)
 
         return (
-            (self.beta * vae_elbo + (1 - self.beta) * iwae_elbo).mean(dim=0),
+            miwae_loss.mean(dim=0),
+            iwae_loss.mean(dim=0),
             recon_loss.mean(dim=0),
             KLD.mean(dim=0),
         )

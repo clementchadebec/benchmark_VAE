@@ -17,6 +17,9 @@ Autoencoders
     factorvae
     betatcvae
     iwae
+    ciwae
+    miwae
+    piwae
     msssimvae
     wae
     infovae
@@ -49,6 +52,9 @@ Available Models
     ~pythae.models.FactorVAE
     ~pythae.models.BetaTCVAE
     ~pythae.models.IWAE
+    ~pythae.models.CIWAE
+    ~pythae.models.MIWAE
+    ~pythae.models.PIWAE
     ~pythae.models.MSSSIM_VAE
     ~pythae.models.WAE_MMD
     ~pythae.models.INFOVAE_MMD

@@ -113,15 +113,13 @@ def main(args):
     train_data = torch.tensor(
         np.load(os.path.join(PATH, f"data/mnist", "train_data.npz"))[
             "data"
-        ]
+        ][:-400]
         / 255.0
     )
     eval_data = torch.tensor(
-        np.load(os.path.join(PATH, f"data/mnist", "eval_data.npz"))["data"]
+        np.load(os.path.join(PATH, f"data/mnist", "eval_data.npz"))["data"][-400:]
         / 255.0
     )
-
-    train_data = torch.cat((train_data, eval_data))
 
     test_data = (
         np.load(os.path.join(PATH, f"data/mnist", "test_data.npz"))["data"]
@@ -167,6 +165,11 @@ def main(args):
     seed = 123
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
+
+
+    print(train_dataset.data.shape)
+    print(eval_dataset.data.shape)
+    print(test_data.shape)
 
     logger.info("Using Base Trainer\n")
     trainer = BaseTrainer(

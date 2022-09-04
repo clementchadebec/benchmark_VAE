@@ -8,7 +8,7 @@ import torch
 
 from pythae.data.preprocessors import DataProcessor
 from pythae.models import AutoModel
-from pythae.models import MIWAE, MIWAEConfig
+from pythae.models import PIWAE, PIWAEConfig
 from pythae.trainers import BaseTrainer, BaseTrainerConfig
 
 from pythae.models.nn import BaseEncoder, BaseDecoder
@@ -128,14 +128,14 @@ def main(args):
     data_input_dim = tuple(train_data.shape[1:])
 
     if args.model_config is not None:
-        model_config = MIWAEConfig.from_json_file(args.model_config)
+        model_config = PIWAEConfig.from_json_file(args.model_config)
 
     else:
-        model_config = MIWAEConfig()
+        model_config = PIWAEConfig()
 
     model_config.input_dim = data_input_dim
 
-    model = MIWAE(
+    model = PIWAE(
         model_config=model_config,
         encoder=Encoder(model_config),
         decoder=Decoder(model_config),
@@ -162,14 +162,14 @@ def main(args):
         optimizer, milestones=[2, 5, 14, 28, 41, 122, 365, 1094], gamma=10**(-1/7), verbose=True
     )
 
+    seed = 123
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+
 
     print(train_dataset.data.shape)
     print(eval_dataset.data.shape)
     print(test_data.shape)
-
-    seed = 123
-    torch.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)
 
     logger.info("Using Base Trainer\n")
     trainer = BaseTrainer(
