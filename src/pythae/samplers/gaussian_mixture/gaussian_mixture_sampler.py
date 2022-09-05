@@ -57,15 +57,9 @@ class GaussianMixtureSampler(BaseSampler):
             train_data.max() >= 1 and train_data.min() >= 0
         ), "Train data must in the range [0-1]"
 
-        dataset_type = (
-            "DoubleBatchDataset"
-            if self.model.model_name == "FactorVAE"
-            else "BaseDataset"
-        )
-
         data_processor = DataProcessor()
         train_data = data_processor.process_data(train_data).to(self.device)
-        train_dataset = data_processor.to_dataset(train_data, dataset_type=dataset_type)
+        train_dataset = data_processor.to_dataset(train_data)
         train_loader = DataLoader(dataset=train_dataset, batch_size=100, shuffle=False)
 
         z = []

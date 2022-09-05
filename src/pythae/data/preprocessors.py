@@ -16,7 +16,7 @@ import numpy as np
 import torch
 from typing_extensions import Literal
 
-from pythae.data.datasets import BaseDataset, DoubleBatchDataset
+from pythae.data.datasets import BaseDataset
 
 logger = logging.getLogger(__name__)
 
@@ -73,8 +73,7 @@ class DataProcessor:
     @staticmethod
     def to_dataset(
         data: torch.Tensor,
-        labels: Optional[torch.Tensor] = None,
-        dataset_type: Literal["BaseDataset", "DoubleBatchDataset"] = "BaseDataset",
+        labels: Optional[torch.Tensor] = None
     ):
         """This method converts a set of ``torch.Tensor`` to a
         :class:`~pythae.data.datasets.BaseDataset`
@@ -82,8 +81,6 @@ class DataProcessor:
         Args:
             data (torch.Tensor): The set of data as a big torch.Tensor
             labels (torch.Tensor): The targets labels as a big torch.Tensor
-            dataset_type (str): The dataset instance name to create. Choices =
-                ['BaseDataset', 'DoubleBatchDataset']. Default: 'BaseDataset'.
 
         Returns:
             (BaseDataset): The resulting dataset
@@ -93,19 +90,8 @@ class DataProcessor:
             labels = torch.ones(data.shape[0])
 
         labels = DataProcessor.to_tensor(labels)
-
-        if dataset_type == "BaseDataset":
-            dataset = BaseDataset(data, labels)
-
-        elif dataset_type == "DoubleBatchDataset":
-            dataset = DoubleBatchDataset(data, labels)
-
-        else:
-            raise NotImplementedError(
-                f"Dataset of type {dataset_type} is not implemented. Current possible choices are "
-                "['BaseDataset', 'DoubleBatchDataset']"
-            )
-
+        dataset = BaseDataset(data, labels)
+        
         return dataset
 
     def _process_data_array(self, data: np.ndarray, batch_size: int = 100):

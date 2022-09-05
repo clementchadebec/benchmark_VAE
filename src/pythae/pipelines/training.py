@@ -162,14 +162,12 @@ class TrainingPipeline(Pipeline):
                 A list of callbacks to use during training.
         """
 
-        dataset_type = "BaseDataset"
-
         if isinstance(train_data, np.ndarray) or isinstance(train_data, torch.Tensor):
 
             logger.info("Preprocessing train data...")
             train_data = self.data_processor.process_data(train_data)
             train_dataset = self.data_processor.to_dataset(
-                train_data, dataset_type=dataset_type
+                train_data
             )
 
         else:
@@ -183,7 +181,7 @@ class TrainingPipeline(Pipeline):
                 logger.info("Preprocessing eval data...\n")
                 eval_data = self.data_processor.process_data(eval_data)
                 eval_dataset = self.data_processor.to_dataset(
-                    eval_data, dataset_type=dataset_type
+                    eval_data
                 )
 
             else:
