@@ -34,14 +34,15 @@
 This library implements some of the most common (Variational) Autoencoder models under a unified implementation. In particular, it 
 provides the possibility to perform benchmark experiments and comparisons by training 
 the models with the same autoencoding neural network architecture. The feature *make your own autoencoder* 
-allows you to train any of these models with your own data and own Encoder and Decoder neural networks. It integrates an experiment monitoring tool  [wandb](https://wandb.ai/) 🧪 and allows model sharing and loading from the [HuggingFace Hub](https://huggingface.co/models) 🤗 in a few lines of code.
+allows you to train any of these models with your own data and own Encoder and Decoder neural networks. It integrates experiment monitoring tools such [wandb](https://wandb.ai/) and [mlflow](https://mlflow.org/) 🧪 and allows model sharing and loading from the [HuggingFace Hub](https://huggingface.co/models) 🤗 in a few lines of code.
+
 
 ## Quick access:
 - [Installation](#installation)
 - [Implemented models](#available-models) / [Implemented samplers](#available-samplers)
 - [Reproducibility statement](#reproducibility) / [Results flavor](#results)
 - [Model training](#launching-a-model-training) / [Data generation](#launching-data-generation) / [Custom network architectures](#define-you-own-autoencoder-architecture)
-- [Model sharing with 🤗 Hub](#sharing-your-models-with-the-huggingface-hub-) / [Experiment tracking with `wandb`](#monitoring-your-experiments-with-wandb-)
+- [Model sharing with 🤗 Hub](#sharing-your-models-with-the-huggingface-hub-) / [Experiment tracking with `wandb`](#monitoring-your-experiments-with-wandb-) / [Experiment tracking with `mlflow`](#monitoring-your-experiments-with-mlflow-)
 - [Tutorials](#getting-your-hands-on-the-code) / [Documentation](https://pythae.readthedocs.io/en/latest/)
 - [Contributing 🚀](#contributing-) / [Issues 🛠️](#dealing-with-issues-%EF%B8%8F)
 - [Citing this repository](#citation)
@@ -399,7 +400,48 @@ Launching an experiment monitoring with `wandb` in pythae is pretty simple. The 
 ... )
 >>> # You can log to https://wandb.ai/your_wandb_entity/your_wandb_project to monitor your training
 ```
-See a detailes tutorial 
+See the detailed tutorial 
+
+## Monitoring your experiments with **mlflow** 🧪
+Pythae also integrates the experiement tracking tool [mlflow](https://mlflow.org/) allowing users to store their configs, monitor their trainings and compare runs through a graphic interface. To be able use this feature you will need:
+- the package `mlfow` installed in your virtual env. If not you can install it with 
+```
+$ pip install mlflow
+```
+
+### Creating a `MLFlowCallback`
+Launching an experiment monitoring with `mlfow` in pythae is pretty simple. The only thing a user needs to do is create a `MLFlowCallback` instance...
+
+```python
+>>> # Create you callback
+>>> from pythae.trainers.training_callbacks import MLFlowCallback
+>>> callbacks = [] # the TrainingPipeline expects a list of callbacks
+>>> mlflow_cb = MLFlowCallback() # Build the callback 
+>>> # SetUp the callback 
+>>> mlflow_cb.setup(
+...	training_config=your_training_config, # training config
+...	model_config=your_model_config, # model config
+...	run_name="mlflow_cb_example", # specify your mlflow run
+... )
+>>> callbacks.append(mlflow_cb) # Add it to the callbacks list
+```
+...and then pass it to the `TrainingPipeline`.
+```python
+>>> pipeline = TrainingPipeline(
+...	training_config=config,
+...	model=model
+... )
+>>> pipeline(
+...	train_data=train_dataset,
+...	eval_data=eval_dataset,
+...	callbacks=callbacks # pass the callbacks to the TrainingPipeline and you are done!
+... )
+```
+you can visualize your metric by running the following in the directory where the `./mlruns`
+```bash
+$ mlflow ui 
+```
+See the detailed tutorial 
 
 ## Getting your hands on the code 
 
@@ -413,6 +455,8 @@ provide tutorials:
 - [hf_hub_models_sharing.ipynb](https://github.com/clementchadebec/benchmark_VAE/tree/main/examples/notebooks) shows you how to upload and download models for the HuggingFace Hub [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/notebooks/hf_hub_models_sharing.ipynb)
 
 - [wandb_experiment_monitoring.ipynb](https://github.com/clementchadebec/benchmark_VAE/tree/main/examples/notebooks) shows you how to monitor you experiments using `wandb` [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/notebooks/wandb_experiment_monitoring.ipynb)
+
+- [mlflow_experiment_monitoring.ipynb](https://github.com/clementchadebec/benchmark_VAE/tree/main/examples/notebooks) shows you how to monitor you experiments using `mlflow` [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/notebooks/mlflow_experiment_monitoring.ipynb)
 
 - [models_training](https://github.com/clementchadebec/benchmark_VAE/tree/main/examples/notebooks/models_training) folder provides notebooks showing how to train each implemented model and how to sample from it using `pythae.samplers`.
 

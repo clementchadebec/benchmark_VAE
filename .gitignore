@@ -55,6 +55,9 @@ mlruns/*
 examples/notebooks/data_folders/*
 
 examples/scripts/configs/*
+
+examples/notebooks/mlruns/*
+mlruns/*
 examples/scripts/reproducibility/reproducibility/*
 
 

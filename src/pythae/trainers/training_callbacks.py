@@ -15,6 +15,8 @@ logger = logging.getLogger(__name__)
 def wandb_is_available():
     return importlib.util.find_spec("wandb") is not None
 
+def mlflow_is_available():
+    return importlib.util.find_spec("mlflow") is not None
 
 def rename_logs(logs):
     train_prefix = "train_"
@@ -353,3 +355,67 @@ class WandbCallback(TrainingCallback):  # pragma: no cover
 
     def on_train_end(self, training_config: BaseTrainerConfig, **kwargs):
         self.run.finish()
+
+class MLFlowCallback(TrainingCallback):  # pragma: no cover
+    def __init__(self):
+        if not mlflow_is_available():
+            raise ModuleNotFoundError(
+                "`mlflow` package must be installed. Run `pip install mlflow`"
+            )
+
+        else:
+            import mlflow
+
+            self._mlflow = mlflow
+
+    def setup(self, training_config, **kwargs):
+        self.is_initialized = True
+
+        model_config = kwargs.pop("model_config", None)
+        run_name = kwargs.pop("run_name", None)
+
+        training_config_dict = training_config.to_dict()
+
+        self._mlflow.start_run(run_name=run_name)
+
+        logger.info(f"MLflow run started with run_id={self._mlflow.active_run().info.run_id}")
+        if model_config is not None:
+            model_config_dict = model_config.to_dict()
+
+            self._mlflow.log_params(
+                {
+                    **training_config_dict,
+                    **model_config_dict,
+                }
+            )
+
+        else:
+            self._mlflow.log_params({**training_config_dict})
+
+    def on_train_begin(self, training_config, **kwargs):
+        model_config = kwargs.pop("model_config", None)
+        if not self.is_initialized:
+            self.setup(training_config, model_config=model_config)
+
+    def on_log(self, training_config, logs, **kwargs):
+        global_step = kwargs.pop("global_step", None)
+
+        logs = rename_logs(logs)
+        metrics = {}
+        for k, v in logs.items():
+            if isinstance(v, (int, float)):
+                metrics[k] = v
+
+        self._mlflow.log_metrics(metrics=metrics, step=global_step)
+
+    def on_train_end(self, training_config: BaseTrainerConfig, **kwargs):
+        self._mlflow.end_run()
+
+    def __del__(self):
+        # if the previous run is not terminated correctly, the fluent API will
+        # not let you start a new run before the previous one is killed
+        if (
+            callable(getattr(self._mlflow, "active_run", None))
+            and self._mlflow.active_run() is not None
+        ):
+            self._mlflow.end_run()
