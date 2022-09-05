@@ -30,7 +30,7 @@ class Quantizer(nn.Module):
 
         distances = (
             (z.reshape(-1, self.embedding_dim) ** 2).sum(dim=-1, keepdim=True)
-            + (self.embeddings.weight**2).sum(dim=-1)
+            + (self.embeddings.weight ** 2).sum(dim=-1)
             - 2 * z.reshape(-1, self.embedding_dim) @ self.embeddings.weight.T
         )
 
@@ -107,7 +107,7 @@ class QuantizerEMA(nn.Module):
 
         distances = (
             (z.reshape(-1, self.embedding_dim) ** 2).sum(dim=-1, keepdim=True)
-            + (self.embeddings.weight**2).sum(dim=-1)
+            + (self.embeddings.weight ** 2).sum(dim=-1)
             - 2 * z.reshape(-1, self.embedding_dim) @ self.embeddings.weight.T
         )
 
