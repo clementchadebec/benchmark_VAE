@@ -87,7 +87,7 @@ class Test_Set_Training_config:
         params=[
             AdversarialTrainerConfig(autoencoder_optim_decay=0),
             AdversarialTrainerConfig(
-                batch_size=10, learning_rate=1e-5, autoencoder_optim_decay=0
+                batch_size=10, learning_rate=1e-3, autoencoder_optim_decay=0
             ),
         ]
     )
@@ -269,7 +269,7 @@ class Test_Build_Scheduler:
 
 @pytest.mark.slow
 class Test_Main_Training:
-    @pytest.fixture(params=[AdversarialTrainerConfig(num_epochs=3)])
+    @pytest.fixture(params=[AdversarialTrainerConfig(num_epochs=3, learning_rate=1e-3)])
     def training_configs(self, tmpdir, request):
         tmpdir.mkdir("dummy_folder")
         dir_path = os.path.join(tmpdir, "dummy_folder")
