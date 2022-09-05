@@ -60,8 +60,6 @@ class CIWAE(VAE):
 
         x = inputs["data"]
 
-        x = (x > torch.distributions.Uniform(0, 1).sample(x.shape).cuda()).float()
-
         encoder_output = self.encoder(x)
 
         mu, log_var = encoder_output.embedding, encoder_output.log_covariance

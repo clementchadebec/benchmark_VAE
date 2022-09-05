@@ -10,6 +10,9 @@ from pythae.data.preprocessors import DataProcessor
 from pythae.models import AutoModel
 from pythae.models import PIWAE, PIWAEConfig
 from pythae.trainers import CoupledOptimizerTrainerConfig, CoupledOptimizerTrainer
+from pythae.data.datasets import DatasetOutput
+from torch.utils.data import Dataset
+
 
 from pythae.models.nn import BaseEncoder, BaseDecoder
 import torch.nn as nn
@@ -75,6 +78,18 @@ class Encoder(BaseEncoder):
 
         return output
 
+class DynBinarizedMNIST(Dataset):
+    def __init__(self, data):
+        self.data = data.type(torch.float)
+
+    def __len__(self):
+        return len(self.data)
+
+    def __getitem__(self, index):
+        x = self.data[index]
+        x = (x > torch.distributions.Uniform(0, 1).sample(x.shape)).float()
+        return DatasetOutput(data=x)
+
 ### Define paper decoder network
 class Decoder(BaseDecoder):
     def __init__(self, args: dict):
@@ -113,13 +128,17 @@ def main(args):
     train_data = torch.tensor(
         np.load(os.path.join(PATH, f"data/mnist", "train_data.npz"))[
             "data"
-        ][:-400]
+        ]
         / 255.0
     )
     eval_data = torch.tensor(
-        np.load(os.path.join(PATH, f"data/mnist", "eval_data.npz"))["data"][-400:]
+        np.load(os.path.join(PATH, f"data/mnist", "eval_data.npz"))["data"]
         / 255.0
     )
+
+    train_data = torch.cat((train_data, eval_data))
+    train_data = train_data[:-400]
+    train_data = eval_data[-400:]
 
     test_data = (
         np.load(os.path.join(PATH, f"data/mnist", "test_data.npz"))["data"]
@@ -148,11 +167,13 @@ def main(args):
     data_processor = DataProcessor()
     logger.info("Preprocessing train data...")
     #train_data = data_processor.process_data(train_data)
-    train_dataset = data_processor.to_dataset(train_data)
+    #train_dataset = data_processor.to_dataset(train_data)
+    train_dataset = DynBinarizedMNIST(train_data)
 
     logger.info("Preprocessing eval data...\n")
     #ieval_data = data_processor.process_data(eval_data)
-    eval_dataset = data_processor.to_dataset(eval_data)
+    #eval_dataset = data_processor.to_dataset(eval_data)
+    eval_dataset = DynBinarizedMNIST(eval_data)
 
     ### Optimizers
     enc_optimizer = torch.optim.Adam(model.encoder.parameters(), lr=training_config.learning_rate, eps=1e-4)
@@ -193,6 +214,7 @@ def main(args):
     trained_model = AutoModel.load_from_folder(os.path.join(training_config.output_dir, f'{trainer.model.model_name}_training_{trainer._training_signature}', 'final_model')).to(device)
 
     test_data = torch.tensor(test_data).to(device).type(torch.float)
+    test_data = (test_data > torch.distributions.Uniform(0, 1).sample(test_data.shape).to(test_data.device)).float()
 
     ### Compute NLL
     with torch.no_grad():

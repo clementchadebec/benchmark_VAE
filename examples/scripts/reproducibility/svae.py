@@ -10,6 +10,8 @@ from pythae.data.preprocessors import DataProcessor
 from pythae.models import SVAE, SVAEConfig
 from pythae.models import AutoModel
 from pythae.trainers import BaseTrainerConfig, BaseTrainer
+from pythae.data.datasets import DatasetOutput
+from torch.utils.data import Dataset
 
 from pythae.models.nn import BaseEncoder, BaseDecoder
 import torch.nn as nn
@@ -163,7 +165,17 @@ class Decoder(BaseDecoder):
 
         return output
 
+class DynBinarizedMNIST(Dataset):
+    def __init__(self, data):
+        self.data = data.type(torch.float)
 
+    def __len__(self):
+        return len(self.data)
+
+    def __getitem__(self, index):
+        x = self.data[index]
+        x = (x > torch.distributions.Uniform(0, 1).sample(x.shape)).float()
+        return DatasetOutput(data=x)
 
 def main(args):
 
@@ -207,14 +219,16 @@ def main(args):
     training_config = BaseTrainerConfig.from_json_file(args.training_config)
 
     ### Process data
-    data_processor = DataProcessor()
+    #data_processor = DataProcessor()
     logger.info("Preprocessing train data...")
-    train_data = data_processor.process_data(torch.bernoulli(train_data))
-    train_dataset = data_processor.to_dataset(train_data)
+    #train_data = data_processor.process_data(torch.bernoulli(train_data))
+    #train_dataset = data_processor.to_dataset(train_data)
+    train_dataset = DynBinarizedMNIST(train_data)
 
     logger.info("Preprocessing eval data...\n")
-    eval_data = data_processor.process_data(torch.bernoulli(eval_data))
-    eval_dataset = data_processor.to_dataset(eval_data)
+    #eval_data = data_processor.process_data(torch.bernoulli(eval_data))
+    #eval_dataset = data_processor.to_dataset(eval_data)
+    eval_dataset = DynBinarizedMNIST(eval_data)
 
     ### Optimizer
     optimizer = torch.optim.Adam(model.parameters(), lr=training_config.learning_rate)
@@ -245,6 +259,7 @@ def main(args):
     trained_model = AutoModel.load_from_folder(os.path.join(training_config.output_dir, f'{trainer.model.model_name}_training_{trainer._training_signature}', 'final_model')).to(device)
 
     test_data = torch.tensor(test_data).to(device).type(torch.float)
+    test_data = (test_data > torch.distributions.Uniform(0, 1).sample(test_data.shape).to(test_data.device)).float()
 
     ### Compute NLL
     with torch.no_grad():
