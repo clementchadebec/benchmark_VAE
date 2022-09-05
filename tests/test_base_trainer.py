@@ -2,7 +2,6 @@ import os
 from copy import deepcopy
 
 import pytest
-from sklearn.model_selection import learning_curve
 import torch
 from torch.optim import SGD, Adadelta, Adagrad, Adam, RMSprop
 from torch.optim.lr_scheduler import StepLR, LinearLR, ExponentialLR
@@ -385,7 +384,7 @@ class Test_Sanity_Checks:
 @pytest.mark.slow
 class Test_Main_Training:
     @pytest.fixture(
-        params=[BaseTrainerConfig(num_epochs=3, steps_saving=2, steps_predict=2, learning_rate=1e-2)]
+        params=[BaseTrainerConfig(num_epochs=3, steps_saving=2, steps_predict=2, learning_rate=1e-5)]
     )
     def training_configs(self, tmpdir, request):
         tmpdir.mkdir("dummy_folder")

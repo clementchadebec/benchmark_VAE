@@ -14,7 +14,7 @@ import torch
 import torch.nn as nn
 
 from ...customexception import BadInheritanceError
-from ...data.datasets import BaseDataset
+from ...data.datasets import BaseDataset, DatasetOutput
 from ..auto_model import AutoConfig
 from ..nn import BaseDecoder, BaseEncoder
 from ..nn.default_architectures import Decoder_AE_MLP
@@ -115,7 +115,7 @@ class BaseAE(nn.Module):
         Returns:
             torch.Tensor: A tensor of shape [B x input_dim] containing the reconstructed samples.
         """
-        return self({"data": inputs, "data_bis": inputs}).recon_x
+        return self(DatasetOutput(data=inputs)).recon_x
 
     def interpolate(
         self,
@@ -143,8 +143,8 @@ class BaseAE(nn.Module):
             "for endinging_inputs."
         )
 
-        starting_z = self({"data": starting_inputs, "data_bis": starting_inputs}).z
-        ending_z = self({"data": ending_inputs, "data_bis": ending_inputs}).z
+        starting_z = self(DatasetOutput(data=starting_inputs)).z
+        ending_z = self(DatasetOutput(data=ending_inputs)).z
         t = torch.linspace(0, 1, granularity).to(starting_inputs.device)
         intep_line = (
             torch.kron(

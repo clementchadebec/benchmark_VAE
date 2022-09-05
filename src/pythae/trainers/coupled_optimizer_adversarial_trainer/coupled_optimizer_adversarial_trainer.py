@@ -216,7 +216,7 @@ class CoupledOptimizerAdversarialTrainer(BaseTrainer):
         )
 
         # run sanity check on the model
-        self._run_model_sanity_check(self.model, self.train_dataset)
+        self._run_model_sanity_check(self.model, self.train_loader)
 
         logger.info("Model passed sanity check !\n")
 
