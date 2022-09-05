@@ -11,6 +11,7 @@ Samplers
     gmm_sampler
     twostage_sampler
     unit_sphere_unif_sampler
+    poincare_disk_sampler
     vamp_sampler
     rhvae_sampler
     maf_sampler
@@ -28,6 +29,7 @@ Samplers
     ~pythae.samplers.GaussianMixtureSampler
     ~pythae.samplers.TwoStageVAESampler
     ~pythae.samplers.HypersphereUniformSampler
+    ~pythae.samplers.PoincareDiskSampler
     ~pythae.samplers.VAMPSampler
     ~pythae.samplers.RHVAESampler
     ~pythae.samplers.MAFSampler

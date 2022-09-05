@@ -176,9 +176,10 @@ class BaseTrainer:
 
         return scheduler
 
-    def _run_model_sanity_check(self, model, train_dataset):
+    def _run_model_sanity_check(self, model, loader):
         try:
-            train_dataset = self._set_inputs_to_device(train_dataset[:2])
+            inputs = next(iter(loader))
+            train_dataset = self._set_inputs_to_device(inputs)
             model(train_dataset)
 
         except Exception as e:
@@ -251,7 +252,7 @@ class BaseTrainer:
         )
 
         # run sanity check on the model
-        self._run_model_sanity_check(self.model, self.train_dataset)
+        self._run_model_sanity_check(self.model, self.train_loader)
 
         logger.info("Model passed sanity check !\n")
 

@@ -3,7 +3,7 @@ import os
 import pytest
 import torch
 
-from pythae.data.datasets import BaseDataset, DoubleBatchDataset
+from pythae.data.datasets import BaseDataset
 
 PATH = os.path.dirname(os.path.abspath(__file__))
 
@@ -28,25 +28,3 @@ class Test_Dataset:
 
         assert torch.all(dataset[index]["data"] == data[index])
         assert torch.all(dataset[index]["labels"] == labels[index])
-
-
-
-class Test_DoubleBatchDataset:
-    def test_dataset_call(self, data, labels):
-        dataset = DoubleBatchDataset(data, labels)
-        assert torch.all(dataset[0]["data"] == data[0])
-        assert torch.all(dataset[1]["labels"] == labels[1])
-
-        assert torch.all(dataset.data == data)
-        assert torch.all(dataset.labels == labels)
-
-        index = torch.randperm(1000)[:3]
-
-        assert torch.all(dataset[index]["data"] == data[index])
-        assert torch.all(dataset[index]["labels"] == labels[index])
-
-        assert not torch.all(dataset[index]["data_bis"] == data[index])
-        assert not torch.all(dataset[index]["labels_bis"] == labels[index])
-
-        assert dataset[index]["data_bis"].shape == dataset[index]["data"].shape
-        assert dataset[index]["labels_bis"].shape == dataset[index]["labels"].shape

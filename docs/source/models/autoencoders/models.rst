@@ -22,6 +22,7 @@ Autoencoders
     infovae
     vamp
     svae
+    pvae
     aae
     vaegan
     vqvae
@@ -53,6 +54,7 @@ Available Models
     ~pythae.models.INFOVAE_MMD
     ~pythae.models.VAMP
     ~pythae.models.SVAE
+    ~pythae.models.PoincareVAE
     ~pythae.models.Adversarial_AE
     ~pythae.models.VAEGAN
     ~pythae.models.VQVAE
