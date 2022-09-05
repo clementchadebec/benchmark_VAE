@@ -331,6 +331,8 @@ class CoupledOptimizerTrainer(BaseTrainer):
         logger.info("Training ended!")
         logger.info(f"Saved final model in {final_dir}")
 
+        self.callback_handler.on_train_end(self.training_config)
+
     def eval_step(self, epoch: int):
         """Perform an evaluation step
 
@@ -391,8 +393,6 @@ class CoupledOptimizerTrainer(BaseTrainer):
             epoch_encoder_loss,
             epoch_decoder_loss
         )
-
-        self.callback_handler.on_train_end(self.training_config)
 
     def train_step(self, epoch: int):
         """The trainer performs training loop over the train_loader.
