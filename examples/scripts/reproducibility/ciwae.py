@@ -136,7 +136,7 @@ def main(args):
 
     train_data = torch.cat((train_data, eval_data))
     train_data = train_data[:-400]
-    train_data = eval_data[-400:]
+    eval_data = eval_data[-400:]
 
     test_data = (
         np.load(os.path.join(PATH, f"data/mnist", "test_data.npz"))["data"]
