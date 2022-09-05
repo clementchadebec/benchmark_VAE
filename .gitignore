@@ -50,6 +50,10 @@ examples/scripts/plots/*
 examples/notebooks/my_model_with_custom_archi/
 examples/notebooks/my_model/
 examples/net.py
+examples/notebooks/mlruns/*
+mlruns/*
+examples/notebooks/data_folders/*
+
 examples/scripts/configs/*
 examples/scripts/reproducibility/reproducibility/*
 

@@ -295,7 +295,6 @@ class Test_Model_forward:
         data = torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))[
             :
         ]
-        data['data_bis'] = torch.flipud(data["data"])
         return data  # This is an extract of 3 data from MNIST (unnormalized) used to test custom architecture
 
     @pytest.fixture
@@ -309,8 +308,10 @@ class Test_Model_forward:
 
         # factor_ae = FactorVAE(model_configs)
 
-        factor_ae.train()
+        with pytest.raises(ArithmeticError):
+            factor_ae({'data': demo_data['data'][0]})
 
+        factor_ae.train()
        
         out = factor_ae(demo_data)
 
@@ -328,9 +329,9 @@ class Test_Model_forward:
             ]
         ) == set(out.keys())
 
-        assert out.z.shape[0] == demo_data["data"].shape[0]
-        assert out.z_bis_permuted.shape[0] == demo_data["data"].shape[0]
-        assert out.recon_x.shape == demo_data["data"].shape
+        assert out.z.shape[0] == int(demo_data["data"].shape[0] / 2) + 1 * (demo_data["data"].shape[0] % 2 != 0)
+        assert out.z_bis_permuted.shape[0] == int(demo_data["data"].shape[0] / 2)
+        assert out.recon_x.shape == (int(demo_data["data"].shape[0] / 2) + 1 * (demo_data["data"].shape[0] % 2 != 0),) + (demo_data["data"].shape[1:])
         
         assert not torch.equal(out.z, out.z_bis_permuted)
 
@@ -396,7 +397,6 @@ class Test_NLL_Compute:
         data = torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))[
             :
         ]
-        data['data_bis'] = torch.flipud(data["data"])
         return data  # This is an extract of 3 data from MNIST (unnormalized) used to test custom architecture
 
     @pytest.fixture
@@ -424,7 +424,7 @@ class Test_FactorVAE_Training:
         data = torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))[
             :
         ]
-        return DataProcessor().to_dataset(data['data'], dataset_type="DoubleBatchDataset")
+        return DataProcessor().to_dataset(data['data'])
 
     @pytest.fixture(
         params=[
@@ -590,8 +590,8 @@ class Test_FactorVAE_Training:
         )
 
         assert torch.equal(inputs.cpu(), train_dataset.data.cpu())
-        assert recon.shape == inputs.shape
-        assert generated.shape == inputs.shape 
+        assert recon.shape == (int(inputs.shape[0] / 2) + 1 * (inputs.shape[0] % 2 != 0),) + (inputs.shape[1:])
+        assert generated.shape == (int(inputs.shape[0] / 2) + 1 * (inputs.shape[0] % 2 != 0),) + (inputs.shape[1:])
 
     def test_factor_ae_main_train_loop(
         self, tmpdir, factor_ae, train_dataset, training_configs, optimizers

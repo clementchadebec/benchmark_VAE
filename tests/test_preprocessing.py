@@ -5,7 +5,7 @@ import pytest
 import torch
 
 from pythae.data.preprocessors import DataProcessor
-from pythae.data.datasets import BaseDataset, DoubleBatchDataset
+from pythae.data.datasets import BaseDataset
 
 PATH = os.path.dirname(os.path.abspath(__file__))
 
@@ -63,12 +63,3 @@ class Test_Data_Convert:
 
         train_dataset = data_processor.to_dataset(train_data)
         assert isinstance(train_dataset, BaseDataset)
-
-        train_dataset = data_processor.to_dataset(train_data, dataset_type="BaseDataset")
-        assert isinstance(train_dataset, BaseDataset)
-
-        train_dataset = data_processor.to_dataset(train_data, dataset_type="DoubleBatchDataset")
-        assert isinstance(train_dataset, DoubleBatchDataset)
-
-        with pytest.raises(NotImplementedError):
-            train_dataset = data_processor.to_dataset(train_data, dataset_type="Wrong Dataset name")

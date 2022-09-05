@@ -156,8 +156,8 @@ To launch a model training, you only need to call a `TrainingPipeline` instance.
 ... )
 >>> # Launch the Pipeline
 >>> pipeline(
-...	train_data=your_train_data, # must be torch.Tensor or np.array 
-...	eval_data=your_eval_data # must be torch.Tensor or np.array
+...	train_data=your_train_data, # must be torch.Tensor, np.array or torch datasets
+...	eval_data=your_eval_data # must be torch.Tensor, np.array or torch datasets
 ... )
 ```
 
@@ -407,6 +407,8 @@ To help you to understand the way pythae works and how you can train your models
 provide tutorials:
 
 - [making_your_own_autoencoder.ipynb](https://github.com/clementchadebec/benchmark_VAE/tree/main/examples/notebooks) shows you how to pass your own networks to the models implemented in pythae [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/notebooks/making_your_own_autoencoder.ipynb)
+
+- [custom_dataset.ipynb](https://github.com/clementchadebec/benchmark_VAE/tree/main/examples/notebooks) shows you how to  use custom datasets with any of the models implemented in pythae [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/notebooks/custom_dataset.ipynb)
 
 - [hf_hub_models_sharing.ipynb](https://github.com/clementchadebec/benchmark_VAE/tree/main/examples/notebooks) shows you how to upload and download models for the HuggingFace Hub [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/notebooks/hf_hub_models_sharing.ipynb)
 
