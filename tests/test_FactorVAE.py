@@ -424,7 +424,7 @@ class Test_FactorVAE_Training:
         data = torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))[
             :
         ]
-        return DataProcessor().to_dataset(data['data'], dataset_type="DoubleBatchDataset")
+        return DataProcessor().to_dataset(data['data'])
 
     @pytest.fixture(
         params=[
