@@ -71,10 +71,7 @@ class DataProcessor:
         return data
 
     @staticmethod
-    def to_dataset(
-        data: torch.Tensor,
-        labels: Optional[torch.Tensor] = None
-    ):
+    def to_dataset(data: torch.Tensor, labels: Optional[torch.Tensor] = None):
         """This method converts a set of ``torch.Tensor`` to a
         :class:`~pythae.data.datasets.BaseDataset`
 
@@ -91,7 +88,7 @@ class DataProcessor:
 
         labels = DataProcessor.to_tensor(labels)
         dataset = BaseDataset(data, labels)
-        
+
         return dataset
 
     def _process_data_array(self, data: np.ndarray, batch_size: int = 100):
