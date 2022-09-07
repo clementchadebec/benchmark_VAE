@@ -135,8 +135,6 @@ def main(args):
     )
 
     train_data = torch.cat((train_data, eval_data))
-    train_data = train_data[:-400]
-    eval_data = eval_data[-400:]
 
     test_data = (
         np.load(os.path.join(PATH, f"data/mnist", "test_data.npz"))["data"]
@@ -162,15 +160,10 @@ def main(args):
     training_config = BaseTrainerConfig.from_json_file(args.training_config)
 
     ### Process data
-    data_processor = DataProcessor()
     logger.info("Preprocessing train data...")
-    #train_data = data_processor.process_data(train_data)
-    #train_dataset = data_processor.to_dataset(train_data)
     train_dataset = DynBinarizedMNIST(train_data)
 
     logger.info("Preprocessing eval data...\n")
-    #ieval_data = data_processor.process_data(eval_data)
-    #eval_dataset = data_processor.to_dataset(eval_data)
     eval_dataset = DynBinarizedMNIST(eval_data)
 
     ### Optimizer
@@ -194,7 +187,7 @@ def main(args):
     trainer = BaseTrainer(
         model=model,
         train_dataset=train_dataset,
-        eval_dataset=eval_dataset,
+        eval_dataset=None,#eval_dataset,
         training_config=training_config,
         optimizer=optimizer,
         scheduler=scheduler,

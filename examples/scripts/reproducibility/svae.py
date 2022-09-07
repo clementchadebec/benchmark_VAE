@@ -218,16 +218,10 @@ def main(args):
     ### Set training config
     training_config = BaseTrainerConfig.from_json_file(args.training_config)
 
-    ### Process data
-    #data_processor = DataProcessor()
     logger.info("Preprocessing train data...")
-    #train_data = data_processor.process_data(torch.bernoulli(train_data))
-    #train_dataset = data_processor.to_dataset(train_data)
     train_dataset = DynBinarizedMNIST(train_data)
 
     logger.info("Preprocessing eval data...\n")
-    #eval_data = data_processor.process_data(torch.bernoulli(eval_data))
-    #eval_dataset = data_processor.to_dataset(eval_data)
     eval_dataset = DynBinarizedMNIST(eval_data)
 
     ### Optimizer

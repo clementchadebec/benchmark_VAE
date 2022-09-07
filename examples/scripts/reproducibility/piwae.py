@@ -137,8 +137,6 @@ def main(args):
     )
 
     train_data = torch.cat((train_data, eval_data))
-    train_data = train_data[:-400]
-    eval_data = eval_data[-400:]
 
     test_data = (
         np.load(os.path.join(PATH, f"data/mnist", "test_data.npz"))["data"]
@@ -163,16 +161,10 @@ def main(args):
     ### Set training config
     training_config = CoupledOptimizerTrainerConfig.from_json_file(args.training_config)
 
-    ### Process data
-    data_processor = DataProcessor()
     logger.info("Preprocessing train data...")
-    #train_data = data_processor.process_data(train_data)
-    #train_dataset = data_processor.to_dataset(train_data)
     train_dataset = DynBinarizedMNIST(train_data)
 
     logger.info("Preprocessing eval data...\n")
-    #ieval_data = data_processor.process_data(eval_data)
-    #eval_dataset = data_processor.to_dataset(eval_data)
     eval_dataset = DynBinarizedMNIST(eval_data)
 
     ### Optimizers
@@ -191,15 +183,10 @@ def main(args):
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
 
-
-    print(train_dataset.data.shape)
-    print(eval_dataset.data.shape)
-    print(test_data.shape)
-
     trainer = CoupledOptimizerTrainer(
         model=model,
         train_dataset=train_dataset,
-        eval_dataset=eval_dataset,
+        eval_dataset=None,#eval_dataset,
         training_config=training_config,
         encoder_optimizer=enc_optimizer,
         decoder_optimizer=dec_optimizer,
