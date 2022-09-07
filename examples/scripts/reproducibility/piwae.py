@@ -164,9 +164,6 @@ def main(args):
     logger.info("Preprocessing train data...")
     train_dataset = DynBinarizedMNIST(train_data)
 
-    logger.info("Preprocessing eval data...\n")
-    eval_dataset = DynBinarizedMNIST(eval_data)
-
     ### Optimizers
     enc_optimizer = torch.optim.Adam(model.encoder.parameters(), lr=training_config.learning_rate, eps=1e-4)
     dec_optimizer = torch.optim.Adam(model.decoder.parameters(), lr=training_config.learning_rate, eps=1e-4)
