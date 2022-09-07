@@ -163,9 +163,6 @@ def main(args):
     logger.info("Preprocessing train data...")
     train_dataset = DynBinarizedMNIST(train_data)
 
-    logger.info("Preprocessing eval data...\n")
-    eval_dataset = DynBinarizedMNIST(eval_data)
-
     ### Optimizer
     optimizer = torch.optim.Adam(model.parameters(), lr=training_config.learning_rate, eps=1e-4)
 
@@ -177,11 +174,6 @@ def main(args):
     seed = 123
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
-
-
-    print(train_dataset.data.shape)
-    print(eval_dataset.data.shape)
-    print(test_data.shape)
 
     logger.info("Using Base Trainer\n")
     trainer = BaseTrainer(
