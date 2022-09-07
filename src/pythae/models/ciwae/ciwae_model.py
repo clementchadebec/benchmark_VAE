@@ -125,7 +125,7 @@ class CIWAE(VAE):
         w_tilde = (w / w.sum(axis=1, keepdim=True)).detach()
 
         iwae_elbo = -(w_tilde * log_w).sum(1)
-        vae_elbo = -log_w.mean(dim=-1) # avg on importance samples
+        vae_elbo = -log_w.mean(dim=-1)  # avg on importance samples
 
         return (
             (self.beta * vae_elbo + (1 - self.beta) * iwae_elbo).mean(dim=0),

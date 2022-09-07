@@ -64,11 +64,15 @@ class PIWAE(VAE):
 
         mu, log_var = encoder_output.embedding, encoder_output.log_covariance
 
-        mu = mu.unsqueeze(1).unsqueeze(1).repeat(
-            1, self.gradient_n_estimates, self.n_samples, 1
+        mu = (
+            mu.unsqueeze(1)
+            .unsqueeze(1)
+            .repeat(1, self.gradient_n_estimates, self.n_samples, 1)
         )
-        log_var = log_var.unsqueeze(1).unsqueeze(1).repeat(
-            1, self.gradient_n_estimates, self.n_samples, 1
+        log_var = (
+            log_var.unsqueeze(1)
+            .unsqueeze(1)
+            .repeat(1, self.gradient_n_estimates, self.n_samples, 1)
         )
 
         std = torch.exp(0.5 * log_var)
@@ -79,7 +83,9 @@ class PIWAE(VAE):
             "reconstruction"
         ].reshape(x.shape[0], self.gradient_n_estimates, self.n_samples, -1)
 
-        miwae_loss, iwae_loss, recon_loss, kld = self.loss_function(recon_x, x, mu, log_var, z)
+        miwae_loss, iwae_loss, recon_loss, kld = self.loss_function(
+            recon_x, x, mu, log_var, z
+        )
 
         loss = miwae_loss + iwae_loss
 
@@ -93,14 +99,10 @@ class PIWAE(VAE):
             update_decoder=True,
             recon_x=recon_x.reshape(
                 x.shape[0], self.gradient_n_estimates, self.n_samples, -1
-                )[:, 0, 0, :].reshape_as(
-                    x
-                ),
-            z=z.reshape(
-                x.shape[0], self.gradient_n_estimates, self.n_samples, -1
-                )[:, 0, 0, :].reshape(
-                    -1, self.latent_dim
-            ),
+            )[:, 0, 0, :].reshape_as(x),
+            z=z.reshape(x.shape[0], self.gradient_n_estimates, self.n_samples, -1)[
+                :, 0, 0, :
+            ].reshape(-1, self.latent_dim),
         )
 
         return output
@@ -112,7 +114,8 @@ class PIWAE(VAE):
             recon_loss = F.mse_loss(
                 recon_x,
                 x.reshape(recon_x.shape[0], -1)
-                .unsqueeze(1).unsqueeze(1)
+                .unsqueeze(1)
+                .unsqueeze(1)
                 .repeat(1, self.gradient_n_estimates, self.n_samples, 1),
                 reduction="none",
             ).sum(dim=-1)
@@ -122,7 +125,8 @@ class PIWAE(VAE):
             recon_loss = F.binary_cross_entropy(
                 recon_x,
                 x.reshape(recon_x.shape[0], -1)
-                .unsqueeze(1).unsqueeze(1)
+                .unsqueeze(1)
+                .unsqueeze(1)
                 .repeat(1, self.gradient_n_estimates, self.n_samples, 1),
                 reduction="none",
             ).sum(dim=-1)
@@ -140,14 +144,16 @@ class PIWAE(VAE):
         w_tilde = (w / w.sum(axis=1, keepdim=True)).detach()
 
         miwae_loss = -(w_tilde * log_w).sum(1).mean(dim=-1)
-        
+
         # IWAE loss (K=ML)
-        log_w_iwae = log_w.reshape(x.shape[0], self.gradient_n_estimates *self.n_samples)
-        
+        log_w_iwae = log_w.reshape(
+            x.shape[0], self.gradient_n_estimates * self.n_samples
+        )
+
         log_w_iwae_minus_max = log_w_iwae - log_w_iwae.max(1, keepdim=True)[0]
         w_iwae = log_w_iwae_minus_max.exp()
         w_iwae_tilde = (w_iwae / w_iwae.sum(axis=1, keepdim=True)).detach()
-        
+
         iwae_loss = -(w_iwae_tilde * log_w_iwae).sum(1)
 
         return (

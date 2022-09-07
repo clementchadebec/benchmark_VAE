@@ -95,5 +95,5 @@ __all__ = [
     "MIWAE",
     "MIWAEConfig",
     "PIWAE",
-    "PIWAEConfig"
+    "PIWAEConfig",
 ]

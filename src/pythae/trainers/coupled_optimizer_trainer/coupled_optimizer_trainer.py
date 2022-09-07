@@ -245,7 +245,7 @@ class CoupledOptimizerTrainer(BaseTrainer):
             [
                 epoch_train_loss,
                 epoch_train_encoder_loss,
-                epoch_train_decoder_loss
+                epoch_train_decoder_loss,
             ] = train_losses
             metrics["train_epoch_loss"] = epoch_train_loss
             metrics["train_encoder_loss"] = epoch_train_encoder_loss
@@ -257,7 +257,7 @@ class CoupledOptimizerTrainer(BaseTrainer):
                 [
                     epoch_eval_loss,
                     epoch_eval_encoder_loss,
-                    epoch_eval_decoder_loss
+                    epoch_eval_decoder_loss,
                 ] = eval_losses
                 metrics["eval_epoch_loss"] = epoch_eval_loss
                 metrics["eval_encoder_loss"] = epoch_eval_encoder_loss
@@ -265,14 +265,14 @@ class CoupledOptimizerTrainer(BaseTrainer):
 
                 self._schedulers_step(
                     encoder_metrics=epoch_eval_encoder_loss,
-                    decoder_metrics=epoch_eval_decoder_loss
+                    decoder_metrics=epoch_eval_decoder_loss,
                 )
 
             else:
                 epoch_eval_loss = best_eval_loss
                 self._schedulers_step(
                     encoder_metrics=epoch_train_encoder_loss,
-                    decoder_metrics=epoch_train_decoder_loss
+                    decoder_metrics=epoch_train_decoder_loss,
                 )
 
             if (
@@ -388,11 +388,7 @@ class CoupledOptimizerTrainer(BaseTrainer):
         epoch_decoder_loss /= len(self.eval_loader)
         epoch_loss /= len(self.eval_loader)
 
-        return (
-            epoch_loss,
-            epoch_encoder_loss,
-            epoch_decoder_loss
-        )
+        return (epoch_loss, epoch_encoder_loss, epoch_decoder_loss)
 
     def train_step(self, epoch: int):
         """The trainer performs training loop over the train_loader.
@@ -449,11 +445,7 @@ class CoupledOptimizerTrainer(BaseTrainer):
         epoch_decoder_loss /= len(self.train_loader)
         epoch_loss /= len(self.train_loader)
 
-        return (
-            epoch_loss,
-            epoch_encoder_loss,
-            epoch_decoder_loss
-        )
+        return (epoch_loss, epoch_encoder_loss, epoch_decoder_loss)
 
     def save_checkpoint(self, model: BaseAE, dir_path, epoch: int):
         """Saves a checkpoint alowing to restart training from here

@@ -64,11 +64,15 @@ class MIWAE(VAE):
 
         mu, log_var = encoder_output.embedding, encoder_output.log_covariance
 
-        mu = mu.unsqueeze(1).unsqueeze(1).repeat(
-            1, self.gradient_n_estimates, self.n_samples, 1
+        mu = (
+            mu.unsqueeze(1)
+            .unsqueeze(1)
+            .repeat(1, self.gradient_n_estimates, self.n_samples, 1)
         )
-        log_var = log_var.unsqueeze(1).unsqueeze(1).repeat(
-            1, self.gradient_n_estimates, self.n_samples, 1
+        log_var = (
+            log_var.unsqueeze(1)
+            .unsqueeze(1)
+            .repeat(1, self.gradient_n_estimates, self.n_samples, 1)
         )
 
         std = torch.exp(0.5 * log_var)
@@ -87,14 +91,10 @@ class MIWAE(VAE):
             loss=loss,
             recon_x=recon_x.reshape(
                 x.shape[0], self.gradient_n_estimates, self.n_samples, -1
-                )[:, 0, 0, :].reshape_as(
-                    x
-                ),
-            z=z.reshape(
-                x.shape[0], self.gradient_n_estimates, self.n_samples, -1
-                )[:, 0, 0, :].reshape(
-                    -1, self.latent_dim
-            ),
+            )[:, 0, 0, :].reshape_as(x),
+            z=z.reshape(x.shape[0], self.gradient_n_estimates, self.n_samples, -1)[
+                :, 0, 0, :
+            ].reshape(-1, self.latent_dim),
         )
 
         return output
@@ -106,7 +106,8 @@ class MIWAE(VAE):
             recon_loss = F.mse_loss(
                 recon_x,
                 x.reshape(recon_x.shape[0], -1)
-                .unsqueeze(1).unsqueeze(1)
+                .unsqueeze(1)
+                .unsqueeze(1)
                 .repeat(1, self.gradient_n_estimates, self.n_samples, 1),
                 reduction="none",
             ).sum(dim=-1)
@@ -116,7 +117,8 @@ class MIWAE(VAE):
             recon_loss = F.binary_cross_entropy(
                 recon_x,
                 x.reshape(recon_x.shape[0], -1)
-                .unsqueeze(1).unsqueeze(1)
+                .unsqueeze(1)
+                .unsqueeze(1)
                 .repeat(1, self.gradient_n_estimates, self.n_samples, 1),
                 reduction="none",
             ).sum(dim=-1)

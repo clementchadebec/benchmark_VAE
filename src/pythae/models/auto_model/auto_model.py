@@ -183,7 +183,7 @@ class AutoModel(nn.Module):
             from ..ciwae import CIWAE
 
             model = CIWAE.load_from_folder(dir_path=dir_path)
-        
+
         elif model_name == "MIWAEConfig":
             from ..miwae import MIWAE
 
@@ -444,7 +444,7 @@ class AutoModel(nn.Module):
             model = CIWAE.load_from_hf_hub(
                 hf_hub_path=hf_hub_path, allow_pickle=allow_pickle
             )
-        
+
         elif model_name == "MIWAEConfig":
             from ..miwae import MIWAE
 
