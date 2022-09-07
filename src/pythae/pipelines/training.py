@@ -65,16 +65,16 @@ class TrainingPipeline(Pipeline):
             else:
                 training_config = BaseTrainerConfig()
 
-        elif model.model_name == "RAE_L2":
+        elif model.model_name == "RAE_L2" or model.model_name == "PIWAE":
             if not isinstance(training_config, CoupledOptimizerTrainerConfig):
 
                 raise AssertionError(
                     "A 'CoupledOptimizerTrainerConfig' "
-                    "is expected for training a RAE_L2"
+                    f"is expected for training a {model.model_name}"
                 )
-
-            training_config.encoder_optim_decay = 0.0
-            training_config.decoder_optim_decay = model.model_config.reg_weight
+            if model.model_name == "RAE_L2":
+                training_config.encoder_optim_decay = 0.0
+                training_config.decoder_optim_decay = model.model_config.reg_weight
 
         elif model.model_name == "Adversarial_AE" or model.model_name == "FactorVAE":
             if not isinstance(training_config, AdversarialTrainerConfig):

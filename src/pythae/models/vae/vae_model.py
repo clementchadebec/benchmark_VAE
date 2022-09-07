@@ -151,7 +151,6 @@ class VAE(BaseAE):
             log_p_x = []
 
             for j in range(n_full_batch):
-
                 x_rep = torch.cat(batch_size * [x])
 
                 encoder_output = self.encoder(x_rep)

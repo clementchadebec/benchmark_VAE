@@ -59,6 +59,8 @@ examples/scripts/configs/*
 examples/notebooks/mlruns/*
 mlruns/*
 examples/scripts/reproducibility/reproducibility/*
+examples/scripts/reproducibility/sync.ipynb
+
 
 
 

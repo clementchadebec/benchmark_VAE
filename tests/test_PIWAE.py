@@ -7,7 +7,7 @@ from torch.optim import Adam
 
 from pythae.customexception import BadInheritanceError
 from pythae.models.base.base_utils import ModelOutput
-from pythae.models import RAE_L2, RAE_L2_Config, AutoModel
+from pythae.models import PIWAE, PIWAEConfig, AutoModel
 from pythae.samplers import NormalSamplerConfig, GaussianMixtureSamplerConfig, MAFSamplerConfig, IAFSamplerConfig
 from pythae.trainers import (
     CoupledOptimizerTrainer,
@@ -17,24 +17,24 @@ from pythae.trainers import (
 from pythae.pipelines import TrainingPipeline, GenerationPipeline
 from tests.data.custom_architectures import (
     Decoder_AE_Conv,
-    Encoder_AE_Conv,
+    Encoder_VAE_Conv,
     NetBadInheritance,
 )
 
 PATH = os.path.dirname(os.path.abspath(__file__))
 
 
-@pytest.fixture(params=[RAE_L2_Config(), RAE_L2_Config(latent_dim=5)])
+@pytest.fixture(params=[PIWAEConfig(), PIWAEConfig(latent_dim=5)])
 def model_configs_no_input_dim(request):
     return request.param
 
 
 @pytest.fixture(
     params=[
-        RAE_L2_Config(
-            input_dim=(1, 28, 28), latent_dim=10, embedding_weight=1.0, reg_weight=1e-3
+        PIWAEConfig(
+            input_dim=(1, 28, 28), latent_dim=10, number_gradient_estimates=3
         ),
-        RAE_L2_Config(input_dim=(1, 2, 18), latent_dim=5, reg_weight=1.0),
+        PIWAEConfig(input_dim=(1, 2, 18), latent_dim=5),
     ]
 )
 def model_configs(request):
@@ -43,7 +43,7 @@ def model_configs(request):
 
 @pytest.fixture
 def custom_encoder(model_configs):
-    return Encoder_AE_Conv(model_configs)
+    return Encoder_VAE_Conv(model_configs)
 
 
 @pytest.fixture
@@ -57,7 +57,7 @@ class Test_Model_Building:
         return NetBadInheritance()
 
     def test_build_model(self, model_configs):
-        model = RAE_L2(model_configs)
+        model = PIWAE(model_configs)
         assert all(
             [
                 model.input_dim == model_configs.input_dim,
@@ -67,43 +67,43 @@ class Test_Model_Building:
 
     def test_raises_bad_inheritance(self, model_configs, bad_net):
         with pytest.raises(BadInheritanceError):
-            model = RAE_L2(model_configs, encoder=bad_net)
+            model = PIWAE(model_configs, encoder=bad_net)
 
         with pytest.raises(BadInheritanceError):
-            model = RAE_L2(model_configs, decoder=bad_net)
+            model = PIWAE(model_configs, decoder=bad_net)
 
     def test_raises_no_input_dim(
         self, model_configs_no_input_dim, custom_encoder, custom_decoder
     ):
         with pytest.raises(AttributeError):
-            model = RAE_L2(model_configs_no_input_dim)
+            model = PIWAE(model_configs_no_input_dim)
 
         with pytest.raises(AttributeError):
-            model = RAE_L2(model_configs_no_input_dim, encoder=custom_encoder)
+            model = PIWAE(model_configs_no_input_dim, encoder=custom_encoder)
 
         with pytest.raises(AttributeError):
-            model = RAE_L2(model_configs_no_input_dim, decoder=custom_decoder)
+            model = PIWAE(model_configs_no_input_dim, decoder=custom_decoder)
 
-        model = RAE_L2(
+        model = PIWAE(
             model_configs_no_input_dim, encoder=custom_encoder, decoder=custom_decoder
         )
 
     def test_build_custom_arch(self, model_configs, custom_encoder, custom_decoder):
 
-        model = RAE_L2(model_configs, encoder=custom_encoder, decoder=custom_decoder)
+        model = PIWAE(model_configs, encoder=custom_encoder, decoder=custom_decoder)
 
         assert model.encoder == custom_encoder
         assert not model.model_config.uses_default_encoder
         assert model.decoder == custom_decoder
         assert not model.model_config.uses_default_decoder
 
-        model = RAE_L2(model_configs, encoder=custom_encoder)
+        model = PIWAE(model_configs, encoder=custom_encoder)
 
         assert model.encoder == custom_encoder
         assert not model.model_config.uses_default_encoder
         assert model.model_config.uses_default_decoder
 
-        model = RAE_L2(model_configs, decoder=custom_decoder)
+        model = PIWAE(model_configs, decoder=custom_decoder)
 
         assert model.model_config.uses_default_encoder
         assert model.decoder == custom_decoder
@@ -116,7 +116,7 @@ class Test_Model_Saving:
         tmpdir.mkdir("dummy_folder")
         dir_path = dir_path = os.path.join(tmpdir, "dummy_folder")
 
-        model = RAE_L2(model_configs)
+        model = PIWAE(model_configs)
 
         model.state_dict()["encoder.layers.0.0.weight"][0] = 0
 
@@ -142,7 +142,7 @@ class Test_Model_Saving:
         tmpdir.mkdir("dummy_folder")
         dir_path = dir_path = os.path.join(tmpdir, "dummy_folder")
 
-        model = RAE_L2(model_configs, encoder=custom_encoder)
+        model = PIWAE(model_configs, encoder=custom_encoder)
 
         model.state_dict()["encoder.layers.0.0.weight"][0] = 0
 
@@ -170,7 +170,7 @@ class Test_Model_Saving:
         tmpdir.mkdir("dummy_folder")
         dir_path = dir_path = os.path.join(tmpdir, "dummy_folder")
 
-        model = RAE_L2(model_configs, decoder=custom_decoder)
+        model = PIWAE(model_configs, decoder=custom_decoder)
 
         model.state_dict()["encoder.layers.0.0.weight"][0] = 0
 
@@ -200,7 +200,7 @@ class Test_Model_Saving:
         tmpdir.mkdir("dummy_folder")
         dir_path = dir_path = os.path.join(tmpdir, "dummy_folder")
 
-        model = RAE_L2(model_configs, encoder=custom_encoder, decoder=custom_decoder)
+        model = PIWAE(model_configs, encoder=custom_encoder, decoder=custom_decoder)
 
         model.state_dict()["encoder.layers.0.0.weight"][0] = 0
 
@@ -236,7 +236,7 @@ class Test_Model_Saving:
         tmpdir.mkdir("dummy_folder")
         dir_path = dir_path = os.path.join(tmpdir, "dummy_folder")
 
-        model = RAE_L2(model_configs, encoder=custom_encoder, decoder=custom_decoder)
+        model = PIWAE(model_configs, encoder=custom_encoder, decoder=custom_decoder)
 
         model.state_dict()["encoder.layers.0.0.weight"][0] = 0
 
@@ -278,7 +278,7 @@ class Test_Model_forward:
     @pytest.fixture
     def rae(self, model_configs, demo_data):
         model_configs.input_dim = tuple(demo_data["data"][0].shape)
-        return RAE_L2(model_configs)
+        return PIWAE(model_configs)
 
     def test_model_train_output(self, rae, demo_data):
 
@@ -290,12 +290,12 @@ class Test_Model_forward:
 
         assert set([
             "loss",
-            "recon_loss",
+            "reconstruction_loss",
             "encoder_loss",
             "decoder_loss",
             "update_encoder",
             "update_decoder",
-            "embedding_loss",
+            "reg_loss",
             "recon_x",
             "z"]) == set(
             out.keys()
@@ -324,7 +324,7 @@ class Test_Model_interpolate:
     @pytest.fixture
     def ae(self, model_configs, demo_data):
         model_configs.input_dim = tuple(demo_data[0].shape)
-        return RAE_L2(model_configs)
+        return PIWAE(model_configs)
 
 
     def test_interpolate(self, ae, demo_data, granularity):
@@ -351,7 +351,7 @@ class Test_Model_reconstruct:
     @pytest.fixture
     def ae(self, model_configs, demo_data):
         model_configs.input_dim = tuple(demo_data[0].shape)
-        return RAE_L2(model_configs)
+        return PIWAE(model_configs)
 
 
     def test_reconstruct(self, ae, demo_data):
@@ -361,7 +361,7 @@ class Test_Model_reconstruct:
 
 
 @pytest.mark.slow
-class Test_RAE_L2_Training:
+class Test_PIWAE_Training:
     @pytest.fixture
     def train_dataset(self):
         return torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))
@@ -398,16 +398,16 @@ class Test_RAE_L2_Training:
         alpha = request.param
 
         if alpha < 0.25:
-            model = RAE_L2(model_configs)
+            model = PIWAE(model_configs)
 
         elif 0.25 <= alpha < 0.5:
-            model = RAE_L2(model_configs, encoder=custom_encoder)
+            model = PIWAE(model_configs, encoder=custom_encoder)
 
         elif 0.5 <= alpha < 0.75:
-            model = RAE_L2(model_configs, decoder=custom_decoder)
+            model = PIWAE(model_configs, decoder=custom_decoder)
 
         else:
-            model = RAE_L2(
+            model = PIWAE(
                 model_configs, encoder=custom_encoder, decoder=custom_decoder
             )
 
@@ -681,7 +681,7 @@ class Test_RAE_L2_Training:
         trainer.train()
 
         training_dir = os.path.join(
-            dir_path, f"RAE_L2_training_{trainer._training_signature}"
+            dir_path, f"PIWAE_training_{trainer._training_signature}"
         )
         assert os.path.isdir(training_dir)
 
@@ -747,7 +747,7 @@ class Test_RAE_L2_Training:
         model = deepcopy(trainer._best_model)
 
         training_dir = os.path.join(
-            dir_path, f"RAE_L2_training_{trainer._training_signature}"
+            dir_path, f"PIWAE_training_{trainer._training_signature}"
         )
         assert os.path.isdir(training_dir)
 
@@ -807,17 +807,10 @@ class Test_RAE_L2_Training:
             eval_data=train_dataset.data,  # gives tensor to pipeline
         )
 
-        # check decays are set accordingly to model params
-        assert pipeline.trainer.encoder_optimizer.param_groups[0]["weight_decay"] == 0.0
-        assert (
-            pipeline.trainer.decoder_optimizer.param_groups[0]["weight_decay"]
-            == rae.model_config.reg_weight
-        )
-
         model = deepcopy(pipeline.trainer._best_model)
 
         training_dir = os.path.join(
-            dir_path, f"RAE_L2_training_{pipeline.trainer._training_signature}"
+            dir_path, f"PIWAE_training_{pipeline.trainer._training_signature}"
         )
         assert os.path.isdir(training_dir)
 
@@ -866,7 +859,7 @@ class Test_RAE_Generation:
 
     @pytest.fixture()
     def ae_model(self):
-        return RAE_L2(RAE_L2_Config(input_dim=(1, 28, 28), latent_dim=7))
+        return PIWAE(PIWAEConfig(input_dim=(1, 28, 28), latent_dim=7))
 
     @pytest.fixture(
         params=[

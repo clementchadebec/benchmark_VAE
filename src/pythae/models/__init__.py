@@ -20,12 +20,15 @@ from .auto_model import AutoModel
 from .base import BaseAE, BaseAEConfig
 from .beta_tc_vae import BetaTCVAE, BetaTCVAEConfig
 from .beta_vae import BetaVAE, BetaVAEConfig
+from .ciwae import CIWAE, CIWAEConfig
 from .disentangled_beta_vae import DisentangledBetaVAE, DisentangledBetaVAEConfig
 from .factor_vae import FactorVAE, FactorVAEConfig
 from .hvae import HVAE, HVAEConfig
 from .info_vae import INFOVAE_MMD, INFOVAE_MMD_Config
 from .iwae import IWAE, IWAEConfig
+from .miwae import MIWAE, MIWAEConfig
 from .msssim_vae import MSSSIM_VAE, MSSSIM_VAEConfig
+from .piwae import PIWAE, PIWAEConfig
 from .pvae import PoincareVAE, PoincareVAEConfig
 from .rae_gp import RAE_GP, RAE_GP_Config
 from .rae_l2 import RAE_L2, RAE_L2_Config
@@ -87,4 +90,10 @@ __all__ = [
     "VAE_IAF_Config",
     "PoincareVAE",
     "PoincareVAEConfig",
+    "CIWAE",
+    "CIWAEConfig",
+    "MIWAE",
+    "MIWAEConfig",
+    "PIWAE",
+    "PIWAEConfig",
 ]

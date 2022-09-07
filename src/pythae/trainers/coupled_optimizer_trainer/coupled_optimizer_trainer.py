@@ -120,15 +120,23 @@ class CoupledOptimizerTrainer(BaseTrainer):
 
     def _optimizers_step(self, model_output):
 
-        loss = model_output.loss
+        encoder_loss = model_output.encoder_loss
+        decoder_loss = model_output.decoder_loss
 
-        self.encoder_optimizer.zero_grad()
-        self.decoder_optimizer.zero_grad()
+        # Reset optimizers
+        if model_output.update_encoder:
+            self.encoder_optimizer.zero_grad()
+            encoder_loss.backward(retain_graph=True)
 
-        loss.backward()
+        if model_output.update_decoder:
+            self.decoder_optimizer.zero_grad()
+            decoder_loss.backward(retain_graph=True)
 
-        self.encoder_optimizer.step()
-        self.decoder_optimizer.step()
+        if model_output.update_encoder:
+            self.encoder_optimizer.step()
+
+        if model_output.update_decoder:
+            self.decoder_optimizer.step()
 
     def _schedulers_step(self, encoder_metrics=None, decoder_metrics=None):
         if isinstance(self.encoder_scheduler, ReduceLROnPlateau):
@@ -232,21 +240,39 @@ class CoupledOptimizerTrainer(BaseTrainer):
 
             metrics = {}
 
-            epoch_train_loss = self.train_step(epoch)
+            train_losses = self.train_step(epoch)
+
+            [
+                epoch_train_loss,
+                epoch_train_encoder_loss,
+                epoch_train_decoder_loss,
+            ] = train_losses
             metrics["train_epoch_loss"] = epoch_train_loss
+            metrics["train_encoder_loss"] = epoch_train_encoder_loss
+            metrics["train_decoder_loss"] = epoch_train_decoder_loss
 
             if self.eval_dataset is not None:
-                epoch_eval_loss = self.eval_step(epoch)
+                eval_losses = self.eval_step(epoch)
+
+                [
+                    epoch_eval_loss,
+                    epoch_eval_encoder_loss,
+                    epoch_eval_decoder_loss,
+                ] = eval_losses
                 metrics["eval_epoch_loss"] = epoch_eval_loss
+                metrics["eval_encoder_loss"] = epoch_eval_encoder_loss
+                metrics["eval_decoder_loss"] = epoch_eval_decoder_loss
 
                 self._schedulers_step(
-                    encoder_metrics=epoch_eval_loss, decoder_metrics=epoch_eval_loss
+                    encoder_metrics=epoch_eval_encoder_loss,
+                    decoder_metrics=epoch_eval_decoder_loss,
                 )
 
             else:
                 epoch_eval_loss = best_eval_loss
                 self._schedulers_step(
-                    encoder_metrics=epoch_train_loss, decoder_metrics=epoch_train_loss
+                    encoder_metrics=epoch_train_encoder_loss,
+                    decoder_metrics=epoch_train_decoder_loss,
                 )
 
             if (
@@ -307,6 +333,63 @@ class CoupledOptimizerTrainer(BaseTrainer):
 
         self.callback_handler.on_train_end(self.training_config)
 
+    def eval_step(self, epoch: int):
+        """Perform an evaluation step
+
+        Parameters:
+            epoch (int): The current epoch number
+
+        Returns:
+            (torch.Tensor): The evaluation loss
+        """
+        self.callback_handler.on_eval_step_begin(
+            training_config=self.training_config,
+            eval_loader=self.eval_loader,
+            epoch=epoch,
+        )
+
+        self.model.eval()
+
+        epoch_encoder_loss = 0
+        epoch_decoder_loss = 0
+        epoch_loss = 0
+
+        for inputs in self.eval_loader:
+
+            inputs = self._set_inputs_to_device(inputs)
+
+            try:
+                with torch.no_grad():
+
+                    model_output = self.model(
+                        inputs, epoch=epoch, dataset_size=len(self.eval_loader.dataset)
+                    )
+
+            except RuntimeError:
+                model_output = self.model(
+                    inputs, epoch=epoch, dataset_size=len(self.eval_loader.dataset)
+                )
+
+            encoder_loss = model_output.encoder_loss
+            decoder_loss = model_output.decoder_loss
+
+            loss = encoder_loss + decoder_loss
+
+            epoch_encoder_loss += encoder_loss.item()
+            epoch_decoder_loss += decoder_loss.item()
+            epoch_loss += loss.item()
+
+            if epoch_loss != epoch_loss:
+                raise ArithmeticError("NaN detected in eval loss")
+
+            self.callback_handler.on_eval_step_end(training_config=self.training_config)
+
+        epoch_encoder_loss /= len(self.eval_loader)
+        epoch_decoder_loss /= len(self.eval_loader)
+        epoch_loss /= len(self.eval_loader)
+
+        return (epoch_loss, epoch_encoder_loss, epoch_decoder_loss)
+
     def train_step(self, epoch: int):
         """The trainer performs training loop over the train_loader.
 
@@ -325,6 +408,8 @@ class CoupledOptimizerTrainer(BaseTrainer):
         # set model in train model
         self.model.train()
 
+        epoch_encoder_loss = 0
+        epoch_decoder_loss = 0
         epoch_loss = 0
 
         for inputs in self.train_loader:
@@ -337,8 +422,13 @@ class CoupledOptimizerTrainer(BaseTrainer):
 
             self._optimizers_step(model_output)
 
-            loss = model_output.loss
+            encoder_loss = model_output.encoder_loss
+            decoder_loss = model_output.decoder_loss
 
+            loss = encoder_loss + decoder_loss
+
+            epoch_encoder_loss += encoder_loss.item()
+            epoch_decoder_loss += decoder_loss.item()
             epoch_loss += loss.item()
 
             if epoch_loss != epoch_loss:
@@ -351,9 +441,11 @@ class CoupledOptimizerTrainer(BaseTrainer):
         # Allows model updates if needed
         self.model.update()
 
+        epoch_encoder_loss /= len(self.train_loader)
+        epoch_decoder_loss /= len(self.train_loader)
         epoch_loss /= len(self.train_loader)
 
-        return epoch_loss
+        return (epoch_loss, epoch_encoder_loss, epoch_decoder_loss)
 
     def save_checkpoint(self, model: BaseAE, dir_path, epoch: int):
         """Saves a checkpoint alowing to restart training from here

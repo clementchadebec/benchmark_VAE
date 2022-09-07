@@ -8,8 +8,10 @@ import torch
 
 from pythae.data.preprocessors import DataProcessor
 from pythae.models import AutoModel
-from pythae.models import IWAE, IWAEConfig
+from pythae.models import CIWAE, CIWAEConfig
 from pythae.trainers import BaseTrainer, BaseTrainerConfig
+from pythae.data.datasets import DatasetOutput
+from torch.utils.data import Dataset
 
 from pythae.models.nn import BaseEncoder, BaseDecoder
 import torch.nn as nn
@@ -68,7 +70,7 @@ class Encoder(BaseEncoder):
     def forward(self, x, output_layer_levels: List[int] = None):
         output = ModelOutput()
 
-        out = torch.tanh(self.fc1(x))
+        out = torch.tanh(self.fc1(x.reshape(x.shape[0], -1)))
         out = torch.tanh(self.fc2(out))
         output["embedding"] = self.embedding(out)
         output["log_covariance"] = self.log_var(out)
@@ -103,27 +105,52 @@ class Decoder(BaseDecoder):
 
         return output
 
+class DynBinarizedMNIST(Dataset):
+    def __init__(self, data):
+        self.data = data.type(torch.float)
+
+    def __len__(self):
+        return len(self.data)
+
+    def __getitem__(self, index):
+        x = self.data[index]
+        x = (x > torch.distributions.Uniform(0, 1).sample(x.shape)).float()
+        return DatasetOutput(data=x)
 
 
 def main(args):
 
     
     
-    train_data = torch.tensor(np.loadtxt(os.path.join(PATH, f"data/binary_mnist", "binarized_mnist_train.amat"))).type(torch.float)
-    eval_data = torch.tensor(np.loadtxt(os.path.join(PATH, f"data/binary_mnist", "binarized_mnist_valid.amat"))).type(torch.float)
-    test_data = torch.tensor(np.loadtxt(os.path.join(PATH, f"data/binary_mnist", "binarized_mnist_test.amat"))).type(torch.float)
+    ### Load data
+    train_data = torch.tensor(
+        np.load(os.path.join(PATH, f"data/mnist", "train_data.npz"))[
+            "data"
+        ]
+        / 255.0
+    )
+    eval_data = torch.tensor(
+        np.load(os.path.join(PATH, f"data/mnist", "eval_data.npz"))["data"]
+        / 255.0
+    )
 
+    train_data = torch.cat((train_data, eval_data))
+
+    test_data = (
+        np.load(os.path.join(PATH, f"data/mnist", "test_data.npz"))["data"]
+        / 255.0
+    )
     data_input_dim = tuple(train_data.shape[1:])
 
     if args.model_config is not None:
-        model_config = IWAEConfig.from_json_file(args.model_config)
+        model_config = CIWAEConfig.from_json_file(args.model_config)
 
     else:
-        model_config = IWAEConfig()
+        model_config = CIWAEConfig()
 
     model_config.input_dim = data_input_dim
 
-    model = IWAE(
+    model = CIWAE(
         model_config=model_config,
         encoder=Encoder(model_config),
         decoder=Decoder(model_config),
@@ -133,14 +160,8 @@ def main(args):
     training_config = BaseTrainerConfig.from_json_file(args.training_config)
 
     ### Process data
-    data_processor = DataProcessor()
     logger.info("Preprocessing train data...")
-    #train_data = data_processor.process_data(train_data)
-    train_dataset = data_processor.to_dataset(train_data)
-
-    logger.info("Preprocessing eval data...\n")
-    #ieval_data = data_processor.process_data(eval_data)
-    eval_dataset = data_processor.to_dataset(eval_data)
+    train_dataset = DynBinarizedMNIST(train_data)
 
     ### Optimizer
     optimizer = torch.optim.Adam(model.parameters(), lr=training_config.learning_rate, eps=1e-4)
@@ -158,7 +179,7 @@ def main(args):
     trainer = BaseTrainer(
         model=model,
         train_dataset=train_dataset,
-        eval_dataset=eval_dataset,
+        eval_dataset=None,#eval_dataset,
         training_config=training_config,
         optimizer=optimizer,
         scheduler=scheduler,
@@ -171,6 +192,7 @@ def main(args):
     trained_model = AutoModel.load_from_folder(os.path.join(training_config.output_dir, f'{trainer.model.model_name}_training_{trainer._training_signature}', 'final_model')).to(device).eval()
 
     test_data = torch.tensor(test_data).to(device).type(torch.float)
+    test_data = (test_data > torch.distributions.Uniform(0, 1).sample(test_data.shape).to(test_data.device)).float()
 
     ### Compute NLL
     with torch.no_grad():

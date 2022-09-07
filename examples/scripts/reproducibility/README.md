@@ -54,6 +54,9 @@ Below are gathered the results we were able to reproduce
 | SVAE | Dyn. Binarized MNIST | NLL (500 IS) | 93.13 (0.01) | 93.16 (0.31) | [code](https://github.com/nicola-decao/s-vae-pytorch) | [link](https://huggingface.co/clementchadebec/reproduced_svae) |
 PoincareVAE (Wrapped)| MNIST | NLL (500 IS) | 101.66 (0.00) | 101.47 (0.01) | [code](https://github.com/emilemathieu/pvae) | [link](https://huggingface.co/clementchadebec/reproduced_wrapped_poincare_vae)
 | IWAE (n_samples=50) | Binary MNIST | NLL (5000 IS) | 86.82 (0.01) | 87.1 | [paper](https://arxiv.org/abs/1509.00519) | [link](https://huggingface.co/clementchadebec/reproduced_iwae)
+| MIWAE (M=8, K=8) | Dyn. Binarized MNIST | NLL (5000 IS) | 85.09 (0.00) | 84.97 (0.10) | [paper](https://arxiv.org/abs/1802.04537) | [link](https://huggingface.co/clementchadebec/reproduced_miwae)
+| PIWAE (M=8, K=8) | Dyn. Binarized MNIST | NLL (5000 IS) | 84.58 (0.00) | 84.46 (0.06) | [paper](https://arxiv.org/abs/1802.04537) | [link](https://huggingface.co/clementchadebec/reproduced_piwae)
+| CIWAE (beta=0.05) | Dyn. Binarized MNIST | NLL (5000 IS) | 84.74 (0.01) | 84.57 (0.09) | [paper](https://arxiv.org/abs/1802.04537) | [link](https://huggingface.co/clementchadebec/reproduced_ciwae)
 | HVAE (n_lf=4) | Binary MNIST | NLL (1000 IS) | 86.21 (0.01) | 86.40 | [paper](https://arxiv.org/abs/1410.6460) | [link](https://huggingface.co/clementchadebec/reproduced_hvae)
 | BetaTCVAE | DSPRITES | Modified ELBO/ELBO (after 50 epochs) | 710.41/85.54 | 712.26/86.40 | [code](https://github.com/rtqichen/beta-tcvae) | [link](https://huggingface.co/clementchadebec/reproduced_beta_tc_vae)
 | RAE_L2 | MNIST | FID | 9.1 | 9.9 | [code](https://github.com/ParthaEth/Regularized_autoencoders-RAE-) | [link](https://huggingface.co/clementchadebec/reproduced_rae_l2)

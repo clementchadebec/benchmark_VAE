@@ -8,6 +8,8 @@ from pythae.trainers import *
 from pythae.models import (
     AE,
     AEConfig,
+    RAE_L2,
+    RAE_L2_Config,
     Adversarial_AE,
     Adversarial_AE_Config,
     VAEGAN,
@@ -177,7 +179,7 @@ class Test_TrainersCalls:
                 BaseTrainerConfig(num_epochs=2, steps_predict=1),
             ],
             [
-                AEConfig(input_dim=(1, 28, 28)),
+                RAE_L2_Config(input_dim=(1, 28, 28)),
                 CoupledOptimizerTrainerConfig(num_epochs=3, steps_predict=1),
             ],
             [
@@ -197,6 +199,8 @@ class Test_TrainersCalls:
 
         if request.param[0].name == "AEConfig":
             model = AE(request.param[0])
+        elif request.param[0].name == "RAE_L2_Config":
+            model = RAE_L2(request.param[0])
         elif request.param[0].name == "Adversarial_AE_Config":
             model = Adversarial_AE(request.param[0])
         else:

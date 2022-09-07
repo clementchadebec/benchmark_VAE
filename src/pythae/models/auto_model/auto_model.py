@@ -179,6 +179,21 @@ class AutoModel(nn.Module):
 
             model = PoincareVAE.load_from_folder(dir_path=dir_path)
 
+        elif model_name == "CIWAEConfig":
+            from ..ciwae import CIWAE
+
+            model = CIWAE.load_from_folder(dir_path=dir_path)
+
+        elif model_name == "MIWAEConfig":
+            from ..miwae import MIWAE
+
+            model = MIWAE.load_from_folder(dir_path=dir_path)
+
+        elif model_name == "PIWAEConfig":
+            from ..piwae import PIWAE
+
+            model = PIWAE.load_from_folder(dir_path=dir_path)
+
         else:
             raise NameError(
                 "Cannot reload automatically the model... "
@@ -420,6 +435,27 @@ class AutoModel(nn.Module):
             from ..pvae import PoincareVAE
 
             model = PoincareVAE.load_from_hf_hub(
+                hf_hub_path=hf_hub_path, allow_pickle=allow_pickle
+            )
+
+        elif model_name == "CIWAEConfig":
+            from ..ciwae import CIWAE
+
+            model = CIWAE.load_from_hf_hub(
+                hf_hub_path=hf_hub_path, allow_pickle=allow_pickle
+            )
+
+        elif model_name == "MIWAEConfig":
+            from ..miwae import MIWAE
+
+            model = MIWAE.load_from_hf_hub(
+                hf_hub_path=hf_hub_path, allow_pickle=allow_pickle
+            )
+
+        elif model_name == "PIWAEConfig":
+            from ..piwae import PIWAE
+
+            model = PIWAE.load_from_hf_hub(
                 hf_hub_path=hf_hub_path, allow_pickle=allow_pickle
             )
 

@@ -274,7 +274,7 @@ def main(args):
     trainer.train()
     
     ### Reload model
-    trained_model = AutoModel.load_from_folder(os.path.join(training_config.output_dir, f'{trainer.model.model_name}_training_{trainer._training_signature}', 'final_model')).to(device)
+    trained_model = AutoModel.load_from_folder(os.path.join(training_config.output_dir, f'{trainer.model.model_name}_training_{trainer._training_signature}', 'final_model')).to(device).eval()
 
     test_data = torch.tensor(test_data).to(device).type(torch.float)
 

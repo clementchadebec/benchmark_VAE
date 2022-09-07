@@ -165,6 +165,21 @@ class AutoConfig(BaseConfig):
 
             model_config = PoincareVAEConfig.from_json_file(json_path)
 
+        elif config_name == "CIWAEConfig":
+            from ..ciwae import CIWAEConfig
+
+            model_config = CIWAEConfig.from_json_file(json_path)
+
+        elif config_name == "MIWAEConfig":
+            from ..miwae import MIWAEConfig
+
+            model_config = MIWAEConfig.from_json_file(json_path)
+
+        elif config_name == "PIWAEConfig":
+            from ..piwae import PIWAEConfig
+
+            model_config = PIWAEConfig.from_json_file(json_path)
+
         else:
             raise NameError(
                 "Cannot reload automatically the model configuration... "

@@ -8,8 +8,11 @@ import torch
 
 from pythae.data.preprocessors import DataProcessor
 from pythae.models import AutoModel
-from pythae.models import IWAE, IWAEConfig
-from pythae.trainers import BaseTrainer, BaseTrainerConfig
+from pythae.models import PIWAE, PIWAEConfig
+from pythae.trainers import CoupledOptimizerTrainerConfig, CoupledOptimizerTrainer
+from pythae.data.datasets import DatasetOutput
+from torch.utils.data import Dataset
+
 
 from pythae.models.nn import BaseEncoder, BaseDecoder
 import torch.nn as nn
@@ -68,12 +71,24 @@ class Encoder(BaseEncoder):
     def forward(self, x, output_layer_levels: List[int] = None):
         output = ModelOutput()
 
-        out = torch.tanh(self.fc1(x))
+        out = torch.tanh(self.fc1(x.reshape(x.shape[0], -1)))
         out = torch.tanh(self.fc2(out))
         output["embedding"] = self.embedding(out)
         output["log_covariance"] = self.log_var(out)
 
         return output
+
+class DynBinarizedMNIST(Dataset):
+    def __init__(self, data):
+        self.data = data.type(torch.float)
+
+    def __len__(self):
+        return len(self.data)
+
+    def __getitem__(self, index):
+        x = self.data[index]
+        x = (x > torch.distributions.Uniform(0, 1).sample(x.shape)).float()
+        return DatasetOutput(data=x)
 
 ### Define paper decoder network
 class Decoder(BaseDecoder):
@@ -109,59 +124,71 @@ def main(args):
 
     
     
-    train_data = torch.tensor(np.loadtxt(os.path.join(PATH, f"data/binary_mnist", "binarized_mnist_train.amat"))).type(torch.float)
-    eval_data = torch.tensor(np.loadtxt(os.path.join(PATH, f"data/binary_mnist", "binarized_mnist_valid.amat"))).type(torch.float)
-    test_data = torch.tensor(np.loadtxt(os.path.join(PATH, f"data/binary_mnist", "binarized_mnist_test.amat"))).type(torch.float)
+    ### Load data
+    train_data = torch.tensor(
+        np.load(os.path.join(PATH, f"data/mnist", "train_data.npz"))[
+            "data"
+        ]
+        / 255.0
+    )
+    eval_data = torch.tensor(
+        np.load(os.path.join(PATH, f"data/mnist", "eval_data.npz"))["data"]
+        / 255.0
+    )
 
+    train_data = torch.cat((train_data, eval_data))
+
+    test_data = (
+        np.load(os.path.join(PATH, f"data/mnist", "test_data.npz"))["data"]
+        / 255.0
+    )
     data_input_dim = tuple(train_data.shape[1:])
 
     if args.model_config is not None:
-        model_config = IWAEConfig.from_json_file(args.model_config)
+        model_config = PIWAEConfig.from_json_file(args.model_config)
 
     else:
-        model_config = IWAEConfig()
+        model_config = PIWAEConfig()
 
     model_config.input_dim = data_input_dim
 
-    model = IWAE(
+    model = PIWAE(
         model_config=model_config,
         encoder=Encoder(model_config),
         decoder=Decoder(model_config),
     )
 
     ### Set training config
-    training_config = BaseTrainerConfig.from_json_file(args.training_config)
+    training_config = CoupledOptimizerTrainerConfig.from_json_file(args.training_config)
 
-    ### Process data
-    data_processor = DataProcessor()
     logger.info("Preprocessing train data...")
-    #train_data = data_processor.process_data(train_data)
-    train_dataset = data_processor.to_dataset(train_data)
+    train_dataset = DynBinarizedMNIST(train_data)
 
-    logger.info("Preprocessing eval data...\n")
-    #ieval_data = data_processor.process_data(eval_data)
-    eval_dataset = data_processor.to_dataset(eval_data)
+    ### Optimizers
+    enc_optimizer = torch.optim.Adam(model.encoder.parameters(), lr=training_config.learning_rate, eps=1e-4)
+    dec_optimizer = torch.optim.Adam(model.decoder.parameters(), lr=training_config.learning_rate, eps=1e-4)
 
-    ### Optimizer
-    optimizer = torch.optim.Adam(model.parameters(), lr=training_config.learning_rate, eps=1e-4)
-
-    ### Scheduler
-    scheduler = torch.optim.lr_scheduler.MultiStepLR(
-        optimizer, milestones=[2, 5, 14, 28, 41, 122, 365, 1094], gamma=10**(-1/7), verbose=True
+    ### Schedulers
+    enc_scheduler = torch.optim.lr_scheduler.MultiStepLR(
+        enc_optimizer, milestones=[2, 5, 14, 28, 41, 122, 365, 1094], gamma=10**(-1/7), verbose=True
+    )
+    dec_scheduler = torch.optim.lr_scheduler.MultiStepLR(
+        dec_optimizer, milestones=[2, 5, 14, 28, 41, 122, 365, 1094], gamma=10**(-1/7), verbose=True
     )
 
     seed = 123
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
 
-    logger.info("Using Base Trainer\n")
-    trainer = BaseTrainer(
+    trainer = CoupledOptimizerTrainer(
         model=model,
         train_dataset=train_dataset,
-        eval_dataset=eval_dataset,
+        eval_dataset=None,#eval_dataset,
         training_config=training_config,
-        optimizer=optimizer,
-        scheduler=scheduler,
+        encoder_optimizer=enc_optimizer,
+        decoder_optimizer=dec_optimizer,
+        encoder_scheduler=enc_scheduler,
+        decoder_scheduler=dec_scheduler,
         callbacks=None,
     )
 
@@ -171,6 +198,7 @@ def main(args):
     trained_model = AutoModel.load_from_folder(os.path.join(training_config.output_dir, f'{trainer.model.model_name}_training_{trainer._training_signature}', 'final_model')).to(device).eval()
 
     test_data = torch.tensor(test_data).to(device).type(torch.float)
+    test_data = (test_data > torch.distributions.Uniform(0, 1).sample(test_data.shape).to(test_data.device)).float()
 
     ### Compute NLL
     with torch.no_grad():
