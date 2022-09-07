@@ -438,6 +438,27 @@ class AutoModel(nn.Module):
                 hf_hub_path=hf_hub_path, allow_pickle=allow_pickle
             )
 
+        elif model_name == "CIWAEConfig":
+            from ..ciwae import CIWAE
+
+            model = CIWAE.load_from_hf_hub(
+                hf_hub_path=hf_hub_path, allow_pickle=allow_pickle
+            )
+        
+        elif model_name == "MIWAEConfig":
+            from ..miwae import MIWAE
+
+            model = MIWAE.load_from_hf_hub(
+                hf_hub_path=hf_hub_path, allow_pickle=allow_pickle
+            )
+
+        elif model_name == "PIWAEConfig":
+            from ..piwae import PIWAE
+
+            model = PIWAE.load_from_hf_hub(
+                hf_hub_path=hf_hub_path, allow_pickle=allow_pickle
+            )
+
         else:
             raise NameError(
                 "Cannot reload automatically the model... "
