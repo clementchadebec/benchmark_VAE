@@ -34,7 +34,7 @@
 This library implements some of the most common (Variational) Autoencoder models under a unified implementation. In particular, it 
 provides the possibility to perform benchmark experiments and comparisons by training 
 the models with the same autoencoding neural network architecture. The feature *make your own autoencoder* 
-allows you to train any of these models with your own data and own Encoder and Decoder neural networks. It integrates experiment monitoring tools such [wandb](https://wandb.ai/) and [mlflow](https://mlflow.org/) 🧪 and allows model sharing and loading from the [HuggingFace Hub](https://huggingface.co/models) 🤗 in a few lines of code.
+allows you to train any of these models with your own data and own Encoder and Decoder neural networks. It integrates experiment monitoring tools such [wandb](https://wandb.ai/), [mlflow](https://mlflow.org/) or [comet-ml](https://www.comet.com/site/) 🧪 and allows model sharing and loading from the [HuggingFace Hub](https://huggingface.co/models) 🤗 in a few lines of code.
 
 
 ## Quick access:
@@ -42,7 +42,7 @@ allows you to train any of these models with your own data and own Encoder and D
 - [Implemented models](#available-models) / [Implemented samplers](#available-samplers)
 - [Reproducibility statement](#reproducibility) / [Results flavor](#results)
 - [Model training](#launching-a-model-training) / [Data generation](#launching-data-generation) / [Custom network architectures](#define-you-own-autoencoder-architecture)
-- [Model sharing with 🤗 Hub](#sharing-your-models-with-the-huggingface-hub-) / [Experiment tracking with `wandb`](#monitoring-your-experiments-with-wandb-) / [Experiment tracking with `mlflow`](#monitoring-your-experiments-with-mlflow-)
+- [Model sharing with 🤗 Hub](#sharing-your-models-with-the-huggingface-hub-) / [Experiment tracking with `wandb`](#monitoring-your-experiments-with-wandb-) / [Experiment tracking with `mlflow`](#monitoring-your-experiments-with-mlflow-) / [Experiment tracking with `comet_ml`](#monitoring-your-experiments-with-comet_ml-)
 - [Tutorials](#getting-your-hands-on-the-code) / [Documentation](https://pythae.readthedocs.io/en/latest/)
 - [Contributing 🚀](#contributing-) / [Issues 🛠️](#dealing-with-issues-%EF%B8%8F)
 - [Citing this repository](#citation)
@@ -445,6 +445,52 @@ you can visualize your metric by running the following in the directory where th
 $ mlflow ui 
 ```
 See the detailed tutorial 
+
+## Monitoring your experiments with **comet_ml** 🧪
+Pythae also integrates the experiement tracking tool [comet_ml](https://www.comet.com/site/) allowing users to store their configs, monitor their trainings and compare runs through a graphic interface. To be able use this feature you will need:
+- the package `comet_ml` installed in your virtual env. If not you can install it with 
+```
+$ pip install comet_ml
+```
+
+### Creating a `CometCallback`
+Launching an experiment monitoring with `comet_ml` in pythae is pretty simple. The only thing a user needs to do is create a `CometCallback` instance...
+
+```python
+>>> # Create you callback
+>>> from pythae.trainers.training_callbacks import CometCallback
+>>> callbacks = [] # the TrainingPipeline expects a list of callbacks
+>>> comet_cb = CometCallback() # Build the callback 
+>>> # SetUp the callback 
+>>> comet_cb.setup(
+...	training_config=training_config, # training config
+...	model_config=model_config, # model config
+...	api_key="your_comet_api_key", # specify your comet api-key
+...	project_name="your_comet_project", # specify your wandb project
+...	#offline_run=True, # run in offline mode
+...	#offline_directory='my_offline_runs' # set the directory to store the offline runs
+... )
+>>> callbacks.append(comet_cb) # Add it to the callbacks list
+```
+...and then pass it to the `TrainingPipeline`.
+```python
+>>> pipeline = TrainingPipeline(
+...	training_config=config,
+...	model=model
+... )
+>>> pipeline(
+...	train_data=train_dataset,
+...	eval_data=eval_dataset,
+...	callbacks=callbacks # pass the callbacks to the TrainingPipeline and you are done!
+... )
+>>> # You can log to https://comet.com/your_comet_username/your_comet_project to monitor your training
+```
+you can visualize your metric by running the following in the directory where the `./mlruns`
+```bash
+$ mlflow ui 
+```
+See the detailed tutorial 
+
 
 ## Getting your hands on the code 
 
