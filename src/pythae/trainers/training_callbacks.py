@@ -7,8 +7,8 @@ import logging
 import numpy as np
 from tqdm.auto import tqdm
 
-from .base_trainer.base_training_config import BaseTrainerConfig
 from ..models import BaseAEConfig
+from .base_trainer.base_training_config import BaseTrainerConfig
 
 logger = logging.getLogger(__name__)
 
@@ -19,6 +19,7 @@ def wandb_is_available():
 
 def mlflow_is_available():
     return importlib.util.find_spec("mlflow") is not None
+
 
 def comet_is_available():
     return importlib.util.find_spec("comet_ml") is not None
@@ -271,25 +272,26 @@ class ProgressBarCallback(TrainingCallback):
 
 class WandbCallback(TrainingCallback):  # pragma: no cover
     """
-    A :class:`TrainingCallback` integrating the experiment tracking tool 
+    A :class:`TrainingCallback` integrating the experiment tracking tool
     `wandb` (https://wandb.ai/).
-    
-    It allows users to store their configs, monitor their trainings 
+
+    It allows users to store their configs, monitor their trainings
     and compare runs through a graphic interface. To be able use this feature you will need:
-        
+
         - a valid `wandb` account
-        - the package `wandb` installed in your virtual env. If not you can install it with 
-        
+        - the package `wandb` installed in your virtual env. If not you can install it with
+
         .. code-block::
-        
+
             $ pip install wandb
-        
+
         - to be logged in to your wandb account using
-        
+
         .. code-block::
-        
+
             $ wandb login
     """
+
     def __init__(self):
         if not wandb_is_available():
             raise ModuleNotFoundError(
@@ -302,8 +304,13 @@ class WandbCallback(TrainingCallback):  # pragma: no cover
             self._wandb = wandb
 
     def setup(
-        self, training_config, model_config=None, project_name="pythae_experiment", entity_name=None,
-        **kwargs):
+        self,
+        training_config,
+        model_config=None,
+        project_name="pythae_experiment",
+        entity_name=None,
+        **kwargs,
+    ):
         """
         Setup the WandbCallback.
 
@@ -311,10 +318,10 @@ class WandbCallback(TrainingCallback):  # pragma: no cover
             training_config (BaseTrainingConfig): The training configuration used in the run.
 
             model_config (BaseAEConfig): The model configuration used in the run.
-            
+
             project_name (str): The name of the wandb project to use.
 
-            entity_name (str): The name of the wandb entity to use. 
+            entity_name (str): The name of the wandb entity to use.
         """
 
         self.is_initialized = True
@@ -405,18 +412,19 @@ class WandbCallback(TrainingCallback):  # pragma: no cover
 
 class MLFlowCallback(TrainingCallback):  # pragma: no cover
     """
-    A :class:`TrainingCallback` integrating the experiment tracking tool 
+    A :class:`TrainingCallback` integrating the experiment tracking tool
     `mlflow` (https://mlflow.org/).
-    
-    It allows users to store their configs, monitor their trainings 
+
+    It allows users to store their configs, monitor their trainings
     and compare runs through a graphic interface. To be able use this feature you will need:
-        
-        - the package `mlfow` installed in your virtual env. If not you can install it with 
-        
+
+        - the package `mlfow` installed in your virtual env. If not you can install it with
+
         .. code-block::
 
             $ pip install mlflow
     """
+
     def __init__(self):
         if not mlflow_is_available():
             raise ModuleNotFoundError(
@@ -436,8 +444,8 @@ class MLFlowCallback(TrainingCallback):  # pragma: no cover
             training_config (BaseTrainingConfig): The training configuration used in the run.
 
             model_config (BaseAEConfig): The model configuration used in the run.
-            
-            run_name (str): The name to apply to the current run. 
+
+            run_name (str): The name to apply to the current run.
         """
         self.is_initialized = True
 
@@ -489,19 +497,20 @@ class MLFlowCallback(TrainingCallback):  # pragma: no cover
         ):
             self._mlflow.end_run()
 
-class CometCallback(TrainingCallback): # pragma: no cover
+
+class CometCallback(TrainingCallback):  # pragma: no cover
     """
-    A :class:`TrainingCallback` integrating the experiment tracking tool 
+    A :class:`TrainingCallback` integrating the experiment tracking tool
     `comet_ml` (https://www.comet.com/site/).
-    
-    It allows users to store their configs, monitor 
-    their trainings and compare runs through a graphic interface. To be able use this feature 
+
+    It allows users to store their configs, monitor
+    their trainings and compare runs through a graphic interface. To be able use this feature
     you will need:
-    
-    - the package `comet_ml` installed in your virtual env. If not you can install it with 
-    
+
+    - the package `comet_ml` installed in your virtual env. If not you can install it with
+
     .. code-block::
-        
+
         $ pip install comet_ml
     """
 
@@ -518,9 +527,15 @@ class CometCallback(TrainingCallback): # pragma: no cover
 
     def setup(
         self,
-        training_config, model_config=None, 
+        training_config,
+        model_config=None,
         api_key=None,
-        project_name="pythae_experiment", workspace=None, offline_run=False, offline_directory="./", **kwargs):
+        project_name="pythae_experiment",
+        workspace=None,
+        offline_run=False,
+        offline_directory="./",
+        **kwargs,
+    ):
 
         """
         Setup the CometCallback.
@@ -529,7 +544,7 @@ class CometCallback(TrainingCallback): # pragma: no cover
             training_config (BaseTrainingConfig): The training configuration used in the run.
 
             model_config (BaseAEConfig): The model configuration used in the run.
-            
+
             api_key (str): Your personal comet-ml `api_key`.
 
             project_name (str): The name of the wandb project to use.
@@ -538,28 +553,34 @@ class CometCallback(TrainingCallback): # pragma: no cover
 
             offline_run: (bool): Whether to run comet-ml in offline mode.
 
-            offline_directory (str): The path to store the offline runs. They can to be 
-                synchronized then by running `comet upload`. 
+            offline_directory (str): The path to store the offline runs. They can to be
+                synchronized then by running `comet upload`.
         """
 
         self.is_initialized = True
-
 
         training_config_dict = training_config.to_dict()
 
         if not offline_run:
             experiment = self._comet_ml.Experiment(
-                api_key=api_key,
-                project_name=project_name, workspace=workspace)
+                api_key=api_key, project_name=project_name, workspace=workspace
+            )
             experiment.log_other("Created from", "pythae")
         else:
             experiment = self._comet_ml.OfflineExperiment(
                 api_key=api_key,
-                project_name=project_name, workspace=workspace, offline_directory=offline_directory)
+                project_name=project_name,
+                workspace=workspace,
+                offline_directory=offline_directory,
+            )
             experiment.log_other("Created from", "pythae")
 
-        experiment._log_parameters(training_config, prefix="training_config/", framework="pythae")
-        experiment._log_parameters(model_config, prefix="model_config/", framework="pythae")
+        experiment._log_parameters(
+            training_config, prefix="training_config/", framework="pythae"
+        )
+        experiment._log_parameters(
+            model_config, prefix="model_config/", framework="pythae"
+        )
 
     def on_train_begin(self, training_config: BaseTrainerConfig, **kwargs):
         model_config = kwargs.pop("model_config", None)
@@ -593,31 +614,26 @@ class CometCallback(TrainingCallback): # pragma: no cover
                 experiment.log_image(
                     np.moveaxis(true_data[i].cpu().detach().numpy(), 0, -1),
                     name=f"{i}_truth",
-                    step=global_step
+                    step=global_step,
                 )
                 experiment.log_image(
                     np.clip(
-                                np.moveaxis(
-                                    reconstructions[i].cpu().detach().numpy(), 0, -1
-                                ),
-                                0,
-                                255.0,
-                            ),
+                        np.moveaxis(reconstructions[i].cpu().detach().numpy(), 0, -1),
+                        0,
+                        255.0,
+                    ),
                     name=f"{i}_reconstruction",
-                    step=global_step
+                    step=global_step,
                 )
                 experiment.log_image(
                     np.clip(
-                                np.moveaxis(
-                                    generations[i].cpu().detach().numpy(), 0, -1
-                                ),
-                                0,
-                                255.0,
-                            ),
+                        np.moveaxis(generations[i].cpu().detach().numpy(), 0, -1),
+                        0,
+                        255.0,
+                    ),
                     name=f"{i}_normal_generation",
-                    step=global_step
+                    step=global_step,
                 )
-
 
     def on_train_end(self, training_config: BaseTrainerConfig, **kwargs):
         experiment = self._comet_ml.config.get_global_experiment()
