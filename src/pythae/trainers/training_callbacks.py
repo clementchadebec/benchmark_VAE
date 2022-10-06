@@ -1,4 +1,4 @@
-"""Training Callbacks for training monitoring (inspired from 
+"""Training Callbacks for training monitoring integrated in `pythae` (inspired from 
 https://github.com/huggingface/transformers/blob/master/src/transformers/trainer_callback.py)"""
 
 import importlib
@@ -42,7 +42,8 @@ def rename_logs(logs):
 
 class TrainingCallback:
     """
-    Base class for creating training callbacks"""
+    Base class for creating training callbacks
+    """
 
     def on_init_end(self, training_config: BaseTrainerConfig, **kwargs):
         """
@@ -112,7 +113,7 @@ class TrainingCallback:
 
 class CallbackHandler:
     """
-    Class to handle list of Callback
+    Class to handle list of Callback.
     """
 
     def __init__(self, callbacks, model, optimizer, scheduler):
@@ -192,6 +193,10 @@ class CallbackHandler:
 
 
 class MetricConsolePrinterCallback(TrainingCallback):
+    """
+    A :class:`TrainingCallback` printing the training logs in the console.
+    """
+
     def __init__(self):
         self.logger = logging.getLogger(__name__)
 
@@ -220,6 +225,10 @@ class MetricConsolePrinterCallback(TrainingCallback):
 
 
 class ProgressBarCallback(TrainingCallback):
+    """
+    A :class:`TrainingCallback` printing the training progress bar.
+    """
+
     def __init__(self):
         self.train_progress_bar = None
         self.eval_progress_bar = None
@@ -261,6 +270,26 @@ class ProgressBarCallback(TrainingCallback):
 
 
 class WandbCallback(TrainingCallback):  # pragma: no cover
+    """
+    A :class:`TrainingCallback` integrating the experiment tracking tool 
+    `wandb` (https://wandb.ai/).
+    
+    It allows users to store their configs, monitor their trainings 
+    and compare runs through a graphic interface. To be able use this feature you will need:
+        
+        - a valid `wandb` account
+        - the package `wandb` installed in your virtual env. If not you can install it with 
+        
+        .. code-block::
+        
+            $ pip install wandb
+        
+        - to be logged in to your wandb account using
+        
+        .. code-block::
+        
+            $ wandb login
+    """
     def __init__(self):
         if not wandb_is_available():
             raise ModuleNotFoundError(
@@ -375,6 +404,19 @@ class WandbCallback(TrainingCallback):  # pragma: no cover
 
 
 class MLFlowCallback(TrainingCallback):  # pragma: no cover
+    """
+    A :class:`TrainingCallback` integrating the experiment tracking tool 
+    `mlflow` (https://mlflow.org/).
+    
+    It allows users to store their configs, monitor their trainings 
+    and compare runs through a graphic interface. To be able use this feature you will need:
+        
+        - the package `mlfow` installed in your virtual env. If not you can install it with 
+        
+        .. code-block::
+
+            $ pip install mlflow
+    """
     def __init__(self):
         if not mlflow_is_available():
             raise ModuleNotFoundError(
@@ -447,7 +489,21 @@ class MLFlowCallback(TrainingCallback):  # pragma: no cover
         ):
             self._mlflow.end_run()
 
-class CometCallback(TrainingCallback):
+class CometCallback(TrainingCallback): # pragma: no cover
+    """
+    A :class:`TrainingCallback` integrating the experiment tracking tool 
+    `comet_ml` (https://www.comet.com/site/).
+    
+    It allows users to store their configs, monitor 
+    their trainings and compare runs through a graphic interface. To be able use this feature 
+    you will need:
+    
+    - the package `comet_ml` installed in your virtual env. If not you can install it with 
+    
+    .. code-block::
+        
+        $ pip install comet_ml
+    """
 
     def __init__(self):
         if not comet_is_available():
