@@ -8,6 +8,7 @@ import numpy as np
 from tqdm.auto import tqdm
 
 from .base_trainer.base_training_config import BaseTrainerConfig
+from ..models import BaseAEConfig
 
 logger = logging.getLogger(__name__)
 
@@ -18,6 +19,9 @@ def wandb_is_available():
 
 def mlflow_is_available():
     return importlib.util.find_spec("mlflow") is not None
+
+def comet_is_available():
+    return importlib.util.find_spec("comet_ml") is not None
 
 
 def rename_logs(logs):
@@ -268,12 +272,23 @@ class WandbCallback(TrainingCallback):  # pragma: no cover
 
             self._wandb = wandb
 
-    def setup(self, training_config, **kwargs):
-        self.is_initialized = True
+    def setup(
+        self, training_config, model_config=None, project_name="pythae_experiment", entity_name=None,
+        **kwargs):
+        """
+        Setup the WandbCallback.
 
-        model_config = kwargs.pop("model_config", None)
-        project_name = kwargs.pop("project_name", "pythae_benchmarking_vae")
-        entity_name = kwargs.pop("entity_name", None)
+        args:
+            training_config (BaseTrainingConfig): The training configuration used in the run.
+
+            model_config (BaseAEConfig): The model configuration used in the run.
+            
+            project_name (str): The name of the wandb project to use.
+
+            entity_name (str): The name of the wandb entity to use. 
+        """
+
+        self.is_initialized = True
 
         training_config_dict = training_config.to_dict()
 
@@ -371,11 +386,18 @@ class MLFlowCallback(TrainingCallback):  # pragma: no cover
 
             self._mlflow = mlflow
 
-    def setup(self, training_config, **kwargs):
-        self.is_initialized = True
+    def setup(self, training_config, model_config=None, run_name=None, **kwargs):
+        """
+        Setup the MLflowCallback.
 
-        model_config = kwargs.pop("model_config", None)
-        run_name = kwargs.pop("run_name", None)
+        args:
+            training_config (BaseTrainingConfig): The training configuration used in the run.
+
+            model_config (BaseAEConfig): The model configuration used in the run.
+            
+            run_name (str): The name to apply to the current run. 
+        """
+        self.is_initialized = True
 
         training_config_dict = training_config.to_dict()
 
@@ -424,3 +446,123 @@ class MLFlowCallback(TrainingCallback):  # pragma: no cover
             and self._mlflow.active_run() is not None
         ):
             self._mlflow.end_run()
+
+class CometCallback(TrainingCallback):
+
+    def __init__(self):
+        if not comet_is_available():
+            raise ModuleNotFoundError(
+                "`comet_ml` package must be installed. Run `pip install comet_ml`"
+            )
+
+        else:
+            import comet_ml
+
+            self._comet_ml = comet_ml
+
+    def setup(
+        self,
+        training_config, model_config=None, 
+        api_key=None,
+        project_name="pythae_experiment", workspace=None, offline_run=False, offline_directory="./", **kwargs):
+
+        """
+        Setup the CometCallback.
+
+        args:
+            training_config (BaseTrainingConfig): The training configuration used in the run.
+
+            model_config (BaseAEConfig): The model configuration used in the run.
+            
+            api_key (str): Your personal comet-ml `api_key`.
+
+            project_name (str): The name of the wandb project to use.
+
+            workspace (str): The name of your comet-ml workspace
+
+            offline_run: (bool): Whether to run comet-ml in offline mode.
+
+            offline_directory (str): The path to store the offline runs. They can to be 
+                synchronized then by running `comet upload`. 
+        """
+
+        self.is_initialized = True
+
+
+        training_config_dict = training_config.to_dict()
+
+        if not offline_run:
+            experiment = self._comet_ml.Experiment(
+                api_key=api_key,
+                project_name=project_name, workspace=workspace)
+            experiment.log_other("Created from", "pythae")
+        else:
+            experiment = self._comet_ml.OfflineExperiment(
+                api_key=api_key,
+                project_name=project_name, workspace=workspace, offline_directory=offline_directory)
+            experiment.log_other("Created from", "pythae")
+
+        experiment._log_parameters(training_config, prefix="training_config/", framework="pythae")
+        experiment._log_parameters(model_config, prefix="model_config/", framework="pythae")
+
+    def on_train_begin(self, training_config: BaseTrainerConfig, **kwargs):
+        model_config = kwargs.pop("model_config", None)
+        if not self.is_initialized:
+            self.setup(training_config, model_config=model_config)
+
+    def on_log(self, training_config: BaseTrainerConfig, logs, **kwargs):
+        global_step = kwargs.pop("global_step", None)
+
+        experiment = self._comet_ml.get_global_experiment()
+        experiment._log_metrics(logs, step=global_step, epoch=global_step)
+
+    def on_prediction_step(self, training_config, **kwargs):
+        global_step = kwargs.pop("global_step", None)
+
+        column_names = ["images_id", "truth", "reconstruction", "normal_generation"]
+
+        true_data = kwargs.pop("true_data", None)
+        reconstructions = kwargs.pop("reconstructions", None)
+        generations = kwargs.pop("generations", None)
+
+        experiment = self._comet_ml.get_global_experiment()
+
+        if (
+            true_data is not None
+            and reconstructions is not None
+            and generations is not None
+        ):
+            for i in range(len(true_data)):
+
+                experiment.log_image(
+                    np.moveaxis(true_data[i].cpu().detach().numpy(), 0, -1),
+                    name=f"{i}_truth",
+                    step=global_step
+                )
+                experiment.log_image(
+                    np.clip(
+                                np.moveaxis(
+                                    reconstructions[i].cpu().detach().numpy(), 0, -1
+                                ),
+                                0,
+                                255.0,
+                            ),
+                    name=f"{i}_reconstruction",
+                    step=global_step
+                )
+                experiment.log_image(
+                    np.clip(
+                                np.moveaxis(
+                                    generations[i].cpu().detach().numpy(), 0, -1
+                                ),
+                                0,
+                                255.0,
+                            ),
+                    name=f"{i}_normal_generation",
+                    step=global_step
+                )
+
+
+    def on_train_end(self, training_config: BaseTrainerConfig, **kwargs):
+        experiment = self._comet_ml.config.get_global_experiment()
+        experiment.end()
