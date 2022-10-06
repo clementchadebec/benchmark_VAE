@@ -361,7 +361,7 @@ Equivalently, you can download or reload any Pythae's model directly from the Hu
 >>> my_downloaded_vae = AutoModel.load_from_hf_hub(hf_hub_path="path_to_hf_repo")
 ```
 
-## Monitoring your experiments with **wandb** 🧪
+## Monitoring your experiments with `wandb` 🧪
 Pythae also integrates the experiment tracking tool [wandb](https://wandb.ai/) allowing users to store their configs, monitor their trainings and compare runs through a graphic interface. To be able use this feature you will need:
 - a valid wandb account
 - the package `wandb` installed in your virtual env. If not you can install it with 
@@ -405,7 +405,7 @@ Launching an experiment monitoring with `wandb` in pythae is pretty simple. The 
 ```
 See the detailed tutorial 
 
-## Monitoring your experiments with **mlflow** 🧪
+## Monitoring your experiments with `mlflow` 🧪
 Pythae also integrates the experiment tracking tool [mlflow](https://mlflow.org/) allowing users to store their configs, monitor their trainings and compare runs through a graphic interface. To be able use this feature you will need:
 - the package `mlfow` installed in your virtual env. If not you can install it with 
 ```
@@ -446,7 +446,7 @@ $ mlflow ui
 ```
 See the detailed tutorial 
 
-## Monitoring your experiments with **comet_ml** 🧪
+## Monitoring your experiments with `comet_ml` 🧪
 Pythae also integrates the experiment tracking tool [comet_ml](https://www.comet.com/site/) allowing users to store their configs, monitor their trainings and compare runs through a graphic interface. To be able use this feature you will need:
 - the package `comet_ml` installed in your virtual env. If not you can install it with 
 ```
