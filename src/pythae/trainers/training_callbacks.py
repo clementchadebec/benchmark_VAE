@@ -206,7 +206,7 @@ class MetricConsolePrinterCallback(TrainingCallback):
         self.logger.addHandler(console)
         self.logger.setLevel(logging.INFO)
 
-    def on_log(self, training_config, logs, **kwargs):
+    def on_log(self, training_config: BaseTrainerConfig, logs, **kwargs):
         logger = kwargs.pop("logger", self.logger)
 
         if logger is not None:
@@ -254,15 +254,15 @@ class ProgressBarCallback(TrainingCallback):
                 desc=f"Eval of epoch {epoch}/{training_config.num_epochs}",
             )
 
-    def on_train_step_end(self, training_config, **kwargs):
+    def on_train_step_end(self, training_config: BaseTrainerConfig, **kwargs):
         if self.train_progress_bar is not None:
             self.train_progress_bar.update(1)
 
-    def on_eval_step_end(self, training_config, **kwargs):
+    def on_eval_step_end(self, training_config: BaseTrainerConfig, **kwargs):
         if self.eval_progress_bar is not None:
             self.eval_progress_bar.update(1)
 
-    def on_epoch_end(self, training_config, **kwags):
+    def on_epoch_end(self, training_config: BaseTrainerConfig, **kwags):
         if self.train_progress_bar is not None:
             self.train_progress_bar.close()
 
@@ -305,17 +305,17 @@ class WandbCallback(TrainingCallback):  # pragma: no cover
 
     def setup(
         self,
-        training_config,
-        model_config=None,
-        project_name="pythae_experiment",
-        entity_name=None,
+        training_config: BaseTrainerConfig,
+        model_config: BaseAEConfig = None,
+        project_name: str = "pythae_experiment",
+        entity_name: str = None,
         **kwargs,
     ):
         """
         Setup the WandbCallback.
 
         args:
-            training_config (BaseTrainingConfig): The training configuration used in the run.
+            training_config (BaseTrainerConfig): The training configuration used in the run.
 
             model_config (BaseAEConfig): The model configuration used in the run.
 
@@ -346,18 +346,18 @@ class WandbCallback(TrainingCallback):  # pragma: no cover
         self._wandb.define_metric("train/global_step")
         self._wandb.define_metric("*", step_metric="train/global_step", step_sync=True)
 
-    def on_train_begin(self, training_config, **kwargs):
+    def on_train_begin(self, training_config: BaseTrainerConfig, **kwargs):
         model_config = kwargs.pop("model_config", None)
         if not self.is_initialized:
             self.setup(training_config, model_config=model_config)
 
-    def on_log(self, training_config, logs, **kwargs):
+    def on_log(self, training_config: BaseTrainerConfig, logs, **kwargs):
         global_step = kwargs.pop("global_step", None)
         logs = rename_logs(logs)
 
         self._wandb.log({**logs, "train/global_step": global_step})
 
-    def on_prediction_step(self, training_config, **kwargs):
+    def on_prediction_step(self, training_config: BaseTrainerConfig, **kwargs):
         kwargs.pop("global_step", None)
 
         column_names = ["images_id", "truth", "reconstruction", "normal_generation"]
@@ -436,12 +436,18 @@ class MLFlowCallback(TrainingCallback):  # pragma: no cover
 
             self._mlflow = mlflow
 
-    def setup(self, training_config, model_config=None, run_name=None, **kwargs):
+    def setup(
+        self,
+        training_config: BaseTrainerConfig,
+        model_config: BaseAEConfig = None,
+        run_name: str = None,
+        **kwargs,
+    ):
         """
         Setup the MLflowCallback.
 
         args:
-            training_config (BaseTrainingConfig): The training configuration used in the run.
+            training_config (BaseTrainerConfig): The training configuration used in the run.
 
             model_config (BaseAEConfig): The model configuration used in the run.
 
@@ -474,7 +480,7 @@ class MLFlowCallback(TrainingCallback):  # pragma: no cover
         if not self.is_initialized:
             self.setup(training_config, model_config=model_config)
 
-    def on_log(self, training_config, logs, **kwargs):
+    def on_log(self, training_config: BaseTrainerConfig, logs, **kwargs):
         global_step = kwargs.pop("global_step", None)
 
         logs = rename_logs(logs)
@@ -527,13 +533,13 @@ class CometCallback(TrainingCallback):  # pragma: no cover
 
     def setup(
         self,
-        training_config,
-        model_config=None,
-        api_key=None,
-        project_name="pythae_experiment",
-        workspace=None,
-        offline_run=False,
-        offline_directory="./",
+        training_config: BaseTrainerConfig,
+        model_config: BaseTrainerConfig = None,
+        api_key: str = None,
+        project_name: str = "pythae_experiment",
+        workspace: str = None,
+        offline_run: bool = False,
+        offline_directory: str = "./",
         **kwargs,
     ):
 
@@ -541,7 +547,7 @@ class CometCallback(TrainingCallback):  # pragma: no cover
         Setup the CometCallback.
 
         args:
-            training_config (BaseTrainingConfig): The training configuration used in the run.
+            training_config (BaseTraineronfig): The training configuration used in the run.
 
             model_config (BaseAEConfig): The model configuration used in the run.
 
@@ -593,7 +599,7 @@ class CometCallback(TrainingCallback):  # pragma: no cover
         experiment = self._comet_ml.get_global_experiment()
         experiment._log_metrics(logs, step=global_step, epoch=global_step)
 
-    def on_prediction_step(self, training_config, **kwargs):
+    def on_prediction_step(self, training_config: BaseTrainerConfig, **kwargs):
         global_step = kwargs.pop("global_step", None)
 
         column_names = ["images_id", "truth", "reconstruction", "normal_generation"]
