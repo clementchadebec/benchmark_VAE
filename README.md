@@ -485,10 +485,6 @@ Launching an experiment monitoring with `comet_ml` in pythae is pretty simple. T
 ... )
 >>> # You can log to https://comet.com/your_comet_username/your_comet_project to monitor your training
 ```
-you can visualize your metric by running the following in the directory where the `./mlruns`
-```bash
-$ mlflow ui 
-```
 See the detailed tutorial 
 
 
@@ -506,6 +502,8 @@ provide tutorials:
 - [wandb_experiment_monitoring.ipynb](https://github.com/clementchadebec/benchmark_VAE/tree/main/examples/notebooks) shows you how to monitor you experiments using `wandb` [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/notebooks/wandb_experiment_monitoring.ipynb)
 
 - [mlflow_experiment_monitoring.ipynb](https://github.com/clementchadebec/benchmark_VAE/tree/main/examples/notebooks) shows you how to monitor you experiments using `mlflow` [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/notebooks/mlflow_experiment_monitoring.ipynb)
+
+- [comet_experiment_monitoring.ipynb](https://github.com/clementchadebec/benchmark_VAE/tree/main/examples/notebooks) shows you how to monitor you experiments using `comet_ml` [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/notebooks/comet_experiment_monitoring.ipynb)
 
 - [models_training](https://github.com/clementchadebec/benchmark_VAE/tree/main/examples/notebooks/models_training) folder provides notebooks showing how to train each implemented model and how to sample from it using `pythae.samplers`.
 
