@@ -361,7 +361,7 @@ Equivalently, you can download or reload any Pythae's model directly from the Hu
 >>> my_downloaded_vae = AutoModel.load_from_hf_hub(hf_hub_path="path_to_hf_repo")
 ```
 
-## Monitoring your experiments with **Wandb** 🧪
+## Monitoring your experiments with **wandb** 🧪
 Pythae also integrates the experiment tracking tool [wandb](https://wandb.ai/) allowing users to store their configs, monitor their trainings and compare runs through a graphic interface. To be able use this feature you will need:
 - a valid wandb account
 - the package `wandb` installed in your virtual env. If not you can install it with 
