@@ -60,8 +60,7 @@ examples/notebooks/mlruns/*
 mlruns/*
 examples/scripts/reproducibility/reproducibility/*
 examples/scripts/reproducibility/sync.ipynb
-
-
+examples/notebooks/my_offline_runs/*
 
 
 
