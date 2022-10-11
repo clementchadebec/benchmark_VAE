@@ -53,11 +53,11 @@ class MADE(BaseNF):
         masks = self._make_mask(ordering=self.model_config.degrees_ordering)
 
         self.context_input_layer = MaskedLinear(
-                    self.input_dim,
-                    hidden_sizes[0],
-                    masks[0],
-                    context_features=self.context_dim,
-                )
+            self.input_dim,
+            hidden_sizes[0],
+            masks[0],
+            context_features=self.context_dim,
+        )
 
         for inp, out, mask in zip(hidden_sizes[:-1], hidden_sizes[1:-1], masks[1:-1]):
 
