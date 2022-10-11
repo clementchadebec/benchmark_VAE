@@ -15,8 +15,10 @@ logger = logging.getLogger(__name__)
 def wandb_is_available():
     return importlib.util.find_spec("wandb") is not None
 
+
 def mlflow_is_available():
     return importlib.util.find_spec("mlflow") is not None
+
 
 def rename_logs(logs):
     train_prefix = "train_"
@@ -356,6 +358,7 @@ class WandbCallback(TrainingCallback):  # pragma: no cover
     def on_train_end(self, training_config: BaseTrainerConfig, **kwargs):
         self.run.finish()
 
+
 class MLFlowCallback(TrainingCallback):  # pragma: no cover
     def __init__(self):
         if not mlflow_is_available():
@@ -378,7 +381,9 @@ class MLFlowCallback(TrainingCallback):  # pragma: no cover
 
         self._mlflow.start_run(run_name=run_name)
 
-        logger.info(f"MLflow run started with run_id={self._mlflow.active_run().info.run_id}")
+        logger.info(
+            f"MLflow run started with run_id={self._mlflow.active_run().info.run_id}"
+        )
         if model_config is not None:
             model_config_dict = model_config.to_dict()
 

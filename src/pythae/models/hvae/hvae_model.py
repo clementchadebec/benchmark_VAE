@@ -164,14 +164,11 @@ class HVAE(VAE):
 
         if self.model_config.reconstruction_loss == "mse":
             # sigma is taken as I_D
-            logp_x_given_z = (
-                -0.5
-                * F.mse_loss(
-                    recon_x.reshape(x.shape[0], -1),
-                    x.reshape(x.shape[0], -1),
-                    reduction="none",
-                ).sum(dim=-1)
-            )
+            logp_x_given_z = -0.5 * F.mse_loss(
+                recon_x.reshape(x.shape[0], -1),
+                x.reshape(x.shape[0], -1),
+                reduction="none",
+            ).sum(dim=-1)
             # - torch.log(torch.tensor([2 * np.pi]).to(x.device)) \
             #    * np.prod(self.input_dim) / 2
 
@@ -244,10 +241,10 @@ class HVAE(VAE):
                 log_q_z0_given_x = -0.5 * (
                     log_var + (z0 - mu) ** 2 / torch.exp(log_var)
                 ).sum(dim=-1)
-                log_p_z = -0.5 * (z ** 2).sum(dim=-1)
-                log_p_rho = -0.5 * (rho ** 2).sum(dim=-1)
+                log_p_z = -0.5 * (z**2).sum(dim=-1)
+                log_p_rho = -0.5 * (rho**2).sum(dim=-1)
 
-                log_p_rho0 = -0.5 * (rho ** 2).sum(dim=-1) * self.beta_zero_sqrt
+                log_p_rho0 = -0.5 * (rho**2).sum(dim=-1) * self.beta_zero_sqrt
 
                 recon_x = self.decoder(z)["reconstruction"]
 

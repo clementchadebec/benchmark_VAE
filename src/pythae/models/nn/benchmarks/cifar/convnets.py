@@ -230,6 +230,7 @@ class Encoder_Conv_VAE_CIFAR(BaseEncoder):
         self.input_dim = (3, 32, 32)
         self.latent_dim = args.latent_dim
         self.n_channels = 3
+        self.outputs_context = False
 
         layers = nn.ModuleList()
 
@@ -264,6 +265,10 @@ class Encoder_Conv_VAE_CIFAR(BaseEncoder):
 
         self.embedding = nn.Linear(1024 * 2 * 2, args.latent_dim)
         self.log_var = nn.Linear(1024 * 2 * 2, args.latent_dim)
+
+        if hasattr(args, "context_dim") and args.context_dim is not None:
+            self.outputs_context = True
+            self.context_layer = nn.Linear(1024 * 2 * 2, args.context_dim)
 
     def forward(self, x: torch.Tensor, output_layer_levels: List[int] = None):
         """Forward method
@@ -310,6 +315,8 @@ class Encoder_Conv_VAE_CIFAR(BaseEncoder):
             if i + 1 == self.depth:
                 output["embedding"] = self.embedding(out.reshape(x.shape[0], -1))
                 output["log_covariance"] = self.log_var(out.reshape(x.shape[0], -1))
+                if self.outputs_context:
+                    output["context"] = self.context_layer(out.reshape(x.shape[0], -1))
 
         return output
 

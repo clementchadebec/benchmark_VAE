@@ -30,7 +30,7 @@ def model(request):
 
 @pytest.fixture(
     params=[
-        MAFSamplerConfig(n_made_blocks=2, n_hidden_in_made=1),
+        MAFSamplerConfig(n_blocks=2, n_hidden_in_made=1),
         MAFSamplerConfig(hidden_size=12, include_batch_norm=True),
         None,
     ]

@@ -157,17 +157,11 @@ class VAMP(VAE):
         prior_mu = prior_mu.unsqueeze(0)
         prior_log_var = prior_log_var.unsqueeze(0)
 
-        log_p_z = (
-            torch.sum(
-                -0.5
-                * (
-                    prior_log_var
-                    + (z_expand - prior_mu) ** 2 / torch.exp(prior_log_var)
-                ),
-                dim=2,
-            )
-            - torch.log(torch.tensor(C).type(torch.float))
-        )
+        log_p_z = torch.sum(
+            -0.5
+            * (prior_log_var + (z_expand - prior_mu) ** 2 / torch.exp(prior_log_var)),
+            dim=2,
+        ) - torch.log(torch.tensor(C).type(torch.float))
 
         log_p_z = torch.logsumexp(log_p_z, dim=1)
 

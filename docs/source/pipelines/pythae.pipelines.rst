@@ -75,7 +75,7 @@ provided in Pythae you only need 1) a trained model, 2) the sampler's configurat
    ...	'path/to/your/trained/model'
    ... )
    >>> my_sampler_config = MAFSamplerConfig(
-   ...	n_made_blocks: int = 2
+   ...	n_blocks: int = 2
    ...	n_hidden_in_made: int = 3
    ...	hidden_size: int = 128
    ... )

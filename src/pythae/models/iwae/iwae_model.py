@@ -113,7 +113,7 @@ class IWAE(VAE):
             ).sum(dim=-1)
 
         log_q_z = (-0.5 * (log_var + torch.pow(z - mu, 2) / log_var.exp())).sum(dim=-1)
-        log_p_z = -0.5 * (z ** 2).sum(dim=-1)
+        log_p_z = -0.5 * (z**2).sum(dim=-1)
 
         KLD = -(log_p_z - log_q_z)
 

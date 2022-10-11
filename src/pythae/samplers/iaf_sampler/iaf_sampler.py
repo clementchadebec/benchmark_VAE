@@ -44,7 +44,7 @@ class IAFSampler(BaseSampler):
 
         iaf_config = IAFConfig(
             input_dim=(model.model_config.latent_dim,),
-            n_made_blocks=sampler_config.n_made_blocks,
+            n_blocks=sampler_config.n_blocks,
             n_hidden_in_made=sampler_config.n_hidden_in_made,
             hidden_size=sampler_config.hidden_size,
             include_batch_norm=sampler_config.include_batch_norm,

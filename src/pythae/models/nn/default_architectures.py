@@ -3,6 +3,7 @@ from typing import List
 import numpy as np
 import torch
 import torch.nn as nn
+from attr import has
 
 from pythae.models.nn import BaseDecoder, BaseDiscriminator, BaseEncoder, BaseMetric
 
@@ -70,9 +71,14 @@ class Encoder_VAE_MLP(BaseEncoder):
 
         self.layers = layers
         self.depth = len(layers)
+        self.outputs_context = False
 
         self.embedding = nn.Linear(512, self.latent_dim)
         self.log_var = nn.Linear(512, self.latent_dim)
+
+        if hasattr(args, "context_dim") and args.context_dim is not None:
+            self.outputs_context = True
+            self.context_layer = nn.Linear(512, args.context_dim)
 
     def forward(self, x, output_layer_levels: List[int] = None):
         output = ModelOutput()
@@ -105,6 +111,8 @@ class Encoder_VAE_MLP(BaseEncoder):
             if i + 1 == self.depth:
                 output["embedding"] = self.embedding(out)
                 output["log_covariance"] = self.log_var(out)
+                if self.outputs_context:
+                    output["context"] = self.context_layer(out)
 
         return output
 

@@ -33,7 +33,7 @@ class RadialFlow(BaseNF):
         """The input data is transformed toward the prior
 
         Args:
-            inputs (torch.Tensor): An input tensor
+            inputs (torch.Tensor): An input tensor.
 
         Returns:
             ModelOutput: An instance of ModelOutput containing all the relevant parameters

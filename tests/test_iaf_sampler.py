@@ -30,7 +30,7 @@ def model(request):
 
 @pytest.fixture(
     params=[
-        IAFSamplerConfig(n_made_blocks=2, n_hidden_in_made=1),
+        IAFSamplerConfig(n_blocks=2, n_hidden_in_made=1),
         IAFSamplerConfig(hidden_size=12, include_batch_norm=True),
         None,
     ]
