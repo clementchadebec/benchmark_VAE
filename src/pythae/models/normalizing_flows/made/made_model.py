@@ -52,16 +52,12 @@ class MADE(BaseNF):
 
         masks = self._make_mask(ordering=self.model_config.degrees_ordering)
 
-        self.net.extend(
-            [
-                MaskedLinear(
+        self.context_input_layer = MaskedLinear(
                     self.input_dim,
                     hidden_sizes[0],
                     masks[0],
                     context_features=self.context_dim,
                 )
-            ]
-        )
 
         for inp, out, mask in zip(hidden_sizes[:-1], hidden_sizes[1:-1], masks[1:-1]):
 
@@ -125,7 +121,8 @@ class MADE(BaseNF):
         Returns:
             ModelOutput: An instance of ModelOutput containing all the relevant parameters
         """
-        net_output = self.net(x.reshape(x.shape[0], -1))
+        out = self.context_input_layer(x.reshape(x.shape[0], -1), h)
+        net_output = self.net(out)
 
         mu = net_output[:, : self.input_dim]
         log_var = net_output[:, self.input_dim :]
