@@ -114,6 +114,7 @@ class Test_MNIST_Default:
     def test_vae_encoding_decoding_default(
         self, ae_mnist_config, mnist_like_data, recon_layers_default
     ):
+        ae_mnist_config.context_dim = 12
         encoder = Encoder_VAE_MLP(ae_mnist_config).to(device)
         decoder = Decoder_AE_MLP(ae_mnist_config).to(device)
 
@@ -127,6 +128,11 @@ class Test_MNIST_Default:
         assert log_covariance.shape == (
             mnist_like_data.shape[0],
             ae_mnist_config.latent_dim,
+        )
+
+        assert output.context.shape == (
+            mnist_like_data.shape[0],
+            ae_mnist_config.context_dim,
         )
 
         reconstruction = decoder(embedding).reconstruction
@@ -352,6 +358,7 @@ class Test_MNIST_ConvNets:
     def test_vae_encoding_decoding(
         self, ae_mnist_config, mnist_like_data, recon_layers
     ):
+        ae_mnist_config.context_dim = 12
         encoder = Encoder_Conv_VAE_MNIST(ae_mnist_config).to(device)
         decoder = Decoder_Conv_AE_MNIST(ae_mnist_config).to(device)
 
@@ -365,6 +372,11 @@ class Test_MNIST_ConvNets:
         assert log_covariance.shape == (
             mnist_like_data.shape[0],
             ae_mnist_config.latent_dim,
+        )
+
+        assert output.context.shape == (
+            mnist_like_data.shape[0],
+            ae_mnist_config.context_dim,
         )
 
         reconstruction = decoder(embedding).reconstruction
@@ -631,12 +643,21 @@ class Test_MNIST_ResNets:
     def test_vae_encoding_decoding(
         self, ae_mnist_config, mnist_like_data, recon_layers
     ):
+        ae_mnist_config.context_dim = 12
         encoder = Encoder_ResNet_VAE_MNIST(ae_mnist_config).to(device)
         decoder = Decoder_ResNet_AE_MNIST(ae_mnist_config).to(device)
 
-        embedding = encoder(mnist_like_data).embedding
+        encoder_output = encoder(mnist_like_data)
+
+        embedding, log_covariance = encoder_output.embedding, encoder_output.log_covariance 
 
         assert embedding.shape == (mnist_like_data.shape[0], ae_mnist_config.latent_dim)
+        assert log_covariance.shape == (mnist_like_data.shape[0], ae_mnist_config.latent_dim)
+
+        assert encoder_output.context.shape == (
+            mnist_like_data.shape[0],
+            ae_mnist_config.context_dim,
+        )
 
         reconstruction = decoder(embedding).reconstruction
 
@@ -923,6 +944,7 @@ class Test_CIFAR_ConvNets:
     def test_vae_encoding_decoding(
         self, ae_cifar_config, cifar_like_data, recon_layers
     ):
+        ae_cifar_config.context_dim = 12
         encoder = Encoder_Conv_VAE_CIFAR(ae_cifar_config).to(device)
         decoder = Decoder_Conv_AE_CIFAR(ae_cifar_config).to(device)
 
@@ -936,6 +958,10 @@ class Test_CIFAR_ConvNets:
         assert log_covariance.shape == (
             cifar_like_data.shape[0],
             ae_cifar_config.latent_dim,
+        )
+        assert output.context.shape == (
+            cifar_like_data.shape[0],
+            ae_cifar_config.context_dim,
         )
 
         reconstruction = decoder(embedding).reconstruction
@@ -1201,12 +1227,21 @@ class Test_CIFAR_ResNets:
     def test_vae_encoding_decoding(
         self, ae_cifar_config, cifar_like_data, recon_layers
     ):
+        ae_cifar_config.context_dim = 12
         encoder = Encoder_ResNet_VAE_CIFAR(ae_cifar_config).to(device)
         decoder = Decoder_ResNet_AE_CIFAR(ae_cifar_config).to(device)
 
-        embedding = encoder(cifar_like_data).embedding
+        encoder_output = encoder(cifar_like_data)
+
+        embedding, log_covariance = encoder_output.embedding, encoder_output.log_covariance 
 
         assert embedding.shape == (cifar_like_data.shape[0], ae_cifar_config.latent_dim)
+        assert log_covariance.shape == (cifar_like_data.shape[0], ae_cifar_config.latent_dim)
+
+        assert encoder_output.context.shape == (
+            cifar_like_data.shape[0],
+            ae_cifar_config.context_dim,
+        )
 
         reconstruction = decoder(embedding).reconstruction
 
@@ -1491,6 +1526,7 @@ class Test_CELEBA_ConvNets:
     def test_vae_encoding_decoding(
         self, ae_celeba_config, celeba_like_data, recon_layers
     ):
+        ae_celeba_config.context_dim = 12
         encoder = Encoder_Conv_VAE_CELEBA(ae_celeba_config).to(device)
         decoder = Decoder_Conv_AE_CELEBA(ae_celeba_config).to(device)
 
@@ -1504,6 +1540,10 @@ class Test_CELEBA_ConvNets:
         assert log_covariance.shape == (
             celeba_like_data.shape[0],
             ae_celeba_config.latent_dim,
+        )
+        assert output.context.shape == (
+            celeba_like_data.shape[0],
+            ae_celeba_config.context_dim,
         )
 
         reconstruction = decoder(embedding).reconstruction
@@ -1775,6 +1815,7 @@ class Test_CELEBA_ResNets:
     def test_vae_encoding_decoding(
         self, ae_celeba_config, celeba_like_data, recon_layers
     ):
+        ae_celeba_config.context_dim = 12
         encoder = Encoder_ResNet_VAE_CELEBA(ae_celeba_config).to(device)
         decoder = Decoder_ResNet_AE_CELEBA(ae_celeba_config).to(device)
 
@@ -1788,6 +1829,10 @@ class Test_CELEBA_ResNets:
         assert log_covariance.shape == (
             celeba_like_data.shape[0],
             ae_celeba_config.latent_dim,
+        )
+        assert output.context.shape == (
+            celeba_like_data.shape[0],
+            ae_celeba_config.context_dim,
         )
 
         reconstruction = decoder(embedding).reconstruction

@@ -49,9 +49,10 @@ class VAE_IAF(VAE):
 
         iaf_config = IAFConfig(
             input_dim=(model_config.latent_dim,),
-            n_made_blocks=model_config.n_made_blocks,
+            n_blocks=model_config.n_blocks,
             n_hidden_in_made=model_config.n_hidden_in_made,
             hidden_size=model_config.hidden_size,
+            context_dim=model_config.context_dim,
             include_batch_norm=False,
         )
 
@@ -80,8 +81,23 @@ class VAE_IAF(VAE):
 
         z0 = z
 
-        # Pass it through the Normalizing flows
-        flow_output = self.iaf_flow.inverse(z)  # sampling
+        if self.iaf_flow.context_dim is not None:
+            try:
+                h = encoder_output.context
+
+            except AttributeError as e:
+                raise AttributeError(
+                    "Cannot get context from encoder outputs. If you set `context_dim` argument to "
+                    "something different from None please ensure that the encoder actually outputs "
+                    f"the context vector 'h'. Exception caught: {e}."
+                )
+
+            # Pass it through the Normalizing flows
+            flow_output = self.iaf_flow.inverse(z, h=h)  # sampling
+
+        else:
+            # Pass it through the Normalizing flows
+            flow_output = self.iaf_flow.inverse(z)  # sampling
 
         z = flow_output.out
         log_abs_det_jac = flow_output.log_abs_det_jac

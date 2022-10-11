@@ -18,8 +18,10 @@ class MADEConfig(BaseNFConfig):
             Default: [128].
         degrees_ordering (str): The ordering to use for the mask creation. Can be either
             `sequential` or `random`. Default: `sequential`.
+        context_dim (tuple): The dimension of the context. Default: None.
     """
 
     output_dim: Union[Tuple[int, ...], None] = None
     hidden_sizes: List[int] = field(default_factory=lambda: [128])
     degrees_ordering: Literal["sequential", "random"] = "sequential"
+    context_dim: Union[Tuple[int, ...], None] = None

@@ -229,6 +229,7 @@ class Encoder_ResNet_VAE_MNIST(BaseEncoder):
         self.input_dim = (1, 28, 28)
         self.latent_dim = args.latent_dim
         self.n_channels = 1
+        self.outputs_context = False
 
         layers = nn.ModuleList()
 
@@ -250,6 +251,10 @@ class Encoder_ResNet_VAE_MNIST(BaseEncoder):
 
         self.embedding = nn.Linear(128 * 4 * 4, args.latent_dim)
         self.log_var = nn.Linear(128 * 4 * 4, args.latent_dim)
+
+        if hasattr(args, "context_dim") and args.context_dim is not None:
+            self.outputs_context = True
+            self.context_layer = nn.Linear(128 * 4 * 4, args.context_dim)
 
     def forward(self, x: torch.Tensor, output_layer_levels: List[int] = None):
         """Forward method
@@ -293,6 +298,8 @@ class Encoder_ResNet_VAE_MNIST(BaseEncoder):
             if i + 1 == self.depth:
                 output["embedding"] = self.embedding(out.reshape(x.shape[0], -1))
                 output["log_covariance"] = self.log_var(out.reshape(x.shape[0], -1))
+                if self.outputs_context:
+                    output["context"] = self.context_layer(out.reshape(x.shape[0], -1))
 
         return output
 

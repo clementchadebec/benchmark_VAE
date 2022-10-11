@@ -31,9 +31,10 @@ def model_configs_no_input_dim(request):
         VAE_IAF_Config(
             input_dim=(1, 28),
             latent_dim=5,
-            n_made_blocks=1,
+            n_blocks=1,
             n_hidden_in_made=2,
             hidden_size=142,
+            context_dim=15
         ),
     ]
 )
@@ -279,6 +280,18 @@ class Test_Model_forward:
     def vae(self, model_configs, demo_data):
         model_configs.input_dim = tuple(demo_data["data"][0].shape)
         return VAE_IAF(model_configs)
+
+    def test_raises_no_context(self, model_configs, demo_data):
+
+        # Set context to None to build wrong encoder
+        model_configs.context_dim = None
+        bad_enc = Encoder_VAE_Conv(model_configs)
+        model_configs.context_dim = 12
+        model_configs.input_dim = tuple(demo_data["data"][0].shape)
+        vae = VAE_IAF(model_configs, encoder=bad_enc)
+
+        with pytest.raises(AttributeError):
+            out = vae(demo_data)
 
     def test_model_train_output(self, vae, demo_data):
 

@@ -17,13 +17,20 @@ class MaskedLinear(nn.Linear):
     only a selection of weight.
     """
 
-    def __init__(self, in_features, out_features, mask):
+    def __init__(self, in_features, out_features, mask, context_features=None):
         nn.Linear.__init__(self, in_features=in_features, out_features=out_features)
 
         self.register_buffer("mask", mask)
 
-    def forward(self, x):
-        return F.linear(x, self.mask * self.weight, self.bias)
+        if context_features is not None:
+            self.context_linear = nn.Linear(context_features, out_features, bias=False)
+
+    def forward(self, x, h=None):
+        out = F.linear(x, self.mask * self.weight, self.bias)
+        if h is None:
+            return out
+        else:
+            return out + self.context_linear(h)
 
 
 class BatchNorm(nn.Module):

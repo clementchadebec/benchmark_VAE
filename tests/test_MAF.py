@@ -19,14 +19,14 @@ from pythae.pipelines import TrainingPipeline
 PATH = os.path.dirname(os.path.abspath(__file__))
 
 
-@pytest.fixture(params=[MAFConfig(n_hidden_in_made=10), MAFConfig(n_made_blocks=2)])
+@pytest.fixture(params=[MAFConfig(n_hidden_in_made=10), MAFConfig(n_blocks=2)])
 def model_configs_no_input_output_dim(request):
     return request.param
 
 
 @pytest.fixture(
     params=[
-        MAFConfig(input_dim=(1, 8, 2), n_made_blocks=2, n_hidden_in_made=1),
+        MAFConfig(input_dim=(1, 8, 2), n_blocks=2, n_hidden_in_made=1),
         MAFConfig(input_dim=(1, 2, 18), hidden_size=12, include_batch_norm=True),
     ]
 )
@@ -180,7 +180,7 @@ class Test_MAF_Training:
     @pytest.fixture(
         params=[
             MAFConfig(
-                input_dim=(784,), n_made_blocks=3, n_hidden_in_made=3, hidden_size=134
+                input_dim=(784,), n_blocks=3, n_hidden_in_made=3, hidden_size=134
             ),
         ]
     )
