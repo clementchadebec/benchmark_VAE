@@ -204,7 +204,7 @@ class VAE_IAF(VAE):
                 log_q_z_given_x = (
                     -0.5 * (log_var + torch.pow(z0 - mu, 2) / torch.exp(log_var))
                 ).sum(dim=1) - log_abs_det_jac
-                log_p_z = -0.5 * (z**2).sum(dim=-1)
+                log_p_z = -0.5 * (z ** 2).sum(dim=-1)
 
                 recon_x = self.decoder(z)["reconstruction"]
 

@@ -59,13 +59,13 @@ def _mobius_add(x, y, c, dim=-1):  ## OK
     y2 = y.pow(2).sum(dim=dim, keepdim=True)
     xy = (x * y).sum(dim=dim, keepdim=True)
     num = (1 + 2 * c * xy + c * y2) * x + (1 - c * x2) * y
-    denom = 1 + 2 * c * xy + c**2 * x2 * y2
+    denom = 1 + 2 * c * xy + c ** 2 * x2 * y2
     return num / denom.clamp_min(MIN_NORM)
 
 
 def _mobius_scalar_mul(r, x, c, dim: int = -1):  ## OK
     x_norm = x.norm(dim=dim, keepdim=True, p=2).clamp_min(MIN_NORM)
-    sqrt_c = c**0.5
+    sqrt_c = c ** 0.5
     res_c = tanh(r * artanh(sqrt_c * x_norm)) * x / (x_norm * sqrt_c)
     return res_c
 
@@ -74,7 +74,7 @@ def _project(x, c, dim: int = -1, eps: float = None):  ## OK
     norm = x.norm(dim=dim, keepdim=True, p=2).clamp_min(MIN_NORM)
     if eps is None:
         eps = BALL_EPS[x.dtype]
-    maxnorm = (1 - eps) / (c**0.5)
+    maxnorm = (1 - eps) / (c ** 0.5)
     cond = norm > maxnorm
     projected = x / norm * maxnorm
     return torch.where(cond, projected, x)
@@ -86,7 +86,7 @@ def _gyration(u, v, w, c, dim: int = -1):  ## OK
     uv = (u * v).sum(dim=dim, keepdim=True)
     uw = (u * w).sum(dim=dim, keepdim=True)
     vw = (v * w).sum(dim=dim, keepdim=True)
-    c2 = c**2
+    c2 = c ** 2
     a = -c2 * uw * v2 + c * vw + 2 * c2 * uv * vw
     b = -c2 * vw * u2 - c * uw
     d = 1 + 2 * c * uv + c2 * u2 * v2
@@ -115,7 +115,7 @@ class PoincareBall:
     def dist(  ## OK
         self, x: torch.Tensor, y: torch.Tensor, *, keepdim=False, dim=-1
     ) -> torch.Tensor:  ## OK
-        sqrt_c = self.c**0.5
+        sqrt_c = self.c ** 0.5
         dist_c = artanh(
             sqrt_c
             * _mobius_add(-x, y, self.c, dim=dim).norm(dim=dim, p=2, keepdim=keepdim)
@@ -137,7 +137,7 @@ class PoincareBall:
             return res
 
     def logmap0(self, x: torch.Tensor, y: torch.Tensor, *, dim=-1) -> torch.Tensor:
-        sqrt_c = self.c**0.5
+        sqrt_c = self.c ** 0.5
         y_norm = y.norm(dim=dim, p=2, keepdim=True).clamp_min(MIN_NORM)
         return y / y_norm / sqrt_c * artanh(sqrt_c * y_norm)
 
@@ -147,7 +147,7 @@ class PoincareBall:
         sub = _mobius_add(-x, y, self.c, dim=dim)
         sub_norm = sub.norm(dim=dim, p=2, keepdim=True).clamp_min(MIN_NORM)
         lam = _lambda_x(x, self.c, keepdim=True, dim=dim)
-        sqrt_c = self.c**0.5
+        sqrt_c = self.c ** 0.5
         return 2 / sqrt_c / lam * artanh(sqrt_c * sub_norm) * sub / sub_norm
 
     def transp0(self, y: torch.Tensor, v: torch.Tensor, *, dim=-1) -> torch.Tensor:
@@ -175,13 +175,13 @@ class PoincareBall:
         ).log()
 
     def expmap0(self, u, dim: int = -1):
-        sqrt_c = self.c**0.5
+        sqrt_c = self.c ** 0.5
         u_norm = u.norm(dim=dim, p=2, keepdim=True).clamp_min(MIN_NORM)
         gamma_1 = tanh(sqrt_c * u_norm) * u / (sqrt_c * u_norm)
         return gamma_1
 
     def expmap(self, x, u, dim: int = -1):
-        sqrt_c = self.c**0.5
+        sqrt_c = self.c ** 0.5
         u_norm = u.norm(dim=dim, p=2, keepdim=True).clamp_min(MIN_NORM)
         second_term = (
             tanh(sqrt_c / 2 * _lambda_x(x, self.c, keepdim=True, dim=dim) * u_norm)
@@ -192,7 +192,7 @@ class PoincareBall:
         return gamma_1
 
     def expmap_polar(self, x, u, r, dim: int = -1):  ## OK
-        sqrt_c = self.c**0.5
+        sqrt_c = self.c ** 0.5
         u_norm = u.norm(dim=dim, p=2, keepdim=True).clamp_min(MIN_NORM)
         second_term = (
             tanh(torch.tensor([sqrt_c]).to(x.device) / 2 * r) * u / (sqrt_c * u_norm)
@@ -217,7 +217,7 @@ class PoincareBall:
         norm: bool = False,
     ):
         c = self.c
-        sqrt_c = c**0.5
+        sqrt_c = c ** 0.5
         diff = self.mobius_add(-p, x, dim=dim)
         diff_norm2 = diff.pow(2).sum(dim=dim, keepdim=keepdim).clamp_min(MIN_NORM)
         sc_diff_a = (diff * a).sum(dim=dim, keepdim=keepdim)
