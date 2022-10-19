@@ -12,7 +12,9 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/clementchadebec/benchmark_VAE",
-    project_urls={"Bug Tracker": "https://github.com/clementchadebec/benchmark_VAE/issues"},
+    project_urls={
+        "Bug Tracker": "https://github.com/clementchadebec/benchmark_VAE/issues"
+    },
     classifiers=[
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.7",
@@ -34,7 +36,7 @@ setup(
         "tqdm",
         "typing_extensions",
         "dataclasses>=0.6",
-        "pickle5"
     ],
+    extras_require={':python_version == "3.7.*"': ["pickle5"]},
     python_requires=">=3.7",
 )

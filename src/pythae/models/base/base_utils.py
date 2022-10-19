@@ -4,7 +4,10 @@ import logging
 from collections import OrderedDict
 from typing import Any, Tuple
 
-import pickle5 as pickle
+try:
+    import pickle5 as pickle
+except:
+    import pickle
 import torch
 
 logger = logging.getLogger(__name__)
