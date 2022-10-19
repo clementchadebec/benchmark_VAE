@@ -581,11 +581,11 @@ class CometCallback(TrainingCallback):  # pragma: no cover
             )
             experiment.log_other("Created from", "pythae")
 
-        experiment._log_parameters(
-            training_config, prefix="training_config/", framework="pythae"
+        experiment.log_parameters(
+            training_config, prefix="training_config/"
         )
-        experiment._log_parameters(
-            model_config, prefix="model_config/", framework="pythae"
+        experiment.log_parameters(
+            model_config, prefix="model_config/"
         )
 
     def on_train_begin(self, training_config: BaseTrainerConfig, **kwargs):
@@ -597,7 +597,7 @@ class CometCallback(TrainingCallback):  # pragma: no cover
         global_step = kwargs.pop("global_step", None)
 
         experiment = self._comet_ml.get_global_experiment()
-        experiment._log_metrics(logs, step=global_step, epoch=global_step)
+        experiment.log_metrics(logs, step=global_step, epoch=global_step)
 
     def on_prediction_step(self, training_config: BaseTrainerConfig, **kwargs):
         global_step = kwargs.pop("global_step", None)
