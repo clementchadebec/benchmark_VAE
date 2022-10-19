@@ -34,7 +34,7 @@
 This library implements some of the most common (Variational) Autoencoder models under a unified implementation. In particular, it 
 provides the possibility to perform benchmark experiments and comparisons by training 
 the models with the same autoencoding neural network architecture. The feature *make your own autoencoder* 
-allows you to train any of these models with your own data and own Encoder and Decoder neural networks. It integrates experiment monitoring tools such [wandb](https://wandb.ai/) and [mlflow](https://mlflow.org/) 🧪 and allows model sharing and loading from the [HuggingFace Hub](https://huggingface.co/models) 🤗 in a few lines of code.
+allows you to train any of these models with your own data and own Encoder and Decoder neural networks. It integrates experiment monitoring tools such [wandb](https://wandb.ai/), [mlflow](https://mlflow.org/) or [comet-ml](https://www.comet.com/site/) 🧪 and allows model sharing and loading from the [HuggingFace Hub](https://huggingface.co/models) 🤗 in a few lines of code.
 
 
 ## Quick access:
@@ -42,7 +42,7 @@ allows you to train any of these models with your own data and own Encoder and D
 - [Implemented models](#available-models) / [Implemented samplers](#available-samplers)
 - [Reproducibility statement](#reproducibility) / [Results flavor](#results)
 - [Model training](#launching-a-model-training) / [Data generation](#launching-data-generation) / [Custom network architectures](#define-you-own-autoencoder-architecture)
-- [Model sharing with 🤗 Hub](#sharing-your-models-with-the-huggingface-hub-) / [Experiment tracking with `wandb`](#monitoring-your-experiments-with-wandb-) / [Experiment tracking with `mlflow`](#monitoring-your-experiments-with-mlflow-)
+- [Model sharing with 🤗 Hub](#sharing-your-models-with-the-huggingface-hub-) / [Experiment tracking with `wandb`](#monitoring-your-experiments-with-wandb-) / [Experiment tracking with `mlflow`](#monitoring-your-experiments-with-mlflow-) / [Experiment tracking with `comet_ml`](#monitoring-your-experiments-with-comet_ml-)
 - [Tutorials](#getting-your-hands-on-the-code) / [Documentation](https://pythae.readthedocs.io/en/latest/)
 - [Contributing 🚀](#contributing-) / [Issues 🛠️](#dealing-with-issues-%EF%B8%8F)
 - [Citing this repository](#citation)
@@ -361,9 +361,9 @@ Equivalently, you can download or reload any Pythae's model directly from the Hu
 >>> my_downloaded_vae = AutoModel.load_from_hf_hub(hf_hub_path="path_to_hf_repo")
 ```
 
-## Monitoring your experiments with **Wandb** 🧪
-Pythae also integrates the experiement tracking tool [wandb](https://wandb.ai/) allowing users to store their configs, monitor their trainings and compare runs through a graphic interface. To be able use this feature you will need:
-- a valid wand account
+## Monitoring your experiments with `wandb` 🧪
+Pythae also integrates the experiment tracking tool [wandb](https://wandb.ai/) allowing users to store their configs, monitor their trainings and compare runs through a graphic interface. To be able use this feature you will need:
+- a valid wandb account
 - the package `wandb` installed in your virtual env. If not you can install it with 
 ```
 $ pip install wandb
@@ -405,8 +405,8 @@ Launching an experiment monitoring with `wandb` in pythae is pretty simple. The 
 ```
 See the detailed tutorial 
 
-## Monitoring your experiments with **mlflow** 🧪
-Pythae also integrates the experiement tracking tool [mlflow](https://mlflow.org/) allowing users to store their configs, monitor their trainings and compare runs through a graphic interface. To be able use this feature you will need:
+## Monitoring your experiments with `mlflow` 🧪
+Pythae also integrates the experiment tracking tool [mlflow](https://mlflow.org/) allowing users to store their configs, monitor their trainings and compare runs through a graphic interface. To be able use this feature you will need:
 - the package `mlfow` installed in your virtual env. If not you can install it with 
 ```
 $ pip install mlflow
@@ -446,6 +446,48 @@ $ mlflow ui
 ```
 See the detailed tutorial 
 
+## Monitoring your experiments with `comet_ml` 🧪
+Pythae also integrates the experiment tracking tool [comet_ml](https://www.comet.com/site/) allowing users to store their configs, monitor their trainings and compare runs through a graphic interface. To be able use this feature you will need:
+- the package `comet_ml` installed in your virtual env. If not you can install it with 
+```
+$ pip install comet_ml
+```
+
+### Creating a `CometCallback`
+Launching an experiment monitoring with `comet_ml` in pythae is pretty simple. The only thing a user needs to do is create a `CometCallback` instance...
+
+```python
+>>> # Create you callback
+>>> from pythae.trainers.training_callbacks import CometCallback
+>>> callbacks = [] # the TrainingPipeline expects a list of callbacks
+>>> comet_cb = CometCallback() # Build the callback 
+>>> # SetUp the callback 
+>>> comet_cb.setup(
+...	training_config=training_config, # training config
+...	model_config=model_config, # model config
+...	api_key="your_comet_api_key", # specify your comet api-key
+...	project_name="your_comet_project", # specify your wandb project
+...	#offline_run=True, # run in offline mode
+...	#offline_directory='my_offline_runs' # set the directory to store the offline runs
+... )
+>>> callbacks.append(comet_cb) # Add it to the callbacks list
+```
+...and then pass it to the `TrainingPipeline`.
+```python
+>>> pipeline = TrainingPipeline(
+...	training_config=config,
+...	model=model
+... )
+>>> pipeline(
+...	train_data=train_dataset,
+...	eval_data=eval_dataset,
+...	callbacks=callbacks # pass the callbacks to the TrainingPipeline and you are done!
+... )
+>>> # You can log to https://comet.com/your_comet_username/your_comet_project to monitor your training
+```
+See the detailed tutorial 
+
+
 ## Getting your hands on the code 
 
 To help you to understand the way pythae works and how you can train your models with this library we also
@@ -460,6 +502,8 @@ provide tutorials:
 - [wandb_experiment_monitoring.ipynb](https://github.com/clementchadebec/benchmark_VAE/tree/main/examples/notebooks) shows you how to monitor you experiments using `wandb` [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/notebooks/wandb_experiment_monitoring.ipynb)
 
 - [mlflow_experiment_monitoring.ipynb](https://github.com/clementchadebec/benchmark_VAE/tree/main/examples/notebooks) shows you how to monitor you experiments using `mlflow` [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/notebooks/mlflow_experiment_monitoring.ipynb)
+
+- [comet_experiment_monitoring.ipynb](https://github.com/clementchadebec/benchmark_VAE/tree/main/examples/notebooks) shows you how to monitor you experiments using `comet_ml` [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clementchadebec/benchmark_VAE/blob/main/examples/notebooks/comet_experiment_monitoring.ipynb)
 
 - [models_training](https://github.com/clementchadebec/benchmark_VAE/tree/main/examples/notebooks/models_training) folder provides notebooks showing how to train each implemented model and how to sample from it using `pythae.samplers`.
 

@@ -1,4 +1,4 @@
-"""Training Callbacks for training monitoring (inspired from 
+"""Training Callbacks for training monitoring integrated in `pythae` (inspired from 
 https://github.com/huggingface/transformers/blob/master/src/transformers/trainer_callback.py)"""
 
 import importlib
@@ -7,6 +7,7 @@ import logging
 import numpy as np
 from tqdm.auto import tqdm
 
+from ..models import BaseAEConfig
 from .base_trainer.base_training_config import BaseTrainerConfig
 
 logger = logging.getLogger(__name__)
@@ -18,6 +19,10 @@ def wandb_is_available():
 
 def mlflow_is_available():
     return importlib.util.find_spec("mlflow") is not None
+
+
+def comet_is_available():
+    return importlib.util.find_spec("comet_ml") is not None
 
 
 def rename_logs(logs):
@@ -38,7 +43,8 @@ def rename_logs(logs):
 
 class TrainingCallback:
     """
-    Base class for creating training callbacks"""
+    Base class for creating training callbacks
+    """
 
     def on_init_end(self, training_config: BaseTrainerConfig, **kwargs):
         """
@@ -108,7 +114,7 @@ class TrainingCallback:
 
 class CallbackHandler:
     """
-    Class to handle list of Callback
+    Class to handle list of Callback.
     """
 
     def __init__(self, callbacks, model, optimizer, scheduler):
@@ -188,6 +194,10 @@ class CallbackHandler:
 
 
 class MetricConsolePrinterCallback(TrainingCallback):
+    """
+    A :class:`TrainingCallback` printing the training logs in the console.
+    """
+
     def __init__(self):
         self.logger = logging.getLogger(__name__)
 
@@ -196,7 +206,7 @@ class MetricConsolePrinterCallback(TrainingCallback):
         self.logger.addHandler(console)
         self.logger.setLevel(logging.INFO)
 
-    def on_log(self, training_config, logs, **kwargs):
+    def on_log(self, training_config: BaseTrainerConfig, logs, **kwargs):
         logger = kwargs.pop("logger", self.logger)
 
         if logger is not None:
@@ -216,6 +226,10 @@ class MetricConsolePrinterCallback(TrainingCallback):
 
 
 class ProgressBarCallback(TrainingCallback):
+    """
+    A :class:`TrainingCallback` printing the training progress bar.
+    """
+
     def __init__(self):
         self.train_progress_bar = None
         self.eval_progress_bar = None
@@ -240,15 +254,15 @@ class ProgressBarCallback(TrainingCallback):
                 desc=f"Eval of epoch {epoch}/{training_config.num_epochs}",
             )
 
-    def on_train_step_end(self, training_config, **kwargs):
+    def on_train_step_end(self, training_config: BaseTrainerConfig, **kwargs):
         if self.train_progress_bar is not None:
             self.train_progress_bar.update(1)
 
-    def on_eval_step_end(self, training_config, **kwargs):
+    def on_eval_step_end(self, training_config: BaseTrainerConfig, **kwargs):
         if self.eval_progress_bar is not None:
             self.eval_progress_bar.update(1)
 
-    def on_epoch_end(self, training_config, **kwags):
+    def on_epoch_end(self, training_config: BaseTrainerConfig, **kwags):
         if self.train_progress_bar is not None:
             self.train_progress_bar.close()
 
@@ -257,6 +271,27 @@ class ProgressBarCallback(TrainingCallback):
 
 
 class WandbCallback(TrainingCallback):  # pragma: no cover
+    """
+    A :class:`TrainingCallback` integrating the experiment tracking tool
+    `wandb` (https://wandb.ai/).
+
+    It allows users to store their configs, monitor their trainings
+    and compare runs through a graphic interface. To be able use this feature you will need:
+
+        - a valid `wandb` account
+        - the package `wandb` installed in your virtual env. If not you can install it with
+
+        .. code-block::
+
+            $ pip install wandb
+
+        - to be logged in to your wandb account using
+
+        .. code-block::
+
+            $ wandb login
+    """
+
     def __init__(self):
         if not wandb_is_available():
             raise ModuleNotFoundError(
@@ -268,12 +303,28 @@ class WandbCallback(TrainingCallback):  # pragma: no cover
 
             self._wandb = wandb
 
-    def setup(self, training_config, **kwargs):
-        self.is_initialized = True
+    def setup(
+        self,
+        training_config: BaseTrainerConfig,
+        model_config: BaseAEConfig = None,
+        project_name: str = "pythae_experiment",
+        entity_name: str = None,
+        **kwargs,
+    ):
+        """
+        Setup the WandbCallback.
 
-        model_config = kwargs.pop("model_config", None)
-        project_name = kwargs.pop("project_name", "pythae_benchmarking_vae")
-        entity_name = kwargs.pop("entity_name", None)
+        args:
+            training_config (BaseTrainerConfig): The training configuration used in the run.
+
+            model_config (BaseAEConfig): The model configuration used in the run.
+
+            project_name (str): The name of the wandb project to use.
+
+            entity_name (str): The name of the wandb entity to use.
+        """
+
+        self.is_initialized = True
 
         training_config_dict = training_config.to_dict()
 
@@ -295,18 +346,18 @@ class WandbCallback(TrainingCallback):  # pragma: no cover
         self._wandb.define_metric("train/global_step")
         self._wandb.define_metric("*", step_metric="train/global_step", step_sync=True)
 
-    def on_train_begin(self, training_config, **kwargs):
+    def on_train_begin(self, training_config: BaseTrainerConfig, **kwargs):
         model_config = kwargs.pop("model_config", None)
         if not self.is_initialized:
             self.setup(training_config, model_config=model_config)
 
-    def on_log(self, training_config, logs, **kwargs):
+    def on_log(self, training_config: BaseTrainerConfig, logs, **kwargs):
         global_step = kwargs.pop("global_step", None)
         logs = rename_logs(logs)
 
         self._wandb.log({**logs, "train/global_step": global_step})
 
-    def on_prediction_step(self, training_config, **kwargs):
+    def on_prediction_step(self, training_config: BaseTrainerConfig, **kwargs):
         kwargs.pop("global_step", None)
 
         column_names = ["images_id", "truth", "reconstruction", "normal_generation"]
@@ -360,6 +411,20 @@ class WandbCallback(TrainingCallback):  # pragma: no cover
 
 
 class MLFlowCallback(TrainingCallback):  # pragma: no cover
+    """
+    A :class:`TrainingCallback` integrating the experiment tracking tool
+    `mlflow` (https://mlflow.org/).
+
+    It allows users to store their configs, monitor their trainings
+    and compare runs through a graphic interface. To be able use this feature you will need:
+
+        - the package `mlfow` installed in your virtual env. If not you can install it with
+
+        .. code-block::
+
+            $ pip install mlflow
+    """
+
     def __init__(self):
         if not mlflow_is_available():
             raise ModuleNotFoundError(
@@ -371,11 +436,24 @@ class MLFlowCallback(TrainingCallback):  # pragma: no cover
 
             self._mlflow = mlflow
 
-    def setup(self, training_config, **kwargs):
-        self.is_initialized = True
+    def setup(
+        self,
+        training_config: BaseTrainerConfig,
+        model_config: BaseAEConfig = None,
+        run_name: str = None,
+        **kwargs,
+    ):
+        """
+        Setup the MLflowCallback.
 
-        model_config = kwargs.pop("model_config", None)
-        run_name = kwargs.pop("run_name", None)
+        args:
+            training_config (BaseTrainerConfig): The training configuration used in the run.
+
+            model_config (BaseAEConfig): The model configuration used in the run.
+
+            run_name (str): The name to apply to the current run.
+        """
+        self.is_initialized = True
 
         training_config_dict = training_config.to_dict()
 
@@ -402,7 +480,7 @@ class MLFlowCallback(TrainingCallback):  # pragma: no cover
         if not self.is_initialized:
             self.setup(training_config, model_config=model_config)
 
-    def on_log(self, training_config, logs, **kwargs):
+    def on_log(self, training_config: BaseTrainerConfig, logs, **kwargs):
         global_step = kwargs.pop("global_step", None)
 
         logs = rename_logs(logs)
@@ -424,3 +502,145 @@ class MLFlowCallback(TrainingCallback):  # pragma: no cover
             and self._mlflow.active_run() is not None
         ):
             self._mlflow.end_run()
+
+
+class CometCallback(TrainingCallback):  # pragma: no cover
+    """
+    A :class:`TrainingCallback` integrating the experiment tracking tool
+    `comet_ml` (https://www.comet.com/site/).
+
+    It allows users to store their configs, monitor
+    their trainings and compare runs through a graphic interface. To be able use this feature
+    you will need:
+
+    - the package `comet_ml` installed in your virtual env. If not you can install it with
+
+    .. code-block::
+
+        $ pip install comet_ml
+    """
+
+    def __init__(self):
+        if not comet_is_available():
+            raise ModuleNotFoundError(
+                "`comet_ml` package must be installed. Run `pip install comet_ml`"
+            )
+
+        else:
+            import comet_ml
+
+            self._comet_ml = comet_ml
+
+    def setup(
+        self,
+        training_config: BaseTrainerConfig,
+        model_config: BaseTrainerConfig = None,
+        api_key: str = None,
+        project_name: str = "pythae_experiment",
+        workspace: str = None,
+        offline_run: bool = False,
+        offline_directory: str = "./",
+        **kwargs,
+    ):
+
+        """
+        Setup the CometCallback.
+
+        args:
+            training_config (BaseTraineronfig): The training configuration used in the run.
+
+            model_config (BaseAEConfig): The model configuration used in the run.
+
+            api_key (str): Your personal comet-ml `api_key`.
+
+            project_name (str): The name of the wandb project to use.
+
+            workspace (str): The name of your comet-ml workspace
+
+            offline_run: (bool): Whether to run comet-ml in offline mode.
+
+            offline_directory (str): The path to store the offline runs. They can to be
+                synchronized then by running `comet upload`.
+        """
+
+        self.is_initialized = True
+
+        training_config_dict = training_config.to_dict()
+
+        if not offline_run:
+            experiment = self._comet_ml.Experiment(
+                api_key=api_key, project_name=project_name, workspace=workspace
+            )
+            experiment.log_other("Created from", "pythae")
+        else:
+            experiment = self._comet_ml.OfflineExperiment(
+                api_key=api_key,
+                project_name=project_name,
+                workspace=workspace,
+                offline_directory=offline_directory,
+            )
+            experiment.log_other("Created from", "pythae")
+
+        experiment.log_parameters(
+            training_config, prefix="training_config/"
+        )
+        experiment.log_parameters(
+            model_config, prefix="model_config/"
+        )
+
+    def on_train_begin(self, training_config: BaseTrainerConfig, **kwargs):
+        model_config = kwargs.pop("model_config", None)
+        if not self.is_initialized:
+            self.setup(training_config, model_config=model_config)
+
+    def on_log(self, training_config: BaseTrainerConfig, logs, **kwargs):
+        global_step = kwargs.pop("global_step", None)
+
+        experiment = self._comet_ml.get_global_experiment()
+        experiment.log_metrics(logs, step=global_step, epoch=global_step)
+
+    def on_prediction_step(self, training_config: BaseTrainerConfig, **kwargs):
+        global_step = kwargs.pop("global_step", None)
+
+        column_names = ["images_id", "truth", "reconstruction", "normal_generation"]
+
+        true_data = kwargs.pop("true_data", None)
+        reconstructions = kwargs.pop("reconstructions", None)
+        generations = kwargs.pop("generations", None)
+
+        experiment = self._comet_ml.get_global_experiment()
+
+        if (
+            true_data is not None
+            and reconstructions is not None
+            and generations is not None
+        ):
+            for i in range(len(true_data)):
+
+                experiment.log_image(
+                    np.moveaxis(true_data[i].cpu().detach().numpy(), 0, -1),
+                    name=f"{i}_truth",
+                    step=global_step,
+                )
+                experiment.log_image(
+                    np.clip(
+                        np.moveaxis(reconstructions[i].cpu().detach().numpy(), 0, -1),
+                        0,
+                        255.0,
+                    ),
+                    name=f"{i}_reconstruction",
+                    step=global_step,
+                )
+                experiment.log_image(
+                    np.clip(
+                        np.moveaxis(generations[i].cpu().detach().numpy(), 0, -1),
+                        0,
+                        255.0,
+                    ),
+                    name=f"{i}_normal_generation",
+                    step=global_step,
+                )
+
+    def on_train_end(self, training_config: BaseTrainerConfig, **kwargs):
+        experiment = self._comet_ml.config.get_global_experiment()
+        experiment.end()

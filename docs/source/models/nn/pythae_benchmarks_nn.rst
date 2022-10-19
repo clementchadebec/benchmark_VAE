@@ -66,7 +66,6 @@ ResNets
    ~pythae.models.nn.benchmarks.cifar.Encoder_ResNet_VAE_CIFAR
    ~pythae.models.nn.benchmarks.cifar.Encoder_ResNet_SVAE_CIFAR
    ~pythae.models.nn.benchmarks.cifar.Decoder_ResNet_AE_CIFAR
-   ~pythae.models.nn.benchmarks.cifar.Discriminator_ResNet_CIFAR
    :nosignatures:
 
 CELEBA-64
@@ -94,7 +93,6 @@ ConvNets
    ~pythae.models.nn.benchmarks.celeba.Encoder_ResNet_VAE_CELEBA
    ~pythae.models.nn.benchmarks.celeba.Encoder_ResNet_SVAE_CELEBA
    ~pythae.models.nn.benchmarks.celeba.Decoder_ResNet_AE_CELEBA
-   ~pythae.models.nn.benchmarks.celeba.Discriminator_ResNet_CELEBA
    :nosignatures:
 
 .. note::
