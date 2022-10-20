@@ -34,7 +34,7 @@
 This library implements some of the most common (Variational) Autoencoder models under a unified implementation. In particular, it 
 provides the possibility to perform benchmark experiments and comparisons by training 
 the models with the same autoencoding neural network architecture. The feature *make your own autoencoder* 
-allows you to train any of these models with your own data and own Encoder and Decoder neural networks. It integrates experiment monitoring tools such [wandb](https://wandb.ai/), [mlflow](https://mlflow.org/) or [comet-ml]([https://www.comet.com/site/](https://www.comet.com/signup?utm_source=pythae&utm_medium=partner&utm_campaign=AMS_US_EN_SNUP_Pythae_Comet_Integration)) 🧪 and allows model sharing and loading from the [HuggingFace Hub](https://huggingface.co/models) 🤗 in a few lines of code.
+allows you to train any of these models with your own data and own Encoder and Decoder neural networks. It integrates experiment monitoring tools such [wandb](https://wandb.ai/), [mlflow](https://mlflow.org/) or [comet-ml](https://www.comet.com/signup?utm_source=pythae&utm_medium=partner&utm_campaign=AMS_US_EN_SNUP_Pythae_Comet_Integration) 🧪 and allows model sharing and loading from the [HuggingFace Hub](https://huggingface.co/models) 🤗 in a few lines of code.
 
 
 ## Quick access:
@@ -447,7 +447,7 @@ $ mlflow ui
 See the detailed tutorial 
 
 ## Monitoring your experiments with `comet_ml` 🧪
-Pythae also integrates the experiment tracking tool [comet_ml]([https://www.comet.com/site/](https://www.comet.com/signup?utm_source=pythae&utm_medium=partner&utm_campaign=AMS_US_EN_SNUP_Pythae_Comet_Integration)) allowing users to store their configs, monitor their trainings and compare runs through a graphic interface. To be able use this feature you will need:
+Pythae also integrates the experiment tracking tool [comet_ml](https://www.comet.com/signup?utm_source=pythae&utm_medium=partner&utm_campaign=AMS_US_EN_SNUP_Pythae_Comet_Integration) allowing users to store their configs, monitor their trainings and compare runs through a graphic interface. To be able use this feature you will need:
 - the package `comet_ml` installed in your virtual env. If not you can install it with 
 ```
 $ pip install comet_ml
