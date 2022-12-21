@@ -4,9 +4,6 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
-def image_dim(img):
-    return img.ndimension() - 2
-
 class MSSSIM(torch.nn.Module):
     def __init__(self, input_dim, window_size=11):
         super(MSSSIM, self).__init__()
