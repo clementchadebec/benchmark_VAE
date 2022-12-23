@@ -30,7 +30,7 @@ setup(
         "imageio",
         "numpy>=1.19",
         "pydantic>=1.8.2",
-        "sklearn",
+        "scikit-learn",
         "scipy>=1.7.1",
         "torch>=1.10.1",
         "tqdm",

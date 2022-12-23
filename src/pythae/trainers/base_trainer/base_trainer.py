@@ -221,7 +221,7 @@ class BaseTrainer:
                     cuda_inputs[key] = inputs[key].cuda()
 
                 else:
-                    cuda_inputs = inputs[key]
+                    cuda_inputs[key] = inputs[key]
             inputs_on_device = cuda_inputs
 
         return inputs_on_device
