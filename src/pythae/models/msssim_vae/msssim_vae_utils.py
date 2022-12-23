@@ -4,6 +4,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
+
 class MSSSIM(torch.nn.Module):
     def __init__(self, input_dim, window_size=11):
         super(MSSSIM, self).__init__()
@@ -13,7 +14,7 @@ class MSSSIM(torch.nn.Module):
     def _gaussian(self, sigma):
         gauss = torch.Tensor(
             [
-                np.exp(-((x - self.window_size // 2) ** 2) / float(2 * sigma ** 2))
+                np.exp(-((x - self.window_size // 2) ** 2) / float(2 * sigma**2))
                 for x in range(self.window_size)
             ]
         )
@@ -23,13 +24,22 @@ class MSSSIM(torch.nn.Module):
         _1D_window = self._gaussian(1.5).unsqueeze(1)
         _2D_window = _1D_window.mm(_1D_window.t()).float()
 
-        _3D_window = torch.stack([ _2D_window * x for x in _1D_window],dim=2).float().unsqueeze(0).unsqueeze(0)
+        _3D_window = (
+            torch.stack([_2D_window * x for x in _1D_window], dim=2)
+            .float()
+            .unsqueeze(0)
+            .unsqueeze(0)
+        )
         _2D_window = _2D_window.unsqueeze(0).unsqueeze(0)
 
         if self.n_dim == 3:
-            return _3D_window.expand(channel, 1, self.window_size, self.window_size,self.window_size).contiguous()
+            return _3D_window.expand(
+                channel, 1, self.window_size, self.window_size, self.window_size
+            ).contiguous()
         else:
-            return _2D_window.expand(channel, 1, self.window_size, self.window_size).contiguous()
+            return _2D_window.expand(
+                channel, 1, self.window_size, self.window_size
+            ).contiguous()
 
     def ssim(self, img1: torch.Tensor, img2: torch.Tensor):
 
@@ -51,9 +61,15 @@ class MSSSIM(torch.nn.Module):
         mu2_sq = mu2.pow(2)
         mu1_mu2 = mu1 * mu2
 
-        sigma1_sq = convFunction(img1 * img1, window, padding=padd, groups=channel) - mu1_sq
-        sigma2_sq = convFunction(img2 * img2, window, padding=padd, groups=channel) - mu2_sq
-        sigma12 = convFunction(img1 * img2, window, padding=padd, groups=channel) - mu1_mu2
+        sigma1_sq = (
+            convFunction(img1 * img1, window, padding=padd, groups=channel) - mu1_sq
+        )
+        sigma2_sq = (
+            convFunction(img2 * img2, window, padding=padd, groups=channel) - mu2_sq
+        )
+        sigma12 = (
+            convFunction(img1 * img2, window, padding=padd, groups=channel) - mu1_mu2
+        )
 
         L = 1  # data already in [0, 1]
         C1 = (0.01 * L) ** 2
@@ -69,17 +85,16 @@ class MSSSIM(torch.nn.Module):
         return ret, cs
 
     def forward(self, img1, img2):
-
-        if img1.shape[-1] < 4:
+        if min(img1.shape[1:]) < 4:
             weights = torch.FloatTensor([1.0]).to(img1.device)
 
-        elif img1.shape[-1] < 8:
+        elif min(img1.shape[1:]) < 8:
             weights = torch.FloatTensor([0.3222, 0.6778]).to(img1.device)
 
-        elif img1.shape[-1] < 16:
+        elif min(img1.shape[1:]) < 16:
             weights = torch.FloatTensor([0.4558, 0.1633, 0.3809]).to(img1.device)
 
-        elif img1.shape[-1] < 32:
+        elif min(img1.shape[1:]) < 32:
             weights = torch.FloatTensor([0.3117, 0.3384, 0.2675, 0.0824]).to(
                 img1.device
             )
@@ -114,8 +129,8 @@ class MSSSIM(torch.nn.Module):
         mssim = (mssim + 1) / 2
         mcs = (mcs + 1) / 2
 
-        pow1 = mcs ** weights
-        pow2 = mssim ** weights
+        pow1 = mcs**weights
+        pow2 = mssim**weights
 
         output = torch.prod(pow1[:-1] * pow2[-1])
         return 1 - output
