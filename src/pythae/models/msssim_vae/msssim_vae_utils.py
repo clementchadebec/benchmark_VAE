@@ -6,7 +6,7 @@ import torch.nn.functional as F
 
 
 class MSSSIM(torch.nn.Module):
-    def __init__(self, input_dim, window_size=11):
+    def __init__(self, window_size=11):
         super(MSSSIM, self).__init__()
         self.window_size = window_size
 
