@@ -111,6 +111,9 @@ class TrainingCallback:
         Event called after logging the last logs.
         """
 
+    def __repr__(self) -> str:
+        return self.__class__.__name__
+
 
 class CallbackHandler:
     """
@@ -162,7 +165,7 @@ class CallbackHandler:
         self.call_event("on_train_begin", training_config, **kwargs)
 
     def on_train_end(self, training_config: BaseTrainerConfig, **kwargs):
-        self.call_event("on_train_end", training_config, **kwargs)
+        return self.call_event("on_train_end", training_config, **kwargs)
 
     def on_epoch_begin(self, training_config: BaseTrainerConfig, **kwargs):
         self.call_event("on_epoch_begin", training_config, **kwargs)
@@ -183,6 +186,7 @@ class CallbackHandler:
         self.call_event("on_prediction_step", training_config, **kwargs)
 
     def call_event(self, event, training_config, **kwargs):
+        results = {}
         for callback in self.callbacks:
             result = getattr(callback, event)(
                 training_config,
@@ -191,6 +195,8 @@ class CallbackHandler:
                 scheduler=self.scheduler,
                 **kwargs,
             )
+            results[str(callback)] = result
+        return results
 
 
 class MetricConsolePrinterCallback(TrainingCallback):
@@ -223,6 +229,27 @@ class MetricConsolePrinterCallback(TrainingCallback):
             logger.info(
                 "--------------------------------------------------------------------------"
             )
+
+
+class TrainHistoryCallback(MetricConsolePrinterCallback):
+    def __init__(self):
+        self.history = {"train_loss": [], "eval_loss": []}
+        super().__init__()
+
+    def on_train_begin(self, training_config: BaseTrainerConfig, **kwargs):
+        self.history = {"train_loss": [], "eval_loss": []}
+
+    def on_log(self, training_config: BaseTrainerConfig, logs, **kwargs):
+        logger = kwargs.pop("logger", self.logger)
+
+        if logger is not None:
+            epoch_train_loss = logs.get("train_epoch_loss", None)
+            epoch_eval_loss = logs.get("eval_epoch_loss", None)
+            self.history["train_loss"].append(epoch_train_loss)
+            self.history["eval_loss"].append(epoch_eval_loss)
+
+    def on_train_end(self, training_config: BaseTrainerConfig, **kwargs):
+        return self.history
 
 
 class ProgressBarCallback(TrainingCallback):
@@ -581,12 +608,8 @@ class CometCallback(TrainingCallback):  # pragma: no cover
             )
             experiment.log_other("Created from", "pythae")
 
-        experiment.log_parameters(
-            training_config, prefix="training_config/"
-        )
-        experiment.log_parameters(
-            model_config, prefix="model_config/"
-        )
+        experiment.log_parameters(training_config, prefix="training_config/")
+        experiment.log_parameters(model_config, prefix="model_config/")
 
     def on_train_begin(self, training_config: BaseTrainerConfig, **kwargs):
         model_config = kwargs.pop("model_config", None)

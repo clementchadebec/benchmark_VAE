@@ -228,7 +228,9 @@ class TrainingPipeline(Pipeline):
                 training_config=self.training_config,
                 callbacks=callbacks,
             )
+        else:
+            raise ValueError("The provided training config is not supported.")
 
         self.trainer = trainer
 
-        trainer.train()
+        return trainer.train()
