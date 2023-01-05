@@ -45,7 +45,7 @@ class MSSSIM_VAE(VAE):
 
         self.model_name = "MSSSIM_VAE"
         self.beta = model_config.beta
-        self.msssim = MSSSIM(input_dim=model_config.input_dim, window_size=model_config.window_size)
+        self.msssim = MSSSIM(window_size=model_config.window_size)
 
     def forward(self, inputs: BaseDataset, **kwargs):
         """
