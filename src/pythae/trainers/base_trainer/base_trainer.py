@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional
 
 import torch
 import torch.optim as optim
+import torch.distributed as dist
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torch.utils.data import DataLoader
 
@@ -81,6 +82,9 @@ class BaseTrainer:
 
         self.training_config = training_config
 
+        # for distributed training
+        self.local_rank = self.training_config.local_rank
+
         set_seed(self.training_config.seed)
 
         device = (
@@ -139,13 +143,36 @@ class BaseTrainer:
         self.callback_handler.add_callback(ProgressBarCallback())
         self.callback_handler.add_callback(MetricConsolePrinterCallback())
 
+    def _setup_devices(self):
+        """Sets up the devices to perform distributed training.
+        """
+        if dist.is_available() and dist.is_initialized() and self.local_rank == -1:
+            logger.warning(
+                "torch.distributed process group is initialized, but local_rank == -1. "
+            )
+        if self.training_config.no_cuda:
+            self._n_gpus = 0 
+            device = "cpu"
+
+        else:
+
+            if not dist.is_initialized():
+                dist.init_process_group(
+                    backend="nccl",
+                    init_method='env://'
+                )
+
+
+        return device
+            
+
     def get_train_dataloader(
         self, train_dataset: BaseDataset
     ) -> torch.utils.data.DataLoader:
 
         return DataLoader(
             dataset=train_dataset,
-            batch_size=self.training_config.batch_size,
+            batch_size=self.training_config.per_device_train_batch_size,
             shuffle=True,
         )
 
@@ -154,7 +181,7 @@ class BaseTrainer:
     ) -> torch.utils.data.DataLoader:
         return DataLoader(
             dataset=eval_dataset,
-            batch_size=self.training_config.batch_size,
+            batch_size=self.training_config.per_device_eval_batch_size,
             shuffle=False,
         )
 
@@ -305,7 +332,10 @@ class BaseTrainer:
             file_logger.info("Training started !\n")
             file_logger.info(
                 f"Training params:\n - max_epochs: {self.training_config.num_epochs}\n"
-                f" - batch_size: {self.training_config.batch_size}\n"
+                " - per_device_train_batch_size: "
+                    f"{self.training_config.per_device_train_batch_size}\n"
+                " - per_device_eval_batch_size: "
+                    f"{self.training_config.per_device_eval_batch_size}\n"
                 f" - checkpoint saving every {self.training_config.steps_saving}\n"
             )
 

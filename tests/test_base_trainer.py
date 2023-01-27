@@ -35,8 +35,14 @@ class Test_DataLoader:
     @pytest.fixture(
         params=[
             BaseTrainerConfig(),
-            BaseTrainerConfig(batch_size=100),
-            BaseTrainerConfig(batch_size=10),
+            BaseTrainerConfig(
+                per_device_train_batch_size=35,
+                per_device_eval_batch_size=100
+            ),
+            BaseTrainerConfig(
+                per_device_train_batch_size=3,
+                per_device_eval_batch_size=10
+            ),
         ]
     )
     def training_config_batch_size(self, request, tmpdir):
@@ -59,7 +65,7 @@ class Test_DataLoader:
         assert issubclass(type(train_data_loader), torch.utils.data.DataLoader)
         assert train_data_loader.dataset == train_dataset
 
-        assert train_data_loader.batch_size == trainer.training_config.batch_size
+        assert train_data_loader.batch_size == trainer.training_config.per_device_train_batch_size
 
     def test_build_eval_data_loader(
         self, model_sample, train_dataset, training_config_batch_size
@@ -70,12 +76,12 @@ class Test_DataLoader:
             training_config=training_config_batch_size,
         )
 
-        train_data_loader = trainer.get_eval_dataloader(train_dataset)
+        eval_data_loader = trainer.get_eval_dataloader(train_dataset)
 
-        assert issubclass(type(train_data_loader), torch.utils.data.DataLoader)
-        assert train_data_loader.dataset == train_dataset
+        assert issubclass(type(eval_data_loader), torch.utils.data.DataLoader)
+        assert eval_data_loader.dataset == train_dataset
 
-        assert train_data_loader.batch_size == trainer.training_config.batch_size
+        assert eval_data_loader.batch_size == trainer.training_config.per_device_eval_batch_size
 
 
 class Test_Set_Training_config:
@@ -83,7 +89,11 @@ class Test_Set_Training_config:
         params=[
             None,
             BaseTrainerConfig(),
-            BaseTrainerConfig(batch_size=10, learning_rate=1e-5),
+            BaseTrainerConfig(
+                per_device_train_batch_size=10, 
+                per_device_eval_batch_size=20,
+                learning_rate=1e-5
+            ),
         ]
     )
     def training_configs(self, request, tmpdir):

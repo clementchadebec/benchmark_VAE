@@ -35,9 +35,13 @@ class Test_DataLoader:
     @pytest.fixture(
         params=[
             AdversarialTrainerConfig(autoencoder_optim_decay=0),
-            AdversarialTrainerConfig(batch_size=100, autoencoder_optim_decay=1e-7),
             AdversarialTrainerConfig(
-                batch_size=10,
+                per_device_train_batch_size=100,
+                per_device_eval_batch_size=35,
+                autoencoder_optim_decay=1e-7),
+            AdversarialTrainerConfig(
+                per_device_train_batch_size=10,
+                per_device_eval_batch_size=3,
                 autoencoder_optim_decay=1e-7,
                 discriminator_optim_decay=1e-7,
             ),
@@ -63,7 +67,7 @@ class Test_DataLoader:
         assert issubclass(type(train_data_loader), torch.utils.data.DataLoader)
         assert train_data_loader.dataset == train_dataset
 
-        assert train_data_loader.batch_size == trainer.training_config.batch_size
+        assert train_data_loader.batch_size == trainer.training_config.per_device_train_batch_size
 
     def test_build_eval_data_loader(
         self, model_sample, train_dataset, training_config_batch_size
@@ -74,12 +78,12 @@ class Test_DataLoader:
             training_config=training_config_batch_size,
         )
 
-        train_data_loader = trainer.get_eval_dataloader(train_dataset)
+        eval_data_loader = trainer.get_eval_dataloader(train_dataset)
 
-        assert issubclass(type(train_data_loader), torch.utils.data.DataLoader)
-        assert train_data_loader.dataset == train_dataset
+        assert issubclass(type(eval_data_loader), torch.utils.data.DataLoader)
+        assert eval_data_loader.dataset == train_dataset
 
-        assert train_data_loader.batch_size == trainer.training_config.batch_size
+        assert eval_data_loader.batch_size == trainer.training_config.per_device_eval_batch_size
 
 
 class Test_Set_Training_config:
@@ -87,7 +91,10 @@ class Test_Set_Training_config:
         params=[
             AdversarialTrainerConfig(autoencoder_optim_decay=0),
             AdversarialTrainerConfig(
-                batch_size=10, learning_rate=1e-3, autoencoder_optim_decay=0
+                per_device_train_batch_size=10,
+                per_device_eval_batch_size=10,
+                learning_rate=1e-3,
+                autoencoder_optim_decay=0
             ),
         ]
     )
