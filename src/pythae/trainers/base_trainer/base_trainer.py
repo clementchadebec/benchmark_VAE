@@ -9,6 +9,7 @@ import torch.optim as optim
 import torch.distributed as dist
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torch.utils.data import DataLoader
+from torch.utils.data.distributed import DistributedSampler
 
 from ...customexception import ModelError
 from ...data.datasets import BaseDataset
@@ -83,7 +84,14 @@ class BaseTrainer:
         self.training_config = training_config
 
         # for distributed training
+        self.world_size = self.training_config.world_size
         self.local_rank = self.training_config.local_rank
+        self.rank = self.training_config.rank
+
+        if self.world_size > 1:
+            self.distributed = True
+        else:
+            self.distributed = False
 
         set_seed(self.training_config.seed)
 
@@ -146,6 +154,7 @@ class BaseTrainer:
     def _setup_devices(self):
         """Sets up the devices to perform distributed training.
         """
+
         if dist.is_available() and dist.is_initialized() and self.local_rank == -1:
             logger.warning(
                 "torch.distributed process group is initialized, but local_rank == -1. "
@@ -155,34 +164,46 @@ class BaseTrainer:
             device = "cpu"
 
         else:
-
             if not dist.is_initialized():
                 dist.init_process_group(
                     backend="nccl",
-                    init_method='env://'
+                    init_method='env://',
+                    world_size=self.world_size,
+                    rank=self.rank
                 )
-
-
         return device
             
 
     def get_train_dataloader(
         self, train_dataset: BaseDataset
     ) -> torch.utils.data.DataLoader:
-
+        if self.distributed:
+            train_sampler = DistributedSampler(
+                train_dataset, num_replicas=self.world_size, rank=self.rank
+            )
+        else:
+            train_sampler = None
         return DataLoader(
             dataset=train_dataset,
             batch_size=self.training_config.per_device_train_batch_size,
-            shuffle=True,
+            shuffle=(train_sampler is None),
+            sampler=train_sampler
         )
 
     def get_eval_dataloader(
         self, eval_dataset: BaseDataset
     ) -> torch.utils.data.DataLoader:
+        if self.distributed:
+            eval_sampler = DistributedSampler(
+                eval_dataset, num_replicas=self.world_size, rank=self.rank
+            )
+        else:
+            eval_sampler = None
         return DataLoader(
             dataset=eval_dataset,
             batch_size=self.training_config.per_device_eval_batch_size,
-            shuffle=False,
+            shuffle=(eval_sampler is None),
+            sampler=eval_sampler
         )
 
     def set_default_optimizer(self, model: BaseAE) -> torch.optim.Optimizer:
@@ -408,10 +429,11 @@ class BaseTrainer:
                 self.training_config.steps_saving is not None
                 and epoch % self.training_config.steps_saving == 0
             ):
-                self.save_checkpoint(
-                    model=best_model, dir_path=training_dir, epoch=epoch
-                )
-                logger.info(f"Saved checkpoint at epoch {epoch}\n")
+                if self.rank == 0 or self.rank == -1:
+                    self.save_checkpoint(
+                        model=best_model, dir_path=training_dir, epoch=epoch
+                    )
+                    logger.info(f"Saved checkpoint at epoch {epoch}\n")
 
                 if log_verbose:
                     file_logger.info(f"Saved checkpoint at epoch {epoch}\n")
@@ -422,9 +444,11 @@ class BaseTrainer:
 
         final_dir = os.path.join(training_dir, "final_model")
 
-        self.save_model(best_model, dir_path=final_dir)
-        logger.info("Training ended!")
-        logger.info(f"Saved final model in {final_dir}")
+        if self.rank == 0 or self.rank == -1:
+            self.save_model(best_model, dir_path=final_dir)
+
+            logger.info("Training ended!")
+            logger.info(f"Saved final model in {final_dir}")
 
         self.callback_handler.on_train_end(self.training_config)
 

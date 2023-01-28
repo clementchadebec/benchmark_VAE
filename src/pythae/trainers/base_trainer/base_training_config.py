@@ -1,5 +1,7 @@
 from typing import Union
 
+import os
+
 from pydantic.dataclasses import dataclass
 
 from ...config import BaseConfig
@@ -27,7 +29,11 @@ class BaseTrainerConfig(BaseConfig):
         keep_best_on_train (bool): Whether to keep the best model on the train set. Default: False
         seed (int): The random seed for reproducibility
         no_cuda (bool): Disable `cuda` training. Default: False
-        local_rank (int): The rank of the process for distributed training. Default: -1
+        world_size (int): The total number of process to run. Default: -1 
+        local_rank (int): The rank of the node for distributed training. Default: -1
+        rank (int): The rank of the process for distributed training. Default: -1
+        dist_backend (str): The distributed backend to use. Default: 'nccl'
+        
     """
 
     output_dir: str = None
@@ -40,5 +46,35 @@ class BaseTrainerConfig(BaseConfig):
     keep_best_on_train: bool = False
     seed: int = 8
     no_cuda: bool = False
+    world_size: int = -1
     local_rank: int = -1
-    n_gpus: int = 1
+    rank: int = -1
+    dist_backend: str = "nccl"
+    master_addr: str = 'localhost'
+    master_port: str = '12345'
+
+    def __post_init_post_parse__(self):
+        """Handles environ variables
+        """
+        env_local_rank = int(os.environ.get("LOCAL_RANK", -1))
+        if env_local_rank != -1 and env_local_rank != self.local_rank:
+            self.local_rank = env_local_rank
+
+        env_world_size = int(os.environ.get("WORLD_SIZE", -1))
+        if env_world_size != -1 and env_world_size != self.world_size:
+            self.world_size = env_world_size
+
+        env_rank = int(os.environ.get("RANK", -1))
+        if env_rank != -1 and env_rank != self.rank:
+            self.rank = env_rank
+
+        env_master_addr = os.environ.get("MASTER_ADDR", "localhost")
+        if env_master_addr != 'localhost' and env_master_addr != self.master_addr:
+            self.master_addr = env_master_addr
+        os.environ["MASTER_ADDR"] = self.master_addr
+            
+        
+        env_master_port = os.environ.get("MASTER_PORT", "12345")
+        if env_master_port != '12345' and env_master_port != self.master_port:
+            self.master_port = env_master_port
+        os.environ["MASTER_PORT"] = self.master_port
