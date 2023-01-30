@@ -83,6 +83,8 @@ class BaseTrainer:
             )
 
         self.training_config = training_config
+        self.model_config = model.model_config
+        self.model_name = model.model_name
 
         # for distributed training
         self.world_size = self.training_config.world_size
@@ -307,7 +309,7 @@ class BaseTrainer:
         """
 
         self.callback_handler.on_train_begin(
-            training_config=self.training_config, model_config=self.model.model_config
+            training_config=self.training_config, model_config=self.model_config
         )
 
         # run sanity check on the model
@@ -321,7 +323,7 @@ class BaseTrainer:
 
         training_dir = os.path.join(
             self.training_config.output_dir,
-            f"{self.model.model_name}_training_{self._training_signature}",
+            f"{self.model_name}_training_{self._training_signature}",
         )
 
         self.training_dir = training_dir
