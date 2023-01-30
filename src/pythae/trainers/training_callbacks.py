@@ -581,12 +581,8 @@ class CometCallback(TrainingCallback):  # pragma: no cover
             )
             experiment.log_other("Created from", "pythae")
 
-        experiment.log_parameters(
-            training_config, prefix="training_config/"
-        )
-        experiment.log_parameters(
-            model_config, prefix="model_config/"
-        )
+        experiment.log_parameters(training_config, prefix="training_config/")
+        experiment.log_parameters(model_config, prefix="model_config/")
 
     def on_train_begin(self, training_config: BaseTrainerConfig, **kwargs):
         model_config = kwargs.pop("model_config", None)

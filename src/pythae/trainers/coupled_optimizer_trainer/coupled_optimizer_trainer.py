@@ -217,9 +217,9 @@ class CoupledOptimizerTrainer(BaseTrainer):
             file_logger.info(
                 f"Training params:\n - max_epochs: {self.training_config.num_epochs}\n"
                 " - per_device_train_batch_size: "
-                    f"{self.training_config.per_device_train_batch_size}\n"
+                f"{self.training_config.per_device_train_batch_size}\n"
                 " - per_device_eval_batch_size: "
-                    f"{self.training_config.per_device_eval_batch_size}\n"
+                f"{self.training_config.per_device_eval_batch_size}\n"
                 f" - checkpoint saving every {self.training_config.steps_saving}\n"
             )
 

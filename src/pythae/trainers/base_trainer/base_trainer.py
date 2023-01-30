@@ -5,12 +5,12 @@ from copy import deepcopy
 from typing import Any, Dict, List, Optional
 
 import torch
-import torch.optim as optim
 import torch.distributed as dist
+import torch.optim as optim
+from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torch.utils.data import DataLoader
 from torch.utils.data.distributed import DistributedSampler
-from torch.nn.parallel import DistributedDataParallel as DDP
 
 from ...customexception import ModelError
 from ...data.datasets import BaseDataset
@@ -100,7 +100,7 @@ class BaseTrainer:
 
         if self.distributed:
             device = self._setup_devices()
-        
+
         else:
             device = (
                 "cuda"
@@ -128,8 +128,12 @@ class BaseTrainer:
 
         self.train_dataset = train_dataset
         self.eval_dataset = eval_dataset
-        self._train_batch_size = self.training_config.per_device_train_batch_size * max(1, self.world_size)
-        self._eval_batch_size = self.training_config.per_device_eval_batch_size * max(1, self.world_size)
+        self._train_batch_size = self.training_config.per_device_train_batch_size * max(
+            1, self.world_size
+        )
+        self._eval_batch_size = self.training_config.per_device_eval_batch_size * max(
+            1, self.world_size
+        )
 
         self.model = model
         self.optimizer = optimizer
@@ -164,30 +168,28 @@ class BaseTrainer:
         self.callback_handler.add_callback(MetricConsolePrinterCallback())
 
     def _setup_devices(self):
-        """Sets up the devices to perform distributed training.
-        """
+        """Sets up the devices to perform distributed training."""
 
         if dist.is_available() and dist.is_initialized() and self.local_rank == -1:
             logger.warning(
                 "torch.distributed process group is initialized, but local_rank == -1. "
             )
         if self.training_config.no_cuda:
-            self._n_gpus = 0 
+            self._n_gpus = 0
             device = "cpu"
 
         else:
             if not dist.is_initialized():
                 dist.init_process_group(
                     backend="nccl",
-                    init_method='env://',
+                    init_method="env://",
                     world_size=self.world_size,
-                    rank=self.rank
+                    rank=self.rank,
                 )
 
             torch.cuda.set_device(self.local_rank)
             device = torch.device("cuda", self.local_rank)
         return device
-            
 
     def get_train_dataloader(
         self, train_dataset: BaseDataset
@@ -202,7 +204,7 @@ class BaseTrainer:
             dataset=train_dataset,
             batch_size=self._train_batch_size,
             shuffle=(train_sampler is None),
-            sampler=train_sampler
+            sampler=train_sampler,
         )
 
     def get_eval_dataloader(
@@ -218,7 +220,7 @@ class BaseTrainer:
             dataset=eval_dataset,
             batch_size=self._eval_batch_size,
             shuffle=(eval_sampler is None),
-            sampler=eval_sampler
+            sampler=eval_sampler,
         )
 
     def set_default_optimizer(self, model: BaseAE) -> torch.optim.Optimizer:
@@ -369,9 +371,9 @@ class BaseTrainer:
             file_logger.info(
                 f"Training params:\n - max_epochs: {self.training_config.num_epochs}\n"
                 " - per_device_train_batch_size: "
-                    f"{self.training_config.per_device_train_batch_size}\n"
+                f"{self.training_config.per_device_train_batch_size}\n"
                 " - per_device_eval_batch_size: "
-                    f"{self.training_config.per_device_eval_batch_size}\n"
+                f"{self.training_config.per_device_eval_batch_size}\n"
                 f" - checkpoint saving every {self.training_config.steps_saving}\n"
             )
 
