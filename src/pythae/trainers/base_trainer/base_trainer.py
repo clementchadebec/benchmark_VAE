@@ -88,6 +88,7 @@ class BaseTrainer:
         if not os.path.exists(training_config.output_dir):
             # Only create on main process
             if self.rank == 0 or self.rank == -1:
+                print("RANK", self.rank)
                 os.makedirs(training_config.output_dir)
                 logger.info(
                     f"Created {training_config.output_dir} folder since did not exist.\n"
