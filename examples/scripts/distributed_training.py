@@ -4,6 +4,7 @@ import os
 from statistics import mode
 import torch
 
+import hostlist
 
 import numpy as np
 
@@ -116,7 +117,7 @@ def main(args):
         world_size = int(os.environ['SLURM_NTASKS']),
         rank = int(os.environ['SLURM_PROCID']),
         local_rank = int(os.environ['SLURM_LOCALID']),
-        master_addr = os.environ['SLURM_JOB_NODELIST'],
+        master_addr = hostlist.expand_hostlist(os.environ['SLURM_JOB_NODELIST'])[0],
         master_port = str(12345 + int(min(gpu_ids)))
     )
 
