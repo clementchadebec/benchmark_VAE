@@ -1,14 +1,15 @@
 import argparse
 import logging
 import os
-import hostlist
+from statistics import mode
+import torch
+
 
 import numpy as np
 
-from pythae.pipelines import TrainingPipeline
-from pythae.trainers import BaseTrainerConfig
+from pythae.trainers import BaseTrainerConfig, BaseTrainer
 from pythae.models import VQVAE, VQVAEConfig
-from pythae.models.nn.benchmarks.celeba import Encoder_ResNet_VQVAE_CELEBA, Decoder_ResNet_VQVAE_CELEBA
+from pythae.data.datasets import BaseDataset
 
 
 logger = logging.getLogger(__name__)
@@ -53,54 +54,54 @@ args = ap.parse_args()
 def main(args):
 
 
+    train_data = torch.rand(10000, 2)
+    eval_data = torch.rand(10000, 2)
+
+    train_dataset = BaseDataset(train_data, labels=torch.ones(10000))
+    eval_dataset = BaseDataset(eval_data, labels=torch.ones(10000))
     
-    
-    try:
-        logger.info(f"\nLoading celeba data...\n")
-        train_data = (
-            np.load(os.path.join(PATH, f"data/celeba", "train_data.npz"))[
-                "data"
-            ]
-            / 255.0
-        )
-        eval_data = (
-            np.load(os.path.join(PATH, f"data/celeba", "eval_data.npz"))["data"]
-            / 255.0
-        )
-    except Exception as e:
-        raise FileNotFoundError(
-            f"Unable to load the data from 'data/{args.dataset}' folder. Please check that both a "
-            "'train_data.npz' and 'eval_data.npz' are present in the folder.\n Data must be "
-            " under the key 'data', in the range [0-255] and shaped with channel in first "
-            "position\n"
-            f"Exception raised: {type(e)} with message: " + str(e)
-        ) from e
+    #try:
+    #    logger.info(f"\nLoading celeba data...\n")
+    #    train_data = (
+    #        np.load(os.path.join(PATH, f"data/celeba", "train_data.npz"))[
+    #            "data"
+    #        ]
+    #        / 255.0
+    #    )
+    #    eval_data = (
+    #        np.load(os.path.join(PATH, f"data/celeba", "eval_data.npz"))["data"]
+    #        / 255.0
+    #    )
+    #except Exception as e:
+    #    raise FileNotFoundError(
+    #        f"Unable to load the data from 'data/{args.dataset}' folder. Please check that both a "
+    #        "'train_data.npz' and 'eval_data.npz' are present in the folder.\n Data must be "
+    #        " under the key 'data', in the range [0-255] and shaped with channel in first "
+    #        "position\n"
+    #        f"Exception raised: {type(e)} with message: " + str(e)
+    #    ) from e
 
-    logger.info("Successfully loaded data !\n")
-    logger.info("------------------------------------------------------------")
-    logger.info("Dataset \t \t Shape \t \t \t Range")
-    logger.info(
-        f"{args.dataset.upper()} train data: \t {train_data.shape} \t [{train_data.min()}-{train_data.max()}] "
+    #logger.info("Successfully loaded data !\n")
+    #logger.info("------------------------------------------------------------")
+    #logger.info("Dataset \t \t Shape \t \t \t Range")
+    #logger.info(
+    #    f"{args.dataset.upper()} train data: \t {train_data.shape} \t [{train_data.min()}-{train_data.max()}] "
+    #)
+    #logger.info(
+    #    f"{args.dataset.upper()} eval data: \t {eval_data.shape} \t [{eval_data.min()}-{eval_data.max()}]"
+    #)
+    #logger.info("------------------------------------------------------------\n")
+#
+    #data_input_dim = tuple(train_data.shape[1:])
+
+  
+    model_config = VQVAEConfig(
+        input_dim=(2,),
+        latent_dim=2
     )
-    logger.info(
-        f"{args.dataset.upper()} eval data: \t {eval_data.shape} \t [{eval_data.min()}-{eval_data.max()}]"
-    )
-    logger.info("------------------------------------------------------------\n")
-
-    data_input_dim = tuple(train_data.shape[1:])
-
-    if args.model_config is not None:
-        model_config = VQVAEConfig.from_json_file(args.model_config)
-
-    else:
-        model_config = VQVAEConfig()
-
-    model_config.input_dim = data_input_dim
 
     model = VQVAE(
-        model_config=model_config,
-        encoder=Encoder_ResNet_VQVAE_CELEBA(model_config),
-        decoder=Decoder_ResNet_VQVAE_CELEBA(model_config),
+        model_config=model_config
     )
 
     print(model)
@@ -118,7 +119,7 @@ def main(args):
         world_size = int(os.environ['SLURM_NTASKS']),
         rank = int(os.environ['SLURM_PROCID']),
         local_rank = int(os.environ['SLURM_LOCALID']),
-        master_addr = hostlist.expand_hostlist(os.environ['SLURM_JOB_NODELIST']),
+        master_addr = os.environ['SLURM_JOB_NODELIST'],
         master_port = str(12345 + int(min(gpu_ids)))
     )
 
@@ -139,10 +140,17 @@ def main(args):
 
         callbacks.append(wandb_cb)
 
-    pipeline = TrainingPipeline(training_config=training_config, model=model)
+    trainer = BaseTrainer(
+        model=model,
+        train_dataset=train_dataset,
+        eval_dataset=eval_dataset,
+        training_config=training_config,
+        callbacks=callbacks
+    )
 
-    pipeline(train_data=train_data, eval_data=eval_data, callbacks=callbacks)
+    trainer.train()
 
+    
 if __name__ == "__main__":
 
     main(args)
