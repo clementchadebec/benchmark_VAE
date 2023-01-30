@@ -106,12 +106,12 @@ class BaseTrainer:
                 else "cpu"
             )
 
-        if self.distributed:
-            model = DDP(model, device_ids=[self.local_rank])
-
         # place model on device
         model = model.to(device)
         model.device = device
+
+        if self.distributed:
+            model = DDP(model, device_ids=[self.local_rank])
 
         # set optimizer
         if optimizer is None:
