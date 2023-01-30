@@ -76,12 +76,6 @@ class BaseTrainer:
             output_dir = "dummy_output_dir"
             training_config.output_dir = output_dir
 
-        if not os.path.exists(training_config.output_dir):
-            os.makedirs(training_config.output_dir)
-            logger.info(
-                f"Created {training_config.output_dir} folder since did not exist.\n"
-            )
-
         self.training_config = training_config
         self.model_config = model.model_config
         self.model_name = model.model_name
@@ -90,6 +84,14 @@ class BaseTrainer:
         self.world_size = self.training_config.world_size
         self.local_rank = self.training_config.local_rank
         self.rank = self.training_config.rank
+
+        if not os.path.exists(training_config.output_dir):
+            # Only create on main process
+            if self.rank == 0 or self.rank == -1:
+                os.makedirs(training_config.output_dir)
+                logger.info(
+                    f"Created {training_config.output_dir} folder since did not exist.\n"
+                )
 
         if self.world_size > 1:
             self.distributed = True
