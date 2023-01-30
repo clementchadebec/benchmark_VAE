@@ -104,8 +104,6 @@ def main(args):
         model_config=model_config
     )
 
-    print(model)
-
     gpu_ids = os.environ['SLURM_STEP_GPUS'].split(",")
 
     training_config = BaseTrainerConfig(
@@ -123,7 +121,9 @@ def main(args):
         master_port = str(12345 + int(min(gpu_ids)))
     )
 
-    logger.info(f"Training config: {training_config}\n")
+    if int(os.environ['SLURM_PROCID']) == 0:
+        logger.info(model)
+        logger.info(f"Training config: {training_config}\n")
 
     callbacks = []
 
@@ -150,7 +150,7 @@ def main(args):
 
     trainer.train()
 
-    
+
 if __name__ == "__main__":
 
     main(args)
