@@ -86,13 +86,10 @@ class BaseTrainer:
         self.rank = self.training_config.rank
 
         if not os.path.exists(training_config.output_dir):
-            # Only create on main process
-            if self.rank == 0 or self.rank == -1:
-                print("RANK", self.rank)
-                os.makedirs(training_config.output_dir)
-                logger.info(
-                    f"Created {training_config.output_dir} folder since did not exist.\n"
-                )
+            os.makedirs(training_config.output_dir, exist_ok=True)
+            logger.info(
+                f"Created {training_config.output_dir} folder since did not exist.\n"
+            )
 
         if self.world_size > 1:
             self.distributed = True
