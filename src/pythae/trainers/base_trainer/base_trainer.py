@@ -329,7 +329,7 @@ class BaseTrainer:
         self.training_dir = training_dir
 
         if not os.path.exists(training_dir):
-            os.makedirs(training_dir)
+            os.makedirs(training_dir, exist_ok=True)
             logger.info(
                 f"Created {training_dir}. \n"
                 "Training config, checkpoints and final model will be saved here.\n"
@@ -344,7 +344,7 @@ class BaseTrainer:
 
             # if dir does not exist create it
             if not os.path.exists(log_dir):
-                os.makedirs(log_dir)
+                os.makedirs(log_dir, exist_ok=True)
                 logger.info(f"Created {log_dir} folder since did not exists.")
                 logger.info("Training logs will be recodered here.\n")
                 logger.info(" -> Training can be monitored here.\n")
