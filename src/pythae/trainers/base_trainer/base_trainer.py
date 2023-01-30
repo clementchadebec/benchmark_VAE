@@ -180,8 +180,8 @@ class BaseTrainer:
                     rank=self.rank
                 )
 
-            gpu = torch.cuda.set_device(self.local_rank)
-            device = torch.device(gpu)
+            torch.cuda.set_device(self.local_rank)
+            device = torch.device("cuda", self.local_rank)
         return device
             
 
