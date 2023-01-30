@@ -107,7 +107,7 @@ class BaseTrainer:
             )
 
         if self.distributed:
-            model = dist.DDP(model, device_ids=[self.local_rank])
+            model = DDP(model, device_ids=[self.local_rank])
 
         # place model on device
         model = model.to(device)
