@@ -559,7 +559,10 @@ class BaseTrainer:
             )
 
         # Allows model updates if needed
-        self.model.update()
+        if self.distributed:
+            self.model.module.update()
+        else:
+            self.model.update()
 
         epoch_loss /= len(self.train_loader)
 
@@ -637,6 +640,9 @@ class BaseTrainer:
         reconstructions = model_out.recon_x.cpu().detach()
         z_enc = model_out.z
         z = torch.randn_like(z_enc)
-        normal_generation = model.decoder(z).reconstruction.detach().cpu()
+        if self.distributed:
+            normal_generation = model.module.decoder(z).reconstruction.detach().cpu()
+        else:
+            normal_generation = model.decoder(z).reconstruction.detach().cpu()
 
         return inputs["data"], reconstructions, normal_generation
