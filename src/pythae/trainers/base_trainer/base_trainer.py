@@ -10,6 +10,7 @@ import torch.distributed as dist
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torch.utils.data import DataLoader
 from torch.utils.data.distributed import DistributedSampler
+from torch.nn.parallel import DistributedDataParallel as DDP
 
 from ...customexception import ModelError
 from ...data.datasets import BaseDataset
@@ -95,11 +96,18 @@ class BaseTrainer:
 
         set_seed(self.training_config.seed)
 
-        device = (
-            "cuda"
-            if torch.cuda.is_available() and not training_config.no_cuda
-            else "cpu"
-        )
+        if self.distributed:
+            device = self._setup_devices()
+        
+        else:
+            device = (
+                "cuda"
+                if torch.cuda.is_available() and not training_config.no_cuda
+                else "cpu"
+            )
+
+        if self.distributed:
+            model = dist.DDP(model, device_ids=[self.local_rank])
 
         # place model on device
         model = model.to(device)
@@ -171,6 +179,9 @@ class BaseTrainer:
                     world_size=self.world_size,
                     rank=self.rank
                 )
+
+            gpu = torch.cuda.set_device(self.local_rank)
+            device = torch.device(gpu)
         return device
             
 
@@ -561,7 +572,11 @@ class BaseTrainer:
             os.makedirs(dir_path)
 
         # save model
-        model.save(dir_path)
+        if self.distributed:
+            model.module.save(dir_path)
+
+        else:
+            model.save(dir_path)
 
         # save training config
         self.training_config.save_json(dir_path, "training_config")
@@ -593,7 +608,11 @@ class BaseTrainer:
         )
 
         # save model
-        model.save(checkpoint_dir)
+        if self.distributed:
+            model.module.save(dir_path)
+
+        else:
+            model.save(dir_path)
 
         # save training config
         self.training_config.save_json(checkpoint_dir, "training_config")

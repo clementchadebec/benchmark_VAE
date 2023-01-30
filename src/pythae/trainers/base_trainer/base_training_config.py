@@ -57,24 +57,24 @@ class BaseTrainerConfig(BaseConfig):
         """Handles environ variables
         """
         env_local_rank = int(os.environ.get("LOCAL_RANK", -1))
-        if env_local_rank != -1 and env_local_rank != self.local_rank:
+        if self.local_rank == -1 and env_local_rank != -1:
             self.local_rank = env_local_rank
 
         env_world_size = int(os.environ.get("WORLD_SIZE", -1))
-        if env_world_size != -1 and env_world_size != self.world_size:
+        if self.world_size == -1 and env_world_size != -1:
             self.world_size = env_world_size
 
         env_rank = int(os.environ.get("RANK", -1))
-        if env_rank != -1 and env_rank != self.rank:
+        if self.rank == -1 and env_rank != -1:
             self.rank = env_rank
 
         env_master_addr = os.environ.get("MASTER_ADDR", "localhost")
-        if env_master_addr != 'localhost' and env_master_addr != self.master_addr:
+        if self.master_addr == 'localhost' and env_master_addr != "localhost":
             self.master_addr = env_master_addr
         os.environ["MASTER_ADDR"] = self.master_addr
             
         
         env_master_port = os.environ.get("MASTER_PORT", "12345")
-        if env_master_port != '12345' and env_master_port != self.master_port:
+        if env_master_port == '12345' and env_master_port != "12345":
             self.master_port = env_master_port
         os.environ["MASTER_PORT"] = self.master_port

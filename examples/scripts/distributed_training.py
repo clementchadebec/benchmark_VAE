@@ -1,6 +1,7 @@
 import argparse
 import logging
 import os
+import hostlist
 
 import numpy as np
 
@@ -104,7 +105,22 @@ def main(args):
 
     print(model)
 
-    training_config = BaseTrainerConfig.from_json_file(args.training_config)
+    gpu_ids = os.environ['SLURM_STEP_GPUS'].split(",")
+
+    training_config = BaseTrainerConfig(
+        num_epochs=10,
+        output_dir="my_models_on_mnist",
+        num_epochs=100,
+        learning_rate=1e-3,
+        steps_saving=2,
+        steps_predict=100,
+        no_cuda=False,
+        world_size = int(os.environ['SLURM_NTASKS']),
+        rank = int(os.environ['SLURM_PROCID']),
+        local_rank = int(os.environ['SLURM_LOCALID']),
+        master_addr = hostlist.expand_hostlist(os.environ['SLURM_JOB_NODELIST']),
+        master_port = str(12345 + int(min(gpu_ids)))
+    )
 
     logger.info(f"Training config: {training_config}\n")
 
