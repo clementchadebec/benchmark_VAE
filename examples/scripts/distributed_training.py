@@ -109,10 +109,9 @@ def main(args):
     training_config = BaseTrainerConfig(
         num_epochs=10,
         output_dir="my_models_on_mnist",
-        num_epochs=100,
         learning_rate=1e-3,
         steps_saving=2,
-        steps_predict=100,
+        steps_predict=3,
         no_cuda=False,
         world_size = int(os.environ['SLURM_NTASKS']),
         rank = int(os.environ['SLURM_PROCID']),
