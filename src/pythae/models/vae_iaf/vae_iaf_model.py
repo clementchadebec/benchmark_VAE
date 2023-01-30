@@ -93,7 +93,7 @@ class VAE_IAF(VAE):
         )
 
         output = ModelOutput(
-            reconstruction_loss=recon_loss,
+            recon_loss=recon_loss,
             reg_loss=kld,
             loss=loss,
             recon_x=recon_x,

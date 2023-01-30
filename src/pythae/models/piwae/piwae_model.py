@@ -90,7 +90,7 @@ class PIWAE(VAE):
         loss = miwae_loss + iwae_loss
 
         output = ModelOutput(
-            reconstruction_loss=recon_loss,
+            recon_loss=recon_loss,
             reg_loss=kld,
             loss=loss,
             encoder_loss=miwae_loss,

@@ -79,7 +79,7 @@ class DisentangledBetaVAE(VAE):
         loss, recon_loss, kld = self.loss_function(recon_x, x, mu, log_var, z, epoch)
 
         output = ModelOutput(
-            reconstruction_loss=recon_loss,
+            recon_loss=recon_loss,
             reg_loss=kld,
             loss=loss,
             recon_x=recon_x,
