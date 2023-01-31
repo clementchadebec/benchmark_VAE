@@ -7,8 +7,9 @@ from typing import Any, Dict, List, Optional
 import torch
 import torch.distributed as dist
 import torch.optim as optim
+import torch.optim.lr_scheduler as scheduler
+
 from torch.nn.parallel import DistributedDataParallel as DDP
-from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torch.utils.data import DataLoader
 from torch.utils.data.distributed import DistributedSampler
 
@@ -48,12 +49,6 @@ class BaseTrainer:
             parameters used for training. If None, a basic training instance of
             :class:`BaseTrainerConfig` is used. Default: None.
 
-        optimizer (~torch.optim.Optimizer): An instance of `torch.optim.Optimizer` used for
-            training. If None, a :class:`~torch.optim.Adam` optimizer is used. Default: None.
-
-        scheduler (~torch.optim.lr_scheduler): An instance of `torch.optim.Optimizer` used for
-            training. If None, a :class:`~torch.optim.Adam` optimizer is used. Default: None.
-
         callbacks (List[~pythae.trainers.training_callbacks.TrainingCallbacks]):
             A list of callbacks to use during training.
     """
@@ -64,8 +59,6 @@ class BaseTrainer:
         train_dataset: BaseDataset,
         eval_dataset: Optional[BaseDataset] = None,
         training_config: Optional[BaseTrainerConfig] = None,
-        optimizer: Optional[torch.optim.Optimizer] = None,
-        scheduler: Optional[torch.optim.lr_scheduler.LambdaLR] = None,
         callbacks: List[TrainingCallback] = None,
     ):
 
@@ -85,7 +78,7 @@ class BaseTrainer:
         self.local_rank = self.training_config.local_rank
         self.rank = self.training_config.rank
 
-        if not os.path.exists(training_config.output_dir):
+        if not os.path.exists(training_config.output_dir) and (self.rank == 0 or self.rank == -1):
             os.makedirs(training_config.output_dir, exist_ok=True)
             logger.info(
                 f"Created {training_config.output_dir} folder since did not exist.\n"
@@ -116,15 +109,20 @@ class BaseTrainer:
             model = DDP(model, device_ids=[self.local_rank])
 
         # set optimizer
-        if optimizer is None:
-            optimizer = self.set_default_optimizer(model)
-
-        else:
-            optimizer = self._set_optimizer_on_device(optimizer, device)
-
+        optimizer = self.set_optimizer(model=model)
+        
         # set scheduler
-        if scheduler is None:
-            scheduler = self.set_default_scheduler(model, optimizer)
+        scheduler = self.set_scheduler(optimizer=optimizer)
+
+        #if optimizer is None:
+        #    optimizer = self.set_default_optimizer(model)
+
+        #else:
+        #    optimizer = self._set_optimizer_on_device(optimizer, device)
+
+        
+        #if scheduler is None:
+        #    scheduler = self.set_default_scheduler(model, optimizer)
 
         self.train_dataset = train_dataset
         self.eval_dataset = eval_dataset
@@ -223,21 +221,33 @@ class BaseTrainer:
             sampler=eval_sampler,
         )
 
-    def set_default_optimizer(self, model: BaseAE) -> torch.optim.Optimizer:
-
-        optimizer = optim.Adam(
-            model.parameters(), lr=self.training_config.learning_rate
-        )
+    def set_optimizer(self, model: BaseAE) -> torch.optim.Optimizer:
+        optimizer_cls = getattr(optim, self.training_config.optimizer_cls)
+        
+        if self.training_config.optimizer_params is not None:
+            optimizer = optimizer_cls(
+                model.parameters(), lr=self.training_config.learning_rate, **self.training_config.optimizer_params
+            )
+        else:
+            optimizer = optimizer_cls(
+                model.parameters(), lr=self.training_config.learning_rate
+            )
 
         return optimizer
 
-    def set_default_scheduler(
-        self, model: BaseAE, optimizer: torch.optim.Optimizer
+    def set_scheduler(
+        self, optimizer: torch.optim.Optimizer
     ) -> torch.optim.lr_scheduler:
+        scheduler_cls = getattr(scheduler, self.training_config.scheduler_cls)
 
-        scheduler = optim.lr_scheduler.ReduceLROnPlateau(
-            optimizer, factor=0.5, patience=10, verbose=True
-        )
+        if self.training_config.scheduler_params is not None:
+            scheduler = scheduler_cls(
+                optimizer, **self.training_config.scheduler_params
+            )
+        else:
+            scheduler = scheduler_cls(
+                optimizer
+            )
 
         return scheduler
 
@@ -299,7 +309,7 @@ class BaseTrainer:
         self.optimizer.step()
 
     def _schedulers_step(self, metrics=None):
-        if isinstance(self.scheduler, ReduceLROnPlateau):
+        if isinstance(self.scheduler, scheduler.ReduceLROnPlateau):
             self.scheduler.step(metrics)
 
         else:
@@ -332,7 +342,7 @@ class BaseTrainer:
 
         self.training_dir = training_dir
 
-        if not os.path.exists(training_dir):
+        if not os.path.exists(training_dir) and (self.rank == 0 or self.rank == -1):
             os.makedirs(training_dir, exist_ok=True)
             logger.info(
                 f"Created {training_dir}. \n"
@@ -347,7 +357,7 @@ class BaseTrainer:
             log_verbose = True
 
             # if dir does not exist create it
-            if not os.path.exists(log_dir):
+            if not os.path.exists(log_dir) and (self.rank == 0 or self.rank == -1):
                 os.makedirs(log_dir, exist_ok=True)
                 logger.info(f"Created {log_dir} folder since did not exists.")
                 logger.info("Training logs will be recodered here.\n")

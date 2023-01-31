@@ -7,7 +7,7 @@ from typing import List, Optional
 
 import torch
 import torch.optim as optim
-from torch.optim.lr_scheduler import ReduceLROnPlateau
+import torch.optim.lr_scheduler as scheduler
 
 from ...data.datasets import BaseDataset
 from ...models import BaseAE
@@ -68,21 +68,12 @@ class AdversarialTrainer(BaseTrainer):
             callbacks=callbacks,
         )
 
-        # set autoencoder optimizer
-        if autoencoder_optimizer is None:
-            autoencoder_optimizer = self.set_default_autoencoder_optimizer(model)
+        # set autoencoder optimizer and scheduler
+        autoencoder_optimizer = self.set_autoencoder_optimizer(model=model)
+        autoencoder_scheduler = self.set_scheduler(optimizer=autoencoder_optimizer)
 
-        else:
-            autoencoder_optimizer = self._set_optimizer_on_device(
-                autoencoder_optimizer, self.device
-            )
-
-        if autoencoder_scheduler is None:
-            autoencoder_scheduler = self.set_default_scheduler(
-                model, autoencoder_optimizer
-            )
-
-        # set discriminator optimizer
+        # set discriminator optimizer and scheduler
+        discriminator_optimizer = self.set_optimizer(mode)
         if discriminator_optimizer is None:
             discriminator_optimizer = self.set_default_discriminator_optimizer(model)
 
@@ -103,25 +94,62 @@ class AdversarialTrainer(BaseTrainer):
 
         self.optimizer = None
 
-    def set_default_autoencoder_optimizer(self, model: BaseAE) -> torch.optim.Optimizer:
+    def set_autoencoder_optimizer(self, model: BaseAE) -> torch.optim.Optimizer:
+        autoencoder_optimizer_cls = getattr(optim, self.training_config.autoencoder_optimizer_cls)
 
-        optimizer = torch.optim.Adam(
-            itertools.chain(model.encoder.parameters(), model.decoder.parameters()),
-            lr=self.training_config.learning_rate,
-            weight_decay=self.training_config.autoencoder_optim_decay,
-        )
+        if self.training_config.autoencoder_optimizer_params is not None:
+            if self.distributed:
+                autoencoder_optimizer = autoencoder_optimizer_cls(
+                    itertools.chain(model.module.encoder.parameters(), model.module.decoder.parameters()),
+                    lr=self.training_config.learning_rate,
+                    **self.training_config.autoencoder_optimizer_params
+                )
+            else:
+                autoencoder_optimizer = autoencoder_optimizer_cls(
+                    itertools.chain(model.encoder.parameters(), model.decoder.parameters()),
+                    lr=self.training_config.learning_rate,
+                    **self.training_config.autoencoder_optimizer_params
+                )
+        else:
+            if self.distributed:
+                autoencoder_optimizer = autoencoder_optimizer_cls(
+                    itertools.chain(model.module.encoder.parameters(), model.module.decoder.parameters()),
+                    lr=self.training_config.learning_rate
+                )
+            else:
+                autoencoder_optimizer = autoencoder_optimizer_cls(
+                    itertools.chain(model.encoder.parameters(), model.decoder.parameters()),
+                    lr=self.training_config.learning_rate,
+                )
+        return autoencoder_optimizer
 
-        return optimizer
+    def set_autoencoder_scheduler(
+        self, optimizer: torch.optim.Optimizer
+    ) -> torch.optim.lr_scheduler:
+        autoencoder_scheduler_cls = getattr(scheduler, self.training_config.autoencoder_scheduler_cls)
 
-    def set_default_discriminator_optimizer(
+        if self.training_config.autoencoder_scheduler_params is not None:
+            scheduler = autoencoder_scheduler_cls(
+                optimizer, **self.training_config.autoencoder_scheduler_params
+            )
+        else:
+            scheduler = autoencoder_scheduler_cls(
+                optimizer
+            )
+
+        return scheduler
+
+    def set_discriminator_optimizer(
         self, model: BaseAE
     ) -> torch.optim.Optimizer:
+        discriminator_cls = getattr(optim, self.training_config.discriminator_optimizer_cls)
 
-        optimizer = optim.Adam(
-            model.discriminator.parameters(),
-            lr=self.training_config.learning_rate,
-            weight_decay=self.training_config.discriminator_optim_decay,
-        )
+        if self.distributed:
+            discriminator_optimizer = optim.Adam(
+                model.module.discriminator.parameters(),
+                lr=self.training_config.learning_rate,
+                **self
+            )
 
         return optimizer
 
