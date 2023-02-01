@@ -93,7 +93,9 @@ class Test_Set_Training_config:
             CoupledOptimizerAdversarialTrainerConfig(
                 per_device_train_batch_size=10,
                 per_device_eval_batch_size=3,
-                learning_rate=1e-5
+                encoder_learning_rate=1e-5,
+                decoder_learning_rate=1e-3,
+                discriminator_learning_rate=1e-6
             ),
         ]
     )

@@ -579,38 +579,22 @@ class Test_VAEGAN_Training:
 
         return model
 
-    @pytest.fixture(params=[Adam])
-    def optimizers(self, request, vaegan, training_configs):
-        if request.param is not None:
-            encoder_optimizer = request.param(
-                vaegan.encoder.parameters(), lr=training_configs.learning_rate
-            )
-            decoder_optimizer = request.param(
-                vaegan.decoder.parameters(), lr=training_configs.learning_rate
-            )
-            discriminator_optimizer = request.param(
-                vaegan.discriminator.parameters(),
-                lr=training_configs.learning_rate,
-            )
-
-        else:
-            encoder_optimizer = None
-            decoder_optimizer = None
-            discriminator_optimizer = None
-
-        return (encoder_optimizer, decoder_optimizer, discriminator_optimizer)
-
-    def test_vaegan_train_step(
-        self, vaegan, train_dataset, training_configs, optimizers
-    ):
+    @pytest.fixture
+    def trainer(self, vaegan, train_dataset, training_configs):
         trainer = CoupledOptimizerAdversarialTrainer(
             model=vaegan,
             train_dataset=train_dataset,
-            training_config=training_configs,
-            encoder_optimizer=optimizers[0],
-            decoder_optimizer=optimizers[1],
-            discriminator_optimizer=optimizers[1],
+            eval_dataset=train_dataset,
+            training_config=training_configs
         )
+
+        trainer.prepare_training()
+
+        return trainer
+
+    def test_vaegan_train_step(
+        self, trainer
+    ):
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -627,17 +611,8 @@ class Test_VAEGAN_Training:
         )
 
     def test_vaegan_eval_step(
-        self, vaegan, train_dataset, training_configs, optimizers
+        self, trainer
     ):
-        trainer = CoupledOptimizerAdversarialTrainer(
-            model=vaegan,
-            train_dataset=train_dataset,
-            eval_dataset=train_dataset,
-            training_config=training_configs,
-            encoder_optimizer=optimizers[0],
-            decoder_optimizer=optimizers[1],
-            discriminator_optimizer=optimizers[1],
-        )
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -654,17 +629,8 @@ class Test_VAEGAN_Training:
         )
 
     def test_vaegan_predict_step(
-        self, vaegan, train_dataset, training_configs, optimizers
+        self, trainer, train_dataset
     ):
-        trainer = CoupledOptimizerAdversarialTrainer(
-            model=vaegan,
-            train_dataset=train_dataset,
-            eval_dataset=train_dataset,
-            training_config=training_configs,
-            encoder_optimizer=optimizers[0],
-            decoder_optimizer=optimizers[1],
-            discriminator_optimizer=optimizers[1],
-        )
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -685,18 +651,8 @@ class Test_VAEGAN_Training:
         assert generated.shape == inputs.shape 
 
     def test_vaegan_main_train_loop(
-        self, tmpdir, vaegan, train_dataset, training_configs, optimizers
+        self, trainer
     ):
-
-        trainer = CoupledOptimizerAdversarialTrainer(
-            model=vaegan,
-            train_dataset=train_dataset,
-            eval_dataset=train_dataset,
-            training_config=training_configs,
-            encoder_optimizer=optimizers[0],
-            decoder_optimizer=optimizers[1],
-            discriminator_optimizer=optimizers[1],
-        )
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -713,19 +669,10 @@ class Test_VAEGAN_Training:
         )
 
     def test_checkpoint_saving(
-        self, tmpdir, vaegan, train_dataset, training_configs, optimizers
+        self, vaegan, trainer, training_configs
     ):
 
         dir_path = training_configs.output_dir
-
-        trainer = CoupledOptimizerAdversarialTrainer(
-            model=vaegan,
-            train_dataset=train_dataset,
-            training_config=training_configs,
-            encoder_optimizer=optimizers[0],
-            decoder_optimizer=optimizers[1],
-            discriminator_optimizer=optimizers[1],
-        )
 
         # Make a training step
         step_1_loss = trainer.train_step(epoch=1)
@@ -878,20 +825,12 @@ class Test_VAEGAN_Training:
         )
 
     def test_checkpoint_saving_during_training(
-        self, tmpdir, vaegan, train_dataset, training_configs, optimizers
+        self, vaegan, trainer, training_configs
     ):
         #
         target_saving_epoch = training_configs.steps_saving
 
         dir_path = training_configs.output_dir
-
-        trainer = CoupledOptimizerAdversarialTrainer(
-            model=vaegan,
-            train_dataset=train_dataset,
-            training_config=training_configs,
-            encoder_optimizer=optimizers[0],
-            discriminator_optimizer=optimizers[1],
-        )
 
         model = deepcopy(trainer.model)
 
@@ -954,18 +893,10 @@ class Test_VAEGAN_Training:
         )
 
     def test_final_model_saving(
-        self, tmpdir, vaegan, train_dataset, training_configs, optimizers
+        self, vaegan, trainer, training_configs
     ):
 
         dir_path = training_configs.output_dir
-
-        trainer = CoupledOptimizerAdversarialTrainer(
-            model=vaegan,
-            train_dataset=train_dataset,
-            training_config=training_configs,
-            encoder_optimizer=optimizers[0],
-            discriminator_optimizer=optimizers[1],
-        )
 
         trainer.train()
 
@@ -1023,7 +954,7 @@ class Test_VAEGAN_Training:
         assert type(model_rec.discriminator.cpu()) == type(model.discriminator.cpu())
 
     def test_vaegan_training_pipeline(
-        self, tmpdir, vaegan, train_dataset, training_configs
+        self, vaegan, train_dataset, training_configs
     ):
 
         with pytest.raises(AssertionError):

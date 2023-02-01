@@ -371,9 +371,16 @@ class Test_RAE_L2_Training:
             CoupledOptimizerTrainerConfig(
                 num_epochs=3,
                 steps_saving=2,
-                learning_rate=1e-5,
-                encoder_optim_decay=1e-3,
-                decoder_optim_decay=1e-3,
+                encoder_learning_rate=1e-5,
+                decoder_learning_rate=1e-6
+            ),
+            CoupledOptimizerTrainerConfig(
+                num_epochs=3,
+                steps_saving=2,
+                encoder_learning_rate=1e-5,
+                decoder_learning_rate=1e-6,
+                encoder_optimizer_cls="AdamW",
+                decoder_optimizer_cls = "SGD"
             )
         ]
     )
@@ -413,30 +420,20 @@ class Test_RAE_L2_Training:
 
         return model
 
-    @pytest.fixture(params=[Adam])
-    def optimizers(self, request, rae, training_configs):
-        if request.param is not None:
-            encoder_optimizer = request.param(
-                rae.encoder.parameters(), lr=training_configs.learning_rate
-            )
-            decoder_optimizer = request.param(
-                rae.decoder.parameters(), lr=training_configs.learning_rate
-            )
-
-        else:
-            encoder_optimizer = None
-            decoder_optimizer = None
-
-        return (encoder_optimizer, decoder_optimizer)
-
-    def test_rae_train_step(self, rae, train_dataset, training_configs, optimizers):
+    @pytest.fixture
+    def trainer(self, rae, train_dataset, training_configs):
         trainer = CoupledOptimizerTrainer(
             model=rae,
             train_dataset=train_dataset,
-            training_config=training_configs,
-            encoder_optimizer=optimizers[0],
-            decoder_optimizer=optimizers[1],
+            eval_dataset=train_dataset,
+            training_config=training_configs
         )
+
+        trainer.prepare_training()
+
+        return trainer
+
+    def test_rae_train_step(self, trainer):
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -452,15 +449,7 @@ class Test_RAE_L2_Training:
             ]
         )
 
-    def test_rae_eval_step(self, rae, train_dataset, training_configs, optimizers):
-        trainer = CoupledOptimizerTrainer(
-            model=rae,
-            train_dataset=train_dataset,
-            eval_dataset=train_dataset,
-            training_config=training_configs,
-            encoder_optimizer=optimizers[0],
-            decoder_optimizer=optimizers[1],
-        )
+    def test_rae_eval_step(self, trainer):
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -477,16 +466,8 @@ class Test_RAE_L2_Training:
         )
 
     def test_rae_predict_step(
-        self, rae, train_dataset, training_configs, optimizers
+        self, trainer, train_dataset
     ):
-        trainer = CoupledOptimizerTrainer(
-            model=rae,
-            train_dataset=train_dataset,
-            eval_dataset=train_dataset,
-            training_config=training_configs,
-            encoder_optimizer=optimizers[0],
-            decoder_optimizer=optimizers[1],
-        )
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -507,17 +488,8 @@ class Test_RAE_L2_Training:
         assert generated.shape == inputs.shape 
 
     def test_rae_main_train_loop(
-        self, tmpdir, rae, train_dataset, training_configs, optimizers
+        self, trainer
     ):
-
-        trainer = CoupledOptimizerTrainer(
-            model=rae,
-            train_dataset=train_dataset,
-            eval_dataset=train_dataset,
-            training_config=training_configs,
-            encoder_optimizer=optimizers[0],
-            decoder_optimizer=optimizers[1],
-        )
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -534,18 +506,10 @@ class Test_RAE_L2_Training:
         )
 
     def test_checkpoint_saving(
-        self, tmpdir, rae, train_dataset, training_configs, optimizers
+        self, rae, trainer, training_configs
     ):
 
         dir_path = training_configs.output_dir
-
-        trainer = CoupledOptimizerTrainer(
-            model=rae,
-            train_dataset=train_dataset,
-            training_config=training_configs,
-            encoder_optimizer=optimizers[0],
-            decoder_optimizer=optimizers[1],
-        )
 
         # Make a training step
         step_1_loss = trainer.train_step(epoch=1)
@@ -661,20 +625,12 @@ class Test_RAE_L2_Training:
         )
 
     def test_checkpoint_saving_during_training(
-        self, tmpdir, rae, train_dataset, training_configs, optimizers
+        self, rae, trainer, training_configs
     ):
         #
         target_saving_epoch = training_configs.steps_saving
 
         dir_path = training_configs.output_dir
-
-        trainer = CoupledOptimizerTrainer(
-            model=rae,
-            train_dataset=train_dataset,
-            training_config=training_configs,
-            encoder_optimizer=optimizers[0],
-            decoder_optimizer=optimizers[1],
-        )
 
         model = deepcopy(trainer.model)
 
@@ -729,18 +685,10 @@ class Test_RAE_L2_Training:
         )
 
     def test_final_model_saving(
-        self, tmpdir, rae, train_dataset, training_configs, optimizers
+        self, rae, trainer, training_configs
     ):
 
         dir_path = training_configs.output_dir
-
-        trainer = CoupledOptimizerTrainer(
-            model=rae,
-            train_dataset=train_dataset,
-            training_config=training_configs,
-            encoder_optimizer=optimizers[0],
-            decoder_optimizer=optimizers[1],
-        )
 
         trainer.train()
 
@@ -789,7 +737,7 @@ class Test_RAE_L2_Training:
         assert type(model_rec.encoder.cpu()) == type(model.encoder.cpu())
         assert type(model_rec.decoder.cpu()) == type(model.decoder.cpu())
 
-    def test_rae_training_pipeline(self, tmpdir, rae, train_dataset, training_configs):
+    def test_rae_training_pipeline(self, rae, train_dataset, training_configs):
 
         with pytest.raises(AssertionError):
             pipeline = TrainingPipeline(model=rae, training_config=BaseTrainerConfig())
@@ -808,7 +756,6 @@ class Test_RAE_L2_Training:
         )
 
         # check decays are set accordingly to model params
-        assert pipeline.trainer.encoder_optimizer.param_groups[0]["weight_decay"] == 0.0
         assert (
             pipeline.trainer.decoder_optimizer.param_groups[0]["weight_decay"]
             == rae.model_config.reg_weight

@@ -100,7 +100,7 @@ class CoupledOptimizerAdversarialTrainerConfig(BaseTrainerConfig):
             )
         if self.encoder_optimizer_params is not None:
             try:
-                encoder_optimizer = encoder_optimizer_cls(nn.Linear(2, 2).parameters(), **self.encoder_optimizer_params)
+                encoder_optimizer = encoder_optimizer_cls(nn.Linear(2, 2).parameters(), lr=self.encoder_learning_rate, **self.encoder_optimizer_params)
             except TypeError as e:
                 raise TypeError(
                     "Error in optimizer's parameters. Check that the provided dict contains only "
@@ -109,7 +109,7 @@ class CoupledOptimizerAdversarialTrainerConfig(BaseTrainerConfig):
                     f"Exception raised: {type(e)} with message: " + str(e)
                 ) from e
         else:
-            encoder_optimizer = encoder_optimizer_cls(nn.Linear(2, 2).parameters())
+            encoder_optimizer = encoder_optimizer_cls(nn.Linear(2, 2).parameters(), lr=self.encoder_learning_rate,)
 
         if self.encoder_scheduler_cls is not None:
             try:
@@ -146,7 +146,7 @@ class CoupledOptimizerAdversarialTrainerConfig(BaseTrainerConfig):
             )
         if self.decoder_optimizer_params is not None:
             try:
-                decoder_optimizer = decoder_optimizer_cls(nn.Linear(2, 2).parameters(), **self.decoder_optimizer_params)
+                decoder_optimizer = decoder_optimizer_cls(nn.Linear(2, 2).parameters(), lr=self.decoder_learning_rate, **self.decoder_optimizer_params)
             except TypeError as e:
                 raise TypeError(
                     "Error in optimizer's parameters. Check that the provided dict contains only "
@@ -155,7 +155,7 @@ class CoupledOptimizerAdversarialTrainerConfig(BaseTrainerConfig):
                     f"Exception raised: {type(e)} with message: " + str(e)
                 ) from e
         else:
-            decoder_optimizer = decoder_optimizer_cls(nn.Linear(2, 2).parameters())
+            decoder_optimizer = decoder_optimizer_cls(nn.Linear(2, 2).parameters(), lr=self.decoder_learning_rate)
 
         if self.decoder_scheduler_cls is not None:
             try:
@@ -191,7 +191,7 @@ class CoupledOptimizerAdversarialTrainerConfig(BaseTrainerConfig):
             )
         if self.discriminator_optimizer_params is not None:
             try:
-                discriminator_optimizer = discriminator_optimizer_cls(nn.Linear(2, 2).parameters(), **self.discriminator_optimizer_params)
+                discriminator_optimizer = discriminator_optimizer_cls(nn.Linear(2, 2).parameters(), lr=self.discriminator_learning_rate, **self.discriminator_optimizer_params)
             except TypeError as e:
                 raise TypeError(
                     "Error in optimizer's parameters. Check that the provided dict contains only "
@@ -200,7 +200,7 @@ class CoupledOptimizerAdversarialTrainerConfig(BaseTrainerConfig):
                     f"Exception raised: {type(e)} with message: " + str(e)
                 ) from e
         else:
-            discriminator_optimizer = discriminator_optimizer_cls(nn.Linear(2, 2).parameters())
+            discriminator_optimizer = discriminator_optimizer_cls(nn.Linear(2, 2).parameters(), lr=self.discriminator_learning_rate)
 
         if self.discriminator_scheduler_cls is not None:
             try:

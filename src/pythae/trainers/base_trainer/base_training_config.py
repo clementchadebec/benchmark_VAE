@@ -103,7 +103,7 @@ class BaseTrainerConfig(BaseConfig):
             )
         if self.optimizer_params is not None:
             try:
-                optimizer = optimizer_cls(nn.Linear(2, 2).parameters(), **self.optimizer_params)
+                optimizer = optimizer_cls(nn.Linear(2, 2).parameters(), lr=self.learning_rate, **self.optimizer_params)
             except TypeError as e:
                 raise TypeError(
                     "Error in optimizer's parameters. Check that the provided dict contains only "
@@ -112,7 +112,7 @@ class BaseTrainerConfig(BaseConfig):
                     f"Exception raised: {type(e)} with message: " + str(e)
                 ) from e
         else:
-            optimizer = optimizer_cls(nn.Linear(2, 2).parameters())
+            optimizer = optimizer_cls(nn.Linear(2, 2).parameters(), lr=self.learning_rate)
 
         if self.scheduler_cls is not None:
             try:

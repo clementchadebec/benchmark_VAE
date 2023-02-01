@@ -81,7 +81,7 @@ class AdversarialTrainerConfig(BaseTrainerConfig):
             )
         if self.autoencoder_optimizer_params is not None:
             try:
-                autoencoder_optimizer = autoencoder_optimizer_cls(nn.Linear(2, 2).parameters(), **self.autoencoder_optimizer_params)
+                autoencoder_optimizer = autoencoder_optimizer_cls(nn.Linear(2, 2).parameters(), lr=self.autoencoder_learning_rate, **self.autoencoder_optimizer_params)
             except TypeError as e:
                 raise TypeError(
                     "Error in optimizer's parameters. Check that the provided dict contains only "
@@ -90,7 +90,7 @@ class AdversarialTrainerConfig(BaseTrainerConfig):
                     f"Exception raised: {type(e)} with message: " + str(e)
                 ) from e
         else:
-            autoencoder_optimizer = autoencoder_optimizer_cls(nn.Linear(2, 2).parameters())
+            autoencoder_optimizer = autoencoder_optimizer_cls(nn.Linear(2, 2).parameters(), lr=self.autoencoder_learning_rate)
 
         if self.autoencoder_scheduler_cls is not None:
             try:
@@ -126,7 +126,7 @@ class AdversarialTrainerConfig(BaseTrainerConfig):
             )
         if self.discriminator_optimizer_params is not None:
             try:
-                discriminator_optimizer = discriminator_optimizer_cls(nn.Linear(2, 2).parameters(), **self.discriminator_optimizer_params)
+                discriminator_optimizer = discriminator_optimizer_cls(nn.Linear(2, 2).parameters(), lr=self.discriminator_learning_rate, **self.discriminator_optimizer_params)
             except TypeError as e:
                 raise TypeError(
                     "Error in optimizer's parameters. Check that the provided dict contains only "
@@ -150,7 +150,7 @@ class AdversarialTrainerConfig(BaseTrainerConfig):
 
             if self.discriminator_scheduler_params is not None:
                 try:
-                    discriminator_scheduder_cls(discriminator_optimizer, **self.discriminator_scheduler_params)
+                    discriminator_scheduder_cls(discriminator_optimizer, lr=self.discriminator_learning_rate, **self.discriminator_scheduler_params)
                 except TypeError as e:
                     raise TypeError(
                         "Error in scheduler's parameters. Check that the provided dict contains only "
