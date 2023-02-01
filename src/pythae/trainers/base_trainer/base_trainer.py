@@ -134,7 +134,7 @@ class BaseTrainer:
             self._run_model_sanity_check(model, train_loader)
             logger.info(
                 "Model passed sanity check !\n"
-                "Ready for training."
+                "Ready for training.\n"
             )
 
         self.model = model
