@@ -386,6 +386,7 @@ class AdversarialTrainer(BaseTrainer):
             training_config=self.training_config,
             eval_loader=self.eval_loader,
             epoch=epoch,
+            rank=self.rank
         )
 
         self.model.eval()
@@ -443,6 +444,7 @@ class AdversarialTrainer(BaseTrainer):
             training_config=self.training_config,
             train_loader=self.train_loader,
             epoch=epoch,
+            rank=self.rank
         )
 
         # set model in train model
