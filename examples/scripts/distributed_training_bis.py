@@ -107,7 +107,7 @@ def main(args):
 
     gpu_ids = os.environ['SLURM_STEP_GPUS'].split(",")
 
-    training_config = Adversarial_AE_Config(
+    training_config = AdversarialTrainerConfig(
         num_epochs=10,
         output_dir="my_models_on_mnist",
         learning_rate=1e-3,
