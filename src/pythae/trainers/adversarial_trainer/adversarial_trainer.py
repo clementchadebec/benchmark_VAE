@@ -232,7 +232,7 @@ class AdversarialTrainer(BaseTrainer):
         self.prepare_training()        
 
         self.callback_handler.on_train_begin(
-            training_config=self.training_config, model_config=self.model.model_config
+            training_config=self.training_config, model_config=self.model_config
         )
 
         log_verbose = False
@@ -507,7 +507,11 @@ class AdversarialTrainer(BaseTrainer):
         )
 
         # save model
-        model.save(checkpoint_dir)
+        if self.distributed:
+            model.module.save(checkpoint_dir)
+
+        else:
+            model.save(checkpoint_dir)
 
         # save training config
         self.training_config.save_json(checkpoint_dir, "training_config")
