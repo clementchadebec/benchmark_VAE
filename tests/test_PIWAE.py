@@ -275,15 +275,15 @@ class Test_Model_forward:
         return data  # This is an extract of 3 data from MNIST (unnormalized) used to test custom architecture
 
     @pytest.fixture
-    def rae(self, model_configs, demo_data):
+    def piwae(self, model_configs, demo_data):
         model_configs.input_dim = tuple(demo_data["data"][0].shape)
         return PIWAE(model_configs)
 
-    def test_model_train_output(self, rae, demo_data):
+    def test_model_train_output(self, piwae, demo_data):
 
-        rae.train()
+        piwae.train()
 
-        out = rae(demo_data)
+        out = piwae(demo_data)
 
         assert isinstance(out, ModelOutput)
 
@@ -499,7 +499,7 @@ class Test_PIWAE_Training:
         )
 
     def test_checkpoint_saving(
-        self, rae, trainer, training_configs
+        self, piwae, trainer, training_configs
     ):
 
         dir_path = training_configs.output_dir
@@ -529,14 +529,14 @@ class Test_PIWAE_Training:
         ).issubset(set(files_list))
 
         # check pickled custom decoder
-        if not rae.model_config.uses_default_decoder:
+        if not piwae.model_config.uses_default_decoder:
             assert "decoder.pkl" in files_list
 
         else:
             assert not "decoder.pkl" in files_list
 
         # check pickled custom encoder
-        if not rae.model_config.uses_default_encoder:
+        if not piwae.model_config.uses_default_encoder:
             assert "encoder.pkl" in files_list
 
         else:
@@ -618,7 +618,7 @@ class Test_PIWAE_Training:
         )
 
     def test_checkpoint_saving_during_training(
-        self, rae, trainer, training_configs
+        self, piwae, trainer, training_configs
     ):
         #
         target_saving_epoch = training_configs.steps_saving
@@ -653,14 +653,14 @@ class Test_PIWAE_Training:
         ).issubset(set(files_list))
 
         # check pickled custom decoder
-        if not rae.model_config.uses_default_decoder:
+        if not piwae.model_config.uses_default_decoder:
             assert "decoder.pkl" in files_list
 
         else:
             assert not "decoder.pkl" in files_list
 
         # check pickled custom encoder
-        if not rae.model_config.uses_default_encoder:
+        if not piwae.model_config.uses_default_encoder:
             assert "encoder.pkl" in files_list
 
         else:
@@ -678,7 +678,7 @@ class Test_PIWAE_Training:
         )
 
     def test_final_model_saving(
-        self, rae, trainer, training_configs, optimizers
+        self, piwae, trainer, training_configs
     ):
 
         dir_path = training_configs.output_dir
@@ -702,14 +702,14 @@ class Test_PIWAE_Training:
         )
 
         # check pickled custom decoder
-        if not rae.model_config.uses_default_decoder:
+        if not piwae.model_config.uses_default_decoder:
             assert "decoder.pkl" in files_list
 
         else:
             assert not "decoder.pkl" in files_list
 
         # check pickled custom encoder
-        if not rae.model_config.uses_default_encoder:
+        if not piwae.model_config.uses_default_encoder:
             assert "encoder.pkl" in files_list
 
         else:
@@ -730,15 +730,15 @@ class Test_PIWAE_Training:
         assert type(model_rec.encoder.cpu()) == type(model.encoder.cpu())
         assert type(model_rec.decoder.cpu()) == type(model.decoder.cpu())
 
-    def test_rae_training_pipeline(self, tmpdir, rae, train_dataset, training_configs):
+    def test_piwae_training_pipeline(self, tmpdir, piwae, train_dataset, training_configs):
 
         with pytest.raises(AssertionError):
-            pipeline = TrainingPipeline(model=rae, training_config=BaseTrainerConfig())
+            pipeline = TrainingPipeline(model=piwae, training_config=BaseTrainerConfig())
 
         dir_path = training_configs.output_dir
 
         # build pipeline
-        pipeline = TrainingPipeline(model=rae, training_config=training_configs)
+        pipeline = TrainingPipeline(model=piwae, training_config=training_configs)
 
         assert pipeline.training_config.__dict__ == training_configs.__dict__
 
@@ -765,14 +765,14 @@ class Test_PIWAE_Training:
         )
 
         # check pickled custom decoder
-        if not rae.model_config.uses_default_decoder:
+        if not piwae.model_config.uses_default_decoder:
             assert "decoder.pkl" in files_list
 
         else:
             assert not "decoder.pkl" in files_list
 
         # check pickled custom encoder
-        if not rae.model_config.uses_default_encoder:
+        if not piwae.model_config.uses_default_encoder:
             assert "encoder.pkl" in files_list
 
         else:
@@ -793,7 +793,7 @@ class Test_PIWAE_Training:
         assert type(model_rec.encoder.cpu()) == type(model.encoder.cpu())
         assert type(model_rec.decoder.cpu()) == type(model.decoder.cpu())
 
-class Test_RAE_Generation:
+class Test_PIWAE_Generation:
     @pytest.fixture
     def train_data(self):
         return torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample")).data
