@@ -490,8 +490,8 @@ class BaseTrainer:
                     )
                     logger.info(f"Saved checkpoint at epoch {epoch}\n")
 
-                if log_verbose:
-                    file_logger.info(f"Saved checkpoint at epoch {epoch}\n")
+                    if log_verbose:
+                        file_logger.info(f"Saved checkpoint at epoch {epoch}\n")
 
             self.callback_handler.on_log(
                 self.training_config, metrics, logger=logger, global_step=epoch, rank=self.rank

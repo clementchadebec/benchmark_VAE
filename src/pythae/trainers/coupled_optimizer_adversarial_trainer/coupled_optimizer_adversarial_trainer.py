@@ -7,11 +7,12 @@ from typing import List, Optional
 
 import torch
 import torch.optim as optim
-from torch.optim.lr_scheduler import ReduceLROnPlateau
+import torch.optim.lr_scheduler as lr_scheduler 
 
 from ...data.datasets import BaseDataset
 from ...models import BaseAE
 from ..base_trainer import BaseTrainer
+from ..trainer_utils import set_seed
 from ..training_callbacks import TrainingCallback
 from .coupled_optimizer_adversarial_trainer_config import (
     CoupledOptimizerAdversarialTrainerConfig,
@@ -57,12 +58,6 @@ class CoupledOptimizerAdversarialTrainer(BaseTrainer):
         train_dataset: BaseDataset,
         eval_dataset: Optional[BaseDataset] = None,
         training_config: Optional[CoupledOptimizerAdversarialTrainerConfig] = None,
-        encoder_optimizer: Optional[torch.optim.Optimizer] = None,
-        decoder_optimizer: Optional[torch.optim.Optimizer] = None,
-        discriminator_optimizer: Optional[torch.optim.Optimizer] = None,
-        encoder_scheduler: Optional[torch.optim.lr_scheduler.LambdaLR] = None,
-        decoder_scheduler: Optional[torch.optim.lr_scheduler.LambdaLR] = None,
-        discriminator_scheduler: Optional[torch.optim.lr_scheduler.LambdaLR] = None,
         callbacks: List[TrainingCallback] = None,
     ):
 
@@ -72,88 +67,163 @@ class CoupledOptimizerAdversarialTrainer(BaseTrainer):
             train_dataset=train_dataset,
             eval_dataset=eval_dataset,
             training_config=training_config,
-            optimizer=None,
             callbacks=callbacks,
         )
 
-        # set encoder optimizer
-        if encoder_optimizer is None:
-            encoder_optimizer = self.set_default_encoder_optimizer(model)
+    def set_encoder_optimizer(self):
+        encoder_optimizer_cls = getattr(optim, self.training_config.encoder_optimizer_cls)
 
+        if self.training_config.encoder_optimizer_params is not None:
+            if self.distributed:
+                encoder_optimizer = encoder_optimizer_cls(
+                  self.model.module.encoder.parameters(),
+                    lr=self.training_config.encoder_learning_rate,
+                    **self.training_config.encoder_optimizer_params
+                )
+            else:
+                encoder_optimizer = encoder_optimizer_cls(
+                    self.model.encoder.parameters(),
+                    lr=self.training_config.encoder_learning_rate,
+                    **self.training_config.encoder_optimizer_params
+                )
         else:
-            encoder_optimizer = self._set_optimizer_on_device(
-                encoder_optimizer, self.device
-            )
-
-        if encoder_scheduler is None:
-            encoder_scheduler = self.set_default_scheduler(model, encoder_optimizer)
-
-        # set decoder optimizer
-        if decoder_optimizer is None:
-            decoder_optimizer = self.set_default_decoder_optimizer(model)
-
-        else:
-            decoder_optimizer = self._set_optimizer_on_device(
-                decoder_optimizer, self.device
-            )
-
-        if decoder_scheduler is None:
-            decoder_scheduler = self.set_default_scheduler(model, decoder_optimizer)
-
-        # set decoder optimizer
-        if discriminator_optimizer is None:
-            discriminator_optimizer = self.set_default_discriminator_optimizer(model)
-
-        else:
-            discriminator_optimizer = self._set_optimizer_on_device(
-                discriminator_optimizer, self.device
-            )
-
-        if discriminator_scheduler is None:
-            discriminator_scheduler = self.set_default_scheduler(
-                model, discriminator_optimizer
-            )
+            if self.distributed:
+                encoder_optimizer = encoder_optimizer_cls(
+                    self.model.module.encoder.parameters(),
+                    lr=self.training_config.encoder_learning_rate
+                )
+            else:
+                encoder_optimizer = encoder_optimizer_cls(
+                    self.model.encoder.parameters(),
+                    lr=self.training_config.encoder_learning_rate,
+                )
 
         self.encoder_optimizer = encoder_optimizer
+
+    def set_encoder_scheduler(self):
+        if self.training_config.encoder_scheduler_cls is not None:
+            encoder_scheduler_cls = getattr(
+                lr_scheduler, self.training_config.encoder_scheduler_cls
+            )
+
+            if self.training_config.encoder_scheduler_params is not None:
+                scheduler = encoder_scheduler_cls(
+                    self.encoder_optimizer, **self.training_config.encoder_scheduler_params
+                )
+            else:
+                scheduler = encoder_scheduler_cls(
+                    self.encoder_optimizer
+                )
+
+        else:
+            scheduler = None
+
+        self.encoder_scheduler = scheduler
+
+
+    def set_decoder_optimizer(self):
+        decoder_optimizer_cls = getattr(optim, self.training_config.decoder_optimizer_cls)
+
+        if self.training_config.decoder_optimizer_params is not None:
+            if self.distributed:
+                decoder_optimizer = decoder_optimizer_cls(
+                  self.model.module.decoder.parameters(),
+                    lr=self.training_config.decoder_learning_rate,
+                    **self.training_config.decoder_optimizer_params
+                )
+            else:
+                decoder_optimizer = decoder_optimizer_cls(
+                    self.model.decoder.parameters(),
+                    lr=self.training_config.decoder_learning_rate,
+                    **self.training_config.decoder_optimizer_params
+                )
+        else:
+            if self.distributed:
+                decoder_optimizer = decoder_optimizer_cls(
+                    self.model.module.decoder.parameters(),
+                    lr=self.training_config.decoder_learning_rate
+                )
+            else:
+                decoder_optimizer = decoder_optimizer_cls(
+                    self.model.decoder.parameters(),
+                    lr=self.training_config.decoder_learning_rate,
+                )
+
         self.decoder_optimizer = decoder_optimizer
+
+    def set_decoder_scheduler(self):
+        if self.training_config.decoder_scheduler_cls is not None:
+            decoder_scheduler_cls = getattr(
+                lr_scheduler, self.training_config.decoder_scheduler_cls
+            )
+
+            if self.training_config.decoder_scheduler_params is not None:
+                scheduler = decoder_scheduler_cls(
+                    self.decoder_optimizer, **self.training_config.decoder_scheduler_params
+                )
+            else:
+                scheduler = decoder_scheduler_cls(
+                    self.decoder_optimizer
+                )
+
+        else:
+            scheduler = None
+
+        self.decoder_scheduler = scheduler
+
+    def set_discriminator_optimizer(
+        self
+    ):
+        discriminator_cls = getattr(optim, self.training_config.discriminator_optimizer_cls)
+
+        if self.training_config.discriminator_optimizer_params is not None:
+            if self.distributed:
+                discriminator_optimizer = discriminator_cls(
+                    self.model.module.discriminator.parameters(),
+                    lr=self.training_config.discriminator_learning_rate,
+                    **self.training_config.discriminator_optimizer_params
+                )
+            else:
+                discriminator_optimizer = discriminator_cls(
+                    self.model.discriminator.parameters(),
+                    lr=self.training_config.discriminator_learning_rate,
+                    **self.training_config.discriminator_optimizer_params
+                )
+
+        else:
+            if self.distributed:
+                discriminator_optimizer = discriminator_cls(
+                    self.model.module.discriminator.parameters(),
+                    lr=self.training_config.discriminator_learning_rate
+                )
+            else:
+                discriminator_optimizer = discriminator_cls(
+                    self.model.discriminator.parameters(),
+                    lr=self.training_config.discriminator_learning_rate
+                )
+
         self.discriminator_optimizer = discriminator_optimizer
-        self.encoder_scheduler = encoder_scheduler
-        self.decoder_scheduler = decoder_scheduler
-        self.discriminator_scheduler = discriminator_scheduler
 
-        self.optimizer = None
+    def set_discriminator_scheduler(self) -> torch.optim.lr_scheduler:
+        if self.training_config.discriminator_scheduler_cls is not None:
+            discriminator_scheduler_cls = getattr(
+                lr_scheduler, self.training_config.discriminator_scheduler_cls
+            )
 
-    def set_default_encoder_optimizer(self, model: BaseAE) -> torch.optim.Optimizer:
+            if self.training_config.discriminator_scheduler_params is not None:
+                scheduler = discriminator_scheduler_cls(
+                    self.discriminator_optimizer, **self.training_config.discriminator_scheduler_params
+                )
+            else:
+                scheduler = discriminator_scheduler_cls(
+                    self.discriminator_optimizer
+                )
 
-        optimizer = optim.Adam(
-            model.encoder.parameters(),
-            lr=self.training_config.learning_rate,
-            weight_decay=self.training_config.encoder_optim_decay,
-        )
+        else:
+            scheduler = None
 
-        return optimizer
+        self.discriminator_scheduler = scheduler
 
-    def set_default_decoder_optimizer(self, model: BaseAE) -> torch.optim.Optimizer:
-
-        optimizer = optim.Adam(
-            model.decoder.parameters(),
-            lr=self.training_config.learning_rate,
-            weight_decay=self.training_config.decoder_optim_decay,
-        )
-
-        return optimizer
-
-    def set_default_discriminator_optimizer(
-        self, model: BaseAE
-    ) -> torch.optim.Optimizer:
-
-        optimizer = optim.Adam(
-            model.discriminator.parameters(),
-            lr=self.training_config.learning_rate,
-            weight_decay=self.training_config.discriminator_optim_decay,
-        )
-
-        return optimizer
 
     def _optimizers_step(self, model_output):
 
@@ -186,23 +256,57 @@ class CoupledOptimizerAdversarialTrainer(BaseTrainer):
     def _schedulers_step(
         self, encoder_metrics=None, decoder_metrics=None, discriminator_metrics=None
     ):
-        if isinstance(self.encoder_scheduler, ReduceLROnPlateau):
+        if self.encoder_scheduler is None:
+            pass
+
+        elif isinstance(self.encoder_scheduler, lr_scheduler.ReduceLROnPlateau):
             self.encoder_scheduler.step(encoder_metrics)
 
         else:
             self.encoder_scheduler.step()
 
-        if isinstance(self.decoder_scheduler, ReduceLROnPlateau):
+        if self.decoder_scheduler is None:
+            pass
+
+        elif isinstance(self.decoder_scheduler, lr_scheduler.ReduceLROnPlateau):
             self.decoder_scheduler.step(decoder_metrics)
 
         else:
             self.decoder_scheduler.step()
 
-        if isinstance(self.discriminator_scheduler, ReduceLROnPlateau):
+        if self.discriminator_scheduler is None:
+            pass
+
+        elif isinstance(self.discriminator_scheduler, lr_scheduler.ReduceLROnPlateau):
             self.discriminator_scheduler.step(discriminator_metrics)
 
         else:
             self.discriminator_scheduler.step()
+
+    def prepare_training(self):
+        """Sets up the trainer for training
+        """
+        
+        # set random seed
+        set_seed(self.training_config.seed)
+
+        # set encoder optimizer and scheduler
+        self.set_encoder_optimizer()
+        self.set_encoder_scheduler()
+
+        # set decoder optimizer and scheduler
+        self.set_decoder_optimizer()
+        self.set_decoder_scheduler()
+
+        # set discriminator optimizer and scheduler
+        self.set_discriminator_optimizer()
+        self.set_discriminator_scheduler()
+
+        # create foder for saving
+        self._set_output_dir()
+
+        # set callbacks
+        self._setup_callbacks()
 
     def train(self, log_output_dir: str = None):
         """This function is the main training function
@@ -211,60 +315,19 @@ class CoupledOptimizerAdversarialTrainer(BaseTrainer):
             log_output_dir (str): The path in which the log will be stored
         """
 
+        self.prepare_training()
+
         self.callback_handler.on_train_begin(
-            training_config=self.training_config, model_config=self.model.model_config
+            training_config=self.training_config, model_config=self.model_config
         )
-
-        # run sanity check on the model
-        self._run_model_sanity_check(self.model, self.train_loader)
-
-        logger.info("Model passed sanity check !\n")
-
-        self._training_signature = (
-            str(datetime.datetime.now())[0:19].replace(" ", "_").replace(":", "-")
-        )
-
-        training_dir = os.path.join(
-            self.training_config.output_dir,
-            f"{self.model.model_name}_training_{self._training_signature}",
-        )
-
-        self.training_dir = training_dir
-
-        if not os.path.exists(training_dir):
-            os.makedirs(training_dir)
-            logger.info(
-                f"Created {training_dir}. \n"
-                "Training config, checkpoints and final model will be saved here.\n"
-            )
 
         log_verbose = False
 
         # set up log file
-        if log_output_dir is not None:
-            log_dir = log_output_dir
+        if log_output_dir is not None and self.is_main_process:
             log_verbose = True
 
-            # if dir does not exist create it
-            if not os.path.exists(log_dir):
-                os.makedirs(log_dir)
-                logger.info(f"Created {log_dir} folder since did not exists.")
-                logger.info("Training logs will be recodered here.\n")
-                logger.info(" -> Training can be monitored here.\n")
-
-            # create and set logger
-            log_name = f"training_logs_{self._training_signature}"
-
-            file_logger = logging.getLogger(log_name)
-            file_logger.setLevel(logging.INFO)
-            f_handler = logging.FileHandler(
-                os.path.join(log_dir, f"training_logs_{self._training_signature}.log")
-            )
-            f_handler.setLevel(logging.INFO)
-            file_logger.addHandler(f_handler)
-
-            # Do not output logs in the console
-            file_logger.propagate = False
+            file_logger = self._get_file_logger(log_output_dir=log_output_dir)
 
             file_logger.info("Training started !\n")
             file_logger.info(
@@ -277,9 +340,15 @@ class CoupledOptimizerAdversarialTrainer(BaseTrainer):
             )
 
             file_logger.info(f"Model Architecture: {self.model}\n")
-            file_logger.info(f"Optimizer: {self.optimizer}\n")
+            file_logger.info(f"Encoder Optimizer: {self.encoder_optimizer}\n")
+            file_logger.info(f"Encoder Scheduler: {self.encoder_scheduler}\n")
+            file_logger.info(f"Decoder Optimizer: {self.decoder_optimizer}\n")
+            file_logger.info(f"Decoder Scheduler: {self.decoder_scheduler}\n")
+            file_logger.info(f"Discriminator Optimizer: {self.discriminator_optimizer}\n")
+            file_logger.info(f"Discriminator Scheduler: {self.discriminator_scheduler}\n")
 
-        logger.info("Successfully launched training !\n")
+        if self.is_main_process:
+            logger.info("Successfully launched training !\n")
 
         # set best losses for early stopping
         best_train_loss = 1e10
@@ -375,24 +444,26 @@ class CoupledOptimizerAdversarialTrainer(BaseTrainer):
                 self.training_config.steps_saving is not None
                 and epoch % self.training_config.steps_saving == 0
             ):
-                self.save_checkpoint(
-                    model=best_model, dir_path=training_dir, epoch=epoch
-                )
-                logger.info(f"Saved checkpoint at epoch {epoch}\n")
+                if self.is_main_process:
+                    self.save_checkpoint(
+                        model=best_model, dir_path=self.training_dir, epoch=epoch
+                    )
+                    logger.info(f"Saved checkpoint at epoch {epoch}\n")
 
                 if log_verbose:
                     file_logger.info(f"Saved checkpoint at epoch {epoch}\n")
 
             self.callback_handler.on_log(
-                self.training_config, metrics, logger=logger, global_step=epoch
+                self.training_config, metrics, logger=logger, global_step=epoch, rank=self.rank
             )
 
-        final_dir = os.path.join(training_dir, "final_model")
+        final_dir = os.path.join(self.training_dir, "final_model")
 
-        self.save_model(best_model, dir_path=final_dir)
-        logger.info("----------------------------------")
-        logger.info("Training ended!")
-        logger.info(f"Saved final model in {final_dir}")
+        if self.is_main_process:
+            self.save_model(best_model, dir_path=final_dir)
+            logger.info("----------------------------------")
+            logger.info("Training ended!")
+            logger.info(f"Saved final model in {final_dir}")
 
         self.callback_handler.on_train_end(training_config=self.training_config)
 
@@ -409,6 +480,7 @@ class CoupledOptimizerAdversarialTrainer(BaseTrainer):
             training_config=self.training_config,
             eval_loader=self.eval_loader,
             epoch=epoch,
+            rank=self.rank
         )
 
         self.model.eval()
@@ -475,6 +547,7 @@ class CoupledOptimizerAdversarialTrainer(BaseTrainer):
             training_config=self.training_config,
             train_loader=self.train_loader,
             epoch=epoch,
+            rank=self.rank
         )
 
         # set model in train model
@@ -511,7 +584,10 @@ class CoupledOptimizerAdversarialTrainer(BaseTrainer):
             )
 
         # Allows model updates if needed
-        self.model.update()
+        if self.distributed:
+            self.model.module.update()
+        else:
+            self.model.update()
 
         epoch_encoder_loss /= len(self.train_loader)
         epoch_decoder_loss /= len(self.train_loader)
@@ -552,7 +628,11 @@ class CoupledOptimizerAdversarialTrainer(BaseTrainer):
         )
 
         # save model
-        model.save(checkpoint_dir)
+        if self.distributed:
+            model.module.save(checkpoint_dir)
+
+        else:
+            model.save(checkpoint_dir)
 
         # save training config
         self.training_config.save_json(checkpoint_dir, "training_config")

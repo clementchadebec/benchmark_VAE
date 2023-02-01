@@ -118,7 +118,9 @@ class Test_Set_Training_config:
 class Test_Build_Optimizer:
     @pytest.fixture(
         params=[
-            AdversarialTrainerConfig(learning_rate=1e-2),
+            AdversarialTrainerConfig(
+                autoencoder_learning_rate=1e-2,
+                discriminator_learning_rate=1e-3),
             AdversarialTrainerConfig(),
         ]
     )
@@ -174,13 +176,13 @@ class Test_Build_Optimizer:
         assert issubclass(type(trainer.autoencoder_optimizer), torch.optim.Adam)
         assert (
             trainer.autoencoder_optimizer.defaults["lr"]
-            == training_configs_learning_rate.learning_rate
+            == training_configs_learning_rate.autoencoder_learning_rate
         )
 
         assert issubclass(type(trainer.discriminator_optimizer), torch.optim.Adam)
         assert (
             trainer.discriminator_optimizer.defaults["lr"]
-            == training_configs_learning_rate.learning_rate
+            == training_configs_learning_rate.discriminator_learning_rate
         )
 
     def test_set_custom_optimizer(
@@ -198,7 +200,7 @@ class Test_Build_Optimizer:
         assert issubclass(type(trainer.autoencoder_optimizer), getattr(torch.optim, optimizer_config['autoencoder_optimizer_cls']))
         assert (
             trainer.autoencoder_optimizer.defaults["lr"]
-            == training_configs_learning_rate.learning_rate
+            == training_configs_learning_rate.autoencoder_learning_rate
         )
         if optimizer_config['autoencoder_optimizer_params'] is not None:
             assert all(
@@ -212,7 +214,7 @@ class Test_Build_Optimizer:
         assert issubclass(type(trainer.discriminator_optimizer), getattr(torch.optim, optimizer_config['discriminator_optimizer_cls']))
         assert (
             trainer.discriminator_optimizer.defaults["lr"]
-            == training_configs_learning_rate.learning_rate
+            == training_configs_learning_rate.discriminator_learning_rate
         )
         if optimizer_config['discriminator_optimizer_params'] is not None:
             assert all(

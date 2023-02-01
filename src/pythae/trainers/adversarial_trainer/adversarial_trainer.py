@@ -72,25 +72,25 @@ class AdversarialTrainer(BaseTrainer):
             if self.distributed:
                 autoencoder_optimizer = autoencoder_optimizer_cls(
                     itertools.chain(self.model.module.encoder.parameters(), self.model.module.decoder.parameters()),
-                    lr=self.training_config.learning_rate,
+                    lr=self.training_config.autoencoder_learning_rate,
                     **self.training_config.autoencoder_optimizer_params
                 )
             else:
                 autoencoder_optimizer = autoencoder_optimizer_cls(
                     itertools.chain(self.model.encoder.parameters(), self.model.decoder.parameters()),
-                    lr=self.training_config.learning_rate,
+                    lr=self.training_config.autoencoder_learning_rate,
                     **self.training_config.autoencoder_optimizer_params
                 )
         else:
             if self.distributed:
                 autoencoder_optimizer = autoencoder_optimizer_cls(
                     itertools.chain(self.model.module.encoder.parameters(), self.model.module.decoder.parameters()),
-                    lr=self.training_config.learning_rate
+                    lr=self.training_config.autoencoder_learning_rate
                 )
             else:
                 autoencoder_optimizer = autoencoder_optimizer_cls(
                     itertools.chain(self.model.encoder.parameters(), self.model.decoder.parameters()),
-                    lr=self.training_config.learning_rate,
+                    lr=self.training_config.autoencoder_learning_rate,
                 )
 
         self.autoencoder_optimizer = autoencoder_optimizer
@@ -124,13 +124,13 @@ class AdversarialTrainer(BaseTrainer):
             if self.distributed:
                 discriminator_optimizer = discriminator_cls(
                     self.model.module.discriminator.parameters(),
-                    lr=self.training_config.learning_rate,
+                    lr=self.training_config.discriminator_learning_rate,
                     **self.training_config.discriminator_optimizer_params
                 )
             else:
                 discriminator_optimizer = discriminator_cls(
                     self.model.discriminator.parameters(),
-                    lr=self.training_config.learning_rate,
+                    lr=self.training_config.discriminator_learning_rate,
                     **self.training_config.discriminator_optimizer_params
                 )
 
@@ -138,12 +138,12 @@ class AdversarialTrainer(BaseTrainer):
             if self.distributed:
                 discriminator_optimizer = discriminator_cls(
                     self.model.module.discriminator.parameters(),
-                    lr=self.training_config.learning_rate
+                    lr=self.training_config.discriminator_learning_rate
                 )
             else:
                 discriminator_optimizer = discriminator_cls(
                     self.model.discriminator.parameters(),
-                    lr=self.training_config.learning_rate
+                    lr=self.training_config.discriminator_learning_rate
                 )
 
         self.discriminator_optimizer = discriminator_optimizer
@@ -356,11 +356,11 @@ class AdversarialTrainer(BaseTrainer):
                     )
                     logger.info(f"Saved checkpoint at epoch {epoch}\n")
 
-                if log_verbose:
-                    file_logger.info(f"Saved checkpoint at epoch {epoch}\n")
+                    if log_verbose:
+                        file_logger.info(f"Saved checkpoint at epoch {epoch}\n")
 
             self.callback_handler.on_log(
-                self.training_config, metrics, logger=logger, global_step=epoch
+                self.training_config, metrics, logger=logger, global_step=epoch, rank=self.rank
             )
 
         final_dir = os.path.join(self.training_dir, "final_model")

@@ -14,7 +14,6 @@ class AdversarialTrainerConfig(BaseTrainerConfig):
 
         output_dir (str): The directory where model checkpoints, configs and final
             model will be stored. Default: None.
-
         batch_size (int): The number of training samples per batch. Default 100
         num_epochs (int): The maximal number of epochs for training. Default: 100
         autoencoder_optimizer_cls (str): The name of the `torch.optim.Optimizer` used for
@@ -28,16 +27,19 @@ class AdversarialTrainerConfig(BaseTrainerConfig):
             `torch.optim.le_scheduler`  for the autoencoder. If None, uses the default parameters.
             Default: None.
         discriminator_optimizer_cls (str): The name of the `torch.optim.Optimizer` used for
-            the training of the autoencoder. Default: :class:`~torch.optim.Adam`.
+            the training of the discriminator. Default: :class:`~torch.optim.Adam`.
         discriminator_optimizer_params (dict): A dict containing the parameters to use for the 
-            `torch.optim.Optimizer` for the autoencoder. If None, uses the default parameters.
+            `torch.optim.Optimizer` for the discriminator. If None, uses the default parameters.
             Default: None.
         discriminator_scheduler_cls (str): The name of the `torch.optim.lr_scheduler` used for
-            the training of the autoencoder. Default :class:`~torch.optim.Adam`.
+            the training of the discriminator. Default :class:`~torch.optim.Adam`.
         discriminator_scheduler_params (dict): A dict containing the parameters to use for the 
-            `torch.optim.le_scheduler`  for the autoencoder. If None, uses the default parameters.
+            `torch.optim.le_scheduler`  for the discriminator. If None, uses the default parameters.
             Default: None.
-        learning_rate (int): The learning rate applied to the `Optimizer`. Default: 1e-4
+        autoencoder_learning_rate (int): The learning rate applied to the `Optimizer` for the encoder. 
+            Default: 1e-4
+        discriminator_learning_rate (int): The learning rate applied to the `Optimizer` for the 
+            discriminator. Default: 1e-4
         steps_saving (int): A model checkpoint will be saved every `steps_saving` epoch.
             Default: None
         steps_saving (int): A prediction using the best model will be run every `steps_predict`
@@ -60,6 +62,8 @@ class AdversarialTrainerConfig(BaseTrainerConfig):
     discriminator_optimizer_params: Union[dict, None] = None
     discriminator_scheduler_cls: str = None
     discriminator_scheduler_params: Union[dict, None] = None
+    autoencoder_learning_rate: float = 1e-4
+    discriminator_learning_rate: float = 1e-4
 
 
     def __post_init_post_parse__(self):
@@ -116,7 +120,7 @@ class AdversarialTrainerConfig(BaseTrainerConfig):
             discriminator_optimizer_cls = getattr(optim, self.discriminator_optimizer_cls)
         except AttributeError as e:
             raise AttributeError(
-                f"Unable to import `{self.discriminator_optimizer_cls}` autoencoder optimizer "
+                f"Unable to import `{self.discriminator_optimizer_cls}` discriminator optimizer "
                 "from 'torch.optim'. Check spelling and that it is part of "
                 "'torch.optim.Optimizers.'"
             )
@@ -139,7 +143,7 @@ class AdversarialTrainerConfig(BaseTrainerConfig):
                 discriminator_scheduder_cls = getattr(schedulers, self.discriminator_scheduler_cls)
             except AttributeError as e:
                 raise AttributeError(
-                    f"Unable to import `{self.discriminator_scheduler_cls}` autoencoder scheduler from "
+                    f"Unable to import `{self.discriminator_scheduler_cls}` discriminator scheduler from "
                     "'torch.optim.lr_scheduler'. Check spelling and that it is part of "
                     "'torch.optim.lr_scheduler.'"
                 )
@@ -151,6 +155,6 @@ class AdversarialTrainerConfig(BaseTrainerConfig):
                     raise TypeError(
                         "Error in scheduler's parameters. Check that the provided dict contains only "
                         f"keys and values suitable for `{discriminator_scheduder_cls}` scheduler. "
-                        f"Got {self.autoencoder_scheduler_params} as parameters.\n"
+                        f"Got {self.discriminator_scheduler_params} as parameters.\n"
                         f"Exception raised: {type(e)} with message: " + str(e)
                     ) from e
