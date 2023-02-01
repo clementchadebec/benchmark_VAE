@@ -476,7 +476,10 @@ class AdversarialTrainer(BaseTrainer):
             )
 
         # Allows model updates if needed
-        self.model.update()
+        if self.distributed:
+            self.model.module.update()
+        else:
+            self.model.update()
 
         epoch_autoencoder_loss /= len(self.train_loader)
         epoch_discriminator_loss /= len(self.train_loader)
