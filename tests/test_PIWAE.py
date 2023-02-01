@@ -370,9 +370,10 @@ class Test_PIWAE_Training:
             CoupledOptimizerTrainerConfig(
                 num_epochs=3,
                 steps_saving=2,
-                learning_rate=1e-5,
-                encoder_optim_decay=1e-3,
-                decoder_optim_decay=1e-3,
+                encoder_learning_rate=1e-5,
+                decoder_learning_rate=1e-6,
+                encoder_optimizer_cls="AdamW",
+                decoder_optimizer_cls = "SGD"
             )
         ]
     )
@@ -413,9 +414,9 @@ class Test_PIWAE_Training:
         return model
 
     @pytest.fixture
-    def trainer(self, ae, train_dataset, training_configs):
-        trainer = BaseTrainer(
-            model=ae,
+    def trainer(self, piwae, train_dataset, training_configs):
+        trainer = CoupledOptimizerTrainer(
+            model=piwae,
             train_dataset=train_dataset,
             eval_dataset=train_dataset,
             training_config=training_configs
@@ -425,14 +426,7 @@ class Test_PIWAE_Training:
 
         return trainer
 
-    def test_rae_train_step(self, rae, train_dataset, training_configs, optimizers):
-        trainer = CoupledOptimizerTrainer(
-            model=rae,
-            train_dataset=train_dataset,
-            training_config=training_configs,
-            encoder_optimizer=optimizers[0],
-            decoder_optimizer=optimizers[1],
-        )
+    def test_piwae_train_step(self, trainer):
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -448,15 +442,7 @@ class Test_PIWAE_Training:
             ]
         )
 
-    def test_rae_eval_step(self, rae, train_dataset, training_configs, optimizers):
-        trainer = CoupledOptimizerTrainer(
-            model=rae,
-            train_dataset=train_dataset,
-            eval_dataset=train_dataset,
-            training_config=training_configs,
-            encoder_optimizer=optimizers[0],
-            decoder_optimizer=optimizers[1],
-        )
+    def test_piwae_eval_step(self, trainer):
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -472,17 +458,9 @@ class Test_PIWAE_Training:
             ]
         )
 
-    def test_rae_predict_step(
-        self, rae, train_dataset, training_configs, optimizers
+    def test_piwae_predict_step(
+        self, trainer, train_dataset
     ):
-        trainer = CoupledOptimizerTrainer(
-            model=rae,
-            train_dataset=train_dataset,
-            eval_dataset=train_dataset,
-            training_config=training_configs,
-            encoder_optimizer=optimizers[0],
-            decoder_optimizer=optimizers[1],
-        )
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -502,18 +480,9 @@ class Test_PIWAE_Training:
         assert recon.shape == inputs.shape
         assert generated.shape == inputs.shape 
 
-    def test_rae_main_train_loop(
-        self, tmpdir, rae, train_dataset, training_configs, optimizers
+    def test_piwae_main_train_loop(
+        self, trainer
     ):
-
-        trainer = CoupledOptimizerTrainer(
-            model=rae,
-            train_dataset=train_dataset,
-            eval_dataset=train_dataset,
-            training_config=training_configs,
-            encoder_optimizer=optimizers[0],
-            decoder_optimizer=optimizers[1],
-        )
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -530,18 +499,10 @@ class Test_PIWAE_Training:
         )
 
     def test_checkpoint_saving(
-        self, tmpdir, rae, train_dataset, training_configs, optimizers
+        self, rae, trainer, training_configs
     ):
 
         dir_path = training_configs.output_dir
-
-        trainer = CoupledOptimizerTrainer(
-            model=rae,
-            train_dataset=train_dataset,
-            training_config=training_configs,
-            encoder_optimizer=optimizers[0],
-            decoder_optimizer=optimizers[1],
-        )
 
         # Make a training step
         step_1_loss = trainer.train_step(epoch=1)
@@ -657,20 +618,12 @@ class Test_PIWAE_Training:
         )
 
     def test_checkpoint_saving_during_training(
-        self, tmpdir, rae, train_dataset, training_configs, optimizers
+        self, rae, trainer, training_configs
     ):
         #
         target_saving_epoch = training_configs.steps_saving
 
         dir_path = training_configs.output_dir
-
-        trainer = CoupledOptimizerTrainer(
-            model=rae,
-            train_dataset=train_dataset,
-            training_config=training_configs,
-            encoder_optimizer=optimizers[0],
-            decoder_optimizer=optimizers[1],
-        )
 
         model = deepcopy(trainer.model)
 
@@ -725,18 +678,10 @@ class Test_PIWAE_Training:
         )
 
     def test_final_model_saving(
-        self, tmpdir, rae, train_dataset, training_configs, optimizers
+        self, rae, trainer, training_configs, optimizers
     ):
 
         dir_path = training_configs.output_dir
-
-        trainer = CoupledOptimizerTrainer(
-            model=rae,
-            train_dataset=train_dataset,
-            training_config=training_configs,
-            encoder_optimizer=optimizers[0],
-            decoder_optimizer=optimizers[1],
-        )
 
         trainer.train()
 
