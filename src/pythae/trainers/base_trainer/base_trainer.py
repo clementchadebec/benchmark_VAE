@@ -132,13 +132,13 @@ class BaseTrainer:
         # run sanity check on the model
         if self.is_main_process:
             self._run_model_sanity_check(model, train_loader)
+            logger.info(
+                "Model passed sanity check !\n"
+                "Ready for training."
+            )
 
         self.model = model
-
-        logger.info(
-            "Model passed sanity check !\n"
-            "Ready for training."
-        )
+        
 
     @property
     def is_main_process(self):
@@ -494,7 +494,7 @@ class BaseTrainer:
                     file_logger.info(f"Saved checkpoint at epoch {epoch}\n")
 
             self.callback_handler.on_log(
-                self.training_config, metrics, logger=logger, global_step=epoch
+                self.training_config, metrics, logger=logger, global_step=epoch, rank=self.rank
             )
 
         final_dir = os.path.join(self.training_dir, "final_model")
