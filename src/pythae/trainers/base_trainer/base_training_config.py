@@ -2,6 +2,7 @@ import os
 from typing import Union
 import torch.nn as nn
 
+from dataclasses import field
 from pydantic.dataclasses import dataclass
 
 from ...config import BaseConfig
@@ -59,15 +60,15 @@ class BaseTrainerConfig(BaseConfig):
     keep_best_on_train: bool = False
     seed: int = 8
     no_cuda: bool = False
-    world_size: int = -1
-    local_rank: int = -1
-    rank: int = -1
-    dist_backend: str = "nccl"
-    master_addr: str = "localhost"
-    master_port: str = "12345"
+    world_size: int = field(default=-1)
+    local_rank: int = field(default=-1)
+    rank: int = field(default=-1)
+    dist_backend: str = field(default="nccl")
+    master_addr: str = field(default="localhost")
+    master_port: str = field(default="12345")
 
-    def __post_init_post_parse__(self):
-        """Check compatibilty"""
+    def __post_init__(self):
+        super().__post_init__()
         env_local_rank = int(os.environ.get("LOCAL_RANK", -1))
         if self.local_rank == -1 and env_local_rank != -1:
             self.local_rank = env_local_rank
@@ -90,6 +91,8 @@ class BaseTrainerConfig(BaseConfig):
             self.master_port = env_master_port
         os.environ["MASTER_PORT"] = self.master_port
 
+    def __post_init_post_parse__(self):
+        """Check compatibilty"""
         try:
             import torch.optim as optim
             optimizer_cls = getattr(optim, self.optimizer_cls)

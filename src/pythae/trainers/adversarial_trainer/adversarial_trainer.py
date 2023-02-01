@@ -52,10 +52,6 @@ class AdversarialTrainer(BaseTrainer):
         train_dataset: BaseDataset,
         eval_dataset: Optional[BaseDataset] = None,
         training_config: Optional[AdversarialTrainerConfig] = None,
-        autoencoder_optimizer: Optional[torch.optim.Optimizer] = None,
-        discriminator_optimizer: Optional[torch.optim.Optimizer] = None,
-        autoencoder_scheduler: Optional[torch.optim.lr_scheduler.LambdaLR] = None,
-        discriminator_scheduler: Optional[torch.optim.lr_scheduler.LambdaLR] = None,
         callbacks: List[TrainingCallback] = None,
     ):
 
