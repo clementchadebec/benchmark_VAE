@@ -3,7 +3,6 @@ from copy import deepcopy
 
 import pytest
 import torch
-from torch.optim import Adam
 
 from pythae.customexception import BadInheritanceError
 from pythae.models.base.base_utils import ModelOutput
@@ -428,27 +427,22 @@ class Test_INFOVAE_MMD_Training:
 
         return model
 
-    @pytest.fixture(params=[Adam])
-    def optimizers(self, request, info_vae_mmd, training_configs):
-        if request.param is not None:
-            optimizer = request.param(
-                info_vae_mmd.parameters(), lr=training_configs.learning_rate
-            )
-
-        else:
-            optimizer = None
-
-        return optimizer
-
-    def test_info_vae_mmd_train_step(
-        self, info_vae_mmd, train_dataset, training_configs, optimizers
-    ):
+    @pytest.fixture
+    def trainer(self, info_vae_mmd, train_dataset, training_configs):
         trainer = BaseTrainer(
             model=info_vae_mmd,
             train_dataset=train_dataset,
-            training_config=training_configs,
-            optimizer=optimizers,
+            eval_dataset=train_dataset,
+            training_config=training_configs
         )
+
+        trainer.prepare_training()
+
+        return trainer
+
+    def test_info_vae_mmd_train_step(
+        self, trainer
+    ):
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -465,15 +459,8 @@ class Test_INFOVAE_MMD_Training:
         )
 
     def test_info_vae_mmd_eval_step(
-        self, info_vae_mmd, train_dataset, training_configs, optimizers
+        self, trainer
     ):
-        trainer = BaseTrainer(
-            model=info_vae_mmd,
-            train_dataset=train_dataset,
-            eval_dataset=train_dataset,
-            training_config=training_configs,
-            optimizer=optimizers,
-        )
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -490,15 +477,8 @@ class Test_INFOVAE_MMD_Training:
         )
 
     def test_info_vae_mmd_predict_step(
-        self, info_vae_mmd, train_dataset, training_configs, optimizers
+        self, trainer, train_dataset
     ):
-        trainer = BaseTrainer(
-            model=info_vae_mmd,
-            train_dataset=train_dataset,
-            eval_dataset=train_dataset,
-            training_config=training_configs,
-            optimizer=optimizers,
-        )
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -519,16 +499,8 @@ class Test_INFOVAE_MMD_Training:
         assert generated.shape == inputs.shape 
 
     def test_info_vae_mmd_main_train_loop(
-        self, tmpdir, info_vae_mmd, train_dataset, training_configs, optimizers
+        self, trainer
     ):
-
-        trainer = BaseTrainer(
-            model=info_vae_mmd,
-            train_dataset=train_dataset,
-            eval_dataset=train_dataset,
-            training_config=training_configs,
-            optimizer=optimizers,
-        )
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -545,17 +517,10 @@ class Test_INFOVAE_MMD_Training:
         )
 
     def test_checkpoint_saving(
-        self, tmpdir, info_vae_mmd, train_dataset, training_configs, optimizers
+        self, info_vae_mmd, trainer, training_configs
     ):
 
         dir_path = training_configs.output_dir
-
-        trainer = BaseTrainer(
-            model=info_vae_mmd,
-            train_dataset=train_dataset,
-            training_config=training_configs,
-            optimizer=optimizers,
-        )
 
         # Make a training step
         step_1_loss = trainer.train_step(epoch=1)
@@ -639,19 +604,12 @@ class Test_INFOVAE_MMD_Training:
         )
 
     def test_checkpoint_saving_during_training(
-        self, tmpdir, info_vae_mmd, train_dataset, training_configs, optimizers
+        self, info_vae_mmd, trainer, training_configs
     ):
         #
         target_saving_epoch = training_configs.steps_saving
 
         dir_path = training_configs.output_dir
-
-        trainer = BaseTrainer(
-            model=info_vae_mmd,
-            train_dataset=train_dataset,
-            training_config=training_configs,
-            optimizer=optimizers,
-        )
 
         model = deepcopy(trainer.model)
 
@@ -701,17 +659,10 @@ class Test_INFOVAE_MMD_Training:
         )
 
     def test_final_model_saving(
-        self, tmpdir, info_vae_mmd, train_dataset, training_configs, optimizers
+        self, info_vae_mmd, trainer, training_configs
     ):
 
         dir_path = training_configs.output_dir
-
-        trainer = BaseTrainer(
-            model=info_vae_mmd,
-            train_dataset=train_dataset,
-            training_config=training_configs,
-            optimizer=optimizers,
-        )
 
         trainer.train()
 

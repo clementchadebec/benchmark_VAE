@@ -2,7 +2,6 @@ import os
 
 import pytest
 import torch
-from torch.optim import SGD, Adadelta, Adagrad, Adam, RMSprop
 
 from copy import deepcopy
 
@@ -405,25 +404,20 @@ class Test_VQVAETraining:
 
         return model
 
-    @pytest.fixture(params=[None, Adagrad, Adam, Adadelta, SGD, RMSprop])
-    def optimizers(self, request, vae, training_configs):
-        if request.param is not None:
-            optimizer = request.param(
-                vae.parameters(), lr=training_configs.learning_rate
-            )
-
-        else:
-            optimizer = None
-
-        return optimizer
-
-    def test_vae_train_step(self, vae, train_dataset, training_configs, optimizers):
+    @pytest.fixture
+    def trainer(self, vae, train_dataset, training_configs):
         trainer = BaseTrainer(
             model=vae,
             train_dataset=train_dataset,
-            training_config=training_configs,
-            optimizer=optimizers,
+            eval_dataset=train_dataset,
+            training_config=training_configs
         )
+
+        trainer.prepare_training()
+
+        return trainer
+
+    def test_vae_train_step(self, trainer):
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -439,14 +433,7 @@ class Test_VQVAETraining:
             ]
         )
 
-    def test_vae_eval_step(self, vae, train_dataset, training_configs, optimizers):
-        trainer = BaseTrainer(
-            model=vae,
-            train_dataset=train_dataset,
-            eval_dataset=train_dataset,
-            training_config=training_configs,
-            optimizer=optimizers,
-        )
+    def test_vae_eval_step(self, trainer):
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -463,15 +450,8 @@ class Test_VQVAETraining:
         )
 
     def test_vae_predict_step(
-        self, vae, train_dataset, training_configs, optimizers
+        self, trainer, train_dataset
     ):
-        trainer = BaseTrainer(
-            model=vae,
-            train_dataset=train_dataset,
-            eval_dataset=train_dataset,
-            training_config=training_configs,
-            optimizer=optimizers,
-        )
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -492,16 +472,8 @@ class Test_VQVAETraining:
         assert generated.shape == inputs.shape 
 
     def test_vae_main_train_loop(
-        self, tmpdir, vae, train_dataset, training_configs, optimizers
+        self, trainer
     ):
-
-        trainer = BaseTrainer(
-            model=vae,
-            train_dataset=train_dataset,
-            eval_dataset=train_dataset,
-            training_config=training_configs,
-            optimizer=optimizers,
-        )
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -518,17 +490,10 @@ class Test_VQVAETraining:
         )
 
     def test_checkpoint_saving(
-        self, tmpdir, vae, train_dataset, training_configs, optimizers
+        self, vae, trainer, training_configs
     ):
 
         dir_path = training_configs.output_dir
-
-        trainer = BaseTrainer(
-            model=vae,
-            train_dataset=train_dataset,
-            training_config=training_configs,
-            optimizer=optimizers,
-        )
 
         # Make a training step
         step_1_loss = trainer.train_step(epoch=1)
@@ -612,19 +577,12 @@ class Test_VQVAETraining:
         )
 
     def test_checkpoint_saving_during_training(
-        self, tmpdir, vae, train_dataset, training_configs, optimizers
+        self, vae, trainer, training_configs
     ):
         #
         target_saving_epoch = training_configs.steps_saving
 
         dir_path = training_configs.output_dir
-
-        trainer = BaseTrainer(
-            model=vae,
-            train_dataset=train_dataset,
-            training_config=training_configs,
-            optimizer=optimizers,
-        )
 
         model = deepcopy(trainer.model)
 
@@ -674,17 +632,10 @@ class Test_VQVAETraining:
         )
 
     def test_final_model_saving(
-        self, tmpdir, vae, train_dataset, training_configs, optimizers
+        self, vae, trainer, training_configs
     ):
 
         dir_path = training_configs.output_dir
-
-        trainer = BaseTrainer(
-            model=vae,
-            train_dataset=train_dataset,
-            training_config=training_configs,
-            optimizer=optimizers,
-        )
 
         trainer.train()
 
@@ -733,7 +684,7 @@ class Test_VQVAETraining:
         assert type(model_rec.encoder.cpu()) == type(model.encoder.cpu())
         assert type(model_rec.decoder.cpu()) == type(model.decoder.cpu())
 
-    def test_vae_training_pipeline(self, tmpdir, vae, train_dataset, training_configs):
+    def test_vae_training_pipeline(self, vae, train_dataset, training_configs):
 
         dir_path = training_configs.output_dir
 

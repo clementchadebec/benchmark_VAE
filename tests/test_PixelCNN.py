@@ -4,7 +4,6 @@ import torch
 import numpy as np
 
 from copy import deepcopy
-from torch.optim import Adam
 
 from pythae.models.base.base_utils import ModelOutput
 from pythae.models.normalizing_flows import PixelCNN, PixelCNNConfig
@@ -174,28 +173,22 @@ class Test_PixelCNN_Training:
         return model
 
 
-    @pytest.fixture(params=[Adam])
-    def optimizers(self, request, pixelcnn, training_configs):
-        if request.param is not None:
-            optimizer = request.param(
-                pixelcnn.parameters(), lr=training_configs.learning_rate
-            )
-
-        else:
-            optimizer = None
-
-        return optimizer
-
-    def test_pixelcnn_train_step(
-        self, pixelcnn, train_dataset, training_configs, optimizers
-    ):
-
+    @pytest.fixture
+    def trainer(self, pixelcnn, train_dataset, training_configs):
         trainer = BaseTrainer(
             model=pixelcnn,
             train_dataset=train_dataset,
-            training_config=training_configs,
-            optimizer=optimizers,
+            eval_dataset=train_dataset,
+            training_config=training_configs
         )
+
+        trainer.prepare_training()
+
+        return trainer
+
+    def test_pixelcnn_train_step(
+        self, trainer
+    ):
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -212,16 +205,8 @@ class Test_PixelCNN_Training:
         )
 
     def test_pixelcnn_eval_step(
-        self, pixelcnn, train_dataset, training_configs, optimizers
+        self, trainer
     ):
-
-        trainer = BaseTrainer(
-            model=pixelcnn,
-            train_dataset=train_dataset,
-            eval_dataset=train_dataset,
-            training_config=training_configs,
-            optimizer=optimizers,
-        )
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -243,15 +228,8 @@ class Test_PixelCNN_Training:
             ]
         )
     def test_pixelcnn_main_train_loop(
-        self, pixelcnn, train_dataset, training_configs, optimizers
+        self, trainer
     ):
-
-        trainer = BaseTrainer(
-            model=pixelcnn,
-            train_dataset=train_dataset,
-            training_config=training_configs,
-            optimizer=optimizers,
-        )
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -268,17 +246,10 @@ class Test_PixelCNN_Training:
         )
 
     def test_checkpoint_saving(
-        self, tmpdir, pixelcnn, train_dataset, training_configs, optimizers
+        self, trainer, training_configs
     ):
 
         dir_path = training_configs.output_dir
-
-        trainer = BaseTrainer(
-            model=pixelcnn,
-            train_dataset=train_dataset,
-            training_config=training_configs,
-            optimizer=optimizers,
-        )
 
         # Make a training step
         step_1_loss = trainer.train_step(epoch=1)
@@ -345,19 +316,12 @@ class Test_PixelCNN_Training:
         )
 
     def test_checkpoint_saving_during_training(
-        self, tmpdir, pixelcnn, train_dataset, training_configs, optimizers
+        self, trainer, training_configs
     ):
         #
         target_saving_epoch = training_configs.steps_saving
 
         dir_path = training_configs.output_dir
-
-        trainer = BaseTrainer(
-            model=pixelcnn,
-            train_dataset=train_dataset,
-            training_config=training_configs,
-            optimizer=optimizers,
-        )
 
         model = deepcopy(trainer.model)
 
@@ -393,17 +357,10 @@ class Test_PixelCNN_Training:
         )
 
     def test_final_model_saving(
-        self, tmpdir, pixelcnn, train_dataset, training_configs, optimizers
+        self, trainer, training_configs
     ):
 
         dir_path = training_configs.output_dir
-
-        trainer = BaseTrainer(
-            model=pixelcnn,
-            train_dataset=train_dataset,
-            training_config=training_configs,
-            optimizer=optimizers,
-        )
 
         trainer.train()
 
@@ -436,7 +393,7 @@ class Test_PixelCNN_Training:
         )
 
     def test_pixelcnn_training_pipeline(
-        self, tmpdir, pixelcnn, train_dataset, training_configs
+        self, pixelcnn, train_dataset, training_configs
     ):
 
         dir_path = training_configs.output_dir

@@ -3,7 +3,6 @@ from copy import deepcopy
 
 import pytest
 import torch
-from torch.optim import Adam
 
 from pythae.customexception import BadInheritanceError
 from pythae.models import RHVAE, RHVAEConfig, AutoModel
@@ -578,25 +577,21 @@ class Test_RHVAE_Training:
 
         return model
 
-    @pytest.fixture(params=[Adam])
-    def optimizers(self, request, rhvae, training_configs):
-        if request.param is not None:
-            optimizer = request.param(
-                rhvae.parameters(), lr=training_configs.learning_rate
-            )
-
-        else:
-            optimizer = None
-
-        return optimizer
-
-    def test_rhvae_train_step(self, rhvae, train_dataset, training_configs, optimizers):
+    @pytest.fixture
+    def trainer(self, rhvae, train_dataset, training_configs):
         trainer = BaseTrainer(
             model=rhvae,
             train_dataset=train_dataset,
-            training_config=training_configs,
-            optimizer=optimizers,
+            eval_dataset=train_dataset,
+            training_config=training_configs
         )
+
+        trainer.prepare_training()
+
+        return trainer
+        return optimizer
+
+    def test_rhvae_train_step(self, trainer):
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -612,14 +607,7 @@ class Test_RHVAE_Training:
             ]
         )
 
-    def test_rhvae_eval_step(self, rhvae, train_dataset, training_configs, optimizers):
-        trainer = BaseTrainer(
-            model=rhvae,
-            train_dataset=train_dataset,
-            eval_dataset=train_dataset,
-            training_config=training_configs,
-            optimizer=optimizers,
-        )
+    def test_rhvae_eval_step(self, trainer):
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -636,15 +624,8 @@ class Test_RHVAE_Training:
         )
 
     def test_rhvae_predict_step(
-        self, rhvae, train_dataset, training_configs, optimizers
+        self, trainer, train_dataset
     ):
-        trainer = BaseTrainer(
-            model=rhvae,
-            train_dataset=train_dataset,
-            eval_dataset=train_dataset,
-            training_config=training_configs,
-            optimizer=optimizers,
-        )
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -665,16 +646,8 @@ class Test_RHVAE_Training:
         assert generated.shape == inputs.shape 
 
     def test_rhvae_main_train_loop(
-        self, tmpdir, rhvae, train_dataset, training_configs, optimizers
+        self, trainer
     ):
-
-        trainer = BaseTrainer(
-            model=rhvae,
-            train_dataset=train_dataset,
-            eval_dataset=train_dataset,
-            training_config=training_configs,
-            optimizer=optimizers,
-        )
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -691,17 +664,10 @@ class Test_RHVAE_Training:
         )
 
     def test_checkpoint_saving(
-        self, tmpdir, rhvae, train_dataset, training_configs, optimizers
+        self, rhvae, trainer, training_configs
     ):
 
         dir_path = training_configs.output_dir
-
-        trainer = BaseTrainer(
-            model=rhvae,
-            train_dataset=train_dataset,
-            training_config=training_configs,
-            optimizer=optimizers,
-        )
 
         # Make a training step
         step_1_loss = trainer.train_step(epoch=1)
@@ -799,19 +765,12 @@ class Test_RHVAE_Training:
         )
 
     def test_checkpoint_saving_during_training(
-        self, tmpdir, rhvae, train_dataset, training_configs, optimizers
+        self, rhvae, trainer, training_configs
     ):
         #
         target_saving_epoch = training_configs.steps_saving
 
         dir_path = training_configs.output_dir
-
-        trainer = BaseTrainer(
-            model=rhvae,
-            train_dataset=train_dataset,
-            training_config=training_configs,
-            optimizer=optimizers,
-        )
 
         model = deepcopy(trainer.model)
 
@@ -868,17 +827,10 @@ class Test_RHVAE_Training:
         )
 
     def test_final_model_saving(
-        self, tmpdir, rhvae, train_dataset, training_configs, optimizers
+        self, rhvae, trainer, training_configs
     ):
 
         dir_path = training_configs.output_dir
-
-        trainer = BaseTrainer(
-            model=rhvae,
-            train_dataset=train_dataset,
-            training_config=training_configs,
-            optimizer=optimizers,
-        )
 
         trainer.train()
 
@@ -938,7 +890,7 @@ class Test_RHVAE_Training:
         assert type(model_rec.metric.cpu()) == type(model.metric.cpu())
 
     def test_rhvae_training_pipeline(
-        self, tmpdir, rhvae, train_dataset, training_configs
+        self, rhvae, train_dataset, training_configs
     ):
 
         dir_path = training_configs.output_dir

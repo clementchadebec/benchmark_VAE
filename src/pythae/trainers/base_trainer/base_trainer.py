@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional
 import torch
 import torch.distributed as dist
 import torch.optim as optim
-import torch.optim.lr_scheduler as scheduler
+import torch.optim.lr_scheduler as lr_scheduler
 
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data import DataLoader
@@ -78,18 +78,10 @@ class BaseTrainer:
         self.local_rank = self.training_config.local_rank
         self.rank = self.training_config.rank
 
-        if not os.path.exists(training_config.output_dir) and (self.rank == 0 or self.rank == -1):
-            os.makedirs(training_config.output_dir, exist_ok=True)
-            logger.info(
-                f"Created {training_config.output_dir} folder since did not exist.\n"
-            )
-
         if self.world_size > 1:
             self.distributed = True
         else:
             self.distributed = False
-
-        set_seed(self.training_config.seed)
 
         if self.distributed:
             device = self._setup_devices()
@@ -97,32 +89,19 @@ class BaseTrainer:
         else:
             device = (
                 "cuda"
-                if torch.cuda.is_available() and not training_config.no_cuda
+                if torch.cuda.is_available() and not self.training_config.no_cuda
                 else "cpu"
             )
+
+        self.device = device
 
         # place model on device
         model = model.to(device)
         model.device = device
 
         if self.distributed:
-            model = DDP(model, device_ids=[self.local_rank])
+            self.model = DDP(self.model, device_ids=[self.local_rank])
 
-        # set optimizer
-        optimizer = self.set_optimizer(model=model)
-        
-        # set scheduler
-        scheduler = self.set_scheduler(optimizer=optimizer)
-
-        #if optimizer is None:
-        #    optimizer = self.set_default_optimizer(model)
-
-        #else:
-        #    optimizer = self._set_optimizer_on_device(optimizer, device)
-
-        
-        #if scheduler is None:
-        #    scheduler = self.set_default_scheduler(model, optimizer)
 
         self.train_dataset = train_dataset
         self.eval_dataset = eval_dataset
@@ -132,12 +111,6 @@ class BaseTrainer:
         self._eval_batch_size = self.training_config.per_device_eval_batch_size * max(
             1, self.world_size
         )
-
-        self.model = model
-        self.optimizer = optimizer
-        self.scheduler = scheduler
-
-        self.device = device
 
         # Define the loaders
         train_loader = self.get_train_dataloader(train_dataset)
@@ -154,16 +127,25 @@ class BaseTrainer:
 
         self.train_loader = train_loader
         self.eval_loader = eval_loader
+        self.callbacks = callbacks
 
-        if callbacks is None:
-            callbacks = [TrainingCallback()]
+        # run sanity check on the model
+        if self.is_main_process:
+            self._run_model_sanity_check(model, train_loader)
 
-        self.callback_handler = CallbackHandler(
-            callbacks=callbacks, model=model, optimizer=optimizer, scheduler=scheduler
+        self.model = model
+
+        logger.info(
+            "Model passed sanity check !\n"
+            "Ready for training."
         )
 
-        self.callback_handler.add_callback(ProgressBarCallback())
-        self.callback_handler.add_callback(MetricConsolePrinterCallback())
+    @property
+    def is_main_process(self):
+        if self.rank == 0 or self.rank == -1:
+            return True
+        else:
+            return False
 
     def _setup_devices(self):
         """Sets up the devices to perform distributed training."""
@@ -221,35 +203,100 @@ class BaseTrainer:
             sampler=eval_sampler,
         )
 
-    def set_optimizer(self, model: BaseAE) -> torch.optim.Optimizer:
+    def set_optimizer(self):
         optimizer_cls = getattr(optim, self.training_config.optimizer_cls)
         
         if self.training_config.optimizer_params is not None:
             optimizer = optimizer_cls(
-                model.parameters(), lr=self.training_config.learning_rate, **self.training_config.optimizer_params
+                self.model.parameters(), lr=self.training_config.learning_rate, **self.training_config.optimizer_params
             )
         else:
             optimizer = optimizer_cls(
-                model.parameters(), lr=self.training_config.learning_rate
+                self.model.parameters(), lr=self.training_config.learning_rate
             )
 
-        return optimizer
+        self.optimizer = optimizer
 
-    def set_scheduler(
-        self, optimizer: torch.optim.Optimizer
-    ) -> torch.optim.lr_scheduler:
-        scheduler_cls = getattr(scheduler, self.training_config.scheduler_cls)
+    def set_scheduler(self):
+        if self.training_config.scheduler_cls is not None:
+            scheduler_cls = getattr(lr_scheduler, self.training_config.scheduler_cls)
 
-        if self.training_config.scheduler_params is not None:
-            scheduler = scheduler_cls(
-                optimizer, **self.training_config.scheduler_params
-            )
+            if self.training_config.scheduler_params is not None:
+                scheduler = scheduler_cls(
+                    self.optimizer, **self.training_config.scheduler_params
+                )
+            else:
+                scheduler = scheduler_cls(
+                    self.optimizer
+                )
+
         else:
-            scheduler = scheduler_cls(
-                optimizer
+            scheduler = None
+
+        self.scheduler = scheduler
+
+    def _set_output_dir(self):
+        # Create folder 
+        if not os.path.exists(self.training_config.output_dir) and self.is_main_process:
+            os.makedirs(self.training_config.output_dir, exist_ok=True)
+            logger.info(
+                f"Created {self.training_config.output_dir} folder since did not exist.\n"
             )
 
-        return scheduler
+        self._training_signature = (
+            str(datetime.datetime.now())[0:19].replace(" ", "_").replace(":", "-")
+        )
+
+        training_dir = os.path.join(
+            self.training_config.output_dir,
+            f"{self.model_name}_training_{self._training_signature}",
+        )
+
+        self.training_dir = training_dir
+
+        if not os.path.exists(training_dir) and self.is_main_process:
+            os.makedirs(training_dir, exist_ok=True)
+            logger.info(
+                f"Created {training_dir}. \n"
+                "Training config, checkpoints and final model will be saved here.\n"
+            )
+
+    def _get_file_logger(self, log_output_dir):
+        log_dir = log_output_dir
+
+        # if dir does not exist create it
+        if not os.path.exists(log_dir) and self.is_main_process:
+            os.makedirs(log_dir, exist_ok=True)
+            logger.info(f"Created {log_dir} folder since did not exists.")
+            logger.info("Training logs will be recodered here.\n")
+            logger.info(" -> Training can be monitored here.\n")
+
+        # create and set logger
+        log_name = f"training_logs_{self._training_signature}"
+
+        file_logger = logging.getLogger(log_name)
+        file_logger.setLevel(logging.INFO)
+        f_handler = logging.FileHandler(
+            os.path.join(log_dir, f"training_logs_{self._training_signature}.log")
+        )
+        f_handler.setLevel(logging.INFO)
+        file_logger.addHandler(f_handler)
+
+        # Do not output logs in the console
+        file_logger.propagate = False
+
+        return file_logger
+
+    def _setup_callbacks(self):
+        if self.callbacks is None:
+            self.callbacks = [TrainingCallback()]
+
+        self.callback_handler = CallbackHandler(
+            callbacks=self.callbacks, model=self.model
+        )
+
+        self.callback_handler.add_callback(ProgressBarCallback())
+        self.callback_handler.add_callback(MetricConsolePrinterCallback())
 
     def _run_model_sanity_check(self, model, loader):
         try:
@@ -309,11 +356,32 @@ class BaseTrainer:
         self.optimizer.step()
 
     def _schedulers_step(self, metrics=None):
-        if isinstance(self.scheduler, scheduler.ReduceLROnPlateau):
+        if self.scheduler is None:
+            pass
+
+        elif isinstance(self.scheduler, lr_scheduler.ReduceLROnPlateau):
             self.scheduler.step(metrics)
 
         else:
             self.scheduler.step()
+
+    def prepare_training(self):
+        """Sets up the trainer for training
+        """
+        # set random seed
+        set_seed(self.training_config.seed)
+
+        # set optimizer
+        self.set_optimizer()
+        
+        # set scheduler
+        self.set_scheduler()
+
+        # create folder for saving
+        self._set_output_dir()
+
+        # set callbacks
+        self._setup_callbacks()
 
     def train(self, log_output_dir: str = None):
         """This function is the main training function
@@ -322,61 +390,19 @@ class BaseTrainer:
             log_output_dir (str): The path in which the log will be stored
         """
 
+        self.prepare_training()        
+
         self.callback_handler.on_train_begin(
             training_config=self.training_config, model_config=self.model_config
         )
 
-        # run sanity check on the model
-        self._run_model_sanity_check(self.model, self.train_loader)
-
-        logger.info("Model passed sanity check !\n")
-
-        self._training_signature = (
-            str(datetime.datetime.now())[0:19].replace(" ", "_").replace(":", "-")
-        )
-
-        training_dir = os.path.join(
-            self.training_config.output_dir,
-            f"{self.model_name}_training_{self._training_signature}",
-        )
-
-        self.training_dir = training_dir
-
-        if not os.path.exists(training_dir) and (self.rank == 0 or self.rank == -1):
-            os.makedirs(training_dir, exist_ok=True)
-            logger.info(
-                f"Created {training_dir}. \n"
-                "Training config, checkpoints and final model will be saved here.\n"
-            )
-
         log_verbose = False
 
         # set up log file
-        if log_output_dir is not None:
-            log_dir = log_output_dir
+        if log_output_dir is not None and self.is_main_process:
             log_verbose = True
-
-            # if dir does not exist create it
-            if not os.path.exists(log_dir) and (self.rank == 0 or self.rank == -1):
-                os.makedirs(log_dir, exist_ok=True)
-                logger.info(f"Created {log_dir} folder since did not exists.")
-                logger.info("Training logs will be recodered here.\n")
-                logger.info(" -> Training can be monitored here.\n")
-
-            # create and set logger
-            log_name = f"training_logs_{self._training_signature}"
-
-            file_logger = logging.getLogger(log_name)
-            file_logger.setLevel(logging.INFO)
-            f_handler = logging.FileHandler(
-                os.path.join(log_dir, f"training_logs_{self._training_signature}.log")
-            )
-            f_handler.setLevel(logging.INFO)
-            file_logger.addHandler(f_handler)
-
-            # Do not output logs in the console
-            file_logger.propagate = False
-
+            file_logger = self._get_file_logger(log_output_dir=log_output_dir)
+            
             file_logger.info("Training started !\n")
             file_logger.info(
                 f"Training params:\n - max_epochs: {self.training_config.num_epochs}\n"
@@ -389,8 +415,10 @@ class BaseTrainer:
 
             file_logger.info(f"Model Architecture: {self.model}\n")
             file_logger.info(f"Optimizer: {self.optimizer}\n")
+            file_logger.info(f"Scheduler: {self.scheduler}\n")
 
-        logger.info("Successfully launched training !\n")
+        if self.is_main_process:
+            logger.info("Successfully launched training !\n")
 
         # set best losses for early stopping
         best_train_loss = 1e10
@@ -456,9 +484,9 @@ class BaseTrainer:
                 self.training_config.steps_saving is not None
                 and epoch % self.training_config.steps_saving == 0
             ):
-                if self.rank == 0 or self.rank == -1:
+                if self.is_main_process:
                     self.save_checkpoint(
-                        model=best_model, dir_path=training_dir, epoch=epoch
+                        model=best_model, dir_path=self.training_dir, epoch=epoch
                     )
                     logger.info(f"Saved checkpoint at epoch {epoch}\n")
 
@@ -469,9 +497,9 @@ class BaseTrainer:
                 self.training_config, metrics, logger=logger, global_step=epoch
             )
 
-        final_dir = os.path.join(training_dir, "final_model")
+        final_dir = os.path.join(self.training_dir, "final_model")
 
-        if self.rank == 0 or self.rank == -1:
+        if self.is_main_process:
             self.save_model(best_model, dir_path=final_dir)
 
             logger.info("Training ended!")
@@ -621,17 +649,18 @@ class BaseTrainer:
         )
 
         # save scheduler
-        torch.save(
-            deepcopy(self.scheduler.state_dict()),
-            os.path.join(checkpoint_dir, "scheduler.pt"),
-        )
+        if self.scheduler is not None:
+            torch.save(
+                deepcopy(self.scheduler.state_dict()),
+                os.path.join(checkpoint_dir, "scheduler.pt"),
+            )
 
         # save model
         if self.distributed:
-            model.module.save(dir_path)
+            model.module.save(checkpoint_dir)
 
         else:
-            model.save(dir_path)
+            model.save(checkpoint_dir)
 
         # save training config
         self.training_config.save_json(checkpoint_dir, "training_config")

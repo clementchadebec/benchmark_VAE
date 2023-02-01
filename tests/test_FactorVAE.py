@@ -1,10 +1,8 @@
 import os
-import numpy as np
 from copy import deepcopy
 
 import pytest
 import torch
-from torch.optim import Adam
 
 from pythae.data.preprocessors import DataProcessor
 from pythae.customexception import BadInheritanceError
@@ -495,33 +493,22 @@ class Test_FactorVAE_Training:
 
         return model
 
-    @pytest.fixture(params=[Adam])
-    def optimizers(self, request, factor_ae, training_configs):
-        if request.param is not None:
-            encoder_optimizer = request.param(
-                factor_ae.encoder.parameters(), lr=training_configs.learning_rate
-            )
-            decoder_optimizer = request.param(
-                factor_ae.discriminator.parameters(),
-                lr=training_configs.learning_rate,
-            )
-
-        else:
-            encoder_optimizer = None
-            decoder_optimizer = None
-
-        return (encoder_optimizer, decoder_optimizer)
-
-    def test_factor_ae_train_step(
-        self, factor_ae, train_dataset, training_configs, optimizers
-    ):
+    @pytest.fixture
+    def trainer(self, factor_ae, train_dataset, training_configs):
         trainer = AdversarialTrainer(
             model=factor_ae,
             train_dataset=train_dataset,
-            training_config=training_configs,
-            autoencoder_optimizer=optimizers[0],
-            discriminator_optimizer=optimizers[1],
+            eval_dataset=train_dataset,
+            training_config=training_configs
         )
+
+        trainer.prepare_training()
+
+        return trainer
+
+    def test_factor_ae_train_step(
+        self, trainer
+    ):
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -538,16 +525,8 @@ class Test_FactorVAE_Training:
         )
 
     def test_factor_ae_eval_step(
-        self, factor_ae, train_dataset, training_configs, optimizers
+        self, trainer
     ):
-        trainer = AdversarialTrainer(
-            model=factor_ae,
-            train_dataset=train_dataset,
-            eval_dataset=train_dataset,
-            training_config=training_configs,
-            autoencoder_optimizer=optimizers[0],
-            discriminator_optimizer=optimizers[1],
-        )
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -564,16 +543,8 @@ class Test_FactorVAE_Training:
         )
 
     def test_factor_ae_predict_step(
-        self, factor_ae, train_dataset, training_configs, optimizers
+        self, trainer, train_dataset
     ):
-        trainer = AdversarialTrainer(
-            model=factor_ae,
-            train_dataset=train_dataset,
-            eval_dataset=train_dataset,
-            training_config=training_configs,
-            autoencoder_optimizer=optimizers[0],
-            discriminator_optimizer=optimizers[1],
-        )
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -594,17 +565,8 @@ class Test_FactorVAE_Training:
         assert generated.shape == (int(inputs.shape[0] / 2) + 1 * (inputs.shape[0] % 2 != 0),) + (inputs.shape[1:])
 
     def test_factor_ae_main_train_loop(
-        self, tmpdir, factor_ae, train_dataset, training_configs, optimizers
+        self, trainer
     ):
-
-        trainer = AdversarialTrainer(
-            model=factor_ae,
-            train_dataset=train_dataset,
-            eval_dataset=train_dataset,
-            training_config=training_configs,
-            autoencoder_optimizer=optimizers[0],
-            discriminator_optimizer=optimizers[1],
-        )
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -621,18 +583,10 @@ class Test_FactorVAE_Training:
         )
 
     def test_checkpoint_saving(
-        self, tmpdir, factor_ae, train_dataset, training_configs, optimizers
+        self, factor_ae, trainer, training_configs
     ):
 
         dir_path = training_configs.output_dir
-
-        trainer = AdversarialTrainer(
-            model=factor_ae,
-            train_dataset=train_dataset,
-            training_config=training_configs,
-            autoencoder_optimizer=optimizers[0],
-            discriminator_optimizer=optimizers[1],
-        )
 
         # Make a training step
         step_1_loss = trainer.train_step(epoch=1)
@@ -753,20 +707,12 @@ class Test_FactorVAE_Training:
         )
 
     def test_checkpoint_saving_during_training(
-        self, tmpdir, factor_ae, train_dataset, training_configs, optimizers
+        self, factor_ae, trainer, training_configs
     ):
         #
         target_saving_epoch = training_configs.steps_saving
 
         dir_path = training_configs.output_dir
-
-        trainer = AdversarialTrainer(
-            model=factor_ae,
-            train_dataset=train_dataset,
-            training_config=training_configs,
-            autoencoder_optimizer=optimizers[0],
-            discriminator_optimizer=optimizers[1],
-        )
 
         model = deepcopy(trainer.model)
 
@@ -821,18 +767,10 @@ class Test_FactorVAE_Training:
         )
 
     def test_final_model_saving(
-        self, tmpdir, factor_ae, train_dataset, training_configs, optimizers
+        self, factor_ae, trainer, training_configs
     ):
 
         dir_path = training_configs.output_dir
-
-        trainer = AdversarialTrainer(
-            model=factor_ae,
-            train_dataset=train_dataset,
-            training_config=training_configs,
-            autoencoder_optimizer=optimizers[0],
-            discriminator_optimizer=optimizers[1],
-        )
 
         trainer.train()
 
@@ -883,7 +821,7 @@ class Test_FactorVAE_Training:
         assert type(model_rec.discriminator.cpu()) == type(model.discriminator.cpu())
 
     def test_factor_ae_training_pipeline(
-        self, tmpdir, factor_ae, train_dataset, training_configs
+        self, factor_ae, train_dataset, training_configs
     ):
 
         with pytest.raises(AssertionError):

@@ -3,7 +3,6 @@ from copy import deepcopy
 
 import pytest
 import torch
-from torch.optim import Adam
 
 from pythae.customexception import BadInheritanceError
 from pythae.models.base.base_utils import ModelOutput
@@ -392,7 +391,7 @@ class Test_PIWAE_Training:
             torch.rand(1),
         ]
     )
-    def rae(self, model_configs, custom_encoder, custom_decoder, request):
+    def piwae(self, model_configs, custom_encoder, custom_decoder, request):
         # randomized
 
         alpha = request.param
@@ -413,21 +412,18 @@ class Test_PIWAE_Training:
 
         return model
 
-    @pytest.fixture(params=[Adam])
-    def optimizers(self, request, rae, training_configs):
-        if request.param is not None:
-            encoder_optimizer = request.param(
-                rae.encoder.parameters(), lr=training_configs.learning_rate
-            )
-            decoder_optimizer = request.param(
-                rae.decoder.parameters(), lr=training_configs.learning_rate
-            )
+    @pytest.fixture
+    def trainer(self, ae, train_dataset, training_configs):
+        trainer = BaseTrainer(
+            model=ae,
+            train_dataset=train_dataset,
+            eval_dataset=train_dataset,
+            training_config=training_configs
+        )
 
-        else:
-            encoder_optimizer = None
-            decoder_optimizer = None
+        trainer.prepare_training()
 
-        return (encoder_optimizer, decoder_optimizer)
+        return trainer
 
     def test_rae_train_step(self, rae, train_dataset, training_configs, optimizers):
         trainer = CoupledOptimizerTrainer(

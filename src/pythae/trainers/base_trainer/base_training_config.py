@@ -1,5 +1,6 @@
 import os
 from typing import Union
+import torch.nn as nn
 
 from pydantic.dataclasses import dataclass
 
@@ -25,7 +26,7 @@ class BaseTrainerConfig(BaseConfig):
         optimizer_params (dict): A dict containing the parameters to use for the 
             `torch.optim.Optimizer`. If None, uses the default parameters. Default: None.
         scheduler_cls (str): The name of the `torch.optim.lr_scheduler` used for
-            training. Default :class:`~torch.optim.Adam`.
+            training. If None, no scheduler is used. Default None.
         scheduler_params (dict): A dict containing the parameters to use for the 
             `torch.optim.le_scheduler`. If None, uses the default parameters. Default: None.
         learning_rate (int): The learning rate applied to the `Optimizer`. Default: 1e-4
@@ -50,7 +51,7 @@ class BaseTrainerConfig(BaseConfig):
     num_epochs: int = 100
     optimizer_cls: str = "Adam"
     optimizer_params: Union[dict, None] = None
-    scheduler_cls: str = "ReduceLROnPlateau"
+    scheduler_cls: Union[str, None] = None
     scheduler_params: Union[dict, None] = None
     learning_rate: float = 1e-4
     steps_saving: Union[int, None] = None
@@ -99,7 +100,6 @@ class BaseTrainerConfig(BaseConfig):
             )
         if self.optimizer_params is not None:
             try:
-                import torch.nn as nn
                 optimizer = optimizer_cls(nn.Linear(2, 2).parameters(), **self.optimizer_params)
             except TypeError as e:
                 raise TypeError(
@@ -108,24 +108,27 @@ class BaseTrainerConfig(BaseConfig):
                     f"Got {self.optimizer_params} as parameters.\n"
                     f"Exception raised: {type(e)} with message: " + str(e)
                 ) from e
+        else:
+            optimizer = optimizer_cls(nn.Linear(2, 2).parameters())
 
-        try:
-            import torch.optim.lr_scheduler as schedulers
-            scheduder_cls = getattr(schedulers, self.scheduler_cls)
-        except AttributeError as e:
-            raise AttributeError(
-                f"Unable to import `{self.scheduler_cls}` scheduler from "
-                "'torch.optim.lr_scheduler'. Check spelling and that it is part of "
-                "'torch.optim.lr_scheduler.'"
-            )
-
-        if self.scheduler_params is not None:
+        if self.scheduler_cls is not None:
             try:
-                scheduder_cls(optimizer, **self.scheduler_params)
-            except TypeError as e:
-                raise TypeError(
-                    "Error in scheduler's parameters. Check that the provided dict contains only "
-                    f"keys and values suitable for `{scheduder_cls}` scheduler. "
-                    f"Got {self.scheduler_params} as parameters.\n"
-                    f"Exception raised: {type(e)} with message: " + str(e)
-                ) from e
+                import torch.optim.lr_scheduler as schedulers
+                scheduder_cls = getattr(schedulers, self.scheduler_cls)
+            except AttributeError as e:
+                raise AttributeError(
+                    f"Unable to import `{self.scheduler_cls}` scheduler from "
+                    "'torch.optim.lr_scheduler'. Check spelling and that it is part of "
+                    "'torch.optim.lr_scheduler.'"
+                )
+
+            if self.scheduler_params is not None:
+                try:
+                    scheduder_cls(optimizer, **self.scheduler_params)
+                except TypeError as e:
+                    raise TypeError(
+                        "Error in scheduler's parameters. Check that the provided dict contains only "
+                        f"keys and values suitable for `{scheduder_cls}` scheduler. "
+                        f"Got {self.scheduler_params} as parameters.\n"
+                        f"Exception raised: {type(e)} with message: " + str(e)
+                    ) from e

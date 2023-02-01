@@ -2,10 +2,8 @@ import pytest
 import os
 import torch
 import numpy as np
-import shutil
 
 from copy import deepcopy
-from torch.optim import Adam
 
 from pythae.models.base.base_utils import ModelOutput
 from pythae.models.normalizing_flows import IAF, IAFConfig
@@ -210,30 +208,25 @@ class Test_IAF_Training:
             torch.eye(np.prod(model_configs.input_dim)).to(device),
         )
 
-    @pytest.fixture(params=[Adam])
-    def optimizers(self, request, iaf, training_configs):
-        if request.param is not None:
-            optimizer = request.param(
-                iaf.parameters(), lr=training_configs.learning_rate
-            )
-
-        else:
-            optimizer = None
-
-        return optimizer
-
-    def test_iaf_train_step(
-        self, iaf, prior, train_dataset, training_configs, optimizers
-    ):
+    @pytest.fixture
+    def trainer(self, prior, iaf, train_dataset, training_configs):
 
         nf_model = NFModel(prior=prior, flow=iaf)
 
         trainer = BaseTrainer(
             model=nf_model,
             train_dataset=train_dataset,
-            training_config=training_configs,
-            optimizer=optimizers,
+            eval_dataset=train_dataset,
+            training_config=training_configs
         )
+
+        trainer.prepare_training()
+
+        return trainer
+
+    def test_iaf_train_step(
+        self, trainer
+    ):
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -250,18 +243,8 @@ class Test_IAF_Training:
         )
 
     def test_iaf_eval_step(
-        self, iaf, prior, train_dataset, training_configs, optimizers
+        self, trainer
     ):
-
-        nf_model = NFModel(prior=prior, flow=iaf)
-
-        trainer = BaseTrainer(
-            model=nf_model,
-            train_dataset=train_dataset,
-            eval_dataset=train_dataset,
-            training_config=training_configs,
-            optimizer=optimizers,
-        )
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -278,17 +261,8 @@ class Test_IAF_Training:
         )
 
     def test_iaf_main_train_loop(
-        self, iaf, prior, train_dataset, training_configs, optimizers
+        self, trainer
     ):
-
-        nf_model = NFModel(prior=prior, flow=iaf)
-
-        trainer = BaseTrainer(
-            model=nf_model,
-            train_dataset=train_dataset,
-            training_config=training_configs,
-            optimizer=optimizers,
-        )
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -305,19 +279,11 @@ class Test_IAF_Training:
         )
 
     def test_checkpoint_saving(
-        self, tmpdir, iaf, prior, train_dataset, training_configs, optimizers
+        self, trainer, training_configs
     ):
 
         dir_path = training_configs.output_dir
 
-        nf_model = NFModel(prior=prior, flow=iaf)
-
-        trainer = BaseTrainer(
-            model=nf_model,
-            train_dataset=train_dataset,
-            training_config=training_configs,
-            optimizer=optimizers,
-        )
 
         # Make a training step
         step_1_loss = trainer.train_step(epoch=1)
@@ -384,21 +350,13 @@ class Test_IAF_Training:
         )
 
     def test_checkpoint_saving_during_training(
-        self, tmpdir, iaf, prior, train_dataset, training_configs, optimizers
+        self, trainer, training_configs
     ):
         #
         target_saving_epoch = training_configs.steps_saving
 
         dir_path = training_configs.output_dir
 
-        nf_model = NFModel(prior=prior, flow=iaf)
-
-        trainer = BaseTrainer(
-            model=nf_model,
-            train_dataset=train_dataset,
-            training_config=training_configs,
-            optimizer=optimizers,
-        )
 
         model = deepcopy(trainer.model.flow)
 
@@ -434,19 +392,10 @@ class Test_IAF_Training:
         )
 
     def test_final_model_saving(
-        self, tmpdir, iaf, prior, train_dataset, training_configs, optimizers
+        self, trainer, training_configs
     ):
 
         dir_path = training_configs.output_dir
-
-        nf_model = NFModel(prior=prior, flow=iaf)
-
-        trainer = BaseTrainer(
-            model=nf_model,
-            train_dataset=train_dataset,
-            training_config=training_configs,
-            optimizer=optimizers,
-        )
 
         trainer.train()
 

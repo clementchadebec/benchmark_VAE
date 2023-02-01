@@ -117,13 +117,11 @@ class CallbackHandler:
     Class to handle list of Callback.
     """
 
-    def __init__(self, callbacks, model, optimizer, scheduler):
+    def __init__(self, callbacks, model):
         self.callbacks = []
         for cb in callbacks:
             self.add_callback(cb)
         self.model = model
-        self.optimizer = optimizer
-        self.scheduler = scheduler
 
     def add_callback(self, callback):
         cb = callback() if isinstance(callback, type) else callback
@@ -187,8 +185,6 @@ class CallbackHandler:
             result = getattr(callback, event)(
                 training_config,
                 model=self.model,
-                optimizer=self.optimizer,
-                scheduler=self.scheduler,
                 **kwargs,
             )
 

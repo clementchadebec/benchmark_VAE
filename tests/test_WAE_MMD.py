@@ -3,7 +3,6 @@ from copy import deepcopy
 
 import pytest
 import torch
-from torch.optim import Adam
 
 from pythae.customexception import BadInheritanceError
 from pythae.models.base.base_utils import ModelOutput
@@ -392,25 +391,20 @@ class Test_WAE_MMD_Training:
 
         return model
 
-    @pytest.fixture(params=[Adam])
-    def optimizers(self, request, wae, training_configs):
-        if request.param is not None:
-            optimizer = request.param(
-                wae.parameters(), lr=training_configs.learning_rate
-            )
-
-        else:
-            optimizer = None
-
-        return optimizer
-
-    def test_wae_train_step(self, wae, train_dataset, training_configs, optimizers):
+    @pytest.fixture
+    def trainer(self, wae, train_dataset, training_configs):
         trainer = BaseTrainer(
             model=wae,
             train_dataset=train_dataset,
-            training_config=training_configs,
-            optimizer=optimizers,
+            eval_dataset=train_dataset,
+            training_config=training_configs
         )
+
+        trainer.prepare_training()
+
+        return trainer
+
+    def test_wae_train_step(self, trainer):
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -426,14 +420,7 @@ class Test_WAE_MMD_Training:
             ]
         )
 
-    def test_wae_eval_step(self, wae, train_dataset, training_configs, optimizers):
-        trainer = BaseTrainer(
-            model=wae,
-            train_dataset=train_dataset,
-            eval_dataset=train_dataset,
-            training_config=training_configs,
-            optimizer=optimizers,
-        )
+    def test_wae_eval_step(self, trainer):
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -450,15 +437,8 @@ class Test_WAE_MMD_Training:
         )
 
     def test_wae_predict_step(
-        self, wae, train_dataset, training_configs, optimizers
+        self, trainer, train_dataset
     ):
-        trainer = BaseTrainer(
-            model=wae,
-            train_dataset=train_dataset,
-            eval_dataset=train_dataset,
-            training_config=training_configs,
-            optimizer=optimizers,
-        )
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -479,16 +459,8 @@ class Test_WAE_MMD_Training:
         assert generated.shape == inputs.shape 
 
     def test_wae_main_train_loop(
-        self, tmpdir, wae, train_dataset, training_configs, optimizers
+        self, trainer
     ):
-
-        trainer = BaseTrainer(
-            model=wae,
-            train_dataset=train_dataset,
-            eval_dataset=train_dataset,
-            training_config=training_configs,
-            optimizer=optimizers,
-        )
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -505,17 +477,10 @@ class Test_WAE_MMD_Training:
         )
 
     def test_checkpoint_saving(
-        self, tmpdir, wae, train_dataset, training_configs, optimizers
+        self, wae, trainer, training_configs
     ):
 
         dir_path = training_configs.output_dir
-
-        trainer = BaseTrainer(
-            model=wae,
-            train_dataset=train_dataset,
-            training_config=training_configs,
-            optimizer=optimizers,
-        )
 
         # Make a training step
         step_1_loss = trainer.train_step(epoch=1)
@@ -599,19 +564,12 @@ class Test_WAE_MMD_Training:
         )
 
     def test_checkpoint_saving_during_training(
-        self, tmpdir, wae, train_dataset, training_configs, optimizers
+        self, wae, trainer, training_configs
     ):
         #
         target_saving_epoch = training_configs.steps_saving
 
         dir_path = training_configs.output_dir
-
-        trainer = BaseTrainer(
-            model=wae,
-            train_dataset=train_dataset,
-            training_config=training_configs,
-            optimizer=optimizers,
-        )
 
         model = deepcopy(trainer.model)
 
@@ -661,17 +619,10 @@ class Test_WAE_MMD_Training:
         )
 
     def test_final_model_saving(
-        self, tmpdir, wae, train_dataset, training_configs, optimizers
+        self, wae, trainer, training_configs
     ):
 
         dir_path = training_configs.output_dir
-
-        trainer = BaseTrainer(
-            model=wae,
-            train_dataset=train_dataset,
-            training_config=training_configs,
-            optimizer=optimizers,
-        )
 
         trainer.train()
 
@@ -720,7 +671,7 @@ class Test_WAE_MMD_Training:
         assert type(model_rec.encoder.cpu()) == type(model.encoder.cpu())
         assert type(model_rec.decoder.cpu()) == type(model.decoder.cpu())
 
-    def test_wae_training_pipeline(self, tmpdir, wae, train_dataset, training_configs):
+    def test_wae_training_pipeline(self, wae, train_dataset, training_configs):
 
         dir_path = training_configs.output_dir
 

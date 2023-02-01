@@ -3,7 +3,6 @@ from copy import deepcopy
 
 import pytest
 import torch
-from torch.optim import SGD, Adadelta, Adagrad, Adam, RMSprop
 
 from pythae.customexception import BadInheritanceError
 from pythae.models.base.base_utils import ModelOutput
@@ -404,7 +403,7 @@ class Test_MIWAE_Training:
             torch.rand(1),
         ]
     )
-    def MIWAE(self, model_configs, custom_encoder, custom_decoder, request):
+    def miwae(self, model_configs, custom_encoder, custom_decoder, request):
         # randomized
 
         alpha = request.param
@@ -423,25 +422,20 @@ class Test_MIWAE_Training:
 
         return model
 
-    @pytest.fixture(params=[Adam])
-    def optimizers(self, request, MIWAE, training_configs):
-        if request.param is not None:
-            optimizer = request.param(
-                MIWAE.parameters(), lr=training_configs.learning_rate
-            )
-
-        else:
-            optimizer = None
-
-        return optimizer
-
-    def test_MIWAE_train_step(self, MIWAE, train_dataset, training_configs, optimizers):
+    @pytest.fixture
+    def trainer(self, miwae, train_dataset, training_configs):
         trainer = BaseTrainer(
-            model=MIWAE,
+            model=miwae,
             train_dataset=train_dataset,
-            training_config=training_configs,
-            optimizer=optimizers,
+            eval_dataset=train_dataset,
+            training_config=training_configs
         )
+
+        trainer.prepare_training()
+
+        return trainer
+
+    def test_miwae_train_step(self, trainer):
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -457,14 +451,7 @@ class Test_MIWAE_Training:
             ]
         )
 
-    def test_MIWAE_eval_step(self, MIWAE, train_dataset, training_configs, optimizers):
-        trainer = BaseTrainer(
-            model=MIWAE,
-            train_dataset=train_dataset,
-            eval_dataset=train_dataset,
-            training_config=training_configs,
-            optimizer=optimizers,
-        )
+    def test_miwae_eval_step(self, trainer):
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -480,16 +467,9 @@ class Test_MIWAE_Training:
             ]
         )
 
-    def test_MIWAE_predict_step(
-        self, MIWAE, train_dataset, training_configs, optimizers
+    def test_miwae_predict_step(
+        self, trainer, train_dataset
     ):
-        trainer = BaseTrainer(
-            model=MIWAE,
-            train_dataset=train_dataset,
-            eval_dataset=train_dataset,
-            training_config=training_configs,
-            optimizer=optimizers,
-        )
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -509,17 +489,9 @@ class Test_MIWAE_Training:
         assert recon.shape == inputs.shape
         assert generated.shape == inputs.shape 
 
-    def test_MIWAE_main_train_loop(
-        self, tmpdir, MIWAE, train_dataset, training_configs, optimizers
+    def test_miwae_main_train_loop(
+        self, trainer
     ):
-
-        trainer = BaseTrainer(
-            model=MIWAE,
-            train_dataset=train_dataset,
-            eval_dataset=train_dataset,
-            training_config=training_configs,
-            optimizer=optimizers,
-        )
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -536,17 +508,10 @@ class Test_MIWAE_Training:
         )
 
     def test_checkpoint_saving(
-        self, tmpdir, MIWAE, train_dataset, training_configs, optimizers
+        self, miwae, trainer, training_configs
     ):
 
         dir_path = training_configs.output_dir
-
-        trainer = BaseTrainer(
-            model=MIWAE,
-            train_dataset=train_dataset,
-            training_config=training_configs,
-            optimizer=optimizers,
-        )
 
         # Make a training step
         step_1_loss = trainer.train_step(epoch=1)
@@ -567,14 +532,14 @@ class Test_MIWAE_Training:
         )
 
         # check pickled custom decoder
-        if not MIWAE.model_config.uses_default_decoder:
+        if not miwae.model_config.uses_default_decoder:
             assert "decoder.pkl" in files_list
 
         else:
             assert not "decoder.pkl" in files_list
 
         # check pickled custom encoder
-        if not MIWAE.model_config.uses_default_encoder:
+        if not miwae.model_config.uses_default_encoder:
             assert "encoder.pkl" in files_list
 
         else:
@@ -630,19 +595,13 @@ class Test_MIWAE_Training:
         )
 
     def test_checkpoint_saving_during_training(
-        self, tmpdir, MIWAE, train_dataset, training_configs, optimizers
+        self, miwae, trainer, training_configs
     ):
         #
         target_saving_epoch = training_configs.steps_saving
 
         dir_path = training_configs.output_dir
 
-        trainer = BaseTrainer(
-            model=MIWAE,
-            train_dataset=train_dataset,
-            training_config=training_configs,
-            optimizer=optimizers,
-        )
 
         model = deepcopy(trainer.model)
 
@@ -667,14 +626,14 @@ class Test_MIWAE_Training:
         )
 
         # check pickled custom decoder
-        if not MIWAE.model_config.uses_default_decoder:
+        if not miwae.model_config.uses_default_decoder:
             assert "decoder.pkl" in files_list
 
         else:
             assert not "decoder.pkl" in files_list
 
         # check pickled custom encoder
-        if not MIWAE.model_config.uses_default_encoder:
+        if not miwae.model_config.uses_default_encoder:
             assert "encoder.pkl" in files_list
 
         else:
@@ -692,17 +651,10 @@ class Test_MIWAE_Training:
         )
 
     def test_final_model_saving(
-        self, tmpdir, MIWAE, train_dataset, training_configs, optimizers
+        self, miwae, trainer, training_configs
     ):
 
         dir_path = training_configs.output_dir
-
-        trainer = BaseTrainer(
-            model=MIWAE,
-            train_dataset=train_dataset,
-            training_config=training_configs,
-            optimizer=optimizers,
-        )
 
         trainer.train()
 
@@ -723,14 +675,14 @@ class Test_MIWAE_Training:
         )
 
         # check pickled custom decoder
-        if not MIWAE.model_config.uses_default_decoder:
+        if not miwae.model_config.uses_default_decoder:
             assert "decoder.pkl" in files_list
 
         else:
             assert not "decoder.pkl" in files_list
 
         # check pickled custom encoder
-        if not MIWAE.model_config.uses_default_encoder:
+        if not miwae.model_config.uses_default_encoder:
             assert "encoder.pkl" in files_list
 
         else:
@@ -752,13 +704,13 @@ class Test_MIWAE_Training:
         assert type(model_rec.decoder.cpu()) == type(model.decoder.cpu())
 
     def test_MIWAE_training_pipeline(
-        self, tmpdir, MIWAE, train_dataset, training_configs
+        self, miwae, train_dataset, training_configs
     ):
 
         dir_path = training_configs.output_dir
 
         # build pipeline
-        pipeline = TrainingPipeline(model=MIWAE, training_config=training_configs)
+        pipeline = TrainingPipeline(model=miwae, training_config=training_configs)
 
         assert pipeline.training_config.__dict__ == training_configs.__dict__
 
@@ -785,14 +737,14 @@ class Test_MIWAE_Training:
         )
 
         # check pickled custom decoder
-        if not MIWAE.model_config.uses_default_decoder:
+        if not miwae.model_config.uses_default_decoder:
             assert "decoder.pkl" in files_list
 
         else:
             assert not "decoder.pkl" in files_list
 
         # check pickled custom encoder
-        if not MIWAE.model_config.uses_default_encoder:
+        if not miwae.model_config.uses_default_encoder:
             assert "encoder.pkl" in files_list
 
         else:

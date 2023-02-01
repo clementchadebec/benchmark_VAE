@@ -2,19 +2,12 @@ import pytest
 import os
 import torch
 
-from copy import deepcopy
-from torch.optim import Adam
 
 import numpy as np
-import shutil
 
 from pythae.models.base.base_utils import ModelOutput
 from pythae.models.normalizing_flows import MADE, MADEConfig
-from pythae.models.normalizing_flows import NFModel
 from pythae.models import AutoModel
-
-from pythae.trainers import BaseTrainer, BaseTrainerConfig
-from pythae.pipelines import TrainingPipeline
 
 PATH = os.path.dirname(os.path.abspath(__file__))
 

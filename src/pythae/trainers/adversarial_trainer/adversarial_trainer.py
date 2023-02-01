@@ -7,11 +7,12 @@ from typing import List, Optional
 
 import torch
 import torch.optim as optim
-import torch.optim.lr_scheduler as scheduler
+import torch.optim.lr_scheduler as lr_scheduler
 
 from ...data.datasets import BaseDataset
 from ...models import BaseAE
 from ..base_trainer import BaseTrainer
+from ..trainer_utils import set_seed
 from ..training_callbacks import TrainingCallback
 from .adversarial_trainer_config import AdversarialTrainerConfig
 
@@ -64,94 +65,112 @@ class AdversarialTrainer(BaseTrainer):
             train_dataset=train_dataset,
             eval_dataset=eval_dataset,
             training_config=training_config,
-            optimizer=None,
             callbacks=callbacks,
         )
 
-        # set autoencoder optimizer and scheduler
-        autoencoder_optimizer = self.set_autoencoder_optimizer(model=model)
-        autoencoder_scheduler = self.set_scheduler(optimizer=autoencoder_optimizer)
 
-        # set discriminator optimizer and scheduler
-        discriminator_optimizer = self.set_optimizer(mode)
-        if discriminator_optimizer is None:
-            discriminator_optimizer = self.set_default_discriminator_optimizer(model)
-
-        else:
-            discriminator_optimizer = self._set_optimizer_on_device(
-                discriminator_optimizer, self.device
-            )
-
-        if discriminator_scheduler is None:
-            discriminator_scheduler = self.set_default_scheduler(
-                model, discriminator_optimizer
-            )
-
-        self.autoencoder_optimizer = autoencoder_optimizer
-        self.discriminator_optimizer = discriminator_optimizer
-        self.autoencoder_scheduler = autoencoder_scheduler
-        self.discriminator_scheduler = discriminator_scheduler
-
-        self.optimizer = None
-
-    def set_autoencoder_optimizer(self, model: BaseAE) -> torch.optim.Optimizer:
+    def set_autoencoder_optimizer(self):
         autoencoder_optimizer_cls = getattr(optim, self.training_config.autoencoder_optimizer_cls)
 
         if self.training_config.autoencoder_optimizer_params is not None:
             if self.distributed:
                 autoencoder_optimizer = autoencoder_optimizer_cls(
-                    itertools.chain(model.module.encoder.parameters(), model.module.decoder.parameters()),
+                    itertools.chain(self.model.module.encoder.parameters(), self.model.module.decoder.parameters()),
                     lr=self.training_config.learning_rate,
                     **self.training_config.autoencoder_optimizer_params
                 )
             else:
                 autoencoder_optimizer = autoencoder_optimizer_cls(
-                    itertools.chain(model.encoder.parameters(), model.decoder.parameters()),
+                    itertools.chain(self.model.encoder.parameters(), self.model.decoder.parameters()),
                     lr=self.training_config.learning_rate,
                     **self.training_config.autoencoder_optimizer_params
                 )
         else:
             if self.distributed:
                 autoencoder_optimizer = autoencoder_optimizer_cls(
-                    itertools.chain(model.module.encoder.parameters(), model.module.decoder.parameters()),
+                    itertools.chain(self.model.module.encoder.parameters(), self.model.module.decoder.parameters()),
                     lr=self.training_config.learning_rate
                 )
             else:
                 autoencoder_optimizer = autoencoder_optimizer_cls(
-                    itertools.chain(model.encoder.parameters(), model.decoder.parameters()),
+                    itertools.chain(self.model.encoder.parameters(), self.model.decoder.parameters()),
                     lr=self.training_config.learning_rate,
                 )
-        return autoencoder_optimizer
 
-    def set_autoencoder_scheduler(
-        self, optimizer: torch.optim.Optimizer
-    ) -> torch.optim.lr_scheduler:
-        autoencoder_scheduler_cls = getattr(scheduler, self.training_config.autoencoder_scheduler_cls)
+        self.autoencoder_optimizer = autoencoder_optimizer
 
-        if self.training_config.autoencoder_scheduler_params is not None:
-            scheduler = autoencoder_scheduler_cls(
-                optimizer, **self.training_config.autoencoder_scheduler_params
+    def set_autoencoder_scheduler(self):
+        if self.training_config.autoencoder_scheduler_cls is not None:
+            autoencoder_scheduler_cls = getattr(
+                lr_scheduler, self.training_config.autoencoder_scheduler_cls
             )
+
+            if self.training_config.autoencoder_scheduler_params is not None:
+                scheduler = autoencoder_scheduler_cls(
+                    self.autoencoder_optimizer, **self.training_config.autoencoder_scheduler_params
+                )
+            else:
+                scheduler = autoencoder_scheduler_cls(
+                    self.autoencoder_optimizer
+                )
+
         else:
-            scheduler = autoencoder_scheduler_cls(
-                optimizer
-            )
+            scheduler = None
 
-        return scheduler
+        self.autoencoder_scheduler = scheduler
 
     def set_discriminator_optimizer(
-        self, model: BaseAE
-    ) -> torch.optim.Optimizer:
+        self
+    ):
         discriminator_cls = getattr(optim, self.training_config.discriminator_optimizer_cls)
 
-        if self.distributed:
-            discriminator_optimizer = optim.Adam(
-                model.module.discriminator.parameters(),
-                lr=self.training_config.learning_rate,
-                **self
+        if self.training_config.discriminator_optimizer_params is not None:
+            if self.distributed:
+                discriminator_optimizer = discriminator_cls(
+                    self.model.module.discriminator.parameters(),
+                    lr=self.training_config.learning_rate,
+                    **self.training_config.discriminator_optimizer_params
+                )
+            else:
+                discriminator_optimizer = discriminator_cls(
+                    self.model.discriminator.parameters(),
+                    lr=self.training_config.learning_rate,
+                    **self.training_config.discriminator_optimizer_params
+                )
+
+        else:
+            if self.distributed:
+                discriminator_optimizer = discriminator_cls(
+                    self.model.module.discriminator.parameters(),
+                    lr=self.training_config.learning_rate
+                )
+            else:
+                discriminator_optimizer = discriminator_cls(
+                    self.model.discriminator.parameters(),
+                    lr=self.training_config.learning_rate
+                )
+
+        self.discriminator_optimizer = discriminator_optimizer
+
+    def set_discriminator_scheduler(self) -> torch.optim.lr_scheduler:
+        if self.training_config.discriminator_scheduler_cls is not None:
+            discriminator_scheduler_cls = getattr(
+                lr_scheduler, self.training_config.discriminator_scheduler_cls
             )
 
-        return optimizer
+            if self.training_config.discriminator_scheduler_params is not None:
+                scheduler = discriminator_scheduler_cls(
+                    self.discriminator_optimizer, **self.training_config.discriminator_scheduler_params
+                )
+            else:
+                scheduler = discriminator_scheduler_cls(
+                    self.discriminator_optimizer
+                )
+
+        else:
+            scheduler = None
+
+        self.discriminator_scheduler = scheduler
 
     def _optimizers_step(self, model_output):
 
@@ -168,17 +187,45 @@ class AdversarialTrainer(BaseTrainer):
         self.discriminator_optimizer.step()
 
     def _schedulers_step(self, autoencoder_metrics=None, discriminator_metrics=None):
-        if isinstance(self.autoencoder_scheduler, ReduceLROnPlateau):
+
+        if self.autoencoder_scheduler is None:
+            pass
+
+        elif isinstance(self.autoencoder_scheduler, lr_scheduler.ReduceLROnPlateau):
             self.autoencoder_scheduler.step(autoencoder_metrics)
 
         else:
             self.autoencoder_scheduler.step()
 
-        if isinstance(self.discriminator_scheduler, ReduceLROnPlateau):
+        if self.discriminator_scheduler is None:
+            pass
+
+        elif isinstance(self.discriminator_scheduler, lr_scheduler.ReduceLROnPlateau):
             self.discriminator_scheduler.step(discriminator_metrics)
 
         else:
             self.discriminator_scheduler.step()
+
+    def prepare_training(self):
+        """Sets up the trainer for training
+        """
+        
+        # set random seed
+        set_seed(self.training_config.seed)
+
+        # set autoencoder optimizer and scheduler
+        self.set_autoencoder_optimizer()
+        self.set_autoencoder_scheduler()
+
+        # set discriminator optimizer and scheduler
+        self.set_discriminator_optimizer()
+        self.set_discriminator_scheduler()
+
+        # create foder for saving
+        self._set_output_dir()
+
+        # set callbacks
+        self._setup_callbacks()
 
     def train(self, log_output_dir: str = None):
         """This function is the main training function
@@ -186,62 +233,19 @@ class AdversarialTrainer(BaseTrainer):
         Args:
             log_output_dir (str): The path in which the log will be stored
         """
+        self.prepare_training()        
 
         self.callback_handler.on_train_begin(
             training_config=self.training_config, model_config=self.model.model_config
         )
 
-        # run sanity check on the model
-        self._run_model_sanity_check(self.model, self.train_loader)
-
-        logger.info("Model passed sanity check !\n")
-
-        self._training_signature = (
-            str(datetime.datetime.now())[0:19].replace(" ", "_").replace(":", "-")
-        )
-
-        training_dir = os.path.join(
-            self.training_config.output_dir,
-            f"{self.model.model_name}_training_{self._training_signature}",
-        )
-
-        self.training_dir = training_dir
-
-        if not os.path.exists(training_dir):
-            os.makedirs(training_dir)
-            logger.info(
-                f"Created {training_dir}. \n"
-                "Training config, checkpoints and final model will be saved here.\n"
-            )
-
         log_verbose = False
 
         # set up log file
-        if log_output_dir is not None:
-            log_dir = log_output_dir
+        if log_output_dir is not None and self.is_main_process:
             log_verbose = True
-
-            # if dir does not exist create it
-            if not os.path.exists(log_dir):
-                os.makedirs(log_dir)
-                logger.info(f"Created {log_dir} folder since did not exists.")
-                logger.info("Training logs will be recodered here.\n")
-                logger.info(" -> Training can be monitored here.\n")
-
-            # create and set logger
-            log_name = f"training_logs_{self._training_signature}"
-
-            file_logger = logging.getLogger(log_name)
-            file_logger.setLevel(logging.INFO)
-            f_handler = logging.FileHandler(
-                os.path.join(log_dir, f"training_logs_{self._training_signature}.log")
-            )
-            f_handler.setLevel(logging.INFO)
-            file_logger.addHandler(f_handler)
-
-            # Do not output logs in the console
-            file_logger.propagate = False
-
+            file_logger = self._get_file_logger(log_output_dir=log_output_dir)
+            
             file_logger.info("Training started !\n")
             file_logger.info(
                 f"Training params:\n - max_epochs: {self.training_config.num_epochs}\n"
@@ -253,9 +257,13 @@ class AdversarialTrainer(BaseTrainer):
             )
 
             file_logger.info(f"Model Architecture: {self.model}\n")
-            file_logger.info(f"Optimizer: {self.optimizer}\n")
+            file_logger.info(f"Autoencoder Optimizer: {self.autoencoder_optimizer}\n")
+            file_logger.info(f"Autoencoder Scheduler: {self.autoencoder_scheduler}\n")
+            file_logger.info(f"Discriminator Optimizer: {self.discriminator_optimizer}\n")
+            file_logger.info(f"Discriminator Scheduler: {self.discriminator_scheduler}\n")
 
-        logger.info("Successfully launched training !\n")
+        if self.is_main_process:
+            logger.info("Successfully launched training !\n")
 
         # set best losses for early stopping
         best_train_loss = 1e10
@@ -346,10 +354,11 @@ class AdversarialTrainer(BaseTrainer):
                 self.training_config.steps_saving is not None
                 and epoch % self.training_config.steps_saving == 0
             ):
-                self.save_checkpoint(
-                    model=best_model, dir_path=training_dir, epoch=epoch
-                )
-                logger.info(f"Saved checkpoint at epoch {epoch}\n")
+                if self.is_main_process:
+                    self.save_checkpoint(
+                        model=best_model, dir_path=self.training_dir, epoch=epoch
+                    )
+                    logger.info(f"Saved checkpoint at epoch {epoch}\n")
 
                 if log_verbose:
                     file_logger.info(f"Saved checkpoint at epoch {epoch}\n")
@@ -358,12 +367,13 @@ class AdversarialTrainer(BaseTrainer):
                 self.training_config, metrics, logger=logger, global_step=epoch
             )
 
-        final_dir = os.path.join(training_dir, "final_model")
+        final_dir = os.path.join(self.training_dir, "final_model")
 
-        self.save_model(best_model, dir_path=final_dir)
-        logger.info("----------------------------------")
-        logger.info("Training ended!")
-        logger.info(f"Saved final model in {final_dir}")
+        if self.is_main_process:
+            self.save_model(best_model, dir_path=final_dir)
+            logger.info("----------------------------------")
+            logger.info("Training ended!")
+            logger.info(f"Saved final model in {final_dir}")
 
         self.callback_handler.on_train_end(self.training_config)
 
