@@ -282,38 +282,6 @@ class Test_Build_Scheduler:
         request.param.output_dir = tmpdir.mkdir("dummy_folder")
         return request.param
 
-    @pytest.fixture(params=[
-        {
-            "encoder_optimizer_cls": "Adagrad",
-            "encoder_optimizer_params": {"lr_decay": 0.1},
-            "decoder_optimizer_cls": "AdamW",
-            "decoder_optimizer_params": {"betas": (0.1234, 0.4321)}
-        },
-          {
-            "encoder_optimizer_cls": "SGD",
-            "encoder_optimizer_params": {"momentum": 0.1},
-            "decoder_optimizer_cls": "SGD",
-            "decoder_optimizer_params": {"momentum": 0.9}
-        },
-        {
-            "encoder_optimizer_cls": "SGD",
-            "encoder_optimizer_params": None,
-            "decoder_optimizer_cls": "SGD",
-            "decoder_optimizer_params": None
-        }
-    ])
-    def optimizer_config(self, request, training_configs_learning_rate):
-        
-        optimizer_config = request.param
-
-        # set optim and params to training config
-        training_configs_learning_rate.encoder_optimizer_cls = optimizer_config['encoder_optimizer_cls']
-        training_configs_learning_rate.encoder_optimizer_params = optimizer_config['encoder_optimizer_params']
-        training_configs_learning_rate.decoder_optimizer_cls = optimizer_config['decoder_optimizer_cls']
-        training_configs_learning_rate.decoder_optimizer_params = optimizer_config['decoder_optimizer_params']
-        
-        return optimizer_config
-
     @pytest.fixture(
         params=[
             {
@@ -478,23 +446,14 @@ class Test_Main_Training:
             "decoder_optimizer_params": None
         }
     ])
-    def optimizer_config(self, request, training_configs_learning_rate):
-        
-        optimizer_config = request.param
-
-        # set optim and params to training config
-        training_configs_learning_rate.encoder_optimizer_cls = optimizer_config['encoder_optimizer_cls']
-        training_configs_learning_rate.encoder_optimizer_params = optimizer_config['encoder_optimizer_params']
-        training_configs_learning_rate.decoder_optimizer_cls = optimizer_config['decoder_optimizer_cls']
-        training_configs_learning_rate.decoder_optimizer_params = optimizer_config['decoder_optimizer_params']
-        
-        return optimizer_config
+    def optimizer_config(self, request):       
+        return request.param
 
     @pytest.fixture(
         params=[
             {
-                "encoder_scheduler_cls": "StepLR",
-                "encoder_scheduler_params": {"step_size": 1},
+                "encoder_scheduler_cls": "LinearLR",
+                "encoder_scheduler_params": None,
                 "decoder_scheduler_cls": "LinearLR",
                 "decoder_scheduler_params": None
             },
@@ -502,7 +461,7 @@ class Test_Main_Training:
                 "encoder_scheduler_cls": None,
                 "encoder_scheduler_params": None,
                 "decoder_scheduler_cls": "ExponentialLR",
-                "decoder_scheduler_params": None
+                "decoder_scheduler_params": {"gamma": 0.012}
             },
             {
                 "encoder_scheduler_cls": "ReduceLROnPlateau",
@@ -513,20 +472,22 @@ class Test_Main_Training:
             }
         ]
     )
-    def scheduler_config(self, request, training_configs_learning_rate):
-
-        scheduler_config = request.param
-
-        # set scheduler and params to training config
-        training_configs_learning_rate.encoder_scheduler_cls = scheduler_config['encoder_scheduler_cls']
-        training_configs_learning_rate.encoder_scheduler_params = scheduler_config['encoder_scheduler_params']
-        training_configs_learning_rate.decoder_scheduler_cls = scheduler_config['decoder_scheduler_cls']
-        training_configs_learning_rate.decoder_scheduler_params = scheduler_config['decoder_scheduler_params']
-        
+    def scheduler_config(self, request):
         return request.param
 
     @pytest.fixture
-    def trainer(self, ae, train_dataset, training_configs):
+    def trainer(self, ae, train_dataset, optimizer_config, scheduler_config, training_configs):
+
+        training_configs.encoder_optimizer_cls = optimizer_config['encoder_optimizer_cls']
+        training_configs.encoder_optimizer_params = optimizer_config['encoder_optimizer_params']
+        training_configs.decoder_optimizer_cls = optimizer_config['decoder_optimizer_cls']
+        training_configs.decoder_optimizer_params = optimizer_config['decoder_optimizer_params']
+        training_configs.encoder_scheduler_cls = scheduler_config['encoder_scheduler_cls']
+        training_configs.encoder_scheduler_params = scheduler_config['encoder_scheduler_params']
+        training_configs.decoder_scheduler_cls = scheduler_config['decoder_scheduler_cls']
+        training_configs.decoder_scheduler_params = scheduler_config['decoder_scheduler_params']
+
+
         trainer = CoupledOptimizerTrainer(
             model=ae,
             train_dataset=train_dataset,

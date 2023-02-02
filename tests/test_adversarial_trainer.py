@@ -544,23 +544,18 @@ class Test_Main_Training:
             "discriminator_optimizer_params": None
         }
     ])
-    def optimizer_config(self, request, training_configs_learning_rate):
+    def optimizer_config(self, request):
         
         optimizer_config = request.param
 
-        # set optim and params to training config
-        training_configs_learning_rate.autoencoder_optimizer_cls = optimizer_config['autoencoder_optimizer_cls']
-        training_configs_learning_rate.autoencoder_optimizer_params = optimizer_config['autoencoder_optimizer_params']
-        training_configs_learning_rate.discriminator_optimizer_cls = optimizer_config['discriminator_optimizer_cls']
-        training_configs_learning_rate.discriminator_optimizer_params = optimizer_config['discriminator_optimizer_params']
-        
+            
         return optimizer_config
 
     @pytest.fixture(
         params=[
             {
-                "autoencoder_scheduler_cls": "StepLR",
-                "autoencoder_scheduler_params": {"step_size": 1},
+                "autoencoder_scheduler_cls": "LinearLR",
+                "autoencoder_scheduler_params": None,
                 "discriminator_scheduler_cls": "LinearLR",
                 "discriminator_scheduler_params": None
             },
@@ -568,7 +563,7 @@ class Test_Main_Training:
                 "autoencoder_scheduler_cls": None,
                 "autoencoder_scheduler_params": None,
                 "discriminator_scheduler_cls": "ExponentialLR",
-                "discriminator_scheduler_params": None
+                "discriminator_scheduler_params": {"gamma": 0.13}
             },
             {
                 "autoencoder_scheduler_cls": "ReduceLROnPlateau",
@@ -579,20 +574,21 @@ class Test_Main_Training:
             }
         ]
     )
-    def scheduler_config(self, request, training_configs_learning_rate):
-
-        scheduler_config = request.param
-
-        # set scheduler and params to training config
-        training_configs_learning_rate.autoencoder_scheduler_cls = scheduler_config['autoencoder_scheduler_cls']
-        training_configs_learning_rate.autoencoder_scheduler_params = scheduler_config['autoencoder_scheduler_params']
-        training_configs_learning_rate.discriminator_scheduler_cls = scheduler_config['discriminator_scheduler_cls']
-        training_configs_learning_rate.discriminator_scheduler_params = scheduler_config['discriminator_scheduler_params']
-        
+    def scheduler_config(self, request):
         return request.param
 
     @pytest.fixture
-    def trainer(self, ae, train_dataset, training_configs):
+    def trainer(self, ae, train_dataset, optimizer_config, scheduler_config, training_configs):
+
+        training_configs.autoencoder_optimizer_cls = optimizer_config['autoencoder_optimizer_cls']
+        training_configs.autoencoder_optimizer_params = optimizer_config['autoencoder_optimizer_params']
+        training_configs.discriminator_optimizer_cls = optimizer_config['discriminator_optimizer_cls']
+        training_configs.discriminator_optimizer_params = optimizer_config['discriminator_optimizer_params']
+        training_configs.autoencoder_scheduler_cls = scheduler_config['autoencoder_scheduler_cls']
+        training_configs.autoencoder_scheduler_params = scheduler_config['autoencoder_scheduler_params']
+        training_configs.discriminator_scheduler_cls = scheduler_config['discriminator_scheduler_cls']
+        training_configs.discriminator_scheduler_params = scheduler_config['discriminator_scheduler_params']
+
         trainer = AdversarialTrainer(
             model=ae,
             train_dataset=train_dataset,

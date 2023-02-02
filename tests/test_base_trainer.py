@@ -579,45 +579,37 @@ class Test_Main_Training:
             "optimizer_params": None
         }
     ])
-    def optimizer_config(self, request, training_configs_learning_rate):
-        
-        optimizer_config = request.param
-
-        # set optim and params to training config
-        training_configs_learning_rate.optimizer_cls = optimizer_config['optimizer_cls']
-        training_configs_learning_rate.optimizer_params = optimizer_config['optimizer_params']
-        
-        return optimizer_config
+    def optimizer_config(self, request):
+        return request.param
 
 
     @pytest.fixture(
         params=[
             {
                 "scheduler_cls": "StepLR",
-                "scheduler_params": {"step_size": 1}
+                "scheduler_params": {"step_size": 0.1}
             },
             {
                 "scheduler_cls": "ReduceLROnPlateau",
-                "scheduler_params": {"patience": 2}
+                "scheduler_params": None
             },
             {
-                "scheduler_cls": "ExponentialLR",
-                "scheduler_params": {"gamma": 3.14}
+                "scheduler_cls": None,
+                "scheduler_params": None
             }
         ]
     )
-    def scheduler_config(self, request, training_configs_learning_rate):
-
-        scheduler_config = request.param
-
-        # set scheduler and params to training config
-        training_configs_learning_rate.scheduler_cls = scheduler_config['scheduler_cls']
-        training_configs_learning_rate.scheduler_params = scheduler_config['scheduler_params']
-        
+    def scheduler_config(self, request):   
         return request.param
 
     @pytest.fixture
-    def trainer(self, ae, train_dataset, training_configs):
+    def trainer(self, ae, train_dataset, optimizer_config, scheduler_config, training_configs):
+
+        training_configs.optimizer_cls = optimizer_config['optimizer_cls']
+        training_configs.optimizer_params = optimizer_config['optimizer_params']
+        training_configs.scheduler_cls = scheduler_config['scheduler_cls']
+        training_configs.scheduler_params = scheduler_config['scheduler_params']
+
         trainer = BaseTrainer(
             model=ae,
             train_dataset=train_dataset,

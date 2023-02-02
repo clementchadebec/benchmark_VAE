@@ -2,6 +2,7 @@ import datetime
 import itertools
 import logging
 import os
+import torch.distributed as dist
 from copy import deepcopy
 from typing import List, Optional
 

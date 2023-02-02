@@ -4,6 +4,7 @@ import logging
 import os
 from copy import deepcopy
 from typing import List, Optional
+import torch.distributed as dist
 
 import torch
 import torch.optim as optim
