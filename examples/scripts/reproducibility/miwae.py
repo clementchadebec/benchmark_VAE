@@ -22,6 +22,7 @@ PATH = os.path.dirname(os.path.abspath(__file__))
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
+
 def unif_init(m, n_in, n_out):
     scale = np.sqrt(6.0 / (n_in + n_out))
     m.weight.data.uniform_(-scale, scale)
@@ -120,7 +121,7 @@ def main():
         latent_dim=50,
         reconstruction_loss="bce",
         number_samples=8,
-        number_gradient_estimates=8
+        number_gradient_estimates=8,
     )
 
     model = MIWAE(
@@ -145,8 +146,8 @@ def main():
         scheduler_params={
             "milestones": [2, 5, 14, 28, 41, 122, 365, 1094],
             "gamma": 10 ** (-1 / 7),
-            "verbose": True
-        }
+            "verbose": True,
+        },
     )
 
     logger.info("Preprocessing train data...")

@@ -192,10 +192,7 @@ def main():
     data_input_dim = tuple(train_data.shape[1:])
 
     model_config = RAE_GP_Config(
-        input_dim=data_input_dim,
-        latent_dim=16,
-        embedding_weight=1e-3,
-        reg_weight=1e-6
+        input_dim=data_input_dim, latent_dim=16, embedding_weight=1e-3, reg_weight=1e-6
     )
 
     model = RAE_GP(
@@ -215,11 +212,7 @@ def main():
         steps_predict=100,
         no_cuda=False,
         scheduler_cls="ReduceLROnPlateau",
-        scheduler_params={
-            "factor": 0.5,
-            "patience": 5,
-            "verbose": True
-        }
+        scheduler_params={"factor": 0.5, "patience": 5, "verbose": True},
     )
 
     ### Process data

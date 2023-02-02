@@ -255,7 +255,7 @@ def main():
         reconstruction_loss="mse",
         adversarial_loss_scale=0.5,
         reconstruction_loss_scale=0.05,
-        deterministic_posterior=True
+        deterministic_posterior=True,
     )
 
     model = Adversarial_AE(
@@ -278,16 +278,18 @@ def main():
         no_cuda=False,
         autoencoder_scheduler_cls="LambdaLR",
         autoencoder_scheduler_params={
-            "lr_lambda": lambda epoch: 1 * (epoch < 30) + \
-                0.5 * (30 <= epoch < 50) + 0.2 * (50 <= epoch),
-            "verbose": True
-            },
+            "lr_lambda": lambda epoch: 1 * (epoch < 30)
+            + 0.5 * (30 <= epoch < 50)
+            + 0.2 * (50 <= epoch),
+            "verbose": True,
+        },
         discriminator_scheduler_cls="LambdaLR",
         discriminator_scheduler_params={
-            "lr_lambda": lambda epoch: 1 * (epoch < 30) + \
-                0.5 * (30 <= epoch < 50) + 0.2 * (50 <= epoch),
-            "verbose": True
-            }
+            "lr_lambda": lambda epoch: 1 * (epoch < 30)
+            + 0.5 * (30 <= epoch < 50)
+            + 0.2 * (50 <= epoch),
+            "verbose": True,
+        },
     )
 
     ### Process data

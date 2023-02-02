@@ -11,7 +11,7 @@ from pythae.models import RAE_L2, RAE_L2_Config
 from pythae.models.base.base_utils import ModelOutput
 from pythae.models.nn import BaseDecoder, BaseEncoder
 from pythae.models.rhvae import RHVAEConfig
-from pythae.trainers import CoupledOptimizerTrainerConfig, CoupledOptimizerTrainer
+from pythae.trainers import CoupledOptimizerTrainer, CoupledOptimizerTrainerConfig
 
 logger = logging.getLogger(__name__)
 console = logging.StreamHandler()
@@ -193,10 +193,7 @@ def main():
     data_input_dim = tuple(train_data.shape[1:])
 
     model_config = RAE_L2_Config(
-        input_dim=data_input_dim,
-        latent_dim=16,
-        embedding_weight=1e-6,
-        reg_weight=1e-3
+        input_dim=data_input_dim, latent_dim=16, embedding_weight=1e-6, reg_weight=1e-3
     )
 
     model = RAE_L2(
@@ -216,21 +213,11 @@ def main():
         steps_predict=100,
         no_cuda=False,
         encoder_scheduler_cls="ReduceLROnPlateau",
-        encoder_scheduler_params={
-            "factor": 0.5,
-            "patience": 5,
-            "verbose": True
-        },
+        encoder_scheduler_params={"factor": 0.5, "patience": 5, "verbose": True},
         decoder_optimizer_cls="Adam",
-        decoder_optimizer_params={
-            "weight_decay": model_config.reg_weight
-        },
+        decoder_optimizer_params={"weight_decay": model_config.reg_weight},
         decoder_scheduler_cls="ReduceLROnPlateau",
-        decoder_scheduler_params={
-            "factor": 0.5,
-            "patience": 5,
-            "verbose": True
-        }
+        decoder_scheduler_params={"factor": 0.5, "patience": 5, "verbose": True},
     )
 
     ### Process data

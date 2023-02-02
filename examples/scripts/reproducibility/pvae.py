@@ -157,7 +157,7 @@ def main():
         reconstruction_loss="bce",
         prior_distribution="wrapped_normal",
         posterior_distribution="wrapped_normal",
-        curvature=0.7
+        curvature=0.7,
     )
 
     model = PoincareVAE(
@@ -175,7 +175,7 @@ def main():
         learning_rate=5e-4,
         steps_saving=100,
         steps_predict=None,
-        no_cuda=False
+        no_cuda=False,
     )
 
     ### Process data

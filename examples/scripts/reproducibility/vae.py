@@ -153,9 +153,7 @@ def main():
 
     ### Build model
     model_config = VAEConfig(
-        input_dim=data_input_dim,
-        latent_dim=40,
-        reconstruction_loss="bce"
+        input_dim=data_input_dim, latent_dim=40, reconstruction_loss="bce"
     )
 
     model = VAE(
@@ -178,8 +176,8 @@ def main():
         scheduler_params={
             "milestones": [200, 350, 500, 750, 1000],
             "gamma": 10 ** (-1 / 5),
-            "verbose": True
-        }
+            "verbose": True,
+        },
     )
 
     ### Process data

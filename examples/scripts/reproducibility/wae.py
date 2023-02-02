@@ -201,7 +201,7 @@ def main():
         kernel_choice="imq",
         reg_weight=100,
         kernel_bandwidth=2.0,
-        reconstruction_loss_scale=0.05
+        reconstruction_loss_scale=0.05,
     )
 
     model = WAE_MMD(
@@ -222,10 +222,11 @@ def main():
         no_cuda=False,
         scheduler_cls="LambdaLR",
         scheduler_params={
-            "lr_lambda": lambda epoch: 1 * (epoch < 30) + \
-                0.5 * (30 <= epoch < 50) + 0.2 * (50 <= epoch),
-            "verbose": True
-        }
+            "lr_lambda": lambda epoch: 1 * (epoch < 30)
+            + 0.5 * (30 <= epoch < 50)
+            + 0.2 * (50 <= epoch),
+            "verbose": True,
+        },
     )
 
     ### Process data

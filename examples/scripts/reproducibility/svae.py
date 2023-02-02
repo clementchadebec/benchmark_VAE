@@ -172,9 +172,7 @@ def main():
     data_input_dim = tuple(train_data.shape[1:])
 
     model_config = SVAEConfig(
-        input_dim=data_input_dim,
-        latent_dim=11,
-        reconstruction_loss="bce"
+        input_dim=data_input_dim, latent_dim=11, reconstruction_loss="bce"
     )
 
     model = SVAE(
@@ -192,7 +190,7 @@ def main():
         learning_rate=1e-3,
         steps_saving=50,
         steps_predict=None,
-        no_cuda=False
+        no_cuda=False,
     )
 
     logger.info("Preprocessing train data...")

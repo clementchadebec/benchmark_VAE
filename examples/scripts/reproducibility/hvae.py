@@ -152,7 +152,7 @@ def main():
         eps_lf=0.05,
         beta_zero=1,
         learn_eps_lf=False,
-        learn_beta_zero=False
+        learn_beta_zero=False,
     )
 
     model = HVAE(
@@ -176,8 +176,8 @@ def main():
         scheduler_params={
             "milestones": [200, 350, 500, 750, 1000],
             "gamma": 10 ** (-1 / 5),
-            "verbose": True
-        }
+            "verbose": True,
+        },
     )
 
     ### Process data

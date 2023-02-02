@@ -10,10 +10,7 @@ from pythae.data.preprocessors import DataProcessor
 from pythae.models import VAMP, AutoModel, VAMPConfig
 from pythae.models.base.base_utils import ModelOutput
 from pythae.models.nn import BaseDecoder, BaseEncoder
-from pythae.trainers import (
-    BaseTrainer,
-    BaseTrainerConfig,
-)
+from pythae.trainers import BaseTrainer, BaseTrainerConfig
 
 logger = logging.getLogger(__name__)
 console = logging.StreamHandler()
@@ -23,6 +20,7 @@ logger.setLevel(logging.INFO)
 PATH = os.path.dirname(os.path.abspath(__file__))
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
+
 
 def he_init(m):
     s = np.sqrt(2.0 / m.in_features)
@@ -211,7 +209,7 @@ def main():
         latent_dim=40,
         reconstruction_loss="bce",
         number_components=500,
-        linear_scheduling_steps=100
+        linear_scheduling_steps=100,
     )
 
     model = VAMP(
@@ -235,8 +233,8 @@ def main():
         scheduler_params={
             "milestones": [200, 350, 500, 750, 1000],
             "gamma": 10 ** (-1 / 5),
-            "verbose": True
-        }
+            "verbose": True,
+        },
     )
 
     ### Process data

@@ -153,7 +153,7 @@ def main():
         beta=6,
         gamma=1,
         alpha=1,
-        use_mss=False
+        use_mss=False,
     )
 
     model = BetaTCVAE(
@@ -173,7 +173,7 @@ def main():
         steps_predict=None,
         no_cuda=False,
         optimizer_cls="Adam",
-        optimizer_params={"eps": 1e-4}
+        optimizer_params={"eps": 1e-4},
     )
 
     ### Process data
