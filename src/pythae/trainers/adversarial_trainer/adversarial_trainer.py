@@ -260,7 +260,8 @@ class AdversarialTrainer(BaseTrainer):
             f"Discriminator Scheduler: {self.discriminator_scheduler}\n"
         )
 
-        logger.info(msg)
+        if self.is_main_process:
+            logger.info(msg)
 
         # set up log file
         if log_output_dir is not None and self.is_main_process:
