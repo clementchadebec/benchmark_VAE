@@ -89,7 +89,13 @@ class Test_Set_Training_config:
                 per_device_train_batch_size=10,
                 per_device_eval_batch_size=10,
                 encoder_learning_rate=1e-5,
-                decoder_learning_rate=1e-3
+                decoder_learning_rate=1e-3,
+                encoder_optimizer_cls="AdamW",
+                encoder_optimizer_params={"weight_decay": 0.01},
+                decoder_optimizer_cls="SGD",
+                decoder_optimizer_params={"weight_decay": 0.01},
+                encoder_scheduler_cls="ExponentialLR",
+                encoder_scheduler_params={"gamma": 0.321}
             ),
         ]
     )
@@ -117,6 +123,27 @@ class Test_Set_Training_config:
 
 
 class Test_Build_Optimizer:
+
+    def test_wrong_optimizer_cls(self):
+        with pytest.raises(AttributeError):
+            CoupledOptimizerTrainerConfig(encoder_optimizer_cls="WrongOptim")
+
+        with pytest.raises(AttributeError):
+            CoupledOptimizerTrainerConfig(decoder_optimizer_cls="WrongOptim")
+
+    def test_wrong_optimizer_params(self):
+        with pytest.raises(TypeError):
+            CoupledOptimizerTrainerConfig(
+                encoder_optimizer_cls="Adam",
+                encoder_optimizer_params={"wrong_config": 1}
+            )
+
+        with pytest.raises(TypeError):
+            CoupledOptimizerTrainerConfig(
+                decoder_optimizer_cls="Adam",
+                decoder_optimizer_params={"wrong_config": 1}
+            )
+
     @pytest.fixture(
         params=[
             CoupledOptimizerTrainerConfig(learning_rate=1e-5),
@@ -224,6 +251,32 @@ class Test_Build_Optimizer:
             )
 
 class Test_Build_Scheduler:
+
+    def test_wrong_scheduler_cls(self):
+        with pytest.raises(AttributeError):
+            CoupledOptimizerTrainerConfig(
+                encoder_scheduler_cls="WrongOptim"
+            )
+
+        with pytest.raises(AttributeError):
+            CoupledOptimizerTrainerConfig(
+                decoder_scheduler_cls="WrongOptim"
+            )
+
+    def test_wrong_scheduler_params(self):
+        with pytest.raises(TypeError):
+            CoupledOptimizerTrainerConfig(
+                encoder_scheduler_cls="ReduceLROnPlateau",
+                encoder_scheduler_params={"wrong_config": 1}
+            )
+
+        with pytest.raises(TypeError):
+            CoupledOptimizerTrainerConfig(
+                decoder_scheduler_cls="ReduceLROnPlateau",
+                decoder_scheduler_params={"wrong_config": 1}
+            )
+
+
     @pytest.fixture(params=[CoupledOptimizerTrainerConfig(), CoupledOptimizerTrainerConfig(learning_rate=1e-5)])
     def training_configs_learning_rate(self, tmpdir, request):
         request.param.output_dir = tmpdir.mkdir("dummy_folder")

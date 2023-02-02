@@ -89,7 +89,13 @@ class Test_Set_Training_config:
                 per_device_train_batch_size=10,
                 per_device_eval_batch_size=10,
                 autoencoder_learning_rate=1e-3,
-                discriminator_learning_rate=1e-5
+                discriminator_learning_rate=1e-5,
+                autoencoder_optimizer_cls="AdamW",
+                autoencoder_optimizer_params={"weight_decay": 0.01},
+                discriminator_optimizer_cls="SGD",
+                discriminator_optimizer_params={"weight_decay": 0.01},
+                autoencoder_scheduler_cls="ExponentialLR",
+                autoencoder_scheduler_params={"gamma": 0.321}
             ),
         ]
     )
@@ -117,6 +123,27 @@ class Test_Set_Training_config:
 
 
 class Test_Build_Optimizer:
+
+    def test_wrong_optimizer_cls(self):
+        with pytest.raises(AttributeError):
+            AdversarialTrainerConfig(autoencoder_optimizer_cls="WrongOptim")
+
+        with pytest.raises(AttributeError):
+            AdversarialTrainerConfig(discriminator_optimizer_cls="WrongOptim")
+
+    def test_wrong_optimizer_params(self):
+        with pytest.raises(TypeError):
+            AdversarialTrainerConfig(
+                autoencoder_optimizer_cls="Adam",
+                autoencoder_optimizer_params={"wrong_config": 1}
+            )
+
+        with pytest.raises(TypeError):
+            AdversarialTrainerConfig(
+                discriminator_optimizer_cls="Adam",
+                discriminator_optimizer_params={"wrong_config": 1}
+            )
+
     @pytest.fixture(
         params=[
             AdversarialTrainerConfig(
@@ -226,6 +253,31 @@ class Test_Build_Optimizer:
             )
 
 class Test_Build_Scheduler:
+
+    def test_wrong_scheduler_cls(self):
+        with pytest.raises(AttributeError):
+            AdversarialTrainerConfig(
+                autoencoder_scheduler_cls="WrongOptim"
+            )
+
+        with pytest.raises(AttributeError):
+            AdversarialTrainerConfig(
+                discriminator_scheduler_cls="WrongOptim"
+            )
+
+    def test_wrong_scheduler_params(self):
+        with pytest.raises(TypeError):
+            AdversarialTrainerConfig(
+                autoencoder_scheduler_cls="ReduceLROnPlateau",
+                autoencoder_scheduler_params={"wrong_config": 1}
+            )
+
+        with pytest.raises(TypeError):
+            AdversarialTrainerConfig(
+                discriminator_scheduler_cls="ReduceLROnPlateau",
+                discriminator_scheduler_params={"wrong_config": 1}
+            )
+
     @pytest.fixture(params=[AdversarialTrainerConfig(), AdversarialTrainerConfig(learning_rate=1e-5)])
     def training_configs_learning_rate(self, tmpdir, request):
         request.param.output_dir = tmpdir.mkdir("dummy_folder")
@@ -358,6 +410,30 @@ class Test_Build_Scheduler:
                             for key in scheduler_config['discriminator_scheduler_params'].keys()
                     ]
                 )
+
+class Test_Device_Checks:
+
+    def test_set_environ_variable(self):
+        os.environ["LOCAL_RANK"] = '1'
+        os.environ["WORLD_SIZE"] = '4'
+        os.environ["RANK"] = '3'
+        os.environ["MASTER_ADDR"] = '314'
+        os.environ["MASTER_PORT"] = '222'
+
+        trainer_config = AdversarialTrainerConfig()
+
+        assert int(trainer_config.local_rank) == 1
+        assert int(trainer_config.world_size) == 4
+        assert int(trainer_config.rank) == 3
+        assert trainer_config.master_addr == '314'
+        assert trainer_config.master_port == '222'
+
+        del os.environ["LOCAL_RANK"]
+        del os.environ["WORLD_SIZE"]
+        del os.environ["RANK"]
+        del os.environ["MASTER_ADDR"]
+        del os.environ["MASTER_PORT"]
+
 
 @pytest.mark.slow
 class Test_Main_Training:

@@ -90,7 +90,12 @@ class Test_Set_Training_config:
             BaseTrainerConfig(
                 per_device_train_batch_size=10, 
                 per_device_eval_batch_size=20,
-                learning_rate=1e-5
+                learning_rate=1e-5,
+                optimizer_cls="AdamW",
+                optimizer_params={"weight_decay": 0.01},
+                scheduler_cls="ExponentialLR",
+                scheduler_params={"gamma": 0.321}
+
             ),
         ]
     )
@@ -316,6 +321,28 @@ class Test_Build_Scheduler:
 
 
 class Test_Device_Checks:
+
+    def test_set_environ_variable(self):
+        os.environ["LOCAL_RANK"] = '1'
+        os.environ["WORLD_SIZE"] = '4'
+        os.environ["RANK"] = '3'
+        os.environ["MASTER_ADDR"] = '314'
+        os.environ["MASTER_PORT"] = '222'
+
+        trainer_config = BaseTrainerConfig()
+
+        assert int(trainer_config.local_rank) == 1
+        assert int(trainer_config.world_size) == 4
+        assert int(trainer_config.rank) == 3
+        assert trainer_config.master_addr == '314'
+        assert trainer_config.master_port == '222'
+
+        del os.environ["LOCAL_RANK"]
+        del os.environ["WORLD_SIZE"]
+        del os.environ["RANK"]
+        del os.environ["MASTER_ADDR"]
+        del os.environ["MASTER_PORT"]
+
     @pytest.fixture(
         params=[
             BaseTrainerConfig(num_epochs=3, no_cuda=True),

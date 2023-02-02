@@ -241,27 +241,28 @@ class CoupledOptimizerTrainer(BaseTrainer):
 
         log_verbose = False
 
+        msg = (
+            f"Training params:\n - max_epochs: {self.training_config.num_epochs}\n"
+            " - per_device_train_batch_size: "
+            f"{self.training_config.per_device_train_batch_size}\n"
+            " - per_device_eval_batch_size: "
+            f"{self.training_config.per_device_eval_batch_size}\n"
+            f" - checkpoint saving every {self.training_config.steps_saving}\n"
+            f"Encoder Optimizer: {self.encoder_optimizer}\n"
+            f"Encoder Scheduler: {self.encoder_scheduler}\n"
+            f"Decoder Optimizer: {self.decoder_optimizer}\n"
+            f"Decoder Scheduler: {self.decoder_scheduler}\n"
+        )
+
+        logger.info(msg)
+
         # set up log file
         if log_output_dir is not None and self.is_main_process:
             log_verbose = True
 
             file_logger = self._get_file_logger(log_output_dir=log_output_dir)
 
-            file_logger.info("Training started !\n")
-            file_logger.info(
-                f"Training params:\n - max_epochs: {self.training_config.num_epochs}\n"
-                " - per_device_train_batch_size: "
-                f"{self.training_config.per_device_train_batch_size}\n"
-                " - per_device_eval_batch_size: "
-                f"{self.training_config.per_device_eval_batch_size}\n"
-                f" - checkpoint saving every {self.training_config.steps_saving}\n"
-            )
-
-            file_logger.info(f"Model Architecture: {self.model}\n")
-            file_logger.info(f"Encoder Optimizer: {self.encoder_optimizer}\n")
-            file_logger.info(f"Encoder Scheduler: {self.encoder_scheduler}\n")
-            file_logger.info(f"Decoder Optimizer: {self.decoder_optimizer}\n")
-            file_logger.info(f"Decoder Scheduler: {self.decoder_scheduler}\n")
+            file_logger.info(msg)
 
         if self.is_main_process:
             logger.info("Successfully launched training !\n")
@@ -374,6 +375,9 @@ class CoupledOptimizerTrainer(BaseTrainer):
             logger.info("----------------------------------")
             logger.info("Training ended!")
             logger.info(f"Saved final model in {final_dir}")
+
+        if self.distributed:
+            dist.destroy_process_group()
 
         self.callback_handler.on_train_end(self.training_config)
 
