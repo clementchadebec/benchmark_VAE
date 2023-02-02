@@ -89,7 +89,7 @@ class QuantizerEMA(nn.Module):
         self.commitment_loss_factor = model_config.commitment_loss_factor
         self.decay = model_config.decay
 
-        self.embeddings = self.num_embeddings, self.embedding_dim
+        self.embeddings = nn.Embedding(self.num_embeddings, self.embedding_dim)
 
         self.embeddings.weight.data.uniform_(
             -1 / self.num_embeddings, 1 / self.num_embeddings
@@ -140,8 +140,7 @@ class QuantizerEMA(nn.Module):
                     (self.cluster_size + 1e-5) / (n + self.num_embeddings * 1e-5) * n
                 )
 
-                self.embeddings = self.ema_embed / self.cluster_size.unsqueeze(-1)
-
+                self.embeddings.weight.data = (self.ema_embed / self.cluster_size.unsqueeze(-1))
 
         commitment_loss = F.mse_loss(
             quantized.detach().reshape(-1, self.embedding_dim),
