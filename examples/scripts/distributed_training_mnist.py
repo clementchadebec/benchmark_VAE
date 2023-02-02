@@ -83,8 +83,8 @@ def main(args):
     training_config = BaseTrainerConfig(
         num_epochs=10,
         output_dir="my_models_on_mnist",
-        per_device_train_batch_size = 64 / int(os.environ["SLURM_NTASKS"]),
-        per_device_eval_batch_size = 64 / int(os.environ["SLURM_NTASKS"]),
+        per_device_train_batch_size = 512 / int(os.environ["SLURM_NTASKS"]),
+        per_device_eval_batch_size = 512 / int(os.environ["SLURM_NTASKS"]),
         learning_rate=1e-3,
         steps_saving=2,
         steps_predict=3,
