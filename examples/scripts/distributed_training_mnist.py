@@ -32,12 +32,12 @@ ap.add_argument(
 ap.add_argument(
     "--wandb_project",
     help="wandb project name",
-    default="test-project",
+    default="test-distributed",
 )
 ap.add_argument(
     "--wandb_entity",
     help="wandb entity name",
-    default="benchmark_team",
+    default="clementchadebec",
 )
 
 args = ap.parse_args()
