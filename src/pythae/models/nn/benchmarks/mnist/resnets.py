@@ -529,10 +529,6 @@ class Encoder_ResNet_VQVAE_MNIST(BaseEncoder):
             nn.Sequential(
                 ResBlock(in_channels=128, out_channels=32),
                 ResBlock(in_channels=128, out_channels=32),
-                ResBlock(in_channels=128, out_channels=32),
-                ResBlock(in_channels=128, out_channels=32),
-                ResBlock(in_channels=128, out_channels=32),
-                ResBlock(in_channels=128, out_channels=32),
             )
         )
 
@@ -826,10 +822,6 @@ class Decoder_ResNet_VQVAE_MNIST(BaseDecoder):
             nn.Sequential(
                 ResBlock(in_channels=128, out_channels=32),
                 ResBlock(in_channels=128, out_channels=32),
-                ResBlock(in_channels=128, out_channels=32),
-                ResBlock(in_channels=128, out_channels=32),
-                ResBlock(in_channels=128, out_channels=32),
-                ResBlock(in_channels=128, out_channels=32),
                 nn.ReLU(),
             )
         )
@@ -846,7 +838,7 @@ class Decoder_ResNet_VQVAE_MNIST(BaseDecoder):
                 nn.ConvTranspose2d(
                     64, self.n_channels, 3, 2, padding=1, output_padding=1
                 ),
-                nn.Sigmoid(),
+                #nn.Sigmoid(),
             )
         )
 
