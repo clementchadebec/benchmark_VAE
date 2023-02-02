@@ -87,7 +87,7 @@ def main(args):
         per_device_eval_batch_size = 1024 / int(os.environ["SLURM_NTASKS"]),
         learning_rate=1e-4,
         steps_saving=None,
-        steps_predict=None,
+        steps_predict=99,
         no_cuda=False,
         world_size=int(os.environ["SLURM_NTASKS"]),
         rank=int(os.environ["SLURM_PROCID"]),
