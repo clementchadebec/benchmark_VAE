@@ -237,13 +237,7 @@ class ProgressBarCallback(TrainingCallback):
         train_loader = kwargs.pop("train_loader", None)
         rank = kwargs.pop("rank", -1)
         if train_loader is not None:
-            if rank > -1:
-                self.train_progress_bar = tqdm(
-                    total=len(train_loader),
-                    unit="batch",
-                    desc=f"[Process {rank}] Training of epoch {epoch}/{training_config.num_epochs}",
-                )
-            else:
+            if rank == 0 or rank == -1:
                 self.train_progress_bar = tqdm(
                     total=len(train_loader),
                     unit="batch",
@@ -255,7 +249,7 @@ class ProgressBarCallback(TrainingCallback):
         eval_loader = kwargs.pop("eval_loader", None)
         rank = kwargs.pop("rank", -1)
         if eval_loader is not None:
-            if rank > -1:
+            if rank == 0 or rank == -1:
                 self.eval_progress_bar = tqdm(
                     total=len(eval_loader),
                     unit="batch",
