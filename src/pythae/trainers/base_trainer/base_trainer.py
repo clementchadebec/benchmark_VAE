@@ -587,9 +587,6 @@ class BaseTrainer:
 
             loss = model_output.loss
 
-            if self.is_main_process:
-                logger.info(f"Train loss: {loss}")
-
             epoch_loss += loss.item()
 
             if epoch_loss != epoch_loss:
