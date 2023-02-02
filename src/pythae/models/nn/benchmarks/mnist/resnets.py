@@ -838,7 +838,7 @@ class Decoder_ResNet_VQVAE_MNIST(BaseDecoder):
                 nn.ConvTranspose2d(
                     64, self.n_channels, 3, 2, padding=1, output_padding=1
                 ),
-                #nn.Sigmoid(),
+                nn.Sigmoid(),
             )
         )
 
