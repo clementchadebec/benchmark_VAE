@@ -1,20 +1,20 @@
-import pytest
 import os
-import torch
 
+import pytest
+import torch
 from torch.utils.data import Dataset
-from pythae.data.datasets import DatasetOutput
-from pythae.pipelines import *
-from pythae.models import VAE, VAEConfig, FactorVAE, FactorVAEConfig
-from pythae.trainers import BaseTrainerConfig
-from pythae.samplers import NormalSampler, NormalSamplerConfig
+
 from pythae.customexception import DatasetError
+from pythae.data.datasets import DatasetOutput
+from pythae.models import VAE, FactorVAE, FactorVAEConfig, VAEConfig
+from pythae.pipelines import *
+from pythae.samplers import NormalSampler, NormalSamplerConfig
+from pythae.trainers import BaseTrainerConfig
 
 PATH = os.path.dirname(os.path.abspath(__file__))
 
 
 class CustomWrongOutputDataset(Dataset):
-
     def __init__(self, path) -> None:
         self.img_path = path
 
@@ -23,23 +23,19 @@ class CustomWrongOutputDataset(Dataset):
 
     def __getitem__(self, index) -> dict:
         data = torch.load(self.img_path).data[index]
-        return DatasetOutput(
-            wrong_key=data
-        )
+        return DatasetOutput(wrong_key=data)
+
 
 class CustomNoLenDataset(Dataset):
-
     def __init__(self, path) -> None:
         self.img_path = path
 
     def __getitem__(self, index) -> dict:
         data = torch.load(self.img_path).data[index]
-        return DatasetOutput(
-            data=data
-        )
+        return DatasetOutput(data=data)
+
 
 class CustomDataset(Dataset):
-
     def __init__(self, path) -> None:
         self.img_path = path
 
@@ -48,9 +44,7 @@ class CustomDataset(Dataset):
 
     def __getitem__(self, index) -> dict:
         data = torch.load(self.img_path).data[index]
-        return DatasetOutput(
-            data=data
-        )
+        return DatasetOutput(data=data)
 
 
 class Test_Pipeline_Standalone:
@@ -60,19 +54,27 @@ class Test_Pipeline_Standalone:
 
     @pytest.fixture
     def custom_train_dataset(self):
-        return CustomDataset(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))
+        return CustomDataset(
+            os.path.join(PATH, "data/mnist_clean_train_dataset_sample")
+        )
 
     @pytest.fixture
     def custom_wrong_output_train_dataset(self):
-        return CustomWrongOutputDataset(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))
+        return CustomWrongOutputDataset(
+            os.path.join(PATH, "data/mnist_clean_train_dataset_sample")
+        )
 
     @pytest.fixture
     def custom_no_len_train_dataset(self):
-        return CustomWrongOutputDataset(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))
+        return CustomWrongOutputDataset(
+            os.path.join(PATH, "data/mnist_clean_train_dataset_sample")
+        )
 
     @pytest.fixture
     def training_pipeline(self, train_dataset):
-        vae_config = VAEConfig(input_dim=tuple(train_dataset.data[0].shape), latent_dim=2)
+        vae_config = VAEConfig(
+            input_dim=tuple(train_dataset.data[0].shape), latent_dim=2
+        )
         vae = VAE(vae_config)
         pipe = TrainingPipeline(model=vae)
         return pipe
@@ -96,42 +98,56 @@ class Test_Pipeline_Standalone:
         training_pipeline(train_dataset.data)
         assert isinstance(training_pipeline.model, VAE)
 
+    def test_training_pipeline_wrong_output_dataset(
+        self,
+        tmpdir,
+        training_pipeline,
+        train_dataset,
+        custom_wrong_output_train_dataset,
+    ):
 
-    def test_training_pipeline_wrong_output_dataset(self, tmpdir, training_pipeline, train_dataset, custom_wrong_output_train_dataset):
-        
         tmpdir.mkdir("dummy_folder")
         dir_path = os.path.join(tmpdir, "dummy_folder")
         training_pipeline.training_config.output_dir = dir_path
         training_pipeline.training_config.num_epochs = 1
-        
+
         with pytest.raises(DatasetError):
             training_pipeline(train_data=custom_wrong_output_train_dataset)
-        
+
         with pytest.raises(DatasetError):
-            training_pipeline(train_data=train_dataset.data, eval_data=custom_wrong_output_train_dataset)
+            training_pipeline(
+                train_data=train_dataset.data,
+                eval_data=custom_wrong_output_train_dataset,
+            )
 
+    def test_training_pipeline_no_len_dataset(
+        self, tmpdir, training_pipeline, train_dataset, custom_no_len_train_dataset
+    ):
 
-    def test_training_pipeline_no_len_dataset(self, tmpdir, training_pipeline, train_dataset, custom_no_len_train_dataset):
-        
         tmpdir.mkdir("dummy_folder")
         dir_path = os.path.join(tmpdir, "dummy_folder")
         training_pipeline.training_config.output_dir = dir_path
         training_pipeline.training_config.num_epochs = 1
-        
+
         with pytest.raises(DatasetError):
             training_pipeline(train_data=custom_no_len_train_dataset)
-        
+
         with pytest.raises(DatasetError):
-            training_pipeline(train_data=train_dataset.data, eval_data=custom_no_len_train_dataset)
+            training_pipeline(
+                train_data=train_dataset.data, eval_data=custom_no_len_train_dataset
+            )
 
-
-    def test_training_pipleine_custom_dataset(self, tmpdir, training_pipeline, train_dataset, custom_train_dataset):
+    def test_training_pipleine_custom_dataset(
+        self, tmpdir, training_pipeline, train_dataset, custom_train_dataset
+    ):
 
         tmpdir.mkdir("dummy_folder")
         dir_path = os.path.join(tmpdir, "dummy_folder")
         training_pipeline.training_config.output_dir = dir_path
         training_pipeline.training_config.num_epochs = 1
-        training_pipeline(train_data=custom_train_dataset, eval_data=custom_train_dataset)
+        training_pipeline(
+            train_data=custom_train_dataset, eval_data=custom_train_dataset
+        )
 
         assert training_pipeline.trainer.train_dataset == custom_train_dataset
         assert training_pipeline.trainer.eval_dataset == custom_train_dataset
@@ -139,21 +155,25 @@ class Test_Pipeline_Standalone:
     def test_generation_pipeline(self, tmpdir, train_dataset):
 
         with pytest.raises(NotImplementedError):
-            pipe = GenerationPipeline(model=VAE(VAEConfig(input_dim=(1, 2, 3))), sampler_config=BaseTrainerConfig())
-        
+            pipe = GenerationPipeline(
+                model=VAE(VAEConfig(input_dim=(1, 2, 3))),
+                sampler_config=BaseTrainerConfig(),
+            )
+
         tmpdir.mkdir("dummy_folder")
         dir_path = os.path.join(tmpdir, "dummy_folder")
         pipe = GenerationPipeline(model=VAE(VAEConfig(input_dim=(1, 2, 3))))
         assert isinstance(pipe.sampler, NormalSampler)
         assert pipe.sampler.sampler_config == NormalSamplerConfig()
 
-        gen_data = pipe(num_samples=1,
+        gen_data = pipe(
+            num_samples=1,
             batch_size=10,
             output_dir=dir_path,
             return_gen=True,
             save_sampler_config=True,
             train_data=train_dataset.data,
-            eval_data=None
+            eval_data=None,
         )
 
         assert tuple(gen_data.shape) == (1,) + (1, 2, 3)

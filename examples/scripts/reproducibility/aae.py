@@ -5,14 +5,13 @@ from typing import List
 
 import numpy as np
 import torch
+import torch.nn as nn
 
 from pythae.data.preprocessors import DataProcessor
-from pythae.trainers import AdversarialTrainer, BaseTrainerConfig
 from pythae.models import Adversarial_AE, Adversarial_AE_Config
-from pythae.models.nn import BaseEncoder, BaseDecoder, BaseDiscriminator
-import torch.nn as nn
 from pythae.models.base.base_utils import ModelOutput
-
+from pythae.models.nn import BaseDecoder, BaseDiscriminator, BaseEncoder
+from pythae.trainers import AdversarialTrainer, BaseTrainerConfig
 
 logger = logging.getLogger(__name__)
 console = logging.StreamHandler()
@@ -23,7 +22,7 @@ PATH = os.path.dirname(os.path.abspath(__file__))
 
 ap = argparse.ArgumentParser()
 
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
+device = "cuda" if torch.cuda.is_available() else "cpu"
 
 ap.add_argument(
     "--model_config",
@@ -154,8 +153,7 @@ class Decoder(BaseDecoder):
 
         layers.append(
             nn.Sequential(
-                nn.ConvTranspose2d(128, self.n_channels, 5, 1, padding=1),
-                nn.Sigmoid()
+                nn.ConvTranspose2d(128, self.n_channels, 5, 1, padding=1), nn.Sigmoid()
             )
         )
 
@@ -199,6 +197,7 @@ class Decoder(BaseDecoder):
 
         return output
 
+
 ### Define paper discriminator network
 class Discriminator(BaseDiscriminator):
     def __init__(self, args: dict):
@@ -217,7 +216,7 @@ class Discriminator(BaseDiscriminator):
                 nn.Linear(512, 512),
                 nn.ReLU(),
                 nn.Linear(512, 512),
-                nn.ReLU()
+                nn.ReLU(),
             )
         )
 
@@ -264,16 +263,12 @@ class Discriminator(BaseDiscriminator):
 def main(args):
 
     train_data = (
-        np.load(os.path.join(PATH, f"data/celeba", "train_data.npz"))[
-            "data"
-        ]
-        / 255.0
+        np.load(os.path.join(PATH, f"data/celeba", "train_data.npz"))["data"] / 255.0
     )
     eval_data = (
-        np.load(os.path.join(PATH, f"data/celeba", "eval_data.npz"))["data"]
-        / 255.0
+        np.load(os.path.join(PATH, f"data/celeba", "eval_data.npz"))["data"] / 255.0
     )
-    
+
     data_input_dim = tuple(train_data.shape[1:])
 
     if args.model_config is not None:
@@ -288,7 +283,7 @@ def main(args):
         model_config=model_config,
         encoder=Encoder(model_config),
         decoder=Decoder(model_config),
-        discriminator=Discriminator(model_config)
+        discriminator=Discriminator(model_config),
     )
 
     ### Set training config
@@ -307,11 +302,15 @@ def main(args):
     import itertools
 
     ### Optimizers
-    ae_optimizer = torch.optim.Adam(itertools.chain(model.encoder.parameters(), model.decoder.parameters()), lr=3e-4)
+    ae_optimizer = torch.optim.Adam(
+        itertools.chain(model.encoder.parameters(), model.decoder.parameters()), lr=3e-4
+    )
     dis_optimizer = torch.optim.Adam(model.discriminator.parameters(), lr=1e-3)
 
     ### Schedulers
-    lambda_lr = lambda epoch: 1 * (epoch < 30) + 0.5 * (30 <= epoch < 50) + 0.2 * (50 <= epoch)
+    lambda_lr = (
+        lambda epoch: 1 * (epoch < 30) + 0.5 * (30 <= epoch < 50) + 0.2 * (50 <= epoch)
+    )
 
     ae_scheduler = torch.optim.lr_scheduler.LambdaLR(
         ae_optimizer, lr_lambda=lambda_lr, verbose=True
@@ -337,6 +336,7 @@ def main(args):
     )
 
     trainer.train()
+
 
 if __name__ == "__main__":
 

@@ -1,13 +1,13 @@
+from typing import List
+
+import numpy as np
 import torch
 import torch.nn as nn
-import numpy as np
 
-from typing import List
-from pythae.models.nn.base_architectures import BaseEncoder, BaseDecoder
-from pythae.models.base.base_utils import ModelOutput
 from pythae.models import BaseAEConfig
-
-from pythae.models.nn import BaseEncoder, BaseDecoder, BaseDiscriminator
+from pythae.models.base.base_utils import ModelOutput
+from pythae.models.nn import BaseDecoder, BaseDiscriminator, BaseEncoder
+from pythae.models.nn.base_architectures import BaseDecoder, BaseEncoder
 
 
 class Fully_Conv_Encoder_Conv_AE_MNIST(BaseEncoder):

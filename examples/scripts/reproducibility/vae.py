@@ -5,16 +5,13 @@ from typing import List
 
 import numpy as np
 import torch
+import torch.nn as nn
 
 from pythae.data.preprocessors import DataProcessor
-from pythae.models import AutoModel
-from pythae.models import VAE, VAEConfig
-from pythae.trainers import BaseTrainerConfig, BaseTrainer
-
-from pythae.models.nn import BaseDecoder, BaseEncoder
-import torch.nn as nn
+from pythae.models import VAE, AutoModel, VAEConfig
 from pythae.models.base.base_utils import ModelOutput
-
+from pythae.models.nn import BaseDecoder, BaseEncoder
+from pythae.trainers import BaseTrainer, BaseTrainerConfig
 
 logger = logging.getLogger(__name__)
 console = logging.StreamHandler()
@@ -25,7 +22,7 @@ PATH = os.path.dirname(os.path.abspath(__file__))
 
 ap = argparse.ArgumentParser()
 
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
+device = "cuda" if torch.cuda.is_available() else "cpu"
 
 ap.add_argument(
     "--model_config",
@@ -53,8 +50,8 @@ class Encoder(BaseEncoder):
             nn.Sequential(
                 nn.Linear(np.prod(args.input_dim), 400),
                 nn.ReLU(),
-                #nn.Linear(400, 400),
-                #nn.ReLU()
+                # nn.Linear(400, 400),
+                # nn.ReLU()
             )
         )
 
@@ -63,7 +60,6 @@ class Encoder(BaseEncoder):
 
         self.embedding = nn.Linear(400, self.latent_dim)
         self.log_var = nn.Linear(400, self.latent_dim)
-
 
     def forward(self, x, output_layer_levels: List[int] = None):
         output = ModelOutput()
@@ -75,9 +71,7 @@ class Encoder(BaseEncoder):
             assert all(
                 self.depth >= levels > 0 or levels == -1
                 for levels in output_layer_levels
-            ), (
-                f"Cannot output layer deeper than depth ({self.depth}). Got ({output_layer_levels})."
-            )
+            ), f"Cannot output layer deeper than depth ({self.depth}). Got ({output_layer_levels})."
 
             if -1 in output_layer_levels:
                 max_depth = self.depth
@@ -98,6 +92,7 @@ class Encoder(BaseEncoder):
 
         return output
 
+
 ### Define paper decoder network
 class Decoder(BaseDecoder):
     def __init__(self, args: dict):
@@ -111,16 +106,13 @@ class Decoder(BaseDecoder):
             nn.Sequential(
                 nn.Linear(args.latent_dim, 400),
                 nn.ReLU(),
-                #nn.Linear(400, 400),
-                #nn.ReLU()
+                # nn.Linear(400, 400),
+                # nn.ReLU()
             )
         )
 
         layers.append(
-            nn.Sequential(
-                nn.Linear(400, np.prod(args.input_dim)),
-                nn.Sigmoid()
-            )
+            nn.Sequential(nn.Linear(400, np.prod(args.input_dim)), nn.Sigmoid())
         )
 
         self.layers = layers
@@ -161,12 +153,17 @@ class Decoder(BaseDecoder):
         return output
 
 
-
 def main(args):
 
-    train_data = np.loadtxt(os.path.join(PATH, f"data/binary_mnist", "binarized_mnist_train.amat"))
-    eval_data = np.loadtxt(os.path.join(PATH, f"data/binary_mnist", "binarized_mnist_valid.amat"))
-    test_data = np.loadtxt(os.path.join(PATH, f"data/binary_mnist", "binarized_mnist_test.amat"))
+    train_data = np.loadtxt(
+        os.path.join(PATH, f"data/binary_mnist", "binarized_mnist_train.amat")
+    )
+    eval_data = np.loadtxt(
+        os.path.join(PATH, f"data/binary_mnist", "binarized_mnist_valid.amat")
+    )
+    test_data = np.loadtxt(
+        os.path.join(PATH, f"data/binary_mnist", "binarized_mnist_test.amat")
+    )
 
     data_input_dim = tuple(train_data.shape[1:])
 
@@ -203,7 +200,10 @@ def main(args):
 
     ### Scheduler
     scheduler = torch.optim.lr_scheduler.MultiStepLR(
-        optimizer, milestones=[200, 350, 500, 750, 1000], gamma=10**(-1/5), verbose=True
+        optimizer,
+        milestones=[200, 350, 500, 750, 1000],
+        gamma=10 ** (-1 / 5),
+        verbose=True,
     )
 
     seed = 123
@@ -222,9 +222,19 @@ def main(args):
     )
 
     trainer.train()
-    
+
     ### Reload the model
-    trained_model = AutoModel.load_from_folder(os.path.join(training_config.output_dir, f'{trainer.model.model_name}_training_{trainer._training_signature}', 'final_model')).to(device).eval()
+    trained_model = (
+        AutoModel.load_from_folder(
+            os.path.join(
+                training_config.output_dir,
+                f"{trainer.model.model_name}_training_{trainer._training_signature}",
+                "final_model",
+            )
+        )
+        .to(device)
+        .eval()
+    )
 
     test_data = torch.tensor(test_data).to(device).type(torch.float)
 
@@ -235,13 +245,10 @@ def main(args):
             nll_i = trained_model.get_nll(test_data, n_samples=200)
             logger.info(f"Round {i+1} nll: {nll_i}")
             nll.append(nll_i)
-    
-    logger.info(
-        f'\nmean_nll: {np.mean(nll)}'
-    )
-    logger.info(
-        f'\std_nll: {np.std(nll)}'
-    )
+
+    logger.info(f"\nmean_nll: {np.mean(nll)}")
+    logger.info(f"\std_nll: {np.std(nll)}")
+
 
 if __name__ == "__main__":
 

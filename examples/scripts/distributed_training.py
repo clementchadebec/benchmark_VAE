@@ -2,16 +2,14 @@ import argparse
 import logging
 import os
 from statistics import mode
-import torch
 
 import hostlist
-
 import numpy as np
+import torch
 
-from pythae.trainers import BaseTrainerConfig, BaseTrainer
-from pythae.models import VQVAE, VQVAEConfig
 from pythae.data.datasets import BaseDataset
-
+from pythae.models import VQVAE, VQVAEConfig
+from pythae.trainers import BaseTrainer, BaseTrainerConfig
 
 logger = logging.getLogger(__name__)
 console = logging.StreamHandler()
@@ -54,14 +52,13 @@ args = ap.parse_args()
 
 def main(args):
 
-
     train_data = torch.rand(10000, 2)
     eval_data = torch.rand(10000, 2)
 
     train_dataset = BaseDataset(train_data, labels=torch.ones(10000))
     eval_dataset = BaseDataset(eval_data, labels=torch.ones(10000))
-    
-    #try:
+
+    # try:
     #    logger.info(f"\nLoading celeba data...\n")
     #    train_data = (
     #        np.load(os.path.join(PATH, f"data/celeba", "train_data.npz"))[
@@ -73,7 +70,7 @@ def main(args):
     #        np.load(os.path.join(PATH, f"data/celeba", "eval_data.npz"))["data"]
     #        / 255.0
     #    )
-    #except Exception as e:
+    # except Exception as e:
     #    raise FileNotFoundError(
     #        f"Unable to load the data from 'data/{args.dataset}' folder. Please check that both a "
     #        "'train_data.npz' and 'eval_data.npz' are present in the folder.\n Data must be "
@@ -82,30 +79,24 @@ def main(args):
     #        f"Exception raised: {type(e)} with message: " + str(e)
     #    ) from e
 
-    #logger.info("Successfully loaded data !\n")
-    #logger.info("------------------------------------------------------------")
-    #logger.info("Dataset \t \t Shape \t \t \t Range")
-    #logger.info(
+    # logger.info("Successfully loaded data !\n")
+    # logger.info("------------------------------------------------------------")
+    # logger.info("Dataset \t \t Shape \t \t \t Range")
+    # logger.info(
     #    f"{args.dataset.upper()} train data: \t {train_data.shape} \t [{train_data.min()}-{train_data.max()}] "
-    #)
-    #logger.info(
+    # )
+    # logger.info(
     #    f"{args.dataset.upper()} eval data: \t {eval_data.shape} \t [{eval_data.min()}-{eval_data.max()}]"
-    #)
-    #logger.info("------------------------------------------------------------\n")
-#
-    #data_input_dim = tuple(train_data.shape[1:])
+    # )
+    # logger.info("------------------------------------------------------------\n")
+    #
+    # data_input_dim = tuple(train_data.shape[1:])
 
-  
-    model_config = VQVAEConfig(
-        input_dim=(2,),
-        latent_dim=2
-    )
+    model_config = VQVAEConfig(input_dim=(2,), latent_dim=2)
 
-    model = VQVAE(
-        model_config=model_config
-    )
+    model = VQVAE(model_config=model_config)
 
-    gpu_ids = os.environ['SLURM_STEP_GPUS'].split(",")
+    gpu_ids = os.environ["SLURM_STEP_GPUS"].split(",")
 
     training_config = BaseTrainerConfig(
         num_epochs=10,
@@ -114,14 +105,14 @@ def main(args):
         steps_saving=2,
         steps_predict=3,
         no_cuda=False,
-        world_size = int(os.environ['SLURM_NTASKS']),
-        rank = int(os.environ['SLURM_PROCID']),
-        local_rank = int(os.environ['SLURM_LOCALID']),
-        master_addr = hostlist.expand_hostlist(os.environ['SLURM_JOB_NODELIST'])[0],
-        master_port = str(12345 + int(min(gpu_ids)))
+        world_size=int(os.environ["SLURM_NTASKS"]),
+        rank=int(os.environ["SLURM_PROCID"]),
+        local_rank=int(os.environ["SLURM_LOCALID"]),
+        master_addr=hostlist.expand_hostlist(os.environ["SLURM_JOB_NODELIST"])[0],
+        master_port=str(12345 + int(min(gpu_ids))),
     )
 
-    if int(os.environ['SLURM_PROCID']) == 0:
+    if int(os.environ["SLURM_PROCID"]) == 0:
         logger.info(model)
         logger.info(f"Training config: {training_config}\n")
 
@@ -135,7 +126,7 @@ def main(args):
             training_config,
             model_config=model_config,
             project_name=args.wandb_project,
-            entity_name=args.wandb_entity
+            entity_name=args.wandb_entity,
         )
 
         callbacks.append(wandb_cb)
@@ -145,7 +136,7 @@ def main(args):
         train_dataset=train_dataset,
         eval_dataset=eval_dataset,
         training_config=training_config,
-        callbacks=callbacks
+        callbacks=callbacks,
     )
 
     trainer.train()

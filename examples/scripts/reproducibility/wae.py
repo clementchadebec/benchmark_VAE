@@ -6,15 +6,13 @@ from typing import List
 
 import numpy as np
 import torch
+import torch.nn as nn
 
 from pythae.data.preprocessors import DataProcessor
 from pythae.models import WAE_MMD, WAE_MMD_Config
-from pythae.trainers import BaseTrainer, BaseTrainerConfig
-
-from pythae.models.nn import BaseEncoder, BaseDecoder
-import torch.nn as nn
 from pythae.models.base.base_utils import ModelOutput
-
+from pythae.models.nn import BaseDecoder, BaseEncoder
+from pythae.trainers import BaseTrainer, BaseTrainerConfig
 
 logger = logging.getLogger(__name__)
 console = logging.StreamHandler()
@@ -25,7 +23,7 @@ PATH = os.path.dirname(os.path.abspath(__file__))
 
 ap = argparse.ArgumentParser()
 
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
+device = "cuda" if torch.cuda.is_available() else "cpu"
 
 # Training setting
 ap.add_argument(
@@ -42,8 +40,8 @@ ap.add_argument(
 args = ap.parse_args()
 
 
-
 ### Define paper encoder network
+
 
 class Encoder(BaseEncoder):
     def __init__(self, args):
@@ -122,6 +120,7 @@ class Encoder(BaseEncoder):
 
 ### Define paper decoder network
 
+
 class Decoder(BaseDecoder):
     def __init__(self, args: dict):
         BaseDecoder.__init__(self)
@@ -159,8 +158,7 @@ class Decoder(BaseDecoder):
 
         layers.append(
             nn.Sequential(
-                nn.ConvTranspose2d(128, self.n_channels, 5, 1, padding=1),
-                nn.Sigmoid()
+                nn.ConvTranspose2d(128, self.n_channels, 5, 1, padding=1), nn.Sigmoid()
             )
         )
 
@@ -205,25 +203,18 @@ class Decoder(BaseDecoder):
         return output
 
 
-
 def main(args):
 
-    
     ### Load data
 
     train_data = (
-        np.load(os.path.join(PATH, f"data/celeba", "train_data.npz"))[
-            "data"
-        ]
-        / 255.0
+        np.load(os.path.join(PATH, f"data/celeba", "train_data.npz"))["data"] / 255.0
     )
     eval_data = (
-        np.load(os.path.join(PATH, f"data/celeba", "eval_data.npz"))["data"]
-        / 255.0
+        np.load(os.path.join(PATH, f"data/celeba", "eval_data.npz"))["data"] / 255.0
     )
 
     data_input_dim = tuple(train_data.shape[1:])
-
 
     ### Build model
     model_config = WAE_MMD_Config.from_json_file(args.model_config)
@@ -233,11 +224,9 @@ def main(args):
         encoder=Encoder(model_config),
         decoder=Decoder(model_config),
     )
-    
-    
+
     ### Get training config
     training_config = BaseTrainerConfig.from_json_file(args.training_config)
-
 
     ### Process data
     data_processor = DataProcessor()
@@ -254,7 +243,9 @@ def main(args):
 
     ### Scheduler
 
-    lambda_lr = lambda epoch: 1 * (epoch < 30) + 0.5 * (30 <= epoch < 50) + 0.2 * (50 <= epoch)
+    lambda_lr = (
+        lambda epoch: 1 * (epoch < 30) + 0.5 * (30 <= epoch < 50) + 0.2 * (50 <= epoch)
+    )
 
     scheduler = torch.optim.lr_scheduler.LambdaLR(
         optimizer, lr_lambda=lambda_lr, verbose=True
@@ -275,7 +266,7 @@ def main(args):
     )
 
     trainer.train()
-  
+
 
 if __name__ == "__main__":
 

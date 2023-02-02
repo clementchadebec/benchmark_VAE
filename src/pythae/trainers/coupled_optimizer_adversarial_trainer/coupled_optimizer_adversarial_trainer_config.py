@@ -1,6 +1,7 @@
-from pydantic.dataclasses import dataclass
 from typing import Union
+
 import torch.nn as nn
+from pydantic.dataclasses import dataclass
 
 from ..base_trainer import BaseTrainerConfig
 
@@ -19,39 +20,39 @@ class CoupledOptimizerAdversarialTrainerConfig(BaseTrainerConfig):
         num_epochs (int): The maximal number of epochs for training. Default: 100
         encoder_optimizer_cls (str): The name of the `torch.optim.Optimizer` used for
             the training of the encoder. Default: :class:`~torch.optim.Adam`.
-        encoder_optimizer_params (dict): A dict containing the parameters to use for the 
+        encoder_optimizer_params (dict): A dict containing the parameters to use for the
             `torch.optim.Optimizer` for the encoder. If None, uses the default parameters.
             Default: None.
         encoder_scheduler_cls (str): The name of the `torch.optim.lr_scheduler` used for
             the training of the encoder. Default :class:`~torch.optim.Adam`.
-        encoder_scheduler_params (dict): A dict containing the parameters to use for the 
+        encoder_scheduler_params (dict): A dict containing the parameters to use for the
             `torch.optim.le_scheduler`  for the encoder. If None, uses the default parameters.
             Default: None.
         decoder_optimizer_cls (str): The name of the `torch.optim.Optimizer` used for
             the training of the decoder. Default: :class:`~torch.optim.Adam`.
-        decoder_optimizer_params (dict): A dict containing the parameters to use for the 
+        decoder_optimizer_params (dict): A dict containing the parameters to use for the
             `torch.optim.Optimizer` for the decoder. If None, uses the default parameters.
             Default: None.
         decoder_scheduler_cls (str): The name of the `torch.optim.lr_scheduler` used for
             the training of the decoder. Default :class:`~torch.optim.Adam`.
-        decoder_scheduler_params (dict): A dict containing the parameters to use for the 
+        decoder_scheduler_params (dict): A dict containing the parameters to use for the
             `torch.optim.le_scheduler`  for the decoder. If None, uses the default parameters.
             Default: None.
         discriminator_optimizer_cls (str): The name of the `torch.optim.Optimizer` used for
             the training of the discriminator. Default: :class:`~torch.optim.Adam`.
-        discriminator_optimizer_params (dict): A dict containing the parameters to use for the 
+        discriminator_optimizer_params (dict): A dict containing the parameters to use for the
             `torch.optim.Optimizer` for the discriminator. If None, uses the default parameters.
             Default: None.
         discriminator_scheduler_cls (str): The name of the `torch.optim.lr_scheduler` used for
             the training of the discriminator. Default :class:`~torch.optim.Adam`.
-        discriminator_scheduler_params (dict): A dict containing the parameters to use for the 
+        discriminator_scheduler_params (dict): A dict containing the parameters to use for the
             `torch.optim.le_scheduler`  for the discriminator. If None, uses the default parameters.
             Default: None.
-        encoder_learning_rate (int): The learning rate applied to the `Optimizer` for the encoder. 
+        encoder_learning_rate (int): The learning rate applied to the `Optimizer` for the encoder.
             Default: 1e-4
-        decoder_learning_rate (int): The learning rate applied to the `Optimizer` for the encoder. 
+        decoder_learning_rate (int): The learning rate applied to the `Optimizer` for the encoder.
             Default: 1e-4
-        discriminator_learning_rate (int): The learning rate applied to the `Optimizer` for the 
+        discriminator_learning_rate (int): The learning rate applied to the `Optimizer` for the
             discriminator. Default: 1e-4
         steps_saving (int): A model checkpoint will be saved every `steps_saving` epoch.
             Default: None
@@ -65,7 +66,7 @@ class CoupledOptimizerAdversarialTrainerConfig(BaseTrainerConfig):
         rank (int): The rank of the process for distributed training. Default: -1
         dist_backend (str): The distributed backend to use. Default: 'nccl'
         master_addr (str): The master address for distributed training. Default: 'localhost'
-        master_port (str): The master port for distributed training. Default: '12345'    """
+        master_port (str): The master port for distributed training. Default: '12345'"""
 
     encoder_optimizer_cls: str = "Adam"
     encoder_optimizer_params: Union[dict, None] = None
@@ -84,13 +85,13 @@ class CoupledOptimizerAdversarialTrainerConfig(BaseTrainerConfig):
     decoder_learning_rate: float = 1e-4
     discriminator_learning_rate: float = 1e-4
 
-
     def __post_init_post_parse__(self):
         """Check compatibilty"""
 
         # Encoder optimizer and scheduler
         try:
             import torch.optim as optim
+
             encoder_optimizer_cls = getattr(optim, self.encoder_optimizer_cls)
         except AttributeError as e:
             raise AttributeError(
@@ -100,7 +101,11 @@ class CoupledOptimizerAdversarialTrainerConfig(BaseTrainerConfig):
             )
         if self.encoder_optimizer_params is not None:
             try:
-                encoder_optimizer = encoder_optimizer_cls(nn.Linear(2, 2).parameters(), lr=self.encoder_learning_rate, **self.encoder_optimizer_params)
+                encoder_optimizer = encoder_optimizer_cls(
+                    nn.Linear(2, 2).parameters(),
+                    lr=self.encoder_learning_rate,
+                    **self.encoder_optimizer_params,
+                )
             except TypeError as e:
                 raise TypeError(
                     "Error in optimizer's parameters. Check that the provided dict contains only "
@@ -109,11 +114,15 @@ class CoupledOptimizerAdversarialTrainerConfig(BaseTrainerConfig):
                     f"Exception raised: {type(e)} with message: " + str(e)
                 ) from e
         else:
-            encoder_optimizer = encoder_optimizer_cls(nn.Linear(2, 2).parameters(), lr=self.encoder_learning_rate,)
+            encoder_optimizer = encoder_optimizer_cls(
+                nn.Linear(2, 2).parameters(),
+                lr=self.encoder_learning_rate,
+            )
 
         if self.encoder_scheduler_cls is not None:
             try:
                 import torch.optim.lr_scheduler as schedulers
+
                 encoder_scheduder_cls = getattr(schedulers, self.encoder_scheduler_cls)
             except AttributeError as e:
                 raise AttributeError(
@@ -124,7 +133,9 @@ class CoupledOptimizerAdversarialTrainerConfig(BaseTrainerConfig):
 
             if self.encoder_scheduler_params is not None:
                 try:
-                    encoder_scheduder_cls(encoder_optimizer, **self.encoder_scheduler_params)
+                    encoder_scheduder_cls(
+                        encoder_optimizer, **self.encoder_scheduler_params
+                    )
                 except TypeError as e:
                     raise TypeError(
                         "Error in scheduler's parameters. Check that the provided dict contains only "
@@ -133,10 +144,10 @@ class CoupledOptimizerAdversarialTrainerConfig(BaseTrainerConfig):
                         f"Exception raised: {type(e)} with message: " + str(e)
                     ) from e
 
-
         # Decoder optimizer and scheduler
         try:
             import torch.optim as optim
+
             decoder_optimizer_cls = getattr(optim, self.decoder_optimizer_cls)
         except AttributeError as e:
             raise AttributeError(
@@ -146,7 +157,11 @@ class CoupledOptimizerAdversarialTrainerConfig(BaseTrainerConfig):
             )
         if self.decoder_optimizer_params is not None:
             try:
-                decoder_optimizer = decoder_optimizer_cls(nn.Linear(2, 2).parameters(), lr=self.decoder_learning_rate, **self.decoder_optimizer_params)
+                decoder_optimizer = decoder_optimizer_cls(
+                    nn.Linear(2, 2).parameters(),
+                    lr=self.decoder_learning_rate,
+                    **self.decoder_optimizer_params,
+                )
             except TypeError as e:
                 raise TypeError(
                     "Error in optimizer's parameters. Check that the provided dict contains only "
@@ -155,11 +170,14 @@ class CoupledOptimizerAdversarialTrainerConfig(BaseTrainerConfig):
                     f"Exception raised: {type(e)} with message: " + str(e)
                 ) from e
         else:
-            decoder_optimizer = decoder_optimizer_cls(nn.Linear(2, 2).parameters(), lr=self.decoder_learning_rate)
+            decoder_optimizer = decoder_optimizer_cls(
+                nn.Linear(2, 2).parameters(), lr=self.decoder_learning_rate
+            )
 
         if self.decoder_scheduler_cls is not None:
             try:
                 import torch.optim.lr_scheduler as schedulers
+
                 decoder_scheduder_cls = getattr(schedulers, self.decoder_scheduler_cls)
             except AttributeError as e:
                 raise AttributeError(
@@ -170,7 +188,9 @@ class CoupledOptimizerAdversarialTrainerConfig(BaseTrainerConfig):
 
             if self.decoder_scheduler_params is not None:
                 try:
-                    decoder_scheduder_cls(decoder_optimizer, **self.decoder_scheduler_params)
+                    decoder_scheduder_cls(
+                        decoder_optimizer, **self.decoder_scheduler_params
+                    )
                 except TypeError as e:
                     raise TypeError(
                         "Error in scheduler's parameters. Check that the provided dict contains only "
@@ -179,10 +199,11 @@ class CoupledOptimizerAdversarialTrainerConfig(BaseTrainerConfig):
                         f"Exception raised: {type(e)} with message: " + str(e)
                     ) from e
 
-
         # Discriminator optimizer and scheduler
         try:
-            discriminator_optimizer_cls = getattr(optim, self.discriminator_optimizer_cls)
+            discriminator_optimizer_cls = getattr(
+                optim, self.discriminator_optimizer_cls
+            )
         except AttributeError as e:
             raise AttributeError(
                 f"Unable to import `{self.discriminator_optimizer_cls}` discriminator optimizer "
@@ -191,7 +212,11 @@ class CoupledOptimizerAdversarialTrainerConfig(BaseTrainerConfig):
             )
         if self.discriminator_optimizer_params is not None:
             try:
-                discriminator_optimizer = discriminator_optimizer_cls(nn.Linear(2, 2).parameters(), lr=self.discriminator_learning_rate, **self.discriminator_optimizer_params)
+                discriminator_optimizer = discriminator_optimizer_cls(
+                    nn.Linear(2, 2).parameters(),
+                    lr=self.discriminator_learning_rate,
+                    **self.discriminator_optimizer_params,
+                )
             except TypeError as e:
                 raise TypeError(
                     "Error in optimizer's parameters. Check that the provided dict contains only "
@@ -200,12 +225,17 @@ class CoupledOptimizerAdversarialTrainerConfig(BaseTrainerConfig):
                     f"Exception raised: {type(e)} with message: " + str(e)
                 ) from e
         else:
-            discriminator_optimizer = discriminator_optimizer_cls(nn.Linear(2, 2).parameters(), lr=self.discriminator_learning_rate)
+            discriminator_optimizer = discriminator_optimizer_cls(
+                nn.Linear(2, 2).parameters(), lr=self.discriminator_learning_rate
+            )
 
         if self.discriminator_scheduler_cls is not None:
             try:
                 import torch.optim.lr_scheduler as schedulers
-                discriminator_scheduder_cls = getattr(schedulers, self.discriminator_scheduler_cls)
+
+                discriminator_scheduder_cls = getattr(
+                    schedulers, self.discriminator_scheduler_cls
+                )
             except AttributeError as e:
                 raise AttributeError(
                     f"Unable to import `{self.discriminator_scheduler_cls}` discriminator scheduler from "
@@ -215,7 +245,9 @@ class CoupledOptimizerAdversarialTrainerConfig(BaseTrainerConfig):
 
             if self.discriminator_scheduler_params is not None:
                 try:
-                    discriminator_scheduder_cls(discriminator_optimizer, **self.discriminator_scheduler_params)
+                    discriminator_scheduder_cls(
+                        discriminator_optimizer, **self.discriminator_scheduler_params
+                    )
                 except TypeError as e:
                     raise TypeError(
                         "Error in scheduler's parameters. Check that the provided dict contains only "

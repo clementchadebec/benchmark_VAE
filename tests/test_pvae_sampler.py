@@ -5,8 +5,13 @@ import pytest
 import torch
 
 from pythae.models import PoincareVAE, PoincareVAEConfig
-from pythae.samplers import PoincareDiskSampler, PoincareDiskSamplerConfig, NormalSampler, NormalSamplerConfig
 from pythae.pipelines import GenerationPipeline
+from pythae.samplers import (
+    NormalSampler,
+    NormalSamplerConfig,
+    PoincareDiskSampler,
+    PoincareDiskSamplerConfig,
+)
 
 PATH = os.path.dirname(os.path.abspath(__file__))
 
@@ -19,12 +24,27 @@ def dummy_data():
 
 @pytest.fixture(
     params=[
-        PoincareVAE(PoincareVAEConfig(input_dim=(1, 28, 28), latent_dim=7, prior_distribution="wrapped_normal", curvature=0.2)),
-        PoincareVAE(PoincareVAEConfig(input_dim=(1, 28, 28), latent_dim=2, prior_distribution="riemannian_normal", curvature=0.7))
+        PoincareVAE(
+            PoincareVAEConfig(
+                input_dim=(1, 28, 28),
+                latent_dim=7,
+                prior_distribution="wrapped_normal",
+                curvature=0.2,
+            )
+        ),
+        PoincareVAE(
+            PoincareVAEConfig(
+                input_dim=(1, 28, 28),
+                latent_dim=2,
+                prior_distribution="riemannian_normal",
+                curvature=0.7,
+            )
+        ),
     ]
 )
 def model(request):
     return request.param
+
 
 @pytest.fixture(
     params=[
@@ -58,7 +78,9 @@ class Test_PoicareSampler_saving:
 
         assert os.path.isfile(sampler_config_file)
 
-        generation_config_rec = PoincareDiskSamplerConfig.from_json_file(sampler_config_file)
+        generation_config_rec = PoincareDiskSamplerConfig.from_json_file(
+            sampler_config_file
+        )
 
         assert generation_config_rec.__dict__ == sampler.sampler_config.__dict__
 
@@ -142,16 +164,19 @@ class Test_PoicareSampler_Sampling:
         assert isinstance(pipe.sampler, NormalSampler)
         assert pipe.sampler.sampler_config == NormalSamplerConfig()
 
-        gen_data = pipe(num_samples=num_samples,
+        gen_data = pipe(
+            num_samples=num_samples,
             batch_size=batch_size,
             output_dir=dir_path,
             return_gen=True,
             save_sampler_config=True,
             train_data=dummy_data,
-            eval_data=None
+            eval_data=None,
         )
 
-        assert tuple(gen_data.shape) == (num_samples,) + tuple(model.model_config.input_dim)
+        assert tuple(gen_data.shape) == (num_samples,) + tuple(
+            model.model_config.input_dim
+        )
         assert len(os.listdir(dir_path)) == num_samples + 1
         assert "sampler_config.json" in os.listdir(dir_path)
 
@@ -166,13 +191,14 @@ class Test_PoicareSampler_Sampling:
             assert isinstance(pipe.sampler, PoincareDiskSampler)
             assert pipe.sampler.sampler_config == sampler_config
 
-        gen_data = pipe(num_samples=num_samples,
+        gen_data = pipe(
+            num_samples=num_samples,
             batch_size=batch_size,
             output_dir=dir_path,
             return_gen=False,
             save_sampler_config=False,
             train_data=dummy_data,
-            eval_data=dummy_data
+            eval_data=dummy_data,
         )
 
         assert gen_data is None

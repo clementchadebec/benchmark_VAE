@@ -78,7 +78,9 @@ class TrainingPipeline(Pipeline):
                         "weight_decay": model.model_config.reg_weight
                     }
                 else:
-                    training_config.decoder_optimizer_params["weight_decay"] = model.model_config.reg_weight
+                    training_config.decoder_optimizer_params[
+                        "weight_decay"
+                    ] = model.model_config.reg_weight
 
         elif model.model_name == "Adversarial_AE" or model.model_name == "FactorVAE":
             if not isinstance(training_config, AdversarialTrainerConfig):

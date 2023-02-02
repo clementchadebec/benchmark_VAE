@@ -15,6 +15,7 @@ PATH = os.path.dirname(os.path.abspath(__file__))
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
+
 @pytest.fixture
 def train_dataset():
     return torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))
@@ -37,12 +38,10 @@ class Test_DataLoader:
         params=[
             CoupledOptimizerAdversarialTrainerConfig(),
             CoupledOptimizerAdversarialTrainerConfig(
-                per_device_train_batch_size=100,
-                per_device_eval_batch_size=35
+                per_device_train_batch_size=100, per_device_eval_batch_size=35
             ),
             CoupledOptimizerAdversarialTrainerConfig(
-                per_device_train_batch_size=10,
-                per_device_eval_batch_size=3
+                per_device_train_batch_size=10, per_device_eval_batch_size=3
             ),
         ]
     )
@@ -66,7 +65,10 @@ class Test_DataLoader:
         assert issubclass(type(train_data_loader), torch.utils.data.DataLoader)
         assert train_data_loader.dataset == train_dataset
 
-        assert train_data_loader.batch_size == trainer.training_config.per_device_train_batch_size
+        assert (
+            train_data_loader.batch_size
+            == trainer.training_config.per_device_train_batch_size
+        )
 
     def test_build_eval_data_loader(
         self, model_sample, train_dataset, training_config_batch_size
@@ -82,14 +84,16 @@ class Test_DataLoader:
         assert issubclass(type(eval_data_loader), torch.utils.data.DataLoader)
         assert eval_data_loader.dataset == train_dataset
 
-        assert eval_data_loader.batch_size == trainer.training_config.per_device_eval_batch_size
+        assert (
+            eval_data_loader.batch_size
+            == trainer.training_config.per_device_eval_batch_size
+        )
 
 
 class Test_Set_Training_config:
     @pytest.fixture(
         params=[
-            CoupledOptimizerAdversarialTrainerConfig(
-            ),
+            CoupledOptimizerAdversarialTrainerConfig(),
             CoupledOptimizerAdversarialTrainerConfig(
                 per_device_train_batch_size=10,
                 per_device_eval_batch_size=3,
@@ -103,7 +107,7 @@ class Test_Set_Training_config:
                 discriminator_optimizer_cls="SGD",
                 discriminator_optimizer_params={"weight_decay": 0.01},
                 encoder_scheduler_cls="ExponentialLR",
-                encoder_scheduler_params={"gamma": 0.321}
+                encoder_scheduler_params={"gamma": 0.321},
             ),
         ]
     )
@@ -131,17 +135,12 @@ class Test_Set_Training_config:
 
 
 class Test_Build_Optimizer:
-
     def test_wrong_optimizer_cls(self):
         with pytest.raises(AttributeError):
-            CoupledOptimizerAdversarialTrainerConfig(
-                encoder_optimizer_cls="WrongOptim"
-            )
+            CoupledOptimizerAdversarialTrainerConfig(encoder_optimizer_cls="WrongOptim")
 
         with pytest.raises(AttributeError):
-            CoupledOptimizerAdversarialTrainerConfig(
-                decoder_optimizer_cls="WrongOptim"
-            )
+            CoupledOptimizerAdversarialTrainerConfig(decoder_optimizer_cls="WrongOptim")
 
         with pytest.raises(AttributeError):
             CoupledOptimizerAdversarialTrainerConfig(
@@ -152,19 +151,19 @@ class Test_Build_Optimizer:
         with pytest.raises(TypeError):
             CoupledOptimizerAdversarialTrainerConfig(
                 encoder_optimizer_cls="Adam",
-                encoder_optimizer_params={"wrong_config": 1}
+                encoder_optimizer_params={"wrong_config": 1},
             )
 
         with pytest.raises(TypeError):
             CoupledOptimizerAdversarialTrainerConfig(
                 decoder_optimizer_cls="Adam",
-                decoder_optimizer_params={"wrong_config": 1}
+                decoder_optimizer_params={"wrong_config": 1},
             )
 
         with pytest.raises(TypeError):
             CoupledOptimizerAdversarialTrainerConfig(
                 discriminator_optimizer_cls="Adam",
-                discriminator_optimizer_params={"wrong_config": 1}
+                discriminator_optimizer_params={"wrong_config": 1},
             )
 
     @pytest.fixture(
@@ -172,7 +171,7 @@ class Test_Build_Optimizer:
             CoupledOptimizerAdversarialTrainerConfig(
                 encoder_learning_rate=1e-6,
                 decoder_learning_rate=1e-5,
-                discriminator_learning_rate=1e-3
+                discriminator_learning_rate=1e-3,
             ),
             CoupledOptimizerAdversarialTrainerConfig(),
         ]
@@ -181,44 +180,58 @@ class Test_Build_Optimizer:
         request.param.output_dir = tmpdir.mkdir("dummy_folder")
         return request.param
 
-    @pytest.fixture(params=[
-        {
-            "encoder_optimizer_cls": "Adagrad",
-            "encoder_optimizer_params": {"lr_decay": 0.1},
-            "decoder_optimizer_cls": "SGD",
-            "decoder_optimizer_params": {"momentum": 0.9},
-            "discriminator_optimizer_cls": "AdamW",
-            "discriminator_optimizer_params": {"betas": (0.1234, 0.4321)}
-        },
-        {
-            "encoder_optimizer_cls": "SGD",
-            "encoder_optimizer_params": {"momentum": 0.1},
-            "decoder_optimizer_cls": "SGD",
-            "decoder_optimizer_params": None,
-            "discriminator_optimizer_cls": "SGD",
-            "discriminator_optimizer_params": {"momentum": 0.9}
-        },
-        {
-            "encoder_optimizer_cls": "SGD",
-            "encoder_optimizer_params": None,
-            "decoder_optimizer_cls": "SGD",
-            "decoder_optimizer_params": None,
-            "discriminator_optimizer_cls": "SGD",
-            "discriminator_optimizer_params": None
-        }
-    ])
+    @pytest.fixture(
+        params=[
+            {
+                "encoder_optimizer_cls": "Adagrad",
+                "encoder_optimizer_params": {"lr_decay": 0.1},
+                "decoder_optimizer_cls": "SGD",
+                "decoder_optimizer_params": {"momentum": 0.9},
+                "discriminator_optimizer_cls": "AdamW",
+                "discriminator_optimizer_params": {"betas": (0.1234, 0.4321)},
+            },
+            {
+                "encoder_optimizer_cls": "SGD",
+                "encoder_optimizer_params": {"momentum": 0.1},
+                "decoder_optimizer_cls": "SGD",
+                "decoder_optimizer_params": None,
+                "discriminator_optimizer_cls": "SGD",
+                "discriminator_optimizer_params": {"momentum": 0.9},
+            },
+            {
+                "encoder_optimizer_cls": "SGD",
+                "encoder_optimizer_params": None,
+                "decoder_optimizer_cls": "SGD",
+                "decoder_optimizer_params": None,
+                "discriminator_optimizer_cls": "SGD",
+                "discriminator_optimizer_params": None,
+            },
+        ]
+    )
     def optimizer_config(self, request, training_configs_learning_rate):
-        
+
         optimizer_config = request.param
 
         # set optim and params to training config
-        training_configs_learning_rate.encoder_optimizer_cls = optimizer_config['encoder_optimizer_cls']
-        training_configs_learning_rate.encoder_optimizer_params = optimizer_config['encoder_optimizer_params']
-        training_configs_learning_rate.decoder_optimizer_cls = optimizer_config['decoder_optimizer_cls']
-        training_configs_learning_rate.decoder_optimizer_params = optimizer_config['decoder_optimizer_params']
-        training_configs_learning_rate.discriminator_optimizer_cls = optimizer_config['discriminator_optimizer_cls']
-        training_configs_learning_rate.discriminator_optimizer_params = optimizer_config['discriminator_optimizer_params']
-        
+        training_configs_learning_rate.encoder_optimizer_cls = optimizer_config[
+            "encoder_optimizer_cls"
+        ]
+        training_configs_learning_rate.encoder_optimizer_params = optimizer_config[
+            "encoder_optimizer_params"
+        ]
+        training_configs_learning_rate.decoder_optimizer_cls = optimizer_config[
+            "decoder_optimizer_cls"
+        ]
+        training_configs_learning_rate.decoder_optimizer_params = optimizer_config[
+            "decoder_optimizer_params"
+        ]
+        training_configs_learning_rate.discriminator_optimizer_cls = optimizer_config[
+            "discriminator_optimizer_cls"
+        ]
+        training_configs_learning_rate.discriminator_optimizer_params = (
+            optimizer_config["discriminator_optimizer_params"]
+        )
+
         return optimizer_config
 
     def test_default_optimizer_building(
@@ -254,69 +267,81 @@ class Test_Build_Optimizer:
         )
 
     def test_set_custom_optimizer(
-        self, model_sample, train_dataset, training_configs_learning_rate, optimizer_config
+        self,
+        model_sample,
+        train_dataset,
+        training_configs_learning_rate,
+        optimizer_config,
     ):
         trainer = CoupledOptimizerAdversarialTrainer(
             model=model_sample,
             train_dataset=train_dataset,
-            training_config=training_configs_learning_rate
+            training_config=training_configs_learning_rate,
         )
 
         trainer.set_encoder_optimizer()
         trainer.set_decoder_optimizer()
         trainer.set_discriminator_optimizer()
 
-        assert issubclass(type(trainer.encoder_optimizer), getattr(torch.optim, optimizer_config['encoder_optimizer_cls']))
+        assert issubclass(
+            type(trainer.encoder_optimizer),
+            getattr(torch.optim, optimizer_config["encoder_optimizer_cls"]),
+        )
         assert (
             trainer.encoder_optimizer.defaults["lr"]
             == training_configs_learning_rate.encoder_learning_rate
         )
-        if optimizer_config['encoder_optimizer_params'] is not None:
+        if optimizer_config["encoder_optimizer_params"] is not None:
             assert all(
                 [
-                    trainer.encoder_optimizer.defaults[key] == optimizer_config['encoder_optimizer_params'][key] \
-                        for key in optimizer_config['encoder_optimizer_params'].keys()
+                    trainer.encoder_optimizer.defaults[key]
+                    == optimizer_config["encoder_optimizer_params"][key]
+                    for key in optimizer_config["encoder_optimizer_params"].keys()
                 ]
             )
 
-        assert issubclass(type(trainer.decoder_optimizer), getattr(torch.optim, optimizer_config['decoder_optimizer_cls']))
+        assert issubclass(
+            type(trainer.decoder_optimizer),
+            getattr(torch.optim, optimizer_config["decoder_optimizer_cls"]),
+        )
         assert (
             trainer.decoder_optimizer.defaults["lr"]
             == training_configs_learning_rate.decoder_learning_rate
         )
-        if optimizer_config['decoder_optimizer_params'] is not None:
+        if optimizer_config["decoder_optimizer_params"] is not None:
             assert all(
                 [
-                    trainer.decoder_optimizer.defaults[key] == optimizer_config['decoder_optimizer_params'][key] \
-                        for key in optimizer_config['decoder_optimizer_params'].keys()
+                    trainer.decoder_optimizer.defaults[key]
+                    == optimizer_config["decoder_optimizer_params"][key]
+                    for key in optimizer_config["decoder_optimizer_params"].keys()
                 ]
             )
 
-        assert issubclass(type(trainer.discriminator_optimizer), getattr(torch.optim, optimizer_config['discriminator_optimizer_cls']))
+        assert issubclass(
+            type(trainer.discriminator_optimizer),
+            getattr(torch.optim, optimizer_config["discriminator_optimizer_cls"]),
+        )
         assert (
             trainer.discriminator_optimizer.defaults["lr"]
             == training_configs_learning_rate.discriminator_learning_rate
         )
-        if optimizer_config['discriminator_optimizer_params'] is not None:
+        if optimizer_config["discriminator_optimizer_params"] is not None:
             assert all(
                 [
-                    trainer.discriminator_optimizer.defaults[key] == optimizer_config['discriminator_optimizer_params'][key] \
-                        for key in optimizer_config['discriminator_optimizer_params'].keys()
+                    trainer.discriminator_optimizer.defaults[key]
+                    == optimizer_config["discriminator_optimizer_params"][key]
+                    for key in optimizer_config["discriminator_optimizer_params"].keys()
                 ]
             )
 
-class Test_Build_Scheduler:
 
+class Test_Build_Scheduler:
     def test_wrong_scheduler_cls(self):
         with pytest.raises(AttributeError):
-            CoupledOptimizerAdversarialTrainerConfig(
-                encoder_scheduler_cls="WrongOptim"
-            )
+            CoupledOptimizerAdversarialTrainerConfig(encoder_scheduler_cls="WrongOptim")
 
         with pytest.raises(AttributeError):
-            CoupledOptimizerAdversarialTrainerConfig(
-                decoder_scheduler_cls="WrongOptim"
-            )
+            CoupledOptimizerAdversarialTrainerConfig(decoder_scheduler_cls="WrongOptim")
 
         with pytest.raises(AttributeError):
             CoupledOptimizerAdversarialTrainerConfig(
@@ -327,22 +352,27 @@ class Test_Build_Scheduler:
         with pytest.raises(TypeError):
             CoupledOptimizerAdversarialTrainerConfig(
                 encoder_scheduler_cls="ReduceLROnPlateau",
-                encoder_scheduler_params={"wrong_config": 1}
+                encoder_scheduler_params={"wrong_config": 1},
             )
 
         with pytest.raises(TypeError):
             CoupledOptimizerAdversarialTrainerConfig(
                 decoder_scheduler_cls="ReduceLROnPlateau",
-                decoder_scheduler_params={"wrong_config": 1}
+                decoder_scheduler_params={"wrong_config": 1},
             )
 
         with pytest.raises(TypeError):
             CoupledOptimizerAdversarialTrainerConfig(
                 discriminator_scheduler_cls="ReduceLROnPlateau",
-                discriminator_scheduler_params={"wrong_config": 1}
+                discriminator_scheduler_params={"wrong_config": 1},
             )
 
-    @pytest.fixture(params=[CoupledOptimizerAdversarialTrainerConfig(), CoupledOptimizerAdversarialTrainerConfig(learning_rate=1e-5)])
+    @pytest.fixture(
+        params=[
+            CoupledOptimizerAdversarialTrainerConfig(),
+            CoupledOptimizerAdversarialTrainerConfig(learning_rate=1e-5),
+        ]
+    )
     def training_configs_learning_rate(self, tmpdir, request):
         request.param.output_dir = tmpdir.mkdir("dummy_folder")
         return request.param
@@ -355,7 +385,7 @@ class Test_Build_Scheduler:
                 "decoder_scheduler_cls": "LinearLR",
                 "decoder_scheduler_params": None,
                 "discriminator_scheduler_cls": "LinearLR",
-                "discriminator_scheduler_params": None
+                "discriminator_scheduler_params": None,
             },
             {
                 "encoder_scheduler_cls": "StepLR",
@@ -363,7 +393,7 @@ class Test_Build_Scheduler:
                 "decoder_scheduler_cls": "LinearLR",
                 "decoder_scheduler_params": None,
                 "discriminator_scheduler_cls": "ExponentialLR",
-                "discriminator_scheduler_params": {"gamma": 0.1}
+                "discriminator_scheduler_params": {"gamma": 0.1},
             },
             {
                 "encoder_scheduler_cls": None,
@@ -371,9 +401,8 @@ class Test_Build_Scheduler:
                 "decoder_scheduler_cls": None,
                 "decoder_scheduler_params": None,
                 "discriminator_scheduler_cls": None,
-                "discriminator_scheduler_params": None
-
-            }
+                "discriminator_scheduler_params": None,
+            },
         ]
     )
     def scheduler_config(self, request, training_configs_learning_rate):
@@ -381,13 +410,25 @@ class Test_Build_Scheduler:
         scheduler_config = request.param
 
         # set scheduler and params to training config
-        training_configs_learning_rate.encoder_scheduler_cls = scheduler_config['encoder_scheduler_cls']
-        training_configs_learning_rate.encoder_scheduler_params = scheduler_config['encoder_scheduler_params']
-        training_configs_learning_rate.decoder_scheduler_cls = scheduler_config['decoder_scheduler_cls']
-        training_configs_learning_rate.decoder_scheduler_params = scheduler_config['decoder_scheduler_params']
-        training_configs_learning_rate.discriminator_scheduler_cls = scheduler_config['discriminator_scheduler_cls']
-        training_configs_learning_rate.discriminator_scheduler_params = scheduler_config['discriminator_scheduler_params']
-        
+        training_configs_learning_rate.encoder_scheduler_cls = scheduler_config[
+            "encoder_scheduler_cls"
+        ]
+        training_configs_learning_rate.encoder_scheduler_params = scheduler_config[
+            "encoder_scheduler_params"
+        ]
+        training_configs_learning_rate.decoder_scheduler_cls = scheduler_config[
+            "decoder_scheduler_cls"
+        ]
+        training_configs_learning_rate.decoder_scheduler_params = scheduler_config[
+            "decoder_scheduler_params"
+        ]
+        training_configs_learning_rate.discriminator_scheduler_cls = scheduler_config[
+            "discriminator_scheduler_cls"
+        ]
+        training_configs_learning_rate.discriminator_scheduler_params = (
+            scheduler_config["discriminator_scheduler_params"]
+        )
+
         return request.param
 
     def test_default_scheduler_building(
@@ -397,7 +438,7 @@ class Test_Build_Scheduler:
         trainer = CoupledOptimizerAdversarialTrainer(
             model=model_sample,
             train_dataset=train_dataset,
-            training_config=training_configs_learning_rate
+            training_config=training_configs_learning_rate,
         )
 
         trainer.set_encoder_optimizer()
@@ -431,42 +472,64 @@ class Test_Build_Scheduler:
         trainer.set_discriminator_optimizer()
         trainer.set_discriminator_scheduler()
 
-        if scheduler_config['encoder_scheduler_cls'] is None:
+        if scheduler_config["encoder_scheduler_cls"] is None:
             assert trainer.encoder_scheduler is None
         else:
-            assert issubclass(type(trainer.encoder_scheduler), getattr(torch.optim.lr_scheduler, scheduler_config['encoder_scheduler_cls']))
-            if scheduler_config['encoder_scheduler_params'] is not None:
+            assert issubclass(
+                type(trainer.encoder_scheduler),
+                getattr(
+                    torch.optim.lr_scheduler, scheduler_config["encoder_scheduler_cls"]
+                ),
+            )
+            if scheduler_config["encoder_scheduler_params"] is not None:
                 assert all(
                     [
-                        trainer.encoder_scheduler.state_dict()[key] == scheduler_config['encoder_scheduler_params'][key] \
-                            for key in scheduler_config['encoder_scheduler_params'].keys()
+                        trainer.encoder_scheduler.state_dict()[key]
+                        == scheduler_config["encoder_scheduler_params"][key]
+                        for key in scheduler_config["encoder_scheduler_params"].keys()
                     ]
                 )
 
-        if scheduler_config['decoder_scheduler_cls'] is None:
+        if scheduler_config["decoder_scheduler_cls"] is None:
             assert trainer.decoder_scheduler is None
         else:
-            assert issubclass(type(trainer.decoder_scheduler), getattr(torch.optim.lr_scheduler, scheduler_config['decoder_scheduler_cls']))
-            if scheduler_config['decoder_scheduler_params'] is not None:
+            assert issubclass(
+                type(trainer.decoder_scheduler),
+                getattr(
+                    torch.optim.lr_scheduler, scheduler_config["decoder_scheduler_cls"]
+                ),
+            )
+            if scheduler_config["decoder_scheduler_params"] is not None:
                 assert all(
                     [
-                        trainer.decoder_scheduler.state_dict()[key] == scheduler_config['decoder_scheduler_params'][key] \
-                            for key in scheduler_config['decoder_scheduler_params'].keys()
+                        trainer.decoder_scheduler.state_dict()[key]
+                        == scheduler_config["decoder_scheduler_params"][key]
+                        for key in scheduler_config["decoder_scheduler_params"].keys()
                     ]
                 )
 
-        if scheduler_config['discriminator_scheduler_cls'] is None:
+        if scheduler_config["discriminator_scheduler_cls"] is None:
             assert trainer.discriminator_scheduler is None
 
         else:
-            assert issubclass(type(trainer.discriminator_scheduler), getattr(torch.optim.lr_scheduler, scheduler_config['discriminator_scheduler_cls']))
-            if scheduler_config['discriminator_scheduler_params'] is not None:
+            assert issubclass(
+                type(trainer.discriminator_scheduler),
+                getattr(
+                    torch.optim.lr_scheduler,
+                    scheduler_config["discriminator_scheduler_cls"],
+                ),
+            )
+            if scheduler_config["discriminator_scheduler_params"] is not None:
                 assert all(
                     [
-                        trainer.discriminator_scheduler.state_dict()[key] == scheduler_config['discriminator_scheduler_params'][key] \
-                            for key in scheduler_config['discriminator_scheduler_params'].keys()
+                        trainer.discriminator_scheduler.state_dict()[key]
+                        == scheduler_config["discriminator_scheduler_params"][key]
+                        for key in scheduler_config[
+                            "discriminator_scheduler_params"
+                        ].keys()
                     ]
                 )
+
 
 @pytest.mark.slow
 class Test_Main_Training:
@@ -525,44 +588,46 @@ class Test_Main_Training:
 
         return model
 
-    @pytest.fixture(params=[
-        {
-            "encoder_optimizer_cls": "Adagrad",
-            "encoder_optimizer_params": {"lr_decay": 0.1},
-            "decoder_optimizer_cls": "SGD",
-            "decoder_optimizer_params": {"momentum": 0.9},
-            "discriminator_optimizer_cls": "AdamW",
-            "discriminator_optimizer_params": {"betas": (0.1234, 0.4321)}
-        },
-        {
-            "encoder_optimizer_cls": "SGD",
-            "encoder_optimizer_params": {"momentum": 0.1},
-            "decoder_optimizer_cls": "SGD",
-            "decoder_optimizer_params": None,
-            "discriminator_optimizer_cls": "SGD",
-            "discriminator_optimizer_params": {"momentum": 0.9}
-        },
-        {
-            "encoder_optimizer_cls": "SGD",
-            "encoder_optimizer_params": None,
-            "decoder_optimizer_cls": "SGD",
-            "decoder_optimizer_params": None,
-            "discriminator_optimizer_cls": "SGD",
-            "discriminator_optimizer_params": None
-        }
-    ])
+    @pytest.fixture(
+        params=[
+            {
+                "encoder_optimizer_cls": "Adagrad",
+                "encoder_optimizer_params": {"lr_decay": 0.1},
+                "decoder_optimizer_cls": "SGD",
+                "decoder_optimizer_params": {"momentum": 0.9},
+                "discriminator_optimizer_cls": "AdamW",
+                "discriminator_optimizer_params": {"betas": (0.1234, 0.4321)},
+            },
+            {
+                "encoder_optimizer_cls": "SGD",
+                "encoder_optimizer_params": {"momentum": 0.1},
+                "decoder_optimizer_cls": "SGD",
+                "decoder_optimizer_params": None,
+                "discriminator_optimizer_cls": "SGD",
+                "discriminator_optimizer_params": {"momentum": 0.9},
+            },
+            {
+                "encoder_optimizer_cls": "SGD",
+                "encoder_optimizer_params": None,
+                "decoder_optimizer_cls": "SGD",
+                "decoder_optimizer_params": None,
+                "discriminator_optimizer_cls": "SGD",
+                "discriminator_optimizer_params": None,
+            },
+        ]
+    )
     def optimizer_config(self, request):
         return request.param
 
     @pytest.fixture(
-         params=[
+        params=[
             {
                 "encoder_scheduler_cls": "LinearLR",
                 "encoder_scheduler_params": None,
                 "decoder_scheduler_cls": "LinearLR",
                 "decoder_scheduler_params": None,
                 "discriminator_scheduler_cls": "LinearLR",
-                "discriminator_scheduler_params": None
+                "discriminator_scheduler_params": None,
             },
             {
                 "encoder_scheduler_cls": "StepLR",
@@ -570,7 +635,7 @@ class Test_Main_Training:
                 "decoder_scheduler_cls": "LinearLR",
                 "decoder_scheduler_params": None,
                 "discriminator_scheduler_cls": "ExponentialLR",
-                "discriminator_scheduler_params": {"gamma": 0.1}
+                "discriminator_scheduler_params": {"gamma": 0.1},
             },
             {
                 "encoder_scheduler_cls": None,
@@ -578,47 +643,70 @@ class Test_Main_Training:
                 "decoder_scheduler_cls": None,
                 "decoder_scheduler_params": None,
                 "discriminator_scheduler_cls": None,
-                "discriminator_scheduler_params": None
-
-            }
+                "discriminator_scheduler_params": None,
+            },
         ]
     )
-    def scheduler_config(self, request):        
+    def scheduler_config(self, request):
         return request.param
 
     @pytest.fixture
-    def trainer(self, ae, train_dataset, optimizer_config, scheduler_config, training_configs):
+    def trainer(
+        self, ae, train_dataset, optimizer_config, scheduler_config, training_configs
+    ):
 
-        training_configs.encoder_optimizer_cls = optimizer_config['encoder_optimizer_cls']
-        training_configs.encoder_optimizer_params = optimizer_config['encoder_optimizer_params']
-        training_configs.decoder_optimizer_cls = optimizer_config['decoder_optimizer_cls']
-        training_configs.decoder_optimizer_params = optimizer_config['decoder_optimizer_params']
-        training_configs.discriminator_optimizer_cls = optimizer_config['discriminator_optimizer_cls']
-        training_configs.discriminator_optimizer_params = optimizer_config['discriminator_optimizer_params']
+        training_configs.encoder_optimizer_cls = optimizer_config[
+            "encoder_optimizer_cls"
+        ]
+        training_configs.encoder_optimizer_params = optimizer_config[
+            "encoder_optimizer_params"
+        ]
+        training_configs.decoder_optimizer_cls = optimizer_config[
+            "decoder_optimizer_cls"
+        ]
+        training_configs.decoder_optimizer_params = optimizer_config[
+            "decoder_optimizer_params"
+        ]
+        training_configs.discriminator_optimizer_cls = optimizer_config[
+            "discriminator_optimizer_cls"
+        ]
+        training_configs.discriminator_optimizer_params = optimizer_config[
+            "discriminator_optimizer_params"
+        ]
 
-        training_configs.encoder_scheduler_cls = scheduler_config['encoder_scheduler_cls']
-        training_configs.encoder_scheduler_params = scheduler_config['encoder_scheduler_params']
-        training_configs.decoder_scheduler_cls = scheduler_config['decoder_scheduler_cls']
-        training_configs.decoder_scheduler_params = scheduler_config['decoder_scheduler_params']
-        training_configs.discriminator_scheduler_cls = scheduler_config['discriminator_scheduler_cls']
-        training_configs.discriminator_scheduler_params = scheduler_config['discriminator_scheduler_params']
+        training_configs.encoder_scheduler_cls = scheduler_config[
+            "encoder_scheduler_cls"
+        ]
+        training_configs.encoder_scheduler_params = scheduler_config[
+            "encoder_scheduler_params"
+        ]
+        training_configs.decoder_scheduler_cls = scheduler_config[
+            "decoder_scheduler_cls"
+        ]
+        training_configs.decoder_scheduler_params = scheduler_config[
+            "decoder_scheduler_params"
+        ]
+        training_configs.discriminator_scheduler_cls = scheduler_config[
+            "discriminator_scheduler_cls"
+        ]
+        training_configs.discriminator_scheduler_params = scheduler_config[
+            "discriminator_scheduler_params"
+        ]
 
         trainer = CoupledOptimizerAdversarialTrainer(
             model=ae,
             train_dataset=train_dataset,
             eval_dataset=train_dataset,
-            training_config=training_configs
+            training_config=training_configs,
         )
 
         trainer.prepare_training()
 
         return trainer
 
-    @pytest.fixture(params=[
-        torch.randint(2, (3,)),
-        torch.randint(2, (3,)),
-        torch.randint(2, (3,))
-    ])
+    @pytest.fixture(
+        params=[torch.randint(2, (3,)), torch.randint(2, (3,)), torch.randint(2, (3,))]
+    )
     def optimizer_updates(self, request):
         return request.param
 
@@ -642,8 +730,7 @@ class Test_Main_Training:
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
-        model_output = ae(
-                {"data": train_dataset.data.to(device)})
+        model_output = ae({"data": train_dataset.data.to(device)})
 
         model_output.update_encoder = False
         model_output.update_decoder = False
@@ -661,8 +748,7 @@ class Test_Main_Training:
             ]
         )
 
-        model_output = ae(
-                {"data": train_dataset.data.to(device)})
+        model_output = ae({"data": train_dataset.data.to(device)})
 
         model_output.update_encoder = bool(optimizer_updates[0])
         model_output.update_decoder = bool(optimizer_updates[1])
@@ -676,32 +762,44 @@ class Test_Main_Training:
         for key in start_model_state_dict.keys():
             if "encoder" in key:
                 if bool(optimizer_updates[0]):
-                    assert not torch.equal(step_1_model_state_dict[key], step_2_model_state_dict[key])
+                    assert not torch.equal(
+                        step_1_model_state_dict[key], step_2_model_state_dict[key]
+                    )
 
                 else:
-                    assert torch.equal(step_1_model_state_dict[key], step_2_model_state_dict[key])
+                    assert torch.equal(
+                        step_1_model_state_dict[key], step_2_model_state_dict[key]
+                    )
 
             if "decoder" in key:
                 if bool(optimizer_updates[1]):
-                    assert not torch.equal(step_1_model_state_dict[key], step_2_model_state_dict[key])
+                    assert not torch.equal(
+                        step_1_model_state_dict[key], step_2_model_state_dict[key]
+                    )
 
                 else:
-                    assert torch.equal(step_1_model_state_dict[key], step_2_model_state_dict[key])
-            
+                    assert torch.equal(
+                        step_1_model_state_dict[key], step_2_model_state_dict[key]
+                    )
+
             if "discriminator" in key:
                 if bool(optimizer_updates[2]):
-                    assert not torch.equal(step_1_model_state_dict[key], step_2_model_state_dict[key])
+                    assert not torch.equal(
+                        step_1_model_state_dict[key], step_2_model_state_dict[key]
+                    )
 
                 else:
-                    assert torch.equal(step_1_model_state_dict[key], step_2_model_state_dict[key])
+                    assert torch.equal(
+                        step_1_model_state_dict[key], step_2_model_state_dict[key]
+                    )
 
-    def test_train_step_various_updates(self, ae, train_dataset, trainer, optimizer_updates):
-
+    def test_train_step_various_updates(
+        self, ae, train_dataset, trainer, optimizer_updates
+    ):
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
-        model_output = ae(
-                {"data": train_dataset.data.to(device)})
+        model_output = ae({"data": train_dataset.data.to(device)})
 
         model_output.update_encoder = bool(optimizer_updates[0])
         model_output.update_decoder = bool(optimizer_updates[1])
@@ -715,24 +813,36 @@ class Test_Main_Training:
         for key in start_model_state_dict.keys():
             if "encoder" in key:
                 if bool(optimizer_updates[0]):
-                    assert not torch.equal(step_1_model_state_dict[key], start_model_state_dict[key])
+                    assert not torch.equal(
+                        step_1_model_state_dict[key], start_model_state_dict[key]
+                    )
 
                 else:
-                    assert torch.equal(step_1_model_state_dict[key], start_model_state_dict[key])
+                    assert torch.equal(
+                        step_1_model_state_dict[key], start_model_state_dict[key]
+                    )
 
             if "decoder" in key:
                 if bool(optimizer_updates[1]):
-                    assert not torch.equal(step_1_model_state_dict[key], start_model_state_dict[key])
+                    assert not torch.equal(
+                        step_1_model_state_dict[key], start_model_state_dict[key]
+                    )
 
                 else:
-                    assert torch.equal(step_1_model_state_dict[key], start_model_state_dict[key])
-            
+                    assert torch.equal(
+                        step_1_model_state_dict[key], start_model_state_dict[key]
+                    )
+
             if "discriminator" in key:
                 if bool(optimizer_updates[2]):
-                    assert not torch.equal(step_1_model_state_dict[key], start_model_state_dict[key])
+                    assert not torch.equal(
+                        step_1_model_state_dict[key], start_model_state_dict[key]
+                    )
 
                 else:
-                    assert torch.equal(step_1_model_state_dict[key], start_model_state_dict[key])
+                    assert torch.equal(
+                        step_1_model_state_dict[key], start_model_state_dict[key]
+                    )
 
     def test_eval_step(self, trainer):
 
@@ -750,9 +860,7 @@ class Test_Main_Training:
             ]
         )
 
-    def test_main_train_loop(
-        self, trainer
-    ):
+    def test_main_train_loop(self, trainer):
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 

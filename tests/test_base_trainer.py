@@ -5,7 +5,7 @@ import pytest
 import torch
 
 from pythae.customexception import ModelError
-from pythae.models import AE, AEConfig, VAE, VAEConfig, RHVAE, RHVAEConfig
+from pythae.models import AE, RHVAE, VAE, AEConfig, RHVAEConfig, VAEConfig
 from pythae.trainers import BaseTrainer, BaseTrainerConfig
 from tests.data.custom_architectures import *
 
@@ -34,12 +34,10 @@ class Test_DataLoader:
         params=[
             BaseTrainerConfig(),
             BaseTrainerConfig(
-                per_device_train_batch_size=35,
-                per_device_eval_batch_size=100
+                per_device_train_batch_size=35, per_device_eval_batch_size=100
             ),
             BaseTrainerConfig(
-                per_device_train_batch_size=3,
-                per_device_eval_batch_size=10
+                per_device_train_batch_size=3, per_device_eval_batch_size=10
             ),
         ]
     )
@@ -63,7 +61,10 @@ class Test_DataLoader:
         assert issubclass(type(train_data_loader), torch.utils.data.DataLoader)
         assert train_data_loader.dataset == train_dataset
 
-        assert train_data_loader.batch_size == trainer.training_config.per_device_train_batch_size
+        assert (
+            train_data_loader.batch_size
+            == trainer.training_config.per_device_train_batch_size
+        )
 
     def test_build_eval_data_loader(
         self, model_sample, train_dataset, training_config_batch_size
@@ -79,7 +80,10 @@ class Test_DataLoader:
         assert issubclass(type(eval_data_loader), torch.utils.data.DataLoader)
         assert eval_data_loader.dataset == train_dataset
 
-        assert eval_data_loader.batch_size == trainer.training_config.per_device_eval_batch_size
+        assert (
+            eval_data_loader.batch_size
+            == trainer.training_config.per_device_eval_batch_size
+        )
 
 
 class Test_Set_Training_config:
@@ -88,14 +92,13 @@ class Test_Set_Training_config:
             None,
             BaseTrainerConfig(),
             BaseTrainerConfig(
-                per_device_train_batch_size=10, 
+                per_device_train_batch_size=10,
                 per_device_eval_batch_size=20,
                 learning_rate=1e-5,
                 optimizer_cls="AdamW",
                 optimizer_params={"weight_decay": 0.01},
                 scheduler_cls="ExponentialLR",
-                scheduler_params={"gamma": 0.321}
-
+                scheduler_params={"gamma": 0.321},
             ),
         ]
     )
@@ -126,7 +129,6 @@ class Test_Set_Training_config:
 
 
 class Test_Build_Optimizer:
-
     def test_wrong_optimizer_cls(self):
         with pytest.raises(AttributeError):
             BaseTrainerConfig(optimizer_cls="WrongOptim")
@@ -134,8 +136,7 @@ class Test_Build_Optimizer:
     def test_wrong_optimizer_params(self):
         with pytest.raises(TypeError):
             BaseTrainerConfig(
-                optimizer_cls="Adam",
-                optimizer_params={"wrong_config": 1}
+                optimizer_cls="Adam", optimizer_params={"wrong_config": 1}
             )
 
     @pytest.fixture(params=[BaseTrainerConfig(), BaseTrainerConfig(learning_rate=1e-5)])
@@ -143,28 +144,23 @@ class Test_Build_Optimizer:
         request.param.output_dir = tmpdir.mkdir("dummy_folder")
         return request.param
 
-    @pytest.fixture(params=[
-        {
-            "optimizer_cls": "Adagrad",
-            "optimizer_params": {"lr_decay": 0.1}
-        },
-        {
-            "optimizer_cls": "AdamW",
-            "optimizer_params": {"betas": (0.1234, 0.4321)}
-        },
-        {
-            "optimizer_cls": "SGD",
-            "optimizer_params": None
-        }
-    ])
+    @pytest.fixture(
+        params=[
+            {"optimizer_cls": "Adagrad", "optimizer_params": {"lr_decay": 0.1}},
+            {"optimizer_cls": "AdamW", "optimizer_params": {"betas": (0.1234, 0.4321)}},
+            {"optimizer_cls": "SGD", "optimizer_params": None},
+        ]
+    )
     def optimizer_config(self, request, training_configs_learning_rate):
-        
+
         optimizer_config = request.param
 
         # set optim and params to training config
-        training_configs_learning_rate.optimizer_cls = optimizer_config['optimizer_cls']
-        training_configs_learning_rate.optimizer_params = optimizer_config['optimizer_params']
-        
+        training_configs_learning_rate.optimizer_cls = optimizer_config["optimizer_cls"]
+        training_configs_learning_rate.optimizer_params = optimizer_config[
+            "optimizer_params"
+        ]
+
         return optimizer_config
 
     def test_default_optimizer_building(
@@ -174,7 +170,7 @@ class Test_Build_Optimizer:
         trainer = BaseTrainer(
             model=model_sample,
             train_dataset=train_dataset,
-            training_config=training_configs_learning_rate
+            training_config=training_configs_learning_rate,
         )
 
         trainer.set_optimizer()
@@ -186,7 +182,11 @@ class Test_Build_Optimizer:
         )
 
     def test_set_custom_optimizer(
-        self, model_sample, train_dataset, training_configs_learning_rate, optimizer_config
+        self,
+        model_sample,
+        train_dataset,
+        training_configs_learning_rate,
+        optimizer_config,
     ):
 
         trainer = BaseTrainer(
@@ -197,16 +197,20 @@ class Test_Build_Optimizer:
 
         trainer.set_optimizer()
 
-        assert issubclass(type(trainer.optimizer), getattr(torch.optim, optimizer_config['optimizer_cls']))
+        assert issubclass(
+            type(trainer.optimizer),
+            getattr(torch.optim, optimizer_config["optimizer_cls"]),
+        )
         assert (
             trainer.optimizer.defaults["lr"]
             == training_configs_learning_rate.learning_rate
         )
-        if optimizer_config['optimizer_params'] is not None:
+        if optimizer_config["optimizer_params"] is not None:
             assert all(
                 [
-                    trainer.optimizer.defaults[key] == optimizer_config['optimizer_params'][key] \
-                        for key in optimizer_config['optimizer_params'].keys()
+                    trainer.optimizer.defaults[key]
+                    == optimizer_config["optimizer_params"][key]
+                    for key in optimizer_config["optimizer_params"].keys()
                 ]
             )
 
@@ -219,8 +223,7 @@ class Test_Build_Scheduler:
     def test_wrong_scheduler_params(self):
         with pytest.raises(TypeError):
             BaseTrainerConfig(
-                scheduler_cls="ReduceLROnPlateau",
-                scheduler_params={"wrong_config": 1}
+                scheduler_cls="ReduceLROnPlateau", scheduler_params={"wrong_config": 1}
             )
 
     @pytest.fixture(params=[BaseTrainerConfig(), BaseTrainerConfig(learning_rate=1e-5)])
@@ -228,45 +231,30 @@ class Test_Build_Scheduler:
         request.param.output_dir = tmpdir.mkdir("dummy_folder")
         return request.param
 
-    @pytest.fixture(params=[
-        {
-            "optimizer_cls": "Adagrad",
-            "optimizer_params": {"lr_decay": 0.1}
-        },
-        {
-            "optimizer_cls": "AdamW",
-            "optimizer_params": {"betas": (0.1234, 0.4321)}
-        },
-        {
-            "optimizer_cls": "SGD",
-            "optimizer_params": None
-        }
-    ])
+    @pytest.fixture(
+        params=[
+            {"optimizer_cls": "Adagrad", "optimizer_params": {"lr_decay": 0.1}},
+            {"optimizer_cls": "AdamW", "optimizer_params": {"betas": (0.1234, 0.4321)}},
+            {"optimizer_cls": "SGD", "optimizer_params": None},
+        ]
+    )
     def optimizer_config(self, request, training_configs_learning_rate):
-        
+
         optimizer_config = request.param
 
         # set optim and params to training config
-        training_configs_learning_rate.optimizer_cls = optimizer_config['optimizer_cls']
-        training_configs_learning_rate.optimizer_params = optimizer_config['optimizer_params']
-        
-        return optimizer_config
+        training_configs_learning_rate.optimizer_cls = optimizer_config["optimizer_cls"]
+        training_configs_learning_rate.optimizer_params = optimizer_config[
+            "optimizer_params"
+        ]
 
+        return optimizer_config
 
     @pytest.fixture(
         params=[
-            {
-                "scheduler_cls": "StepLR",
-                "scheduler_params": {"step_size": 1}
-            },
-            {
-                "scheduler_cls": "LinearLR",
-                "scheduler_params": None
-            },
-            {
-                "scheduler_cls": "ExponentialLR",
-                "scheduler_params": {"gamma": 3.14}
-            }
+            {"scheduler_cls": "StepLR", "scheduler_params": {"step_size": 1}},
+            {"scheduler_cls": "LinearLR", "scheduler_params": None},
+            {"scheduler_cls": "ExponentialLR", "scheduler_params": {"gamma": 3.14}},
         ]
     )
     def scheduler_config(self, request, training_configs_learning_rate):
@@ -274,9 +262,11 @@ class Test_Build_Scheduler:
         scheduler_config = request.param
 
         # set scheduler and params to training config
-        training_configs_learning_rate.scheduler_cls = scheduler_config['scheduler_cls']
-        training_configs_learning_rate.scheduler_params = scheduler_config['scheduler_params']
-        
+        training_configs_learning_rate.scheduler_cls = scheduler_config["scheduler_cls"]
+        training_configs_learning_rate.scheduler_params = scheduler_config[
+            "scheduler_params"
+        ]
+
         return request.param
 
     def test_default_scheduler_building(
@@ -304,38 +294,41 @@ class Test_Build_Scheduler:
         trainer = BaseTrainer(
             model=model_sample,
             train_dataset=train_dataset,
-            training_config=training_configs_learning_rate
+            training_config=training_configs_learning_rate,
         )
 
         trainer.set_optimizer()
         trainer.set_scheduler()
 
-        assert issubclass(type(trainer.scheduler), getattr(torch.optim.lr_scheduler, scheduler_config['scheduler_cls']))
-        if scheduler_config['scheduler_params'] is not None:
+        assert issubclass(
+            type(trainer.scheduler),
+            getattr(torch.optim.lr_scheduler, scheduler_config["scheduler_cls"]),
+        )
+        if scheduler_config["scheduler_params"] is not None:
             assert all(
                 [
-                    trainer.scheduler.state_dict()[key] == scheduler_config['scheduler_params'][key] \
-                        for key in scheduler_config['scheduler_params'].keys()
+                    trainer.scheduler.state_dict()[key]
+                    == scheduler_config["scheduler_params"][key]
+                    for key in scheduler_config["scheduler_params"].keys()
                 ]
             )
 
 
 class Test_Device_Checks:
-
     def test_set_environ_variable(self):
-        os.environ["LOCAL_RANK"] = '1'
-        os.environ["WORLD_SIZE"] = '4'
-        os.environ["RANK"] = '3'
-        os.environ["MASTER_ADDR"] = '314'
-        os.environ["MASTER_PORT"] = '222'
+        os.environ["LOCAL_RANK"] = "1"
+        os.environ["WORLD_SIZE"] = "4"
+        os.environ["RANK"] = "3"
+        os.environ["MASTER_ADDR"] = "314"
+        os.environ["MASTER_PORT"] = "222"
 
         trainer_config = BaseTrainerConfig()
 
         assert int(trainer_config.local_rank) == 1
         assert int(trainer_config.world_size) == 4
         assert int(trainer_config.rank) == 3
-        assert trainer_config.master_addr == '314'
-        assert trainer_config.master_port == '222'
+        assert trainer_config.master_addr == "314"
+        assert trainer_config.master_port == "222"
 
         del os.environ["LOCAL_RANK"]
         del os.environ["WORLD_SIZE"]
@@ -491,14 +484,20 @@ class Test_Sanity_Checks:
     def test_raises_sanity_check_error(self, rhvae, train_dataset, training_config):
         with pytest.raises(ModelError):
             _ = BaseTrainer(
-                model=rhvae, train_dataset=train_dataset, training_config=training_config
+                model=rhvae,
+                train_dataset=train_dataset,
+                training_config=training_config,
             )
 
 
 @pytest.mark.slow
 class Test_Main_Training:
     @pytest.fixture(
-        params=[BaseTrainerConfig(num_epochs=3, steps_saving=2, steps_predict=2, learning_rate=1e-5)]
+        params=[
+            BaseTrainerConfig(
+                num_epochs=3, steps_saving=2, steps_predict=2, learning_rate=1e-5
+            )
+        ]
     )
     def training_configs(self, tmpdir, request):
         tmpdir.mkdir("dummy_folder")
@@ -565,65 +564,48 @@ class Test_Main_Training:
 
         return model
 
-    @pytest.fixture(params=[
-        {
-            "optimizer_cls": "Adagrad",
-            "optimizer_params": {"lr_decay": 0.1}
-        },
-        {
-            "optimizer_cls": "AdamW",
-            "optimizer_params": {"betas": (0.1234, 0.4321)}
-        },
-        {
-            "optimizer_cls": "SGD",
-            "optimizer_params": None
-        }
-    ])
+    @pytest.fixture(
+        params=[
+            {"optimizer_cls": "Adagrad", "optimizer_params": {"lr_decay": 0.1}},
+            {"optimizer_cls": "AdamW", "optimizer_params": {"betas": (0.1234, 0.4321)}},
+            {"optimizer_cls": "SGD", "optimizer_params": None},
+        ]
+    )
     def optimizer_config(self, request):
         return request.param
 
-
     @pytest.fixture(
         params=[
-            {
-                "scheduler_cls": "StepLR",
-                "scheduler_params": {"step_size": 0.1}
-            },
-            {
-                "scheduler_cls": "ReduceLROnPlateau",
-                "scheduler_params": None
-            },
-            {
-                "scheduler_cls": None,
-                "scheduler_params": None
-            }
+            {"scheduler_cls": "StepLR", "scheduler_params": {"step_size": 0.1}},
+            {"scheduler_cls": "ReduceLROnPlateau", "scheduler_params": None},
+            {"scheduler_cls": None, "scheduler_params": None},
         ]
     )
-    def scheduler_config(self, request):   
+    def scheduler_config(self, request):
         return request.param
 
     @pytest.fixture
-    def trainer(self, ae, train_dataset, optimizer_config, scheduler_config, training_configs):
+    def trainer(
+        self, ae, train_dataset, optimizer_config, scheduler_config, training_configs
+    ):
 
-        training_configs.optimizer_cls = optimizer_config['optimizer_cls']
-        training_configs.optimizer_params = optimizer_config['optimizer_params']
-        training_configs.scheduler_cls = scheduler_config['scheduler_cls']
-        training_configs.scheduler_params = scheduler_config['scheduler_params']
+        training_configs.optimizer_cls = optimizer_config["optimizer_cls"]
+        training_configs.optimizer_params = optimizer_config["optimizer_params"]
+        training_configs.scheduler_cls = scheduler_config["scheduler_cls"]
+        training_configs.scheduler_params = scheduler_config["scheduler_params"]
 
         trainer = BaseTrainer(
             model=ae,
             train_dataset=train_dataset,
             eval_dataset=train_dataset,
-            training_config=training_configs
+            training_config=training_configs,
         )
 
         trainer.prepare_training()
 
         return trainer
 
-    def test_train_step(
-        self, trainer
-    ):
+    def test_train_step(self, trainer):
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -634,14 +616,16 @@ class Test_Main_Training:
         # check that weights were updated
         for key in start_model_state_dict.keys():
             if "encoder" in key:
-                assert not torch.equal(step_1_model_state_dict[key], start_model_state_dict[key]), key
+                assert not torch.equal(
+                    step_1_model_state_dict[key], start_model_state_dict[key]
+                ), key
 
             if "decoder" in key:
-                assert not torch.equal(step_1_model_state_dict[key], start_model_state_dict[key])
+                assert not torch.equal(
+                    step_1_model_state_dict[key], start_model_state_dict[key]
+                )
 
-    def test_eval_step(
-        self, trainer
-    ):
+    def test_eval_step(self, trainer):
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -657,21 +641,16 @@ class Test_Main_Training:
             ]
         )
 
-    def test_predict_step(
-        self, trainer
-    ):
+    def test_predict_step(self, trainer):
 
         _ = deepcopy(trainer.model.state_dict())
 
         true_data, recon, gene = trainer.predict(trainer.model)
 
-
         assert true_data.reshape(3, -1).shape == recon.reshape(3, -1).shape
         assert gene.reshape(3, -1).shape[1:] == true_data.reshape(3, -1).shape[1:]
 
-    def test_main_train_loop(
-        self, trainer, training_configs
-    ):
+    def test_main_train_loop(self, trainer, training_configs):
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -682,13 +661,20 @@ class Test_Main_Training:
         # check that weights were updated
         for key in start_model_state_dict.keys():
             if "encoder" in key:
-                assert not torch.equal(step_1_model_state_dict[key], start_model_state_dict[key])
+                assert not torch.equal(
+                    step_1_model_state_dict[key], start_model_state_dict[key]
+                )
 
             if "decoder" in key:
-                assert not torch.equal(step_1_model_state_dict[key], start_model_state_dict[key])
+                assert not torch.equal(
+                    step_1_model_state_dict[key], start_model_state_dict[key]
+                )
 
         # check changed lr with custom schedulers
-        if type(trainer.scheduler) != torch.optim.lr_scheduler.ReduceLROnPlateau and trainer.scheduler is not None:
+        if (
+            type(trainer.scheduler) != torch.optim.lr_scheduler.ReduceLROnPlateau
+            and trainer.scheduler is not None
+        ):
             assert training_configs.learning_rate != trainer.scheduler.get_last_lr()
 
 

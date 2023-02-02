@@ -141,7 +141,8 @@ To launch a model training, you only need to call a `TrainingPipeline` instance.
 ...	output_dir='my_model',
 ...	num_epochs=50,
 ...	learning_rate=1e-3,
-...	batch_size=200,
+...	per_device_train_batch_size=200,
+... per_device_eval_batch_size=200,
 ...	steps_saving=None
 ... )
 >>> # Set up the model configuration 

@@ -5,14 +5,13 @@ from typing import List
 
 import numpy as np
 import torch
+import torch.nn as nn
 
 from pythae.data.preprocessors import DataProcessor
-from pythae.trainers import BaseTrainer, BaseTrainerConfig
 from pythae.models import RAE_GP, RAE_GP_Config
-from pythae.models.nn import BaseEncoder, BaseDecoder
-import torch.nn as nn
 from pythae.models.base.base_utils import ModelOutput
-
+from pythae.models.nn import BaseDecoder, BaseEncoder
+from pythae.trainers import BaseTrainer, BaseTrainerConfig
 
 logger = logging.getLogger(__name__)
 console = logging.StreamHandler()
@@ -23,7 +22,7 @@ PATH = os.path.dirname(os.path.abspath(__file__))
 
 ap = argparse.ArgumentParser()
 
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
+device = "cuda" if torch.cuda.is_available() else "cpu"
 
 ap.add_argument(
     "--model_config",
@@ -153,8 +152,7 @@ class Decoder(BaseDecoder):
 
         layers.append(
             nn.Sequential(
-                nn.ConvTranspose2d(128, self.n_channels, 5, 1, padding=1),
-                nn.Sigmoid()
+                nn.ConvTranspose2d(128, self.n_channels, 5, 1, padding=1), nn.Sigmoid()
             )
         )
 
@@ -199,18 +197,13 @@ class Decoder(BaseDecoder):
         return output
 
 
-
 def main(args):
 
     train_data = (
-        np.load(os.path.join(PATH, f"data/celeba", "train_data.npz"))[
-            "data"
-        ]
-        / 255.0
+        np.load(os.path.join(PATH, f"data/celeba", "train_data.npz"))["data"] / 255.0
     )
     eval_data = (
-        np.load(os.path.join(PATH, f"data/celeba", "eval_data.npz"))["data"]
-        / 255.0
+        np.load(os.path.join(PATH, f"data/celeba", "eval_data.npz"))["data"] / 255.0
     )
 
     data_input_dim = tuple(train_data.shape[1:])
@@ -247,8 +240,8 @@ def main(args):
 
     ### Scheduler
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-            optimizer, factor=0.5, patience=5, verbose=True
-        )
+        optimizer, factor=0.5, patience=5, verbose=True
+    )
 
     seed = 123
     torch.manual_seed(seed)
@@ -266,6 +259,7 @@ def main(args):
     )
 
     trainer.train()
+
 
 if __name__ == "__main__":
 

@@ -1,20 +1,21 @@
+import os
+from collections import Counter
+
 import pytest
 import torch
-import os
 
-from pythae.trainers.training_callbacks import *
-from collections import Counter
-from pythae.trainers import *
 from pythae.models import (
     AE,
-    AEConfig,
     RAE_L2,
-    RAE_L2_Config,
+    VAEGAN,
     Adversarial_AE,
     Adversarial_AE_Config,
-    VAEGAN,
+    AEConfig,
+    RAE_L2_Config,
     VAEGANConfig,
 )
+from pythae.trainers import *
+from pythae.trainers.training_callbacks import *
 
 PATH = os.path.dirname(os.path.abspath(__file__))
 
@@ -110,9 +111,7 @@ def init_callback():
 
 @pytest.fixture()
 def dummy_handler(init_callback):
-    return CallbackHandler(
-        callbacks=[init_callback], model=None
-    )
+    return CallbackHandler(callbacks=[init_callback], model=None)
 
 
 @pytest.fixture(params=[MetricConsolePrinterCallback(), CustomCallback()])

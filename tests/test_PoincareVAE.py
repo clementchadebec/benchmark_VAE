@@ -5,31 +5,61 @@ import pytest
 import torch
 
 from pythae.customexception import BadInheritanceError
+from pythae.models import AutoModel, PoincareVAE, PoincareVAEConfig
 from pythae.models.base.base_utils import ModelOutput
-from pythae.models import PoincareVAE, PoincareVAEConfig, AutoModel
 from pythae.models.pvae.pvae_utils import PoincareBall
-from pythae.samplers import PoincareDiskSamplerConfig, NormalSamplerConfig, GaussianMixtureSamplerConfig, MAFSamplerConfig, TwoStageVAESamplerConfig, IAFSamplerConfig
+from pythae.pipelines import GenerationPipeline, TrainingPipeline
+from pythae.samplers import (
+    GaussianMixtureSamplerConfig,
+    IAFSamplerConfig,
+    MAFSamplerConfig,
+    NormalSamplerConfig,
+    PoincareDiskSamplerConfig,
+    TwoStageVAESamplerConfig,
+)
 from pythae.trainers import BaseTrainer, BaseTrainerConfig
-from pythae.pipelines import TrainingPipeline, GenerationPipeline
 from tests.data.custom_architectures import (
     Decoder_AE_Conv,
-    Encoder_VAE_Conv,
     Encoder_SVAE_Conv,
+    Encoder_VAE_Conv,
     NetBadInheritance,
 )
 
 PATH = os.path.dirname(os.path.abspath(__file__))
 
 
-@pytest.fixture(params=[PoincareVAEConfig(), PoincareVAEConfig(latent_dim=5, prior_distribution="wrapped_normal", posterior_distribution="riemannian_normal", curvature=0.5)])
+@pytest.fixture(
+    params=[
+        PoincareVAEConfig(),
+        PoincareVAEConfig(
+            latent_dim=5,
+            prior_distribution="wrapped_normal",
+            posterior_distribution="riemannian_normal",
+            curvature=0.5,
+        ),
+    ]
+)
 def model_configs_no_input_dim(request):
     return request.param
 
 
 @pytest.fixture(
     params=[
-        PoincareVAEConfig(input_dim=(1, 28, 28), latent_dim=2, reconstruction_loss="bce", prior_distribution="wrapped_normal", posterior_distribution="wrapped_normal", curvature=0.7),
-        PoincareVAEConfig(input_dim=(1, 28), latent_dim=5, prior_distribution="riemannian_normal", posterior_distribution="riemannian_normal", curvature=0.8),
+        PoincareVAEConfig(
+            input_dim=(1, 28, 28),
+            latent_dim=2,
+            reconstruction_loss="bce",
+            prior_distribution="wrapped_normal",
+            posterior_distribution="wrapped_normal",
+            curvature=0.7,
+        ),
+        PoincareVAEConfig(
+            input_dim=(1, 28),
+            latent_dim=5,
+            prior_distribution="riemannian_normal",
+            posterior_distribution="riemannian_normal",
+            curvature=0.8,
+        ),
     ]
 )
 def model_configs(request):
@@ -87,7 +117,9 @@ class Test_Model_Building:
 
     def test_build_custom_arch(self, model_configs, custom_encoder, custom_decoder):
 
-        model = PoincareVAE(model_configs, encoder=custom_encoder, decoder=custom_decoder)
+        model = PoincareVAE(
+            model_configs, encoder=custom_encoder, decoder=custom_decoder
+        )
 
         assert model.encoder == custom_encoder
         assert not model.model_config.uses_default_encoder
@@ -107,7 +139,7 @@ class Test_Model_Building:
         assert not model.model_config.uses_default_decoder
 
     def test_misc_manifold_func(self):
-        
+
         manifold = PoincareBall(dim=2, c=0.7)
         x = torch.randn(10, 2)
         y = torch.randn(10, 2)
@@ -116,7 +148,6 @@ class Test_Model_Building:
         manifold.transp0(x, y)
         manifold.normdist2plane(x, x, x)
         manifold.normdist2plane(x, x, x, signed=True, norm=True)
-
 
 
 class Test_Model_Saving:
@@ -131,7 +162,9 @@ class Test_Model_Saving:
 
         model.save(dir_path=dir_path)
 
-        assert set(os.listdir(dir_path)) == set(["model_config.json", "model.pt", "environment.json"])
+        assert set(os.listdir(dir_path)) == set(
+            ["model_config.json", "model.pt", "environment.json"]
+        )
 
         # reload model
         model_rec = AutoModel.load_from_folder(dir_path)
@@ -209,7 +242,9 @@ class Test_Model_Saving:
         tmpdir.mkdir("dummy_folder")
         dir_path = dir_path = os.path.join(tmpdir, "dummy_folder")
 
-        model = PoincareVAE(model_configs, encoder=custom_encoder, decoder=custom_decoder)
+        model = PoincareVAE(
+            model_configs, encoder=custom_encoder, decoder=custom_decoder
+        )
 
         model.state_dict()["encoder.layers.0.0.weight"][0] = 0
 
@@ -221,7 +256,7 @@ class Test_Model_Saving:
                 "model.pt",
                 "encoder.pkl",
                 "decoder.pkl",
-                "environment.json"
+                "environment.json",
             ]
         )
 
@@ -245,7 +280,9 @@ class Test_Model_Saving:
         tmpdir.mkdir("dummy_folder")
         dir_path = dir_path = os.path.join(tmpdir, "dummy_folder")
 
-        model = PoincareVAE(model_configs, encoder=custom_encoder, decoder=custom_decoder)
+        model = PoincareVAE(
+            model_configs, encoder=custom_encoder, decoder=custom_decoder
+        )
 
         model.state_dict()["encoder.layers.0.0.weight"][0] = 0
 
@@ -304,14 +341,15 @@ class Test_Model_forward:
         assert out.z.shape[0] == demo_data["data"].shape[0]
         assert out.recon_x.shape == demo_data["data"].shape
 
+
 class Test_Model_interpolate:
     @pytest.fixture(
         params=[
             torch.randn(3, 2, 3, 1),
             torch.randn(3, 2, 2),
-            torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))[
-            :
-        ]['data']
+            torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))[:][
+                "data"
+            ],
         ]
     )
     def demo_data(self, request):
@@ -326,23 +364,30 @@ class Test_Model_interpolate:
         model_configs.input_dim = tuple(demo_data[0].shape)
         return PoincareVAE(model_configs)
 
-
     def test_interpolate(self, ae, demo_data, granularity):
         with pytest.raises(AssertionError):
             ae.interpolate(demo_data, demo_data[1:], granularity)
 
         interp = ae.interpolate(demo_data, demo_data, granularity)
 
-        assert tuple(interp.shape) == (demo_data.shape[0], granularity,) + (demo_data.shape[1:])
+        assert (
+            tuple(interp.shape)
+            == (
+                demo_data.shape[0],
+                granularity,
+            )
+            + (demo_data.shape[1:])
+        )
+
 
 class Test_Model_reconstruct:
     @pytest.fixture(
         params=[
             torch.randn(3, 2, 3, 1),
             torch.randn(3, 2, 2),
-            torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))[
-            :
-        ]['data']
+            torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))[:][
+                "data"
+            ],
         ]
     )
     def demo_data(self, request):
@@ -353,9 +398,8 @@ class Test_Model_reconstruct:
         model_configs.input_dim = tuple(demo_data[0].shape)
         return PoincareVAE(model_configs)
 
-
     def test_reconstruct(self, ae, demo_data):
-      
+
         recon = ae.reconstruct(demo_data)
         assert tuple(recon.shape) == demo_data.shape
 
@@ -425,7 +469,9 @@ class Test_VAE_Training:
             model = PoincareVAE(model_configs, decoder=custom_decoder)
 
         else:
-            model = PoincareVAE(model_configs, encoder=custom_encoder, decoder=custom_decoder)
+            model = PoincareVAE(
+                model_configs, encoder=custom_encoder, decoder=custom_decoder
+            )
 
         return model
 
@@ -435,7 +481,7 @@ class Test_VAE_Training:
             model=vae,
             train_dataset=train_dataset,
             eval_dataset=train_dataset,
-            training_config=training_configs
+            training_config=training_configs,
         )
 
         trainer.prepare_training()
@@ -474,9 +520,7 @@ class Test_VAE_Training:
             ]
         )
 
-    def test_vae_predict_step(
-        self, trainer, train_dataset
-    ):
+    def test_vae_predict_step(self, trainer, train_dataset):
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -494,11 +538,9 @@ class Test_VAE_Training:
 
         assert torch.equal(inputs.cpu(), train_dataset.data.cpu())
         assert recon.shape == inputs.shape
-        assert generated.shape == inputs.shape 
+        assert generated.shape == inputs.shape
 
-    def test_vae_main_train_loop(
-        self, trainer
-    ):
+    def test_vae_main_train_loop(self, trainer):
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -514,9 +556,7 @@ class Test_VAE_Training:
             ]
         )
 
-    def test_checkpoint_saving(
-        self, vae, trainer, training_configs
-    ):
+    def test_checkpoint_saving(self, vae, trainer, training_configs):
 
         dir_path = training_configs.output_dir
 
@@ -601,9 +641,7 @@ class Test_VAE_Training:
             ]
         )
 
-    def test_checkpoint_saving_during_training(
-        self, vae, trainer, training_configs
-    ):
+    def test_checkpoint_saving_during_training(self, vae, trainer, training_configs):
         #
         target_saving_epoch = training_configs.steps_saving
 
@@ -656,9 +694,7 @@ class Test_VAE_Training:
             ]
         )
 
-    def test_final_model_saving(
-        self, vae, trainer, training_configs
-    ):
+    def test_final_model_saving(self, vae, trainer, training_configs):
 
         dir_path = training_configs.output_dir
 
@@ -769,15 +805,30 @@ class Test_VAE_Training:
         assert type(model_rec.encoder.cpu()) == type(model.encoder.cpu())
         assert type(model_rec.decoder.cpu()) == type(model.decoder.cpu())
 
+
 class Test_VAE_Generation:
     @pytest.fixture
     def train_data(self):
-        return torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample")).data
+        return torch.load(
+            os.path.join(PATH, "data/mnist_clean_train_dataset_sample")
+        ).data
 
-    @pytest.fixture(params=[
-        PoincareVAEConfig(input_dim=(1, 28, 28), latent_dim=7, prior_distribution="wrapped_normal", curvature=0.2),
-        PoincareVAEConfig(input_dim=(1, 28, 28), latent_dim=2, prior_distribution="riemannian_normal", curvature=0.7)
-    ])
+    @pytest.fixture(
+        params=[
+            PoincareVAEConfig(
+                input_dim=(1, 28, 28),
+                latent_dim=7,
+                prior_distribution="wrapped_normal",
+                curvature=0.2,
+            ),
+            PoincareVAEConfig(
+                input_dim=(1, 28, 28),
+                latent_dim=2,
+                prior_distribution="riemannian_normal",
+                curvature=0.7,
+            ),
+        ]
+    )
     def ae_config(self, request):
         return request.param
 
@@ -792,7 +843,7 @@ class Test_VAE_Generation:
             GaussianMixtureSamplerConfig(),
             MAFSamplerConfig(),
             IAFSamplerConfig(),
-            TwoStageVAESamplerConfig()
+            TwoStageVAESamplerConfig(),
         ]
     )
     def sampler_configs(self, request):
@@ -807,7 +858,7 @@ class Test_VAE_Generation:
             return_gen=True,
             train_data=train_data,
             eval_data=train_data,
-            training_config=BaseTrainerConfig(num_epochs=1)
+            training_config=BaseTrainerConfig(num_epochs=1),
         )
 
         assert gen_data.shape[0] == 11

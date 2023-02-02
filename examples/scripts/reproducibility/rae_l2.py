@@ -5,16 +5,14 @@ from typing import List
 
 import numpy as np
 import torch
+import torch.nn as nn
 
 from pythae.data.preprocessors import DataProcessor
 from pythae.models import RAE_L2, RAE_L2_Config
+from pythae.models.base.base_utils import ModelOutput
+from pythae.models.nn import BaseDecoder, BaseEncoder
 from pythae.models.rhvae import RHVAEConfig
 from pythae.trainers import BaseTrainerConfig, CoupledOptimizerTrainer
-
-from pythae.models.nn import BaseEncoder, BaseDecoder
-import torch.nn as nn
-from pythae.models.base.base_utils import ModelOutput
-
 
 logger = logging.getLogger(__name__)
 console = logging.StreamHandler()
@@ -25,7 +23,7 @@ PATH = os.path.dirname(os.path.abspath(__file__))
 
 ap = argparse.ArgumentParser()
 
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
+device = "cuda" if torch.cuda.is_available() else "cpu"
 
 ap.add_argument(
     "--model_config",
@@ -155,8 +153,7 @@ class Decoder(BaseDecoder):
 
         layers.append(
             nn.Sequential(
-                nn.ConvTranspose2d(128, self.n_channels, 5, 1, padding=1),
-                nn.Sigmoid()
+                nn.ConvTranspose2d(128, self.n_channels, 5, 1, padding=1), nn.Sigmoid()
             )
         )
 
@@ -201,20 +198,15 @@ class Decoder(BaseDecoder):
         return output
 
 
-
 def main(args):
 
     train_data = (
-        np.load(os.path.join(PATH, f"data/celeba", "train_data.npz"))[
-            "data"
-        ]
-        / 255.0
+        np.load(os.path.join(PATH, f"data/celeba", "train_data.npz"))["data"] / 255.0
     )
     eval_data = (
-        np.load(os.path.join(PATH, f"data/celeba", "eval_data.npz"))["data"]
-        / 255.0
+        np.load(os.path.join(PATH, f"data/celeba", "eval_data.npz"))["data"] / 255.0
     )
-          
+
     data_input_dim = tuple(train_data.shape[1:])
 
     if args.model_config is not None:
@@ -245,22 +237,28 @@ def main(args):
     eval_dataset = data_processor.to_dataset(eval_data)
 
     ### Optimizers
-    enc_optimizer = torch.optim.Adam(model.encoder.parameters(), lr=training_config.learning_rate)
-    dec_optimizer = torch.optim.Adam(model.decoder.parameters(), lr=training_config.learning_rate, weight_decay=model_config.reg_weight)
+    enc_optimizer = torch.optim.Adam(
+        model.encoder.parameters(), lr=training_config.learning_rate
+    )
+    dec_optimizer = torch.optim.Adam(
+        model.decoder.parameters(),
+        lr=training_config.learning_rate,
+        weight_decay=model_config.reg_weight,
+    )
 
     ### Schedulers
     enc_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-            enc_optimizer, factor=0.5, patience=5, verbose=True
-        )
+        enc_optimizer, factor=0.5, patience=5, verbose=True
+    )
     dec_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-            enc_optimizer, factor=0.5, patience=5, verbose=True
-        )
+        enc_optimizer, factor=0.5, patience=5, verbose=True
+    )
 
     seed = 123
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
 
-    #logger.info("Using Base Trainer\n")
+    # logger.info("Using Base Trainer\n")
     trainer = CoupledOptimizerTrainer(
         model=model,
         train_dataset=train_dataset,
@@ -276,6 +274,7 @@ def main(args):
     print(trainer.scheduler)
 
     trainer.train()
+
 
 if __name__ == "__main__":
 

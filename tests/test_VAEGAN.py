@@ -1,25 +1,31 @@
 import os
-import numpy as np
 from copy import deepcopy
 
+import numpy as np
 import pytest
 import torch
 from torch.optim import Adam
 
 from pythae.customexception import BadInheritanceError
+from pythae.models import VAEGAN, AutoModel, VAEGANConfig
 from pythae.models.base.base_utils import ModelOutput
-from pythae.models import VAEGAN, VAEGANConfig, AutoModel
+from pythae.pipelines import GenerationPipeline, TrainingPipeline
+from pythae.samplers import (
+    GaussianMixtureSamplerConfig,
+    IAFSamplerConfig,
+    MAFSamplerConfig,
+    NormalSamplerConfig,
+    TwoStageVAESamplerConfig,
+)
 from pythae.trainers import (
+    BaseTrainerConfig,
     CoupledOptimizerAdversarialTrainer,
     CoupledOptimizerAdversarialTrainerConfig,
-    BaseTrainerConfig,
 )
-from pythae.pipelines import TrainingPipeline, GenerationPipeline
-from pythae.samplers import NormalSamplerConfig, GaussianMixtureSamplerConfig, MAFSamplerConfig, TwoStageVAESamplerConfig, IAFSamplerConfig
 from tests.data.custom_architectures import (
     Decoder_AE_Conv,
-    Encoder_VAE_Conv,
     Discriminator_MLP_Custom,
+    Encoder_VAE_Conv,
     NetBadInheritance,
 )
 
@@ -171,7 +177,9 @@ class Test_Model_Saving:
 
         model.save(dir_path=dir_path)
 
-        assert set(os.listdir(dir_path)) == set(["model_config.json", "model.pt", "environment.json"])
+        assert set(os.listdir(dir_path)) == set(
+            ["model_config.json", "model.pt", "environment.json"]
+        )
 
         # reload model
         model_rec = AutoModel.load_from_folder(dir_path)
@@ -302,7 +310,7 @@ class Test_Model_Saving:
                 "encoder.pkl",
                 "decoder.pkl",
                 "discriminator.pkl",
-                "environment.json"
+                "environment.json",
             ]
         )
 
@@ -398,32 +406,36 @@ class Test_Model_forward:
 
         assert isinstance(out, ModelOutput)
 
-        assert set(
-            [
-                "loss",
-                "recon_loss",
-                "encoder_loss",
-                "decoder_loss",
-                "discriminator_loss",
-                "recon_x",
-                "z",
-                "update_discriminator",
-                "update_encoder",
-                "update_decoder",
-            ]
-        ) == set(out.keys())
+        assert (
+            set(
+                [
+                    "loss",
+                    "recon_loss",
+                    "encoder_loss",
+                    "decoder_loss",
+                    "discriminator_loss",
+                    "recon_x",
+                    "z",
+                    "update_discriminator",
+                    "update_encoder",
+                    "update_decoder",
+                ]
+            )
+            == set(out.keys())
+        )
 
         assert out.z.shape[0] == demo_data["data"].shape[0]
         assert out.recon_x.shape == demo_data["data"].shape
+
 
 class Test_Model_interpolate:
     @pytest.fixture(
         params=[
             torch.randn(3, 2, 3, 1),
             torch.randn(3, 2, 2),
-            torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))[
-            :
-        ]['data']
+            torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))[:][
+                "data"
+            ],
         ]
     )
     def demo_data(self, request):
@@ -438,23 +450,30 @@ class Test_Model_interpolate:
         model_configs.input_dim = tuple(demo_data[0].shape)
         return VAEGAN(model_configs)
 
-
     def test_interpolate(self, ae, demo_data, granularity):
         with pytest.raises(AssertionError):
             ae.interpolate(demo_data, demo_data[1:], granularity)
 
         interp = ae.interpolate(demo_data, demo_data, granularity)
 
-        assert tuple(interp.shape) == (demo_data.shape[0], granularity,) + (demo_data.shape[1:])
+        assert (
+            tuple(interp.shape)
+            == (
+                demo_data.shape[0],
+                granularity,
+            )
+            + (demo_data.shape[1:])
+        )
+
 
 class Test_Model_reconstruct:
     @pytest.fixture(
         params=[
             torch.randn(3, 2, 3, 1),
             torch.randn(3, 2, 2),
-            torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))[
-            :
-        ]['data']
+            torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))[:][
+                "data"
+            ],
         ]
     )
     def demo_data(self, request):
@@ -465,9 +484,8 @@ class Test_Model_reconstruct:
         model_configs.input_dim = tuple(demo_data[0].shape)
         return VAEGAN(model_configs)
 
-
     def test_reconstruct(self, ae, demo_data):
-      
+
         recon = ae.reconstruct(demo_data)
         assert tuple(recon.shape) == demo_data.shape
 
@@ -585,16 +603,14 @@ class Test_VAEGAN_Training:
             model=vaegan,
             train_dataset=train_dataset,
             eval_dataset=train_dataset,
-            training_config=training_configs
+            training_config=training_configs,
         )
 
         trainer.prepare_training()
 
         return trainer
 
-    def test_vaegan_train_step(
-        self, trainer
-    ):
+    def test_vaegan_train_step(self, trainer):
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -610,9 +626,7 @@ class Test_VAEGAN_Training:
             ]
         )
 
-    def test_vaegan_eval_step(
-        self, trainer
-    ):
+    def test_vaegan_eval_step(self, trainer):
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -628,9 +642,7 @@ class Test_VAEGAN_Training:
             ]
         )
 
-    def test_vaegan_predict_step(
-        self, trainer, train_dataset
-    ):
+    def test_vaegan_predict_step(self, trainer, train_dataset):
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -648,11 +660,9 @@ class Test_VAEGAN_Training:
 
         assert torch.equal(inputs.cpu(), train_dataset.data.cpu())
         assert recon.shape == inputs.shape
-        assert generated.shape == inputs.shape 
+        assert generated.shape == inputs.shape
 
-    def test_vaegan_main_train_loop(
-        self, trainer
-    ):
+    def test_vaegan_main_train_loop(self, trainer):
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -668,9 +678,7 @@ class Test_VAEGAN_Training:
             ]
         )
 
-    def test_checkpoint_saving(
-        self, vaegan, trainer, training_configs
-    ):
+    def test_checkpoint_saving(self, vaegan, trainer, training_configs):
 
         dir_path = training_configs.output_dir
 
@@ -824,9 +832,7 @@ class Test_VAEGAN_Training:
             ]
         )
 
-    def test_checkpoint_saving_during_training(
-        self, vaegan, trainer, training_configs
-    ):
+    def test_checkpoint_saving_during_training(self, vaegan, trainer, training_configs):
         #
         target_saving_epoch = training_configs.steps_saving
 
@@ -892,9 +898,7 @@ class Test_VAEGAN_Training:
             ]
         )
 
-    def test_final_model_saving(
-        self, vaegan, trainer, training_configs
-    ):
+    def test_final_model_saving(self, vaegan, trainer, training_configs):
 
         dir_path = training_configs.output_dir
 
@@ -953,9 +957,7 @@ class Test_VAEGAN_Training:
         assert type(model_rec.decoder.cpu()) == type(model.decoder.cpu())
         assert type(model_rec.discriminator.cpu()) == type(model.discriminator.cpu())
 
-    def test_vaegan_training_pipeline(
-        self, vaegan, train_dataset, training_configs
-    ):
+    def test_vaegan_training_pipeline(self, vaegan, train_dataset, training_configs):
 
         with pytest.raises(AssertionError):
             pipeline = TrainingPipeline(
@@ -1028,10 +1030,13 @@ class Test_VAEGAN_Training:
         assert type(model_rec.decoder.cpu()) == type(model.decoder.cpu())
         assert type(model_rec.discriminator.cpu()) == type(model.discriminator.cpu())
 
+
 class Test_VAEGAN_Generation:
     @pytest.fixture
     def train_data(self):
-        return torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample")).data
+        return torch.load(
+            os.path.join(PATH, "data/mnist_clean_train_dataset_sample")
+        ).data
 
     @pytest.fixture()
     def ae_model(self):
@@ -1043,7 +1048,7 @@ class Test_VAEGAN_Generation:
             GaussianMixtureSamplerConfig(),
             MAFSamplerConfig(),
             IAFSamplerConfig(),
-            TwoStageVAESamplerConfig()
+            TwoStageVAESamplerConfig(),
         ]
     )
     def sampler_configs(self, request):
@@ -1058,7 +1063,7 @@ class Test_VAEGAN_Generation:
             return_gen=True,
             train_data=train_data,
             eval_data=train_data,
-            training_config=BaseTrainerConfig(num_epochs=1)
+            training_config=BaseTrainerConfig(num_epochs=1),
         )
 
         assert gen_data.shape[0] == 11

@@ -8,7 +8,6 @@ import torch
 import torch.distributed as dist
 import torch.optim as optim
 import torch.optim.lr_scheduler as lr_scheduler
-
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data import DataLoader
 from torch.utils.data.distributed import DistributedSampler
@@ -102,7 +101,6 @@ class BaseTrainer:
         if self.distributed:
             model = DDP(model, device_ids=[self.local_rank])
 
-
         self.train_dataset = train_dataset
         self.eval_dataset = eval_dataset
         self._train_batch_size = self.training_config.per_device_train_batch_size * max(
@@ -132,13 +130,9 @@ class BaseTrainer:
         # run sanity check on the model
         if self.is_main_process:
             self._run_model_sanity_check(model, train_loader)
-            logger.info(
-                "Model passed sanity check !\n"
-                "Ready for training.\n"
-            )
+            logger.info("Model passed sanity check !\n" "Ready for training.\n")
 
         self.model = model
-        
 
     @property
     def is_main_process(self):
@@ -205,10 +199,12 @@ class BaseTrainer:
 
     def set_optimizer(self):
         optimizer_cls = getattr(optim, self.training_config.optimizer_cls)
-        
+
         if self.training_config.optimizer_params is not None:
             optimizer = optimizer_cls(
-                self.model.parameters(), lr=self.training_config.learning_rate, **self.training_config.optimizer_params
+                self.model.parameters(),
+                lr=self.training_config.learning_rate,
+                **self.training_config.optimizer_params,
             )
         else:
             optimizer = optimizer_cls(
@@ -226,9 +222,7 @@ class BaseTrainer:
                     self.optimizer, **self.training_config.scheduler_params
                 )
             else:
-                scheduler = scheduler_cls(
-                    self.optimizer
-                )
+                scheduler = scheduler_cls(self.optimizer)
 
         else:
             scheduler = None
@@ -236,7 +230,7 @@ class BaseTrainer:
         self.scheduler = scheduler
 
     def _set_output_dir(self):
-        # Create folder 
+        # Create folder
         if not os.path.exists(self.training_config.output_dir) and self.is_main_process:
             os.makedirs(self.training_config.output_dir, exist_ok=True)
             logger.info(
@@ -366,14 +360,13 @@ class BaseTrainer:
             self.scheduler.step()
 
     def prepare_training(self):
-        """Sets up the trainer for training
-        """
+        """Sets up the trainer for training"""
         # set random seed
         set_seed(self.training_config.seed)
 
         # set optimizer
         self.set_optimizer()
-        
+
         # set scheduler
         self.set_scheduler()
 
@@ -390,7 +383,7 @@ class BaseTrainer:
             log_output_dir (str): The path in which the log will be stored
         """
 
-        self.prepare_training()        
+        self.prepare_training()
 
         self.callback_handler.on_train_begin(
             training_config=self.training_config, model_config=self.model_config
@@ -415,7 +408,7 @@ class BaseTrainer:
         if log_output_dir is not None and self.is_main_process:
             log_verbose = True
             file_logger = self._get_file_logger(log_output_dir=log_output_dir)
-            
+
             file_logger.info(msg)
 
         if self.is_main_process:
@@ -496,7 +489,11 @@ class BaseTrainer:
                         file_logger.info(f"Saved checkpoint at epoch {epoch}\n")
 
             self.callback_handler.on_log(
-                self.training_config, metrics, logger=logger, global_step=epoch, rank=self.rank
+                self.training_config,
+                metrics,
+                logger=logger,
+                global_step=epoch,
+                rank=self.rank,
             )
 
         final_dir = os.path.join(self.training_dir, "final_model")
@@ -526,7 +523,7 @@ class BaseTrainer:
             training_config=self.training_config,
             eval_loader=self.eval_loader,
             epoch=epoch,
-            rank=self.rank
+            rank=self.rank,
         )
 
         self.model.eval()
@@ -575,7 +572,7 @@ class BaseTrainer:
             training_config=self.training_config,
             train_loader=self.train_loader,
             epoch=epoch,
-            rank=self.rank
+            rank=self.rank,
         )
 
         # set model in train model

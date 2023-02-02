@@ -1,13 +1,12 @@
-import pytest
 import os
-import torch
-
 
 import numpy as np
+import pytest
+import torch
 
+from pythae.models import AutoModel
 from pythae.models.base.base_utils import ModelOutput
 from pythae.models.normalizing_flows import MADE, MADEConfig
-from pythae.models import AutoModel
 
 PATH = os.path.dirname(os.path.abspath(__file__))
 
@@ -66,7 +65,9 @@ class Test_Model_Saving:
 
         model.save(dir_path=dir_path)
 
-        assert set(os.listdir(dir_path)) == set(["model_config.json", "model.pt", "environment.json"])
+        assert set(os.listdir(dir_path)) == set(
+            ["model_config.json", "model.pt", "environment.json"]
+        )
 
         # reload model
         model_rec = AutoModel.load_from_folder(dir_path)

@@ -3,9 +3,9 @@ import logging
 import os
 from copy import deepcopy
 from typing import List, Optional
-import torch.distributed as dist
 
 import torch
+import torch.distributed as dist
 import torch.optim as optim
 import torch.optim.lr_scheduler as lr_scheduler
 
@@ -64,28 +64,29 @@ class CoupledOptimizerTrainer(BaseTrainer):
             callbacks=callbacks,
         )
 
-
     def set_encoder_optimizer(self):
-        encoder_optimizer_cls = getattr(optim, self.training_config.encoder_optimizer_cls)
+        encoder_optimizer_cls = getattr(
+            optim, self.training_config.encoder_optimizer_cls
+        )
 
         if self.training_config.encoder_optimizer_params is not None:
             if self.distributed:
                 encoder_optimizer = encoder_optimizer_cls(
                     self.model.module.encoder.parameters(),
                     lr=self.training_config.encoder_learning_rate,
-                    **self.training_config.encoder_optimizer_params
+                    **self.training_config.encoder_optimizer_params,
                 )
             else:
                 encoder_optimizer = encoder_optimizer_cls(
                     self.model.encoder.parameters(),
                     lr=self.training_config.encoder_learning_rate,
-                    **self.training_config.encoder_optimizer_params
+                    **self.training_config.encoder_optimizer_params,
                 )
         else:
             if self.distributed:
                 encoder_optimizer = encoder_optimizer_cls(
                     self.model.module.encoder.parameters(),
-                    lr=self.training_config.encoder_learning_rate
+                    lr=self.training_config.encoder_learning_rate,
                 )
             else:
                 encoder_optimizer = encoder_optimizer_cls(
@@ -103,21 +104,18 @@ class CoupledOptimizerTrainer(BaseTrainer):
 
             if self.training_config.encoder_scheduler_params is not None:
                 scheduler = encoder_scheduler_cls(
-                    self.encoder_optimizer, **self.training_config.encoder_scheduler_params
+                    self.encoder_optimizer,
+                    **self.training_config.encoder_scheduler_params,
                 )
             else:
-                scheduler = encoder_scheduler_cls(
-                    self.encoder_optimizer
-                )
+                scheduler = encoder_scheduler_cls(self.encoder_optimizer)
 
         else:
             scheduler = None
 
         self.encoder_scheduler = scheduler
 
-    def set_decoder_optimizer(
-        self
-    ):
+    def set_decoder_optimizer(self):
         decoder_cls = getattr(optim, self.training_config.decoder_optimizer_cls)
 
         if self.training_config.decoder_optimizer_params is not None:
@@ -125,25 +123,25 @@ class CoupledOptimizerTrainer(BaseTrainer):
                 decoder_optimizer = decoder_cls(
                     self.model.module.decoder.parameters(),
                     lr=self.training_config.decoder_learning_rate,
-                    **self.training_config.decoder_optimizer_params
+                    **self.training_config.decoder_optimizer_params,
                 )
             else:
                 decoder_optimizer = decoder_cls(
                     self.model.decoder.parameters(),
                     lr=self.training_config.decoder_learning_rate,
-                    **self.training_config.decoder_optimizer_params
+                    **self.training_config.decoder_optimizer_params,
                 )
 
         else:
             if self.distributed:
                 decoder_optimizer = decoder_cls(
                     self.model.module.decoder.parameters(),
-                    lr=self.training_config.decoder_learning_rate
+                    lr=self.training_config.decoder_learning_rate,
                 )
             else:
                 decoder_optimizer = decoder_cls(
                     self.model.decoder.parameters(),
-                    lr=self.training_config.decoder_learning_rate
+                    lr=self.training_config.decoder_learning_rate,
                 )
 
         self.decoder_optimizer = decoder_optimizer
@@ -156,12 +154,11 @@ class CoupledOptimizerTrainer(BaseTrainer):
 
             if self.training_config.decoder_scheduler_params is not None:
                 scheduler = decoder_scheduler_cls(
-                    self.decoder_optimizer, **self.training_config.decoder_scheduler_params
+                    self.decoder_optimizer,
+                    **self.training_config.decoder_scheduler_params,
                 )
             else:
-                scheduler = decoder_scheduler_cls(
-                    self.decoder_optimizer
-                )
+                scheduler = decoder_scheduler_cls(self.decoder_optimizer)
 
         else:
             scheduler = None
@@ -209,7 +206,7 @@ class CoupledOptimizerTrainer(BaseTrainer):
             self.decoder_scheduler.step()
 
     def prepare_training(self):
-        
+
         # set random seed
         set_seed(self.training_config.seed)
 
@@ -234,7 +231,7 @@ class CoupledOptimizerTrainer(BaseTrainer):
             log_output_dir (str): The path in which the log will be stored
         """
 
-        self.prepare_training()     
+        self.prepare_training()
 
         self.callback_handler.on_train_begin(
             training_config=self.training_config, model_config=self.model_config
@@ -367,7 +364,11 @@ class CoupledOptimizerTrainer(BaseTrainer):
                         file_logger.info(f"Saved checkpoint at epoch {epoch}\n")
 
             self.callback_handler.on_log(
-                self.training_config, metrics, logger=logger, global_step=epoch, rank=self.rank
+                self.training_config,
+                metrics,
+                logger=logger,
+                global_step=epoch,
+                rank=self.rank,
             )
 
         final_dir = os.path.join(self.training_dir, "final_model")
@@ -396,7 +397,7 @@ class CoupledOptimizerTrainer(BaseTrainer):
             training_config=self.training_config,
             eval_loader=self.eval_loader,
             epoch=epoch,
-            rank=self.rank
+            rank=self.rank,
         )
 
         self.model.eval()
@@ -454,7 +455,7 @@ class CoupledOptimizerTrainer(BaseTrainer):
             training_config=self.training_config,
             train_loader=self.train_loader,
             epoch=epoch,
-            rank=self.rank
+            rank=self.rank,
         )
 
         # set model in train model

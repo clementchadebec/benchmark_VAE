@@ -1,8 +1,8 @@
 import os
-from typing import Union
-import torch.nn as nn
-
 from dataclasses import field
+from typing import Union
+
+import torch.nn as nn
 from pydantic.dataclasses import dataclass
 
 from ...config import BaseConfig
@@ -24,11 +24,11 @@ class BaseTrainerConfig(BaseConfig):
         num_epochs (int): The maximal number of epochs for training. Default: 100
         optimizer_cls (str): The name of the `torch.optim.Optimizer` used for
             training. Default: :class:`~torch.optim.Adam`.
-        optimizer_params (dict): A dict containing the parameters to use for the 
+        optimizer_params (dict): A dict containing the parameters to use for the
             `torch.optim.Optimizer`. If None, uses the default parameters. Default: None.
         scheduler_cls (str): The name of the `torch.optim.lr_scheduler` used for
             training. If None, no scheduler is used. Default None.
-        scheduler_params (dict): A dict containing the parameters to use for the 
+        scheduler_params (dict): A dict containing the parameters to use for the
             `torch.optim.le_scheduler`. If None, uses the default parameters. Default: None.
         learning_rate (int): The learning rate applied to the `Optimizer`. Default: 1e-4
         steps_saving (int): A model checkpoint will be saved every `steps_saving` epoch.
@@ -95,6 +95,7 @@ class BaseTrainerConfig(BaseConfig):
         """Check compatibilty"""
         try:
             import torch.optim as optim
+
             optimizer_cls = getattr(optim, self.optimizer_cls)
         except AttributeError as e:
             raise AttributeError(
@@ -103,7 +104,11 @@ class BaseTrainerConfig(BaseConfig):
             )
         if self.optimizer_params is not None:
             try:
-                optimizer = optimizer_cls(nn.Linear(2, 2).parameters(), lr=self.learning_rate, **self.optimizer_params)
+                optimizer = optimizer_cls(
+                    nn.Linear(2, 2).parameters(),
+                    lr=self.learning_rate,
+                    **self.optimizer_params,
+                )
             except TypeError as e:
                 raise TypeError(
                     "Error in optimizer's parameters. Check that the provided dict contains only "
@@ -112,11 +117,14 @@ class BaseTrainerConfig(BaseConfig):
                     f"Exception raised: {type(e)} with message: " + str(e)
                 ) from e
         else:
-            optimizer = optimizer_cls(nn.Linear(2, 2).parameters(), lr=self.learning_rate)
+            optimizer = optimizer_cls(
+                nn.Linear(2, 2).parameters(), lr=self.learning_rate
+            )
 
         if self.scheduler_cls is not None:
             try:
                 import torch.optim.lr_scheduler as schedulers
+
                 scheduder_cls = getattr(schedulers, self.scheduler_cls)
             except AttributeError as e:
                 raise AttributeError(

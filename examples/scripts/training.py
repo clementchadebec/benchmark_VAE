@@ -11,9 +11,9 @@ from pythae.models import RHVAE
 from pythae.models.rhvae import RHVAEConfig
 from pythae.pipelines import TrainingPipeline
 from pythae.trainers import (
+    AdversarialTrainerConfig,
     BaseTrainerConfig,
     CoupledOptimizerTrainerConfig,
-    AdversarialTrainerConfig,
 )
 
 logger = logging.getLogger(__name__)
@@ -75,7 +75,7 @@ ap.add_argument(
     "--nn",
     help="neural nets to use",
     default="convnet",
-    choices=["default", "convnet","resnet"]
+    choices=["default", "convnet", "resnet"],
 )
 ap.add_argument(
     "--training_config",
@@ -107,22 +107,45 @@ def main(args):
 
         if args.nn == "convnet":
 
-            from pythae.models.nn.benchmarks.mnist import Encoder_Conv_AE_MNIST as Encoder_AE
-            from pythae.models.nn.benchmarks.mnist import Encoder_Conv_VAE_MNIST as Encoder_VAE
-            from pythae.models.nn.benchmarks.mnist import Encoder_Conv_SVAE_MNIST as Encoder_SVAE
-            from pythae.models.nn.benchmarks.mnist import Encoder_Conv_AE_MNIST as Encoder_VQVAE
-            from pythae.models.nn.benchmarks.mnist import Decoder_Conv_AE_MNIST as Decoder_AE
-            from pythae.models.nn.benchmarks.mnist import Decoder_Conv_AE_MNIST as Decoder_VQVAE
+            from pythae.models.nn.benchmarks.mnist import (
+                Decoder_Conv_AE_MNIST as Decoder_AE,
+            )
+            from pythae.models.nn.benchmarks.mnist import (
+                Decoder_Conv_AE_MNIST as Decoder_VQVAE,
+            )
+            from pythae.models.nn.benchmarks.mnist import (
+                Encoder_Conv_AE_MNIST as Encoder_AE,
+            )
+            from pythae.models.nn.benchmarks.mnist import (
+                Encoder_Conv_AE_MNIST as Encoder_VQVAE,
+            )
+            from pythae.models.nn.benchmarks.mnist import (
+                Encoder_Conv_SVAE_MNIST as Encoder_SVAE,
+            )
+            from pythae.models.nn.benchmarks.mnist import (
+                Encoder_Conv_VAE_MNIST as Encoder_VAE,
+            )
 
         elif args.nn == "resnet":
-            from pythae.models.nn.benchmarks.mnist import Encoder_ResNet_AE_MNIST as Encoder_AE
-            from pythae.models.nn.benchmarks.mnist import Encoder_ResNet_VAE_MNIST as Encoder_VAE
-            from pythae.models.nn.benchmarks.mnist import Encoder_ResNet_SVAE_MNIST as Encoder_SVAE
-            from pythae.models.nn.benchmarks.mnist import Encoder_ResNet_VQVAE_MNIST as Encoder_VQVAE
-            from pythae.models.nn.benchmarks.mnist import Decoder_ResNet_AE_MNIST as Decoder_AE
-            from pythae.models.nn.benchmarks.mnist import Decoder_ResNet_VQVAE_MNIST as Decoder_VQVAE
-        
-        
+            from pythae.models.nn.benchmarks.mnist import (
+                Encoder_ResNet_AE_MNIST as Encoder_AE,
+            )
+            from pythae.models.nn.benchmarks.mnist import (
+                Encoder_ResNet_VAE_MNIST as Encoder_VAE,
+            )
+            from pythae.models.nn.benchmarks.mnist import (
+                Encoder_ResNet_SVAE_MNIST as Encoder_SVAE,
+            )
+            from pythae.models.nn.benchmarks.mnist import (
+                Encoder_ResNet_VQVAE_MNIST as Encoder_VQVAE,
+            )
+            from pythae.models.nn.benchmarks.mnist import (
+                Decoder_ResNet_AE_MNIST as Decoder_AE,
+            )
+            from pythae.models.nn.benchmarks.mnist import (
+                Decoder_ResNet_VQVAE_MNIST as Decoder_VQVAE,
+            )
+
         from pythae.models.nn.benchmarks.mnist import (
             Discriminator_Conv_MNIST as Discriminator,
         )
@@ -131,39 +154,87 @@ def main(args):
 
         if args.nn == "convnet":
 
-            from pythae.models.nn.benchmarks.cifar import Encoder_Conv_AE_CIFAR as Encoder_AE
-            from pythae.models.nn.benchmarks.cifar import Encoder_Conv_VAE_CIFAR as Encoder_VAE
-            from pythae.models.nn.benchmarks.cifar import Encoder_Conv_SVAE_CIFAR as Encoder_SVAE
-            from pythae.models.nn.benchmarks.cifar import Encoder_Conv_AE_CIFAR as Encoder_VQVAE
-            from pythae.models.nn.benchmarks.cifar import Decoder_Conv_AE_CIFAR as Decoder_AE
-            from pythae.models.nn.benchmarks.cifar import Decoder_Conv_AE_CIFAR as Decoder_VQVAE
+            from pythae.models.nn.benchmarks.cifar import (
+                Decoder_Conv_AE_CIFAR as Decoder_AE,
+            )
+            from pythae.models.nn.benchmarks.cifar import (
+                Decoder_Conv_AE_CIFAR as Decoder_VQVAE,
+            )
+            from pythae.models.nn.benchmarks.cifar import (
+                Encoder_Conv_AE_CIFAR as Encoder_AE,
+            )
+            from pythae.models.nn.benchmarks.cifar import (
+                Encoder_Conv_AE_CIFAR as Encoder_VQVAE,
+            )
+            from pythae.models.nn.benchmarks.cifar import (
+                Encoder_Conv_SVAE_CIFAR as Encoder_SVAE,
+            )
+            from pythae.models.nn.benchmarks.cifar import (
+                Encoder_Conv_VAE_CIFAR as Encoder_VAE,
+            )
 
         elif args.nn == "resnet":
-            from pythae.models.nn.benchmarks.cifar import Encoder_ResNet_AE_CIFAR as Encoder_AE
-            from pythae.models.nn.benchmarks.cifar import Encoder_ResNet_VAE_CIFAR as Encoder_VAE
-            from pythae.models.nn.benchmarks.cifar import Encoder_ResNet_SVAE_CIFAR as Encoder_SVAE
-            from pythae.models.nn.benchmarks.cifar import Encoder_ResNet_VQVAE_CIFAR as Encoder_VQVAE
-            from pythae.models.nn.benchmarks.cifar import Decoder_ResNet_AE_CIFAR as Decoder_AE
-            from pythae.models.nn.benchmarks.cifar import Decoder_ResNet_VQVAE_CIFAR as Decoder_VQVAE
+            from pythae.models.nn.benchmarks.cifar import (
+                Decoder_ResNet_AE_CIFAR as Decoder_AE,
+            )
+            from pythae.models.nn.benchmarks.cifar import (
+                Decoder_ResNet_VQVAE_CIFAR as Decoder_VQVAE,
+            )
+            from pythae.models.nn.benchmarks.cifar import (
+                Encoder_ResNet_AE_CIFAR as Encoder_AE,
+            )
+            from pythae.models.nn.benchmarks.cifar import (
+                Encoder_ResNet_SVAE_CIFAR as Encoder_SVAE,
+            )
+            from pythae.models.nn.benchmarks.cifar import (
+                Encoder_ResNet_VAE_CIFAR as Encoder_VAE,
+            )
+            from pythae.models.nn.benchmarks.cifar import (
+                Encoder_ResNet_VQVAE_CIFAR as Encoder_VQVAE,
+            )
 
     elif args.dataset == "celeba":
 
         if args.nn == "convnet":
 
-            from pythae.models.nn.benchmarks.celeba import Encoder_Conv_AE_CELEBA as Encoder_AE
-            from pythae.models.nn.benchmarks.celeba import Encoder_Conv_VAE_CELEBA as Encoder_VAE
-            from pythae.models.nn.benchmarks.celeba import Encoder_Conv_SVAE_CELEBA as Encoder_SVAE
-            from pythae.models.nn.benchmarks.celeba import Encoder_Conv_AE_CELEBA as Encoder_VQVAE
-            from pythae.models.nn.benchmarks.celeba import Decoder_Conv_AE_CELEBA as Decoder_AE
-            from pythae.models.nn.benchmarks.celeba import Decoder_Conv_AE_CELEBA as Decoder_VQVAE
+            from pythae.models.nn.benchmarks.celeba import (
+                Decoder_Conv_AE_CELEBA as Decoder_AE,
+            )
+            from pythae.models.nn.benchmarks.celeba import (
+                Decoder_Conv_AE_CELEBA as Decoder_VQVAE,
+            )
+            from pythae.models.nn.benchmarks.celeba import (
+                Encoder_Conv_AE_CELEBA as Encoder_AE,
+            )
+            from pythae.models.nn.benchmarks.celeba import (
+                Encoder_Conv_AE_CELEBA as Encoder_VQVAE,
+            )
+            from pythae.models.nn.benchmarks.celeba import (
+                Encoder_Conv_SVAE_CELEBA as Encoder_SVAE,
+            )
+            from pythae.models.nn.benchmarks.celeba import (
+                Encoder_Conv_VAE_CELEBA as Encoder_VAE,
+            )
 
         elif args.nn == "resnet":
-            from pythae.models.nn.benchmarks.celeba import Encoder_ResNet_AE_CELEBA as Encoder_AE
-            from pythae.models.nn.benchmarks.celeba import Encoder_ResNet_VAE_CELEBA as Encoder_VAE
-            from pythae.models.nn.benchmarks.celeba import Encoder_ResNet_SVAE_CELEBA as Encoder_SVAE
-            from pythae.models.nn.benchmarks.celeba import Encoder_ResNet_VQVAE_CELEBA as Encoder_VQVAE
-            from pythae.models.nn.benchmarks.celeba import Decoder_ResNet_AE_CELEBA as Decoder_AE
-            from pythae.models.nn.benchmarks.celeba import Decoder_ResNet_VQVAE_CELEBA as Decoder_VQVAE
+            from pythae.models.nn.benchmarks.celeba import (
+                Decoder_ResNet_AE_CELEBA as Decoder_AE,
+            )
+            from pythae.models.nn.benchmarks.celeba import (
+                Decoder_ResNet_VQVAE_CELEBA as Decoder_VQVAE,
+            )
+            from pythae.models.nn.benchmarks.celeba import (
+                Encoder_ResNet_AE_CELEBA as Encoder_AE,
+            )
+            from pythae.models.nn.benchmarks.celeba import (
+                Encoder_ResNet_SVAE_CELEBA as Encoder_SVAE,
+            )
+            from pythae.models.nn.benchmarks.celeba import (
+                Encoder_ResNet_VAE_CELEBA as Encoder_VAE,
+            )
+            from pythae.models.nn.benchmarks.celeba import (
+                Encoder_ResNet_VQVAE_CELEBA as Encoder_VQVAE,
+            )
 
     try:
         logger.info(f"\nLoading {args.dataset} data...\n")
