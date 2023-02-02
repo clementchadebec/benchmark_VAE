@@ -12,7 +12,7 @@ from pythae.data.datasets import DatasetOutput
 from pythae.data.datasets import BaseDataset
 from pythae.models import VQVAE, VQVAEConfig
 from pythae.trainers import BaseTrainer, BaseTrainerConfig
-from pythae.models.nn.benchmarks.mnist import Encoder_ResNet_AE_MNIST, Decoder_ResNet_AE_MNIST
+from pythae.models.nn.benchmarks.mnist import Encoder_ResNet_VQVAE_MNIST, Decoder_ResNet_VQVAE_MNIST
 
 logger = logging.getLogger(__name__)
 console = logging.StreamHandler()
@@ -73,8 +73,8 @@ def main(args):
         latent_dim=32
     )
 
-    encoder = Encoder_ResNet_AE_MNIST(model_config)
-    decoder= Decoder_ResNet_AE_MNIST(model_config)
+    encoder = Encoder_ResNet_VQVAE_MNIST(model_config)
+    decoder= Decoder_ResNet_VQVAE_MNIST(model_config)
 
     model = VQVAE(model_config=model_config, encoder=encoder, decoder=decoder)
 
