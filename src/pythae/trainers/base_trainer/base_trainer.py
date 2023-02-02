@@ -170,7 +170,7 @@ class BaseTrainer:
             train_sampler = None
         return DataLoader(
             dataset=train_dataset,
-            batch_size=self.training_config.per_device_train_batch_size  * min(1, self.world_size),
+            batch_size=self.training_config.per_device_train_batch_size,
             shuffle=(train_sampler is None),
             sampler=train_sampler,
         )
@@ -186,7 +186,7 @@ class BaseTrainer:
             eval_sampler = None
         return DataLoader(
             dataset=eval_dataset,
-            batch_size=self.training_config.per_device_eval_batch_size * min(1, self.world_size),
+            batch_size=self.training_config.per_device_eval_batch_size,
             shuffle=(eval_sampler is None),
             sampler=eval_sampler,
         )
@@ -586,6 +586,9 @@ class BaseTrainer:
             self._optimizers_step(model_output)
 
             loss = model_output.loss
+
+            if self.is_main_process:
+                logger.info(f"Train loss: {loss}")
 
             epoch_loss += loss.item()
 

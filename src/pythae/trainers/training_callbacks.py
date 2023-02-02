@@ -253,7 +253,7 @@ class ProgressBarCallback(TrainingCallback):
                 self.eval_progress_bar = tqdm(
                     total=len(eval_loader),
                     unit="batch",
-                    desc=f"[Process {rank}] Eval of epoch {epoch}/{training_config.num_epochs}",
+                    desc=f"Eval of epoch {epoch}/{training_config.num_epochs}",
                 )
 
     def on_train_step_end(self, training_config: BaseTrainerConfig, **kwargs):
