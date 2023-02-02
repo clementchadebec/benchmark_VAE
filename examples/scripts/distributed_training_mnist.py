@@ -1,15 +1,18 @@
 import argparse
 import logging
 import os
-from statistics import mode
+import time
 
 import hostlist
 import numpy as np
 import torch
+from torch.utils.data import Dataset
 
+from pythae.data.datasets import DatasetOutput
 from pythae.data.datasets import BaseDataset
 from pythae.models import VQVAE, VQVAEConfig
 from pythae.trainers import BaseTrainer, BaseTrainerConfig
+from pythae.models.nn.benchmarks.mnist import Encoder_ResNet_VQVAE_MNIST, Decoder_ResNet_VQVAE_MNIST
 
 logger = logging.getLogger(__name__)
 console = logging.StreamHandler()
@@ -21,16 +24,6 @@ PATH = os.path.dirname(os.path.abspath(__file__))
 ap = argparse.ArgumentParser()
 
 # Training setting
-ap.add_argument(
-    "--model_config",
-    help="path to model config file (expected json file)",
-    default=None,
-)
-ap.add_argument(
-    "--training_config",
-    help="path to training config_file (expected json file)",
-    default=os.path.join(PATH, "configs/base_training_config.json"),
-)
 ap.add_argument(
     "--use_wandb",
     help="whether to log the metrics in wandb",
@@ -50,17 +43,40 @@ ap.add_argument(
 args = ap.parse_args()
 
 
+class MNIST(Dataset):
+    def __init__(self, data):
+        self.data = data.type(torch.float)
+
+    def __len__(self):
+        return len(self.data)
+
+    def __getitem__(self, index):
+        x = self.data[index]
+        return DatasetOutput(data=x)
+
+
 def main(args):
 
-    train_data = torch.rand(10000, 2)
-    eval_data = torch.rand(10000, 2)
+    ### Load data
+    train_data = torch.tensor(
+        np.load(os.path.join(PATH, f"data/mnist", "train_data.npz"))["data"] / 255.0
+    )
+    eval_data = torch.tensor(
+        np.load(os.path.join(PATH, f"data/mnist", "eval_data.npz"))["data"] / 255.0
+    )
 
-    train_dataset = BaseDataset(train_data, labels=torch.ones(10000))
-    eval_dataset = BaseDataset(eval_data, labels=torch.ones(10000))
+    train_dataset = MNIST(train_data)
+    eval_dataset = MNIST(eval_data)
 
-    model_config = VQVAEConfig(input_dim=(2,), latent_dim=2)
+    model_config = VQVAEConfig(
+        input_dim=(1, 28, 28),
+        latent_dim=32
+    )
 
-    model = VQVAE(model_config=model_config)
+    encoder = Encoder_ResNet_VQVAE_MNIST(model_config)
+    decoder= Decoder_ResNet_VQVAE_MNIST(model_config)
+
+    model = VQVAE(model_config=model_config, encoder=encoder, decoder=decoder)
 
     gpu_ids = os.environ["SLURM_STEP_GPUS"].split(",")
 
@@ -105,7 +121,13 @@ def main(args):
         callbacks=callbacks,
     )
 
+    start_time = time.time()
+
     trainer.train()
+
+    end_time = time.time()
+
+    logger.info(f"Total execution time: {(end_time - start_time)} seconds")
 
 
 if __name__ == "__main__":

@@ -6,10 +6,11 @@ from ..ae import AEConfig
 @dataclass
 class VQVAEConfig(AEConfig):
     r"""
-    Vector Quentized VAE model config config class
+    Vector Quantized VAE model config config class
 
     Parameters:
         input_dim (tuple): The input_data dimension.
+        latent_dim (int): The latent space dimension. Default: None.
         commitment_loss_factor (float): The commitment loss factor in the loss. Default: 0.25.
         quantization_loss_factor: The quantization loss factor in the loss. Default: 1.
         num_embedding (int): The number of embedding points. Default: 512
