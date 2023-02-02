@@ -41,7 +41,7 @@ allows you to train any of these models with your own data and own Encoder and D
 - [Installation](#installation)
 - [Implemented models](#available-models) / [Implemented samplers](#available-samplers)
 - [Reproducibility statement](#reproducibility) / [Results flavor](#results)
-- [Model training](#launching-a-model-training) / [Data generation](#launching-data-generation) / [Custom network architectures](#define-you-own-autoencoder-architecture)
+- [Model training](#launching-a-model-training) / [Data generation](#launching-data-generation) / [Custom network architectures](#define-you-own-autoencoder-architecture) / [Distributed training](#distributed-training-with-pythae)
 - [Model sharing with 🤗 Hub](#sharing-your-models-with-the-huggingface-hub-) / [Experiment tracking with `wandb`](#monitoring-your-experiments-with-wandb-) / [Experiment tracking with `mlflow`](#monitoring-your-experiments-with-mlflow-) / [Experiment tracking with `comet_ml`](#monitoring-your-experiments-with-comet_ml-)
 - [Tutorials](#getting-your-hands-on-the-code) / [Documentation](https://pythae.readthedocs.io/en/latest/)
 - [Contributing 🚀](#contributing-) / [Issues 🛠️](#dealing-with-issues-%EF%B8%8F)
@@ -143,7 +143,11 @@ To launch a model training, you only need to call a `TrainingPipeline` instance.
 ...	learning_rate=1e-3,
 ...	per_device_train_batch_size=200,
 ... per_device_eval_batch_size=200,
-...	steps_saving=None
+...	steps_saving=None,
+... optimizer_cls="AdamW",
+...	optimizer_params={"weight_decay": 0.05, "betas": (0.91, 0.995)},
+...	scheduler_cls="ReduceLROnPlateau",
+...	scheduler_params={"patience": 5, "factor": 0.5}
 ... )
 >>> # Set up the model configuration 
 >>> my_vae_config = model_config = VAEConfig(
@@ -334,6 +338,27 @@ You can also find predefined neural network architectures for the most common da
 ... )
 ```
 Replace *mnist* by cifar or celeba to access to other neural nets.
+
+## Distributed Training with `Pythae`
+As of v0.1.0, Pythae now supports distributed training using PyTorch's [DDP](https://pytorch.org/docs/stable/notes/ddp.html). It allows you to train your favorite VAE faster and on larger dataset using multi-node and/or multi-gpu training.
+
+To do so, you can built a python script that will then be launched by a launcher (such as `srun` on a cluster). The only thing that is needed in the script is to specify some elements relative to the environment (such as the number of nodes/gpus) directly in the training configuration as follows
+
+```python
+training_config = BaseTrainerConfig(
+        num_epochs=10,
+        learning_rate=1e-3,
+        per_device_train_batch_size=64,
+		per_device_eval_batch_size=64,
+        world_size= # number of gpus to use (n_nodes x n_gpus_per_node),
+        rank= # process/gpu id,
+        local_rank= # node id,
+        master_addr= # master address,
+        master_port= # master port,
+    )
+```
+
+See this [example script](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/scripts/distributed_training.py) that defines a multi-gpu VQVAE training. Be carefull, the way the environnement (`world_size`, `rank` ...) may be specific to the cluster and launcher you use. 
 
 ## Sharing your models with the HuggingFace Hub 🤗
 Pythae also allows you to share your models on the [HuggingFace Hub](https://huggingface.co/models). To do so you need:

@@ -58,40 +58,6 @@ def main(args):
     train_dataset = BaseDataset(train_data, labels=torch.ones(10000))
     eval_dataset = BaseDataset(eval_data, labels=torch.ones(10000))
 
-    # try:
-    #    logger.info(f"\nLoading celeba data...\n")
-    #    train_data = (
-    #        np.load(os.path.join(PATH, f"data/celeba", "train_data.npz"))[
-    #            "data"
-    #        ]
-    #        / 255.0
-    #    )
-    #    eval_data = (
-    #        np.load(os.path.join(PATH, f"data/celeba", "eval_data.npz"))["data"]
-    #        / 255.0
-    #    )
-    # except Exception as e:
-    #    raise FileNotFoundError(
-    #        f"Unable to load the data from 'data/{args.dataset}' folder. Please check that both a "
-    #        "'train_data.npz' and 'eval_data.npz' are present in the folder.\n Data must be "
-    #        " under the key 'data', in the range [0-255] and shaped with channel in first "
-    #        "position\n"
-    #        f"Exception raised: {type(e)} with message: " + str(e)
-    #    ) from e
-
-    # logger.info("Successfully loaded data !\n")
-    # logger.info("------------------------------------------------------------")
-    # logger.info("Dataset \t \t Shape \t \t \t Range")
-    # logger.info(
-    #    f"{args.dataset.upper()} train data: \t {train_data.shape} \t [{train_data.min()}-{train_data.max()}] "
-    # )
-    # logger.info(
-    #    f"{args.dataset.upper()} eval data: \t {eval_data.shape} \t [{eval_data.min()}-{eval_data.max()}]"
-    # )
-    # logger.info("------------------------------------------------------------\n")
-    #
-    # data_input_dim = tuple(train_data.shape[1:])
-
     model_config = VQVAEConfig(input_dim=(2,), latent_dim=2)
 
     model = VQVAE(model_config=model_config)

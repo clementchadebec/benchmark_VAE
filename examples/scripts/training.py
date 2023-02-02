@@ -1,14 +1,9 @@
 import argparse
-import importlib
 import logging
 import os
 
 import numpy as np
-import torch
 
-from pythae.data.preprocessors import DataProcessor
-from pythae.models import RHVAE
-from pythae.models.rhvae import RHVAEConfig
 from pythae.pipelines import TrainingPipeline
 from pythae.trainers import (
     AdversarialTrainerConfig,
