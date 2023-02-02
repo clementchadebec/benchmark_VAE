@@ -85,7 +85,7 @@ def main(args):
         output_dir="my_models_on_mnist",
         per_device_train_batch_size = 1024 / int(os.environ["SLURM_NTASKS"]),
         per_device_eval_batch_size = 1024 / int(os.environ["SLURM_NTASKS"]),
-        learning_rate=1e-3,
+        learning_rate=1e-4,
         steps_saving=None,
         steps_predict=None,
         no_cuda=False,
