@@ -97,9 +97,8 @@ class QuantizerEMA(nn.Module):
 
         self.register_buffer("cluster_size", torch.zeros(self.num_embeddings))
 
-        self.ema_embed = nn.Parameter(
-            torch.Tensor(self.num_embeddings, self.embedding_dim)
-        )
+        self.ema_embed = torch.Tensor(self.num_embeddings, self.embedding_dim)
+        
 
         self.ema_embed.data.uniform_(-1 / self.num_embeddings, 1 / self.num_embeddings)
 
@@ -133,9 +132,7 @@ class QuantizerEMA(nn.Module):
 
             dw = one_hot_encoding.T @ z.reshape(-1, self.embedding_dim)
 
-            self.ema_embed = nn.Parameter(
-                self.ema_embed * self.decay + dw * (1 - self.decay)
-            )
+            self.ema_embed = self.ema_embed * self.decay + dw * (1 - self.decay)
 
             n = torch.sum(self.cluster_size)
 
@@ -143,9 +140,7 @@ class QuantizerEMA(nn.Module):
                 (self.cluster_size + 1e-5) / (n + self.num_embeddings * 1e-5) * n
             )
 
-            self.embeddings.weight = nn.Parameter(
-                self.ema_embed / self.cluster_size.unsqueeze(-1)
-            )
+            self.embeddings.weight = self.ema_embed / self.cluster_size.unsqueeze(-1)
 
         commitment_loss = F.mse_loss(
             quantized.detach().reshape(-1, self.embedding_dim),
