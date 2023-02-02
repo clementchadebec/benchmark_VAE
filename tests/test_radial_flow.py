@@ -189,30 +189,25 @@ class Test_RadialFlow_Training:
             torch.eye(np.prod(model_configs.input_dim)).to(device),
         )
 
-    @pytest.fixture(params=[Adam])
-    def optimizers(self, request, radial_flow, training_configs):
-        if request.param is not None:
-            optimizer = request.param(
-                radial_flow.parameters(), lr=training_configs.learning_rate
-            )
-
-        else:
-            optimizer = None
-
-        return optimizer
-
-    def test_radial_flow_train_step(
-        self, radial_flow, prior, train_dataset, training_configs, optimizers
-    ):
+    @pytest.fixture
+    def trainer(self, radial_flow, prior, train_dataset, training_configs):
 
         nf_model = NFModel(prior=prior, flow=radial_flow)
 
         trainer = BaseTrainer(
             model=nf_model,
             train_dataset=train_dataset,
-            training_config=training_configs,
-            optimizer=optimizers,
+            eval_dataset=train_dataset,
+            training_config=training_configs
         )
+
+        trainer.prepare_training()
+
+        return trainer
+
+    def test_radial_flow_train_step(
+        self, trainer
+    ):
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -229,18 +224,8 @@ class Test_RadialFlow_Training:
         )
 
     def test_radial_flow_eval_step(
-        self, radial_flow, prior, train_dataset, training_configs, optimizers
+        self, trainer
     ):
-
-        nf_model = NFModel(prior=prior, flow=radial_flow)
-
-        trainer = BaseTrainer(
-            model=nf_model,
-            train_dataset=train_dataset,
-            eval_dataset=train_dataset,
-            training_config=training_configs,
-            optimizer=optimizers,
-        )
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -257,17 +242,8 @@ class Test_RadialFlow_Training:
         )
 
     def test_radial_flow_main_train_loop(
-        self, radial_flow, prior, train_dataset, training_configs, optimizers
+        self, trainer
     ):
-
-        nf_model = NFModel(prior=prior, flow=radial_flow)
-
-        trainer = BaseTrainer(
-            model=nf_model,
-            train_dataset=train_dataset,
-            training_config=training_configs,
-            optimizer=optimizers,
-        )
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -284,19 +260,10 @@ class Test_RadialFlow_Training:
         )
 
     def test_checkpoint_saving(
-        self, tmpdir, radial_flow, prior, train_dataset, training_configs, optimizers
+        self, trainer, training_configs
     ):
 
         dir_path = training_configs.output_dir
-
-        nf_model = NFModel(prior=prior, flow=radial_flow)
-
-        trainer = BaseTrainer(
-            model=nf_model,
-            train_dataset=train_dataset,
-            training_config=training_configs,
-            optimizer=optimizers,
-        )
 
         # Make a training step
         step_1_loss = trainer.train_step(epoch=1)
@@ -363,21 +330,12 @@ class Test_RadialFlow_Training:
         )
 
     def test_checkpoint_saving_during_training(
-        self, tmpdir, radial_flow, prior, train_dataset, training_configs, optimizers
+        self, trainer, training_configs
     ):
         #
         target_saving_epoch = training_configs.steps_saving
 
         dir_path = training_configs.output_dir
-
-        nf_model = NFModel(prior=prior, flow=radial_flow)
-
-        trainer = BaseTrainer(
-            model=nf_model,
-            train_dataset=train_dataset,
-            training_config=training_configs,
-            optimizer=optimizers,
-        )
 
         model = deepcopy(trainer.model.flow)
 
@@ -413,19 +371,10 @@ class Test_RadialFlow_Training:
         )
 
     def test_final_model_saving(
-        self, tmpdir, radial_flow, prior, train_dataset, training_configs, optimizers
+        self, trainer, training_configs
     ):
 
         dir_path = training_configs.output_dir
-
-        nf_model = NFModel(prior=prior, flow=radial_flow)
-
-        trainer = BaseTrainer(
-            model=nf_model,
-            train_dataset=train_dataset,
-            training_config=training_configs,
-            optimizer=optimizers,
-        )
 
         trainer.train()
 

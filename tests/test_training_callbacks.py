@@ -111,7 +111,7 @@ def init_callback():
 @pytest.fixture()
 def dummy_handler(init_callback):
     return CallbackHandler(
-        callbacks=[init_callback], model=None, optimizer=None, scheduler=None
+        callbacks=[init_callback], model=None
     )
 
 
@@ -150,6 +150,8 @@ class Test_TrainerCallbacks:
 
         trainer = BaseTrainer(model=ae, train_dataset=train_dataset)
 
+        trainer.prepare_training()
+
         assert callbacks not in trainer.callback_handler.callbacks
 
         assert ProgressBarCallback().__class__ in [
@@ -159,6 +161,8 @@ class Test_TrainerCallbacks:
         trainer = BaseTrainer(
             model=ae, callbacks=[callbacks], train_dataset=train_dataset
         )
+
+        trainer.prepare_training()
 
         assert callbacks in trainer.callback_handler.callbacks
 
@@ -234,6 +238,8 @@ class Test_TrainersCalls:
             training_config=configs_and_models[1],
             callbacks=[dummy_callback],
         )
+
+        trainer.prepare_training()
 
         assert "on_train_step_begin" not in dummy_callback.step_list
         assert "on_train_step_end" not in dummy_callback.step_list
