@@ -467,6 +467,7 @@ class BaseTrainer:
             if (
                 self.training_config.steps_predict is not None
                 and epoch % self.training_config.steps_predict == 0
+                and self.is_main_process
             ):
                 true_data, reconstructions, generations = self.predict(best_model)
 
