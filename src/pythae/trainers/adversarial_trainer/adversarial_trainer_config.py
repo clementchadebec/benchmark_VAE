@@ -181,7 +181,6 @@ class AdversarialTrainerConfig(BaseTrainerConfig):
                         **self.discriminator_scheduler_params,
                     )
                 except TypeError as e:
-                    assert 0, e
                     raise TypeError(
                         "Error in scheduler's parameters. Check that the provided dict contains only "
                         f"keys and values suitable for `{discriminator_scheduder_cls}` scheduler. "

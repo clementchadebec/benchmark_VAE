@@ -85,8 +85,6 @@ class Decoder(BaseDecoder):
 
         self.input_dim = args.input_dim
 
-        # assert 0, np.prod(args.input_dim)
-
         layers = nn.ModuleList()
 
         layers.append(
