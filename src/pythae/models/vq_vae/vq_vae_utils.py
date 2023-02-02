@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import os
 
 from ..base.base_utils import ModelOutput
 from .vq_vae_config import VQVAEConfig
@@ -123,7 +124,7 @@ class QuantizerEMA(nn.Module):
         quantized = one_hot_encoding @ self.embeddings.weight
         quantized = quantized.reshape_as(z)
 
-        if self.training:
+        if self.training and (os.environ['RANK'] == 0 or os.environ['RANK'] == -1):
 
             n_i = torch.sum(one_hot_encoding, dim=0)
 
