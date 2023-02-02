@@ -144,7 +144,7 @@ class TrainingPipeline(Pipeline):
         loader_out = next(iter(dataloader))
         assert loader_out.data.shape[0] == min(
             len(dataset), 2
-        ), "Error when combining dataset wih loader."
+        ), "Error when combining dataset with loader."
 
     def __call__(
         self,

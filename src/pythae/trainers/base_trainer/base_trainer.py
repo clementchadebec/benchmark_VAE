@@ -103,12 +103,6 @@ class BaseTrainer:
 
         self.train_dataset = train_dataset
         self.eval_dataset = eval_dataset
-        self._train_batch_size = self.training_config.per_device_train_batch_size * max(
-            1, self.world_size
-        )
-        self._eval_batch_size = self.training_config.per_device_eval_batch_size * max(
-            1, self.world_size
-        )
 
         # Define the loaders
         train_loader = self.get_train_dataloader(train_dataset)
@@ -176,7 +170,7 @@ class BaseTrainer:
             train_sampler = None
         return DataLoader(
             dataset=train_dataset,
-            batch_size=self._train_batch_size,
+            batch_size=self.training_config.per_device_train_batch_size,
             shuffle=(train_sampler is None),
             sampler=train_sampler,
         )
@@ -192,7 +186,7 @@ class BaseTrainer:
             eval_sampler = None
         return DataLoader(
             dataset=eval_dataset,
-            batch_size=self._eval_batch_size,
+            batch_size=self.training_config.per_device_eval_batch_size,
             shuffle=(eval_sampler is None),
             sampler=eval_sampler,
         )

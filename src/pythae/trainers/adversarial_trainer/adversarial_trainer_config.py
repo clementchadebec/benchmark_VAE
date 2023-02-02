@@ -15,7 +15,10 @@ class AdversarialTrainerConfig(BaseTrainerConfig):
 
         output_dir (str): The directory where model checkpoints, configs and final
             model will be stored. Default: None.
-        batch_size (int): The number of training samples per batch. Default 100
+        per_device_train_batch_size (int): The number of training samples per batch and per device.
+            Default 64
+        per_device_eval_batch_size (int): The number of evaluation samples per batch and per device.
+            Default 64
         num_epochs (int): The maximal number of epochs for training. Default: 100
         autoencoder_optimizer_cls (str): The name of the `torch.optim.Optimizer` used for
             the training of the autoencoder. Default: :class:`~torch.optim.Adam`.
