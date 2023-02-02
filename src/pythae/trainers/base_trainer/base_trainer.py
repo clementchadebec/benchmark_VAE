@@ -99,7 +99,7 @@ class BaseTrainer:
         model.device = device
 
         if self.distributed:
-            model = DDP(model, device_ids=[self.local_rank])
+            model = DDP(model, device_ids=[self.local_rank], find_unused_parameters=True)
 
         self.train_dataset = train_dataset
         self.eval_dataset = eval_dataset

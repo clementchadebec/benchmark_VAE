@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import os
 
 from ..base.base_utils import ModelOutput
 from .vq_vae_config import VQVAEConfig
@@ -98,7 +97,9 @@ class QuantizerEMA(nn.Module):
 
         self.register_buffer("cluster_size", torch.zeros(self.num_embeddings))
 
-        self.ema_embed = torch.Tensor(self.num_embeddings, self.embedding_dim)
+        self.ema_embed = nn.Parameter(
+            torch.Tensor(self.num_embeddings, self.embedding_dim)
+        )
 
         self.ema_embed.data.uniform_(-1 / self.num_embeddings, 1 / self.num_embeddings)
 
@@ -124,7 +125,7 @@ class QuantizerEMA(nn.Module):
         quantized = one_hot_encoding @ self.embeddings.weight
         quantized = quantized.reshape_as(z)
 
-        if self.training and (os.environ['RANK'] == 0 or os.environ['RANK'] == -1):
+        if self.training:
 
             n_i = torch.sum(one_hot_encoding, dim=0)
 
@@ -132,7 +133,9 @@ class QuantizerEMA(nn.Module):
 
             dw = one_hot_encoding.T @ z.reshape(-1, self.embedding_dim)
 
-            self.ema_embed = self.ema_embed.to(z.device) * self.decay + dw * (1 - self.decay)
+            self.ema_embed = nn.Parameter(
+                self.ema_embed * self.decay + dw * (1 - self.decay)
+            )
 
             n = torch.sum(self.cluster_size)
 
