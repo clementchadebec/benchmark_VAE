@@ -312,48 +312,6 @@ class Test_Build_Scheduler:
     @pytest.fixture(
         params=[
             {
-                "autoencoder_optimizer_cls": "Adagrad",
-                "autoencoder_optimizer_params": {"lr_decay": 0.1},
-                "discriminator_optimizer_cls": "AdamW",
-                "discriminator_optimizer_params": {"betas": (0.1234, 0.4321)},
-            },
-            {
-                "autoencoder_optimizer_cls": "SGD",
-                "autoencoder_optimizer_params": {"momentum": 0.1},
-                "discriminator_optimizer_cls": "SGD",
-                "discriminator_optimizer_params": {"momentum": 0.9},
-            },
-            {
-                "autoencoder_optimizer_cls": "SGD",
-                "autoencoder_optimizer_params": None,
-                "discriminator_optimizer_cls": "SGD",
-                "discriminator_optimizer_params": None,
-            },
-        ]
-    )
-    def optimizer_config(self, request, training_configs_learning_rate):
-
-        optimizer_config = request.param
-
-        # set optim and params to training config
-        training_configs_learning_rate.autoencoder_optimizer_cls = optimizer_config[
-            "autoencoder_optimizer_cls"
-        ]
-        training_configs_learning_rate.autoencoder_optimizer_params = optimizer_config[
-            "autoencoder_optimizer_params"
-        ]
-        training_configs_learning_rate.discriminator_optimizer_cls = optimizer_config[
-            "discriminator_optimizer_cls"
-        ]
-        training_configs_learning_rate.discriminator_optimizer_params = (
-            optimizer_config["discriminator_optimizer_params"]
-        )
-
-        return optimizer_config
-
-    @pytest.fixture(
-        params=[
-            {
                 "autoencoder_scheduler_cls": "StepLR",
                 "autoencoder_scheduler_params": {"step_size": 1},
                 "discriminator_scheduler_cls": "LinearLR",

@@ -1,4 +1,3 @@
-import argparse
 import logging
 import os
 from typing import List
@@ -9,7 +8,6 @@ import torch.nn as nn
 from torch.utils.data import Dataset
 
 from pythae.data.datasets import DatasetOutput
-from pythae.data.preprocessors import DataProcessor
 from pythae.models import SVAE, AutoModel, SVAEConfig
 from pythae.models.base.base_utils import ModelOutput
 from pythae.models.nn import BaseDecoder, BaseEncoder
@@ -22,23 +20,7 @@ logger.setLevel(logging.INFO)
 
 PATH = os.path.dirname(os.path.abspath(__file__))
 
-ap = argparse.ArgumentParser()
-
 device = "cuda" if torch.cuda.is_available() else "cpu"
-
-
-ap.add_argument(
-    "--model_config",
-    help="path to model config file (expected json file)",
-    default=None,
-)
-ap.add_argument(
-    "--training_config",
-    help="path to training config_file (expected json file)",
-    default=os.path.join(PATH, "configs/base_training_config.json"),
-)
-
-args = ap.parse_args()
 
 ### Define paper encoder network
 class Encoder(BaseEncoder):
@@ -171,7 +153,7 @@ class DynBinarizedMNIST(Dataset):
         return DatasetOutput(data=x)
 
 
-def main(args):
+def main():
 
     ### Load data
     train_data = torch.tensor(
@@ -189,13 +171,11 @@ def main(args):
 
     data_input_dim = tuple(train_data.shape[1:])
 
-    if args.model_config is not None:
-        model_config = SVAEConfig.from_json_file(args.model_config)
-
-    else:
-        model_config = SVAEConfig()
-
-    model_config.input_dim = data_input_dim
+    model_config = SVAEConfig(
+        input_dim=data_input_dim,
+        latent_dim=11,
+        reconstruction_loss="bce"
+    )
 
     model = SVAE(
         model_config=model_config,
@@ -204,21 +184,19 @@ def main(args):
     )
 
     ### Set training config
-    training_config = BaseTrainerConfig.from_json_file(args.training_config)
+    training_config = BaseTrainerConfig(
+        output_dir="reproducibility/binary_mnist",
+        per_device_train_batch_size=64,
+        per_device_eval_batch_size=64,
+        num_epochs=500,
+        learning_rate=1e-3,
+        steps_saving=50,
+        steps_predict=None,
+        no_cuda=False
+    )
 
     logger.info("Preprocessing train data...")
     train_dataset = DynBinarizedMNIST(train_data)
-
-    logger.info("Preprocessing eval data...\n")
-    eval_dataset = DynBinarizedMNIST(eval_data)
-
-    ### Optimizer
-    optimizer = torch.optim.Adam(model.parameters(), lr=training_config.learning_rate)
-
-    ### Scheduler
-    scheduler = torch.optim.lr_scheduler.MultiStepLR(
-        optimizer, milestones=[10000000], gamma=10 ** (-1 / 3), verbose=True
-    )
 
     seed = 123
     torch.manual_seed(seed)
@@ -230,8 +208,6 @@ def main(args):
         train_dataset=train_dataset,
         eval_dataset=None,  # eval_dataset,
         training_config=training_config,
-        optimizer=optimizer,
-        scheduler=scheduler,
         callbacks=None,
     )
 
@@ -270,4 +246,4 @@ def main(args):
 
 if __name__ == "__main__":
 
-    main(args)
+    main()

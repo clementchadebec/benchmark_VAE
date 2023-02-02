@@ -1,4 +1,3 @@
-import argparse
 import logging
 import os
 from typing import List
@@ -20,23 +19,7 @@ logger.setLevel(logging.INFO)
 
 PATH = os.path.dirname(os.path.abspath(__file__))
 
-ap = argparse.ArgumentParser()
-
 device = "cuda" if torch.cuda.is_available() else "cpu"
-
-ap.add_argument(
-    "--model_config",
-    help="path to model config file (expected json file)",
-    default=None,
-)
-ap.add_argument(
-    "--training_config",
-    help="path to training config_file (expected json file)",
-    default=os.path.join(PATH, "configs/base_training_config.json"),
-)
-
-args = ap.parse_args()
-
 
 ### Define paper encoder network
 class Encoder(BaseEncoder):
@@ -197,7 +180,7 @@ class Decoder(BaseDecoder):
         return output
 
 
-def main(args):
+def main():
 
     train_data = (
         np.load(os.path.join(PATH, f"data/celeba", "train_data.npz"))["data"] / 255.0
@@ -208,13 +191,12 @@ def main(args):
 
     data_input_dim = tuple(train_data.shape[1:])
 
-    if args.model_config is not None:
-        model_config = RAE_GP_Config.from_json_file(args.model_config)
-
-    else:
-        model_config = RAE_GP_Config()
-
-    model_config.input_dim = data_input_dim
+    model_config = RAE_GP_Config(
+        input_dim=data_input_dim,
+        latent_dim=16,
+        embedding_weight=1e-3,
+        reg_weight=1e-6
+    )
 
     model = RAE_GP(
         model_config=model_config,
@@ -223,7 +205,22 @@ def main(args):
     )
 
     ### Set training config
-    training_config = BaseTrainerConfig.from_json_file(args.training_config)
+    training_config = BaseTrainerConfig(
+        output_dir="my_models_on_celeba",
+        per_device_train_batch_size=100,
+        per_device_eval_batch_size=100,
+        num_epochs=100,
+        learning_rate=0.001,
+        steps_saving=None,
+        steps_predict=100,
+        no_cuda=False,
+        scheduler_cls="ReduceLROnPlateau",
+        scheduler_params={
+            "factor": 0.5,
+            "patience": 5,
+            "verbose": True
+        }
+    )
 
     ### Process data
     data_processor = DataProcessor()
@@ -235,14 +232,6 @@ def main(args):
     eval_data = data_processor.process_data(eval_data)
     eval_dataset = data_processor.to_dataset(eval_data)
 
-    ### Optimizer
-    optimizer = torch.optim.Adam(model.parameters(), lr=training_config.learning_rate)
-
-    ### Scheduler
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-        optimizer, factor=0.5, patience=5, verbose=True
-    )
-
     seed = 123
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
@@ -253,8 +242,6 @@ def main(args):
         train_dataset=train_dataset,
         eval_dataset=eval_dataset,
         training_config=training_config,
-        optimizer=optimizer,
-        scheduler=scheduler,
         callbacks=None,
     )
 
@@ -263,4 +250,4 @@ def main(args):
 
 if __name__ == "__main__":
 
-    main(args)
+    main()

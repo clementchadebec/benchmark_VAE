@@ -1,4 +1,3 @@
-import argparse
 import logging
 import os
 from typing import List
@@ -20,22 +19,7 @@ logger.setLevel(logging.INFO)
 
 PATH = os.path.dirname(os.path.abspath(__file__))
 
-ap = argparse.ArgumentParser()
-
 device = "cuda" if torch.cuda.is_available() else "cpu"
-
-ap.add_argument(
-    "--model_config",
-    help="path to model config file (expected json file)",
-    default=None,
-)
-ap.add_argument(
-    "--training_config",
-    help="path to training config_file (expected json file)",
-    default=os.path.join(PATH, "configs/base_training_config.json"),
-)
-
-args = ap.parse_args()
 
 ### Define paper encoder network
 class Encoder(BaseEncoder):
@@ -153,7 +137,7 @@ class Decoder(BaseDecoder):
         return output
 
 
-def main(args):
+def main():
 
     train_data = np.loadtxt(
         os.path.join(PATH, f"data/binary_mnist", "binarized_mnist_train.amat")
@@ -168,13 +152,11 @@ def main(args):
     data_input_dim = tuple(train_data.shape[1:])
 
     ### Build model
-    if args.model_config is not None:
-        model_config = VAEConfig.from_json_file(args.model_config)
-
-    else:
-        model_config = VAEConfig()
-
-    model_config.input_dim = data_input_dim
+    model_config = VAEConfig(
+        input_dim=data_input_dim,
+        latent_dim=40,
+        reconstruction_loss="bce"
+    )
 
     model = VAE(
         model_config=model_config,
@@ -183,7 +165,22 @@ def main(args):
     )
 
     ### Set training config
-    training_config = BaseTrainerConfig.from_json_file(args.training_config)
+    training_config = BaseTrainerConfig(
+        output_dir="reproducibility/binary_mnist",
+        per_device_train_batch_size=100,
+        per_device_eval_batch_size=100,
+        num_epochs=500,
+        learning_rate=1e-4,
+        steps_saving=None,
+        steps_predict=None,
+        no_cuda=False,
+        scheduler_cls="MultiStepLR",
+        scheduler_params={
+            "milestones": [200, 350, 500, 750, 1000],
+            "gamma": 10 ** (-1 / 5),
+            "verbose": True
+        }
+    )
 
     ### Process data
     data_processor = DataProcessor()
@@ -195,17 +192,6 @@ def main(args):
     eval_data = data_processor.process_data(eval_data).reshape(-1, 1, 28, 28)
     eval_dataset = data_processor.to_dataset(eval_data)
 
-    ### Optimizer
-    optimizer = torch.optim.Adam(model.parameters(), lr=training_config.learning_rate)
-
-    ### Scheduler
-    scheduler = torch.optim.lr_scheduler.MultiStepLR(
-        optimizer,
-        milestones=[200, 350, 500, 750, 1000],
-        gamma=10 ** (-1 / 5),
-        verbose=True,
-    )
-
     seed = 123
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
@@ -216,8 +202,6 @@ def main(args):
         train_dataset=train_dataset,
         eval_dataset=eval_dataset,
         training_config=training_config,
-        optimizer=optimizer,
-        scheduler=scheduler,
         callbacks=None,
     )
 
@@ -252,4 +236,4 @@ def main(args):
 
 if __name__ == "__main__":
 
-    main(args)
+    main()

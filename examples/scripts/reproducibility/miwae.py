@@ -1,4 +1,3 @@
-import argparse
 import logging
 import os
 from typing import List
@@ -9,7 +8,6 @@ import torch.nn as nn
 from torch.utils.data import Dataset
 
 from pythae.data.datasets import DatasetOutput
-from pythae.data.preprocessors import DataProcessor
 from pythae.models import MIWAE, AutoModel, MIWAEConfig
 from pythae.models.base.base_utils import ModelOutput
 from pythae.models.nn import BaseDecoder, BaseEncoder
@@ -22,23 +20,7 @@ logger.setLevel(logging.INFO)
 
 PATH = os.path.dirname(os.path.abspath(__file__))
 
-ap = argparse.ArgumentParser()
-
 device = "cuda" if torch.cuda.is_available() else "cpu"
-
-ap.add_argument(
-    "--model_config",
-    help="path to model config file (expected json file)",
-    default=None,
-)
-ap.add_argument(
-    "--training_config",
-    help="path to training config_file (expected json file)",
-    default=os.path.join(PATH, "configs/base_training_config.json"),
-)
-
-args = ap.parse_args()
-
 
 def unif_init(m, n_in, n_out):
     scale = np.sqrt(6.0 / (n_in + n_out))
@@ -116,7 +98,7 @@ class DynBinarizedMNIST(Dataset):
         return DatasetOutput(data=x)
 
 
-def main(args):
+def main():
 
     ### Load data
     train_data = torch.tensor(
@@ -133,13 +115,13 @@ def main(args):
     )
     data_input_dim = tuple(train_data.shape[1:])
 
-    if args.model_config is not None:
-        model_config = MIWAEConfig.from_json_file(args.model_config)
-
-    else:
-        model_config = MIWAEConfig()
-
-    model_config.input_dim = data_input_dim
+    model_config = MIWAEConfig(
+        input_dim=data_input_dim,
+        latent_dim=50,
+        reconstruction_loss="bce",
+        number_samples=8,
+        number_gradient_estimates=8
+    )
 
     model = MIWAE(
         model_config=model_config,
@@ -148,23 +130,27 @@ def main(args):
     )
 
     ### Set training config
-    training_config = BaseTrainerConfig.from_json_file(args.training_config)
+    training_config = BaseTrainerConfig(
+        output_dir="reproducibility/mnist",
+        per_device_train_batch_size=20,
+        per_device_eval_batch_size=20,
+        num_epochs=3280,
+        learning_rate=1e-3,
+        steps_saving=1000,
+        steps_predict=None,
+        no_cuda=False,
+        optimizer_cls="Adam",
+        optimizer_params={"eps": 1e-4},
+        scheduler_cls="MultiStepLR",
+        scheduler_params={
+            "milestones": [2, 5, 14, 28, 41, 122, 365, 1094],
+            "gamma": 10 ** (-1 / 7),
+            "verbose": True
+        }
+    )
 
     logger.info("Preprocessing train data...")
     train_dataset = DynBinarizedMNIST(train_data)
-
-    ### Optimizer
-    optimizer = torch.optim.Adam(
-        model.parameters(), lr=training_config.learning_rate, eps=1e-4
-    )
-
-    ### Scheduler
-    scheduler = torch.optim.lr_scheduler.MultiStepLR(
-        optimizer,
-        milestones=[2, 5, 14, 28, 41, 122, 365, 1094],
-        gamma=10 ** (-1 / 7),
-        verbose=True,
-    )
 
     seed = 123
     torch.manual_seed(seed)
@@ -176,8 +162,6 @@ def main(args):
         train_dataset=train_dataset,
         eval_dataset=None,  # eval_dataset,
         training_config=training_config,
-        optimizer=optimizer,
-        scheduler=scheduler,
         callbacks=None,
     )
 
@@ -216,4 +200,4 @@ def main(args):
 
 if __name__ == "__main__":
 
-    main(args)
+    main()

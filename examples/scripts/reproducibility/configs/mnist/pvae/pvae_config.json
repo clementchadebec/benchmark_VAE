@@ -1,8 +1,0 @@
-{
-    "name": "PoincareVAEConfig",
-    "latent_dim": 10,
-    "reconstruction_loss": "bce",
-    "prior_distribution": "wrapped_normal",
-    "posterior_distribution": "wrapped_normal",
-    "curvature": 0.7
-}

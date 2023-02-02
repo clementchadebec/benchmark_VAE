@@ -1,4 +1,3 @@
-import argparse
 import logging
 import os
 from time import time
@@ -21,28 +20,10 @@ logger.setLevel(logging.INFO)
 
 PATH = os.path.dirname(os.path.abspath(__file__))
 
-ap = argparse.ArgumentParser()
-
 device = "cuda" if torch.cuda.is_available() else "cpu"
-
-# Training setting
-ap.add_argument(
-    "--model_config",
-    help="path to model config file (expected json file)",
-    default=None,
-)
-ap.add_argument(
-    "--training_config",
-    help="path to training config_file (expected json file)",
-    default=os.path.join(PATH, "configs/base_training_config.json"),
-)
-
-args = ap.parse_args()
 
 
 ### Define paper encoder network
-
-
 class Encoder(BaseEncoder):
     def __init__(self, args):
         BaseEncoder.__init__(self)
@@ -203,22 +184,26 @@ class Decoder(BaseDecoder):
         return output
 
 
-def main(args):
+def main():
 
     ### Load data
 
     train_data = (
         np.load(os.path.join(PATH, f"data/celeba", "train_data.npz"))["data"] / 255.0
     )
-    eval_data = (
-        np.load(os.path.join(PATH, f"data/celeba", "eval_data.npz"))["data"] / 255.0
-    )
 
     data_input_dim = tuple(train_data.shape[1:])
 
     ### Build model
-    model_config = WAE_MMD_Config.from_json_file(args.model_config)
-    model_config.input_dim = data_input_dim
+    model_config = WAE_MMD_Config(
+        input_dim=data_input_dim,
+        latent_dim=64,
+        kernel_choice="imq",
+        reg_weight=100,
+        kernel_bandwidth=2.0,
+        reconstruction_loss_scale=0.05
+    )
+
     model = WAE_MMD(
         model_config=model_config,
         encoder=Encoder(model_config),
@@ -226,30 +211,28 @@ def main(args):
     )
 
     ### Get training config
-    training_config = BaseTrainerConfig.from_json_file(args.training_config)
+    training_config = BaseTrainerConfig(
+        output_dir="my_models_on_celeba",
+        per_device_train_batch_size=100,
+        per_device_eval_batch_size=100,
+        num_epochs=100,
+        learning_rate=0.0001,
+        steps_saving=3,
+        steps_predict=100,
+        no_cuda=False,
+        scheduler_cls="LambdaLR",
+        scheduler_params={
+            "lr_lambda": lambda epoch: 1 * (epoch < 30) + \
+                0.5 * (30 <= epoch < 50) + 0.2 * (50 <= epoch),
+            "verbose": True
+        }
+    )
 
     ### Process data
     data_processor = DataProcessor()
     logger.info("Preprocessing train data...")
     train_data = data_processor.process_data(train_data)
     train_dataset = data_processor.to_dataset(train_data)
-
-    logger.info("Preprocessing eval data...\n")
-    eval_data = data_processor.process_data(eval_data)
-    eval_dataset = data_processor.to_dataset(eval_data)
-
-    ### Optimizer
-    optimizer = torch.optim.Adam(model.parameters(), lr=training_config.learning_rate)
-
-    ### Scheduler
-
-    lambda_lr = (
-        lambda epoch: 1 * (epoch < 30) + 0.5 * (30 <= epoch < 50) + 0.2 * (50 <= epoch)
-    )
-
-    scheduler = torch.optim.lr_scheduler.LambdaLR(
-        optimizer, lr_lambda=lambda_lr, verbose=True
-    )
 
     seed = 123
     torch.manual_seed(seed)
@@ -260,8 +243,6 @@ def main(args):
         model=model,
         train_dataset=train_dataset,
         training_config=training_config,
-        optimizer=optimizer,
-        scheduler=scheduler,
         callbacks=None,
     )
 
@@ -270,4 +251,4 @@ def main(args):
 
 if __name__ == "__main__":
 
-    main(args)
+    main()

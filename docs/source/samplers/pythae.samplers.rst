@@ -53,18 +53,18 @@ Normal sampling
     >>> from pythae.samplers import NormalSampler
     >>> # Retrieve the trained model
     >>> my_trained_vae = VAE.load_from_folder(
-    ...	'path/to/your/trained/model'
+    ...	    'path/to/your/trained/model'
     ... )
     >>> # Define your sampler
     >>> my_samper = NormalSampler(
-    ...	model=my_trained_vae
+    ...	    model=my_trained_vae
     ... )
     >>> # Generate samples
     >>> gen_data = my_samper.sample(
-    ...	num_samples=50,
-    ...	batch_size=10,
-    ...	output_dir=None,
-    ...	return_gen=True
+    ...	    num_samples=50,
+    ...	    batch_size=10,
+    ...	    output_dir=None,
+    ...	    return_gen=True
     ... )
 
 Gaussian mixture sampling
@@ -76,24 +76,24 @@ Gaussian mixture sampling
     >>> from pythae.samplers import GaussianMixtureSampler, GaussianMixtureSamplerConfig
     >>> # Retrieve the trained model
     >>> my_trained_vae = VAE.load_from_folder(
-    ...	'path/to/your/trained/model'
+    ...	    'path/to/your/trained/model'
     ... )
     >>> # Define your sampler
-    ... gmm_sampler_config = GaussianMixtureSamplerConfig(
-    ...	n_components=10
+    ...     gmm_sampler_config = GaussianMixtureSamplerConfig(
+    ...	    n_components=10
     ... )
     >>> my_samper = GaussianMixtureSampler(
-    ...	sampler_config=gmm_sampler_config,
-    ...	model=my_trained_vae
+    ...	    sampler_config=gmm_sampler_config,
+    ...	    model=my_trained_vae
     ... )
     >>> # fit the sampler
     >>> gmm_sampler.fit(train_dataset)
     >>> # Generate samples
     >>> gen_data = my_samper.sample(
-    ...	num_samples=50,
-    ...	batch_size=10,
-    ...	output_dir=None,
-    ...	return_gen=True
+    ...	    num_samples=50,
+    ...	    batch_size=10,
+    ...	    output_dir=None,
+    ...	    return_gen=True
     ... )
 
 See also `tutorials <https://github.com/clementchadebec/benchmark_VAE/tree/main/examples/notebooks>`_.

@@ -154,7 +154,7 @@ class AdversarialTrainerConfig(BaseTrainerConfig):
                 ) from e
         else:
             discriminator_optimizer = discriminator_optimizer_cls(
-                nn.Linear(2, 2).parameters()
+                nn.Linear(2, 2).parameters(), lr=self.discriminator_learning_rate
             )
 
         if self.discriminator_scheduler_cls is not None:
@@ -175,10 +175,10 @@ class AdversarialTrainerConfig(BaseTrainerConfig):
                 try:
                     discriminator_scheduder_cls(
                         discriminator_optimizer,
-                        lr=self.discriminator_learning_rate,
                         **self.discriminator_scheduler_params,
                     )
                 except TypeError as e:
+                    assert 0, e
                     raise TypeError(
                         "Error in scheduler's parameters. Check that the provided dict contains only "
                         f"keys and values suitable for `{discriminator_scheduder_cls}` scheduler. "

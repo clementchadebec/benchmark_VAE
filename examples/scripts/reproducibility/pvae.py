@@ -1,8 +1,6 @@
-import argparse
 import logging
 import math
 import os
-from typing import List
 
 import numpy as np
 import torch
@@ -23,23 +21,7 @@ logger.setLevel(logging.INFO)
 
 PATH = os.path.dirname(os.path.abspath(__file__))
 
-ap = argparse.ArgumentParser()
-
 device = "cuda" if torch.cuda.is_available() else "cpu"
-
-
-ap.add_argument(
-    "--model_config",
-    help="path to model config file (expected json file)",
-    default=None,
-)
-ap.add_argument(
-    "--training_config",
-    help="path to training config_file (expected json file)",
-    default=os.path.join(PATH, "configs/base_training_config.json"),
-)
-
-args = ap.parse_args()
 
 
 class RiemannianLayer(nn.Module):
@@ -151,7 +133,7 @@ class Decoder(BaseDecoder):
         return ModelOutput(reconstruction=out)
 
 
-def main(args):
+def main():
 
     ### Load data
     train_data = torch.tensor(
@@ -169,13 +151,14 @@ def main(args):
 
     data_input_dim = tuple(train_data.shape[1:])
 
-    if args.model_config is not None:
-        model_config = PoincareVAEConfig.from_json_file(args.model_config)
-
-    else:
-        model_config = PoincareVAEConfig()
-
-    model_config.input_dim = data_input_dim
+    model_config = PoincareVAEConfig(
+        input_dim=data_input_dim,
+        latent_dim=10,
+        reconstruction_loss="bce",
+        prior_distribution="wrapped_normal",
+        posterior_distribution="wrapped_normal",
+        curvature=0.7
+    )
 
     model = PoincareVAE(
         model_config=model_config,
@@ -184,25 +167,22 @@ def main(args):
     )
 
     ### Set training config
-    training_config = BaseTrainerConfig.from_json_file(args.training_config)
+    training_config = BaseTrainerConfig(
+        output_dir="reproducibility/mnist",
+        per_device_train_batch_size=128,
+        per_device_eval_batch_size=128,
+        num_epochs=80,
+        learning_rate=5e-4,
+        steps_saving=100,
+        steps_predict=None,
+        no_cuda=False
+    )
 
     ### Process data
     data_processor = DataProcessor()
     logger.info("Preprocessing train data...")
     train_data = data_processor.process_data(torch.bernoulli(train_data))
     train_dataset = data_processor.to_dataset(train_data)
-
-    logger.info("Preprocessing eval data...\n")
-    eval_data = data_processor.process_data(torch.bernoulli(eval_data))
-    eval_dataset = data_processor.to_dataset(eval_data)
-
-    ### Optimizer
-    optimizer = torch.optim.Adam(model.parameters(), lr=training_config.learning_rate)
-
-    ### Scheduler
-    scheduler = torch.optim.lr_scheduler.MultiStepLR(
-        optimizer, milestones=[10000000], gamma=10 ** (-1 / 3), verbose=True
-    )
 
     seed = 123
     torch.manual_seed(seed)
@@ -214,8 +194,6 @@ def main(args):
         train_dataset=train_dataset,
         eval_dataset=None,  # eval_dataset,
         training_config=training_config,
-        optimizer=optimizer,
-        scheduler=scheduler,
         callbacks=None,
     )
 
@@ -250,4 +228,4 @@ def main(args):
 
 if __name__ == "__main__":
 
-    main(args)
+    main()
