@@ -253,7 +253,7 @@ class AdversarialTrainer(BaseTrainer):
             f"{self.training_config.per_device_train_batch_size}\n"
             " - per_device_eval_batch_size: "
             f"{self.training_config.per_device_eval_batch_size}\n"
-            f" - checkpoint saving every {self.training_config.steps_saving}\n"
+            f" - checkpoint saving every: {self.training_config.steps_saving}\n"
             f"Autoencoder Optimizer: {self.autoencoder_optimizer}\n"
             f"Autoencoder Scheduler: {self.autoencoder_scheduler}\n"
             f"Discriminator Optimizer: {self.discriminator_optimizer}\n"
