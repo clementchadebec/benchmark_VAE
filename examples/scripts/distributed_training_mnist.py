@@ -70,7 +70,9 @@ def main(args):
 
     model_config = VQVAEConfig(
         input_dim=(1, 28, 28),
-        latent_dim=32
+        latent_dim=32,
+        use_ema=True,
+        num_embeddings=256
     )
 
     encoder = Encoder_ResNet_VQVAE_MNIST(model_config)
@@ -83,8 +85,8 @@ def main(args):
     training_config = BaseTrainerConfig(
         num_epochs=1000,
         output_dir="my_models_on_mnist",
-        per_device_train_batch_size = 128 / int(os.environ["SLURM_NTASKS"]),
-        per_device_eval_batch_size = 128 / int(os.environ["SLURM_NTASKS"]),
+        per_device_train_batch_size = 512 / int(os.environ["SLURM_NTASKS"]),
+        per_device_eval_batch_size = 512 / int(os.environ["SLURM_NTASKS"]),
         learning_rate=1e-3,
         steps_saving=None,
         steps_predict=99,
