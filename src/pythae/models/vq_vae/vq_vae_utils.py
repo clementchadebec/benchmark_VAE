@@ -125,27 +125,28 @@ class QuantizerEMA(nn.Module):
         quantized = one_hot_encoding @ self.embeddings.weight
         quantized = quantized.reshape_as(z)
 
-        if self.training:
+        with torch.no_grad():
+            if self.training:
 
-            n_i = torch.sum(one_hot_encoding, dim=0)
+                n_i = torch.sum(one_hot_encoding, dim=0)
 
-            self.cluster_size = self.cluster_size * self.decay + n_i * (1 - self.decay)
+                self.cluster_size = self.cluster_size * self.decay + n_i * (1 - self.decay)
 
-            dw = one_hot_encoding.T @ z.reshape(-1, self.embedding_dim)
+                dw = one_hot_encoding.T @ z.reshape(-1, self.embedding_dim)
 
-            self.ema_embed = nn.Parameter(
-                self.ema_embed * self.decay + dw * (1 - self.decay)
-            )
+                self.ema_embed = nn.Parameter(
+                    self.ema_embed * self.decay + dw * (1 - self.decay)
+                )
 
-            n = torch.sum(self.cluster_size)
+                n = torch.sum(self.cluster_size)
 
-            self.cluster_size = (
-                (self.cluster_size + 1e-5) / (n + self.num_embeddings * 1e-5) * n
-            )
+                self.cluster_size = (
+                    (self.cluster_size + 1e-5) / (n + self.num_embeddings * 1e-5) * n
+                )
 
-            self.embeddings.weight = nn.Parameter(
-                self.ema_embed / self.cluster_size.unsqueeze(-1)
-            )
+                self.embeddings.weight = nn.Parameter(
+                    self.ema_embed / self.cluster_size.unsqueeze(-1)
+                )
 
         commitment_loss = F.mse_loss(
             quantized.detach().reshape(-1, self.embedding_dim),
