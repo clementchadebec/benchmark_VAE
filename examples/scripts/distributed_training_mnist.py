@@ -10,7 +10,7 @@ from torch.utils.data import Dataset
 
 from pythae.data.datasets import DatasetOutput
 from pythae.data.datasets import BaseDataset
-from pythae.models import VQVAE, VQVAEConfig
+from pythae.models import VQVAE, VQVAEConfig, AE, AEConfig
 from pythae.trainers import BaseTrainer, BaseTrainerConfig
 from pythae.models.nn.benchmarks.mnist import Encoder_ResNet_AE_MNIST, Decoder_ResNet_AE_MNIST
 
@@ -68,7 +68,7 @@ def main(args):
     train_dataset = MNIST(train_data)
     eval_dataset = MNIST(eval_data)
 
-    model_config = VQVAEConfig(
+    model_config = AEConfig(
         input_dim=(1, 28, 28),
         latent_dim=32
     )
@@ -76,7 +76,7 @@ def main(args):
     encoder = Encoder_ResNet_AE_MNIST(model_config)
     decoder= Decoder_ResNet_AE_MNIST(model_config)
 
-    model = VQVAE(model_config=model_config, encoder=encoder, decoder=decoder)
+    model = AE(model_config=model_config, encoder=encoder, decoder=decoder)
 
     gpu_ids = os.environ["SLURM_STEP_GPUS"].split(",")
 
