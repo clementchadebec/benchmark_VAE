@@ -121,9 +121,9 @@ class QuantizerEMA(nn.Module):
 
             n_i = torch.sum(one_hot_encoding, dim=0)
 
-            if uses_ddp:
-                print("IN first all reduce")
-                dist.all_reduce(n_i)
+            #if uses_ddp:
+            #    print("IN first all reduce")
+            #    dist.all_reduce(n_i)
 
             print("OUT first all reduce")
 
@@ -136,8 +136,8 @@ class QuantizerEMA(nn.Module):
 
             dw = one_hot_encoding.T @ z.reshape(-1, self.embedding_dim)
 
-            if uses_ddp:
-                dist.all_reduce(dw)
+            #if uses_ddp:
+            #    dist.all_reduce(dw)
 
             #self.ema_embed.mul_(self.decay).add_(dw, alpha=(1 - self.decay))
 
