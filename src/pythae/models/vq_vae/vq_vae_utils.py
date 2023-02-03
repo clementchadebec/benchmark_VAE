@@ -140,7 +140,7 @@ class QuantizerEMA(nn.Module):
 
 
             if uses_ddp:
-                dist.all_reduce(dw)
+                dist.all_reduce(dw.contiguous())
             
             #self.ema_embed.mul_(self.decay).add_(dw, alpha=(1 - self.decay))
 
