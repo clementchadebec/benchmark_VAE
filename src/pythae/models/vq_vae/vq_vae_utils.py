@@ -97,7 +97,9 @@ class QuantizerEMA(nn.Module):
 
     def forward(self, z: torch.Tensor, uses_ddp: bool=False):
 
-        distances = torch.cdist(z.reshape(-1, self.embedding_dim), self.embeddings, p=2)
+        embeddings = self.embeddings.detach()
+
+        distances = torch.cdist(z.reshape(-1, self.embedding_dim), embeddings, p=2)
 
         closest = distances.argmin(-1).unsqueeze(-1)
 
@@ -135,7 +137,7 @@ class QuantizerEMA(nn.Module):
             dw = one_hot_encoding.T @ z.reshape(-1, self.embedding_dim)
 
             if uses_ddp:
-                dist.all_reduce(dw.contiguous())
+                dist.all_reduce(dw)
 
             #self.ema_embed.mul_(self.decay).add_(dw, alpha=(1 - self.decay))
 
@@ -151,7 +153,7 @@ class QuantizerEMA(nn.Module):
 
             ema_embedding_normalized = self.ema_embed / cluster_size.unsqueeze(-1)
 
-            self.ema_embed.data.copy_(ema_embedding_normalized)
+            self.embeddings.data.copy_(ema_embedding_normalized)
 
             #self.embeddings.weight = nn.Parameter(
             #    self.ema_embed / self.cluster_size.unsqueeze(-1)
