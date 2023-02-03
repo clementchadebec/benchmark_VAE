@@ -8,7 +8,7 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset
 
-from pythae.data.datasets import BaseDataset, DatasetOutput
+from pythae.data.datasets import DatasetOutput
 from pythae.models import VQVAE, VQVAEConfig
 from pythae.models.nn.benchmarks.mnist import (
     Decoder_ResNet_VQVAE_MNIST,

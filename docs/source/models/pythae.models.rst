@@ -78,12 +78,16 @@ instance.
 
     >>> # Set up the training configuration
     >>> my_training_config = BaseTrainerConfig(
-    ...	    output_dir='my_model',
-    ...	    num_epochs=50,
-    ...	    learning_rate=1e-3,
-    ...	    per_device_train_batch_size=64,
-    ...     per_device_eval_batch_size=64,
-    ...	    steps_saving=None
+    ...	output_dir='my_model',
+    ...	num_epochs=50,
+    ...	learning_rate=1e-3,
+    ...	per_device_train_batch_size=200,
+    ... per_device_eval_batch_size=200,
+    ...	steps_saving=None,
+    ... optimizer_cls="AdamW",
+    ...	optimizer_params={"weight_decay": 0.05, "betas": (0.91, 0.995)},
+    ...	scheduler_cls="ReduceLROnPlateau",
+    ...	scheduler_params={"patience": 5, "factor": 0.5}
     ... )
     >>> # Set up the model configuration 
     >>> my_vae_config = model_config = VAEConfig(
@@ -128,3 +132,25 @@ To do so, you can built a python script that will then be launched by a launcher
 
 
 See this `example script <https://github.com/clementchadebec/benchmark_VAE/tree/main/examples/scripts/distributed_training.py>`_ that defines a multi-gpu VQVAE training. Be carefull, the way the environnement (`world_size`, `rank` ...) may be specific to the cluster and launcher you use. 
+
+Benchmark
+-----------
+
+Below are indicated the training times acheived on GPU V100 16GB for models trained for 100 epochs with `Pythae` on MNIST and ImageNet-1k. 
+
+.. list-table:: Title
+   :widths: 25 25 25 25
+   :header-rows: 1
+
+   * - Exec. time
+     - 1 GPU
+     - 4 GPUs
+     - 2x4 GPUs
+   * - MNIST
+     - 229.66 s
+     - 92.36 s
+     - 83.26 s
+   * - ImageNet-1k
+     - 
+     - 
+     -
