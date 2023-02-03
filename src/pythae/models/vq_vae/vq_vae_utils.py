@@ -115,8 +115,6 @@ class QuantizerEMA(nn.Module):
         quantized = one_hot_encoding @ self.embeddings
         quantized = quantized.reshape_as(z)
 
-        pid = os.getpid()
-
         if self.training:
 
             n_i = torch.sum(one_hot_encoding, dim=0)
@@ -137,7 +135,7 @@ class QuantizerEMA(nn.Module):
             dw = one_hot_encoding.T @ z.reshape(-1, self.embedding_dim)
 
             if uses_ddp:
-                dist.all_reduce(dw, async_op=True)
+                dist.all_reduce(dw.detach())
 
             #self.ema_embed.mul_(self.decay).add_(dw, alpha=(1 - self.decay))
 
