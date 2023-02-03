@@ -140,9 +140,7 @@ class QuantizerEMA(nn.Module):
             if uses_ddp:
                 dist.all_reduce(dw)
 
-            self.ema_embed = nn.Parameter(
-                self.ema_embed * self.decay + dw * (1 - self.decay)
-            )
+            ema_embed = self.ema_embed * self.decay + dw * (1 - self.decay)
 
             n = torch.sum(self.cluster_size)
 
@@ -150,9 +148,10 @@ class QuantizerEMA(nn.Module):
                 (self.cluster_size + 1e-5) / (n + self.num_embeddings * 1e-5) * n
             )
 
-            self.embeddings.weight = nn.Parameter(
+            self.embeddings.weight.data.copy_(
                 self.ema_embed / self.cluster_size.unsqueeze(-1)
             )
+            self.ema_embed.data.copy_(self.ema_embed)
 
         commitment_loss = F.mse_loss(
             quantized.detach().reshape(-1, self.embedding_dim),
