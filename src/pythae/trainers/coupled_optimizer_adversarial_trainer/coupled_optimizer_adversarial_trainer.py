@@ -506,12 +506,12 @@ class CoupledOptimizerAdversarialTrainer(BaseTrainer):
                 with torch.no_grad():
 
                     model_output = self.model(
-                        inputs, epoch=epoch, dataset_size=len(self.eval_loader.dataset)
+                        inputs, epoch=epoch, dataset_size=len(self.eval_loader.dataset), uses_ddp=self.distributed
                     )
 
             except RuntimeError:
                 model_output = self.model(
-                    inputs, epoch=epoch, dataset_size=len(self.eval_loader.dataset)
+                    inputs, epoch=epoch, dataset_size=len(self.eval_loader.dataset), uses_ddp=self.distributed
                 )
 
             encoder_loss = model_output.encoder_loss
@@ -571,7 +571,7 @@ class CoupledOptimizerAdversarialTrainer(BaseTrainer):
             inputs = self._set_inputs_to_device(inputs)
 
             model_output = self.model(
-                inputs, epoch=epoch, dataset_size=len(self.train_loader.dataset)
+                inputs, epoch=epoch, dataset_size=len(self.train_loader.dataset), uses_ddp=self.distributed
             )
 
             self._optimizers_step(model_output)

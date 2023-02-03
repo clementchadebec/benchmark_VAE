@@ -1,6 +1,8 @@
+from dis import dis
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import torch.distributed as dist
 
 from ..base.base_utils import ModelOutput
 from .vq_vae_config import VQVAEConfig
@@ -26,13 +28,9 @@ class Quantizer(nn.Module):
             -1 / self.num_embeddings, 1 / self.num_embeddings
         )
 
-    def forward(self, z: torch.Tensor):
+    def forward(self, z: torch.Tensor, uses_ddp=False):
 
-        distances = (
-            (z.reshape(-1, self.embedding_dim) ** 2).sum(dim=-1, keepdim=True)
-            + (self.embeddings.weight ** 2).sum(dim=-1)
-            - 2 * z.reshape(-1, self.embedding_dim) @ self.embeddings.weight.T
-        )
+        distances = torch.cdist(z.reshape(-1, self.embedding_dim), self.embeddings.weight, p=2)
 
         closest = distances.argmin(-1).unsqueeze(-1)
 
@@ -89,25 +87,17 @@ class QuantizerEMA(nn.Module):
         self.commitment_loss_factor = model_config.commitment_loss_factor
         self.decay = model_config.decay
 
-        self.embeddings = nn.Embedding(self.num_embeddings, self.embedding_dim)
-
-        self.embeddings.weight.data.uniform_(
-            -1 / self.num_embeddings, 1 / self.num_embeddings
-        )
+        embed = torch.empty(self.num_embeddings, self.embedding_dim)
+        nn.init.kaiming_uniform_(embed)
 
         self.register_buffer("cluster_size", torch.zeros(self.num_embeddings))
+        self.register_buffer('ema_embed', embed.clone())
 
-        self.ema_embed = torch.Tensor(self.num_embeddings, self.embedding_dim)
+        self.embeddings = nn.Parameter(embed)
 
-        self.ema_embed.data.uniform_(-1 / self.num_embeddings, 1 / self.num_embeddings)
+    def forward(self, z: torch.Tensor, uses_ddp: bool=False):
 
-    def forward(self, z: torch.Tensor):
-
-        distances = (
-            (z.reshape(-1, self.embedding_dim) ** 2).sum(dim=-1, keepdim=True)
-            + (self.embeddings.weight ** 2).sum(dim=-1)
-            - 2 * z.reshape(-1, self.embedding_dim) @ self.embeddings.weight.T
-        )
+        distances = torch.cdist(z.reshape(-1, self.embedding_dim), self.embeddings, p=2)
 
         closest = distances.argmin(-1).unsqueeze(-1)
 
@@ -120,27 +110,45 @@ class QuantizerEMA(nn.Module):
         )
 
         # quantization
-        quantized = one_hot_encoding @ self.embeddings.weight
+        quantized = one_hot_encoding @ self.embeddings
         quantized = quantized.reshape_as(z)
 
-        with torch.no_grad():
-            if self.training:
+        if self.training:
 
-                n_i = torch.sum(one_hot_encoding, dim=0)
+            n_i = torch.sum(one_hot_encoding, dim=0)
 
-                self.cluster_size = self.cluster_size * self.decay + n_i * (1 - self.decay)
+            if uses_ddp:
+                dist.all_reduce(n_i)
 
-                dw = one_hot_encoding.T @ z.reshape(-1, self.embedding_dim)
+            # ema update
+            #self.cluster_size.mul_(self.decay).add_(n_i, alpha = (1 - self.decay))
 
-                self.ema_embed = self.ema_embed.to(z.device) * self.decay + dw * (1 - self.decay)
+            self.cluster_size = self.cluster_size * self.decay + n_i * (1 - self.decay)
 
-                n = torch.sum(self.cluster_size)
+            dw = one_hot_encoding.T @ z.reshape(-1, self.embedding_dim)
 
-                self.cluster_size = (
-                    (self.cluster_size + 1e-5) / (n + self.num_embeddings * 1e-5) * n
-                )
+            if uses_ddp:
+                dist.all_reduce(dw)
 
-                self.embeddings.weight.data = (self.ema_embed / self.cluster_size.unsqueeze(-1))
+            #self.ema_embed.mul_(self.decay).add_(dw, alpha=(1 - self.decay))
+
+            self.ema_embed = nn.Parameter(
+                self.ema_embed * self.decay + dw * (1 - self.decay)
+            )
+
+            n = torch.sum(self.cluster_size)
+
+            cluster_size = (
+                (self.cluster_size + 1e-5) / (n + self.num_embeddings * 1e-5)
+            ) * n
+
+            ema_embedding_normalized = self.ema_embed / cluster_size.unsqueeze(-1)
+
+            self.ema_embed.data.copy_(ema_embedding_normalized)
+
+            #self.embeddings.weight = nn.Parameter(
+            #    self.ema_embed / self.cluster_size.unsqueeze(-1)
+            #)
 
         commitment_loss = F.mse_loss(
             quantized.detach().reshape(-1, self.embedding_dim),

@@ -84,6 +84,7 @@ class VQVAE(AE):
         """
 
         x = inputs["data"]
+        uses_ddp = kwargs.pop("uses_ddp", False)
 
         encoder_output = self.encoder(x)
 
@@ -97,7 +98,7 @@ class VQVAE(AE):
 
         embeddings = embeddings.permute(0, 2, 3, 1)
 
-        quantizer_output = self.quantizer(embeddings)
+        quantizer_output = self.quantizer(embeddings, uses_ddp=uses_ddp)
 
         quantized_embed = quantizer_output.quantized_vector
         quantized_indices = quantizer_output.quantized_indices
