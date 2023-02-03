@@ -87,12 +87,12 @@ class QuantizerEMA(nn.Module):
         self.commitment_loss_factor = model_config.commitment_loss_factor
         self.decay = model_config.decay
 
-        embed = torch.empty(self.num_embeddings, self.embedding_dim)
-        nn.init.kaiming_uniform_(embed)
+        embedding = torch.empty(self.num_embeddings, self.embedding_dim)
+        nn.init.kaiming_uniform_(embedding)
 
         self.register_buffer("cluster_size", torch.zeros(self.num_embeddings))
-        self.register_buffer('ema_embed', embed.clone())
-        self.embeddings = self.register_buffer("embeddings", embed)
+        self.register_buffer('ema_embed', embedding.clone())
+        self.register_buffer("embeddings", embedding)
 
     def forward(self, z: torch.Tensor, uses_ddp: bool=False):
 
