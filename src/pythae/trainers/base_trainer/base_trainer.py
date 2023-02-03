@@ -591,7 +591,11 @@ class BaseTrainer:
                 uses_ddp=self.distributed
             )
 
+            print("out model forward")
+
             self._optimizers_step(model_output)
+
+            print("OUT optim step")
 
             loss = model_output.loss
 
