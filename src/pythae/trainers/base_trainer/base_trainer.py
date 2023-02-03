@@ -340,6 +340,7 @@ class BaseTrainer:
         loss = model_output.loss
 
         self.optimizer.zero_grad()
+        print("IN Backward")
         loss.backward()
         print("OUT backward")
         self.optimizer.step()
