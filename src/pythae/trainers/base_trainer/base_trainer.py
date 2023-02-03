@@ -341,7 +341,9 @@ class BaseTrainer:
 
         self.optimizer.zero_grad()
         loss.backward()
+        print("OUT backward")
         self.optimizer.step()
+        print("OUT optimizer.step")
 
     def _schedulers_step(self, metrics=None):
         if self.scheduler is None:
