@@ -100,10 +100,12 @@ class QuantizerEMA(nn.Module):
 
     def forward(self, z: torch.Tensor, uses_ddp: bool=False):
 
+        embed = self.embeddings.detach()
+
         distances = (
             (z.reshape(-1, self.embedding_dim) ** 2).sum(dim=-1, keepdim=True)
-            + (self.embeddings ** 2).sum(dim=-1)
-            - 2 * z.reshape(-1, self.embedding_dim) @ self.embeddings.T
+            + (embed ** 2).sum(dim=-1)
+            - 2 * z.reshape(-1, self.embedding_dim) @ embed.T
         )
 
         closest = distances.argmin(-1).unsqueeze(-1)
@@ -129,9 +131,9 @@ class QuantizerEMA(nn.Module):
 
             self.cluster_size = self.cluster_size * self.decay + n_i * (1 - self.decay)
 
-            dw = one_hot_encoding.T @ z.reshape(-1, self.embedding_dim)
+           # dw_ = one_hot_encoding.T @ z.reshape(-1, self.embedding_dim)
 
-            dw = dw.clone().detach()
+            dw = torch.einsum('i k, i j -> j k', z.reshape(-1, self.embedding_dim), one_hot_encoding)
 
             print("Before reduce: ", dw)
 
@@ -140,9 +142,7 @@ class QuantizerEMA(nn.Module):
 
             print("After reduce: ", dw)
 
-            self.ema_embed = nn.Parameter(
-                self.ema_embed * self.decay + dw * (1 - self.decay)
-            )
+            self.ema_embed = self.ema_embed * self.decay + dw * (1 - self.decay)
 
             n = torch.sum(self.cluster_size)
 
@@ -150,7 +150,7 @@ class QuantizerEMA(nn.Module):
                 (self.cluster_size + 1e-5) / (n + self.num_embeddings * 1e-5) * n
             )
 
-            self.embeddings.data.copy_ (
+            self.embeddings.data.copy_(
                 self.ema_embed / self.cluster_size.unsqueeze(-1)
             )
 
