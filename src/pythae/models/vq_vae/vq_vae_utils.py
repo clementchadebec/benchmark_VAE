@@ -121,9 +121,9 @@ class QuantizerEMA(nn.Module):
 
             n_i = torch.sum(one_hot_encoding, dim=0)
 
-            #if uses_ddp:
-            #    print("IN first all reduce")
-            #    dist.all_reduce(n_i)
+            if uses_ddp:
+                print("IN first all reduce")
+                dist.all_reduce(n_i)
 
             print("OUT first all reduce")
 
