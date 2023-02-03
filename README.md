@@ -359,7 +359,7 @@ To do so, you can built a python script that will then be launched by a launcher
 ... )
 ```
 
-See this [example script](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/scripts/distributed_training.py) that defines a multi-gpu VQVAE training. Be carefull, the way the environnement (`world_size`, `rank` ...) may be specific to the cluster and launcher you use. 
+See this [example script](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/scripts/distributed_training.py) that defines a multi-gpu VQVAE training. Be carefull, the way the distributed environnement variables (`world_size`, `rank` ...) are recovered may be specific to the cluster and launcher you use. 
 
 ## Sharing your models with the HuggingFace Hub 🤗
 Pythae also allows you to share your models on the [HuggingFace Hub](https://huggingface.co/models). To do so you need:

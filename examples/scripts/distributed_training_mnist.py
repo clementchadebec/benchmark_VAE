@@ -82,7 +82,7 @@ def main(args):
     gpu_ids = os.environ["SLURM_STEP_GPUS"].split(",")
 
     training_config = BaseTrainerConfig(
-        num_epochs=1000,
+        num_epochs=100,
         output_dir="my_models_on_mnist",
         per_device_train_batch_size=512 / int(os.environ["SLURM_NTASKS"]),
         per_device_eval_batch_size=512 / int(os.environ["SLURM_NTASKS"]),
