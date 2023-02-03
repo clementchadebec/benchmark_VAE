@@ -345,17 +345,18 @@ As of v0.1.0, Pythae now supports distributed training using PyTorch's [DDP](htt
 To do so, you can built a python script that will then be launched by a launcher (such as `srun` on a cluster). The only thing that is needed in the script is to specify some elements relative to the environment (such as the number of nodes/gpus) directly in the training configuration as follows
 
 ```python
-training_config = BaseTrainerConfig(
-        num_epochs=10,
-        learning_rate=1e-3,
-        per_device_train_batch_size=64,
-        per_device_eval_batch_size=64,
-        world_size= # number of gpus to use (n_nodes x n_gpus_per_node),
-        rank= # process/gpu id,
-        local_rank= # node id,
-        master_addr= # master address,
-        master_port= # master port,
-    )
+>>> training_config = BaseTrainerConfig(
+...     num_epochs=10,
+...     learning_rate=1e-3,
+...     per_device_train_batch_size=64,
+...     per_device_eval_batch_size=64,
+...     dist_backend="nccl", # distributed backend
+...     world_size=8 # number of gpus to use (n_nodes x n_gpus_per_node),
+...     rank=0 # process/gpu id,
+...     local_rank=1 # node id,
+...     master_addr="localhost" # master address,
+...     master_port="12345" # master port,
+... )
 ```
 
 See this [example script](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/scripts/distributed_training.py) that defines a multi-gpu VQVAE training. Be carefull, the way the environnement (`world_size`, `rank` ...) may be specific to the cluster and launcher you use. 

@@ -91,6 +91,7 @@ def main(args):
         steps_predict=99,
         no_cuda=False,
         world_size=int(os.environ["SLURM_NTASKS"]),
+        dist_backend="nccl",
         rank=int(os.environ["SLURM_PROCID"]),
         local_rank=int(os.environ["SLURM_LOCALID"]),
         master_addr=hostlist.expand_hostlist(os.environ["SLURM_JOB_NODELIST"])[0],
