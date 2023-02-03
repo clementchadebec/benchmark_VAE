@@ -132,8 +132,12 @@ class QuantizerEMA(nn.Module):
 
             self.cluster_size = self.cluster_size * self.decay + n_i * (1 - self.decay)
 
-            dw = one_hot_encoding.T @ z.reshape(-1, self.embedding_dim)
-            dw = dw.clone().detach()
+            #dw = one_hot_encoding.T @ z.reshape(-1, self.embedding_dim)
+
+            dw = torch.einsum('i k, i j -> j k', z.reshape(-1, self.embedding_dim), one_hot_encoding)
+
+            #assert 0, abs( dw - dw_ei).sum()
+
 
             if uses_ddp:
                 dist.all_reduce(dw)
