@@ -130,20 +130,20 @@ class QuantizerEMA(nn.Module):
 
 
             # ema update
-            #self.cluster_size.mul_(self.decay).add_(n_i, alpha = (1 - self.decay))
+            self.cluster_size.mul_(self.decay).add_(n_i, alpha = (1 - self.decay))
 
-            self.cluster_size = self.cluster_size * self.decay + n_i * (1 - self.decay)
+            #self.cluster_size = self.cluster_size * self.decay + n_i * (1 - self.decay)
 
             dw = one_hot_encoding.T @ z.reshape(-1, self.embedding_dim)
 
             if uses_ddp:
                 dist.all_reduce(dw)
 
-            #self.ema_embed.mul_(self.decay).add_(dw, alpha=(1 - self.decay))
+            self.ema_embed.mul_(self.decay).add_(dw, alpha=(1 - self.decay))
 
-            self.ema_embed = nn.Parameter(
-                self.ema_embed * self.decay + dw * (1 - self.decay)
-            )
+            #self.ema_embed = nn.Parameter(
+            #    self.ema_embed * self.decay + dw * (1 - self.decay)
+            #)
 
             n = torch.sum(self.cluster_size)
 
