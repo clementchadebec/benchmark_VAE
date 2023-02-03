@@ -137,6 +137,8 @@ class QuantizerEMA(nn.Module):
 
             dw = one_hot_encoding.T @ z.reshape(-1, self.embedding_dim)
 
+            dw = dw.clone().detach()
+
             print("Before reduce: ", dw)
 
             if uses_ddp:

@@ -340,7 +340,7 @@ class BaseTrainer:
         loss = model_output.loss
 
         self.optimizer.zero_grad()
-        print("IN Backward")
+        print(f"{self.rank}, IN Backward")
         loss.backward()
         print("OUT backward")
         self.optimizer.step()
@@ -585,7 +585,7 @@ class BaseTrainer:
 
             inputs = self._set_inputs_to_device(inputs)
 
-            print("here before forward")
+            print(f"{self.rank}, here before forward")
 
             model_output = self.model(
                 inputs,
