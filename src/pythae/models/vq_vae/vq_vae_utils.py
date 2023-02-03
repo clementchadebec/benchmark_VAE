@@ -133,11 +133,11 @@ class QuantizerEMA(nn.Module):
             self.cluster_size = self.cluster_size * self.decay + n_i * (1 - self.decay)
 
             dw = one_hot_encoding.T @ z.reshape(-1, self.embedding_dim)
+            dw = dw.clone().detach()
 
             if uses_ddp:
                 dist.all_reduce(dw)
-                dw = dw.clone().detach()
-
+            
             #self.ema_embed.mul_(self.decay).add_(dw, alpha=(1 - self.decay))
 
             self.ema_embed = nn.Parameter(
