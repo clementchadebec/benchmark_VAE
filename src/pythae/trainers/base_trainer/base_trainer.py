@@ -582,6 +582,8 @@ class BaseTrainer:
 
             inputs = self._set_inputs_to_device(inputs)
 
+            print("here before forward")
+
             model_output = self.model(
                 inputs,
                 epoch=epoch,

@@ -117,8 +117,15 @@ class QuantizerEMA(nn.Module):
 
             n_i = torch.sum(one_hot_encoding, dim=0)
 
+            print("before first EMA")
+
             if uses_ddp:
+                print("IN first all reduce")
                 dist.all_reduce(n_i)
+
+            print("OUT first all reduce")
+
+
 
             # ema update
             #self.cluster_size.mul_(self.decay).add_(n_i, alpha = (1 - self.decay))
