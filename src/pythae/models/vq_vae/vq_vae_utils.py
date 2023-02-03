@@ -153,11 +153,11 @@ class QuantizerEMA(nn.Module):
 
             ema_embedding_normalized = self.ema_embed / cluster_size.unsqueeze(-1)
 
-            self.embeddings.data.copy_(ema_embedding_normalized)
+            #self.embeddings.data.copy_(ema_embedding_normalized)
 
-            #self.embeddings.weight = nn.Parameter(
-            #    self.ema_embed / self.cluster_size.unsqueeze(-1)
-            #)
+            self.embeddings.data = nn.Parameter(
+                ema_embedding_normalized
+            )
 
         commitment_loss = F.mse_loss(
             quantized.detach().reshape(-1, self.embedding_dim),
