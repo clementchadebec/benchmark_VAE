@@ -27,7 +27,7 @@ class Quantizer(nn.Module):
             -1 / self.num_embeddings, 1 / self.num_embeddings
         )
 
-    def forward(self, z: torch.Tensor, uses_ddp: bool=False):
+    def forward(self, z: torch.Tensor, uses_ddp: bool = False):
 
         distances = (
             (z.reshape(-1, self.embedding_dim) ** 2).sum(dim=-1, keepdim=True)
@@ -104,7 +104,7 @@ class QuantizerEMA(nn.Module):
 
         self.ema_embed.data.uniform_(-1 / self.num_embeddings, 1 / self.num_embeddings)
 
-    def forward(self, z: torch.Tensor, uses_ddp: bool=False):
+    def forward(self, z: torch.Tensor, uses_ddp: bool = False):
 
         distances = (
             (z.reshape(-1, self.embedding_dim) ** 2).sum(dim=-1, keepdim=True)

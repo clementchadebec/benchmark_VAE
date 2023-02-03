@@ -100,7 +100,9 @@ class BaseTrainer:
         model.device = device
 
         if self.distributed:
-            model = DDP(model, device_ids=[self.local_rank], find_unused_parameters=True)
+            model = DDP(
+                model, device_ids=[self.local_rank], find_unused_parameters=True
+            )
 
         self.train_dataset = train_dataset
         self.eval_dataset = eval_dataset
@@ -341,11 +343,8 @@ class BaseTrainer:
         loss = model_output.loss
 
         self.optimizer.zero_grad()
-        print(f"{self.rank}, IN Backward")
         loss.backward()
-        print("OUT backward")
         self.optimizer.step()
-        print("OUT optimizer.step")
 
     def _schedulers_step(self, metrics=None):
         if self.scheduler is None:
@@ -540,12 +539,15 @@ class BaseTrainer:
                         inputs,
                         epoch=epoch,
                         dataset_size=len(self.eval_loader.dataset),
-                        uses_ddp=self.distributed
+                        uses_ddp=self.distributed,
                     )
 
             except RuntimeError:
                 model_output = self.model(
-                    inputs, epoch=epoch, dataset_size=len(self.eval_loader.dataset), uses_ddp=self.distributed
+                    inputs,
+                    epoch=epoch,
+                    dataset_size=len(self.eval_loader.dataset),
+                    uses_ddp=self.distributed,
                 )
 
             loss = model_output.loss
@@ -586,20 +588,14 @@ class BaseTrainer:
 
             inputs = self._set_inputs_to_device(inputs)
 
-            print(f"{self.rank},here before forward")
-
             model_output = self.model(
                 inputs,
                 epoch=epoch,
                 dataset_size=len(self.train_loader.dataset),
-                uses_ddp=self.distributed
+                uses_ddp=self.distributed,
             )
 
-            print(f"{self.rank}, out model forward")
-
             self._optimizers_step(model_output)
-
-            print("OUT optim step")
 
             loss = model_output.loss
 

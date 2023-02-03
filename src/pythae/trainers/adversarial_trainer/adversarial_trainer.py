@@ -423,12 +423,18 @@ class AdversarialTrainer(BaseTrainer):
                 with torch.no_grad():
 
                     model_output = self.model(
-                        inputs, epoch=epoch, dataset_size=len(self.eval_loader.dataset), uses_ddp=self.distributed
+                        inputs,
+                        epoch=epoch,
+                        dataset_size=len(self.eval_loader.dataset),
+                        uses_ddp=self.distributed,
                     )
 
             except RuntimeError:
                 model_output = self.model(
-                    inputs, epoch=epoch, dataset_size=len(self.eval_loader.dataset), uses_ddp=self.distributed
+                    inputs,
+                    epoch=epoch,
+                    dataset_size=len(self.eval_loader.dataset),
+                    uses_ddp=self.distributed,
                 )
 
             autoencoder_loss = model_output.autoencoder_loss
@@ -479,7 +485,10 @@ class AdversarialTrainer(BaseTrainer):
             inputs = self._set_inputs_to_device(inputs)
 
             model_output = self.model(
-                inputs, epoch=epoch, dataset_size=len(self.train_loader.dataset), uses_ddp=self.distributed
+                inputs,
+                epoch=epoch,
+                dataset_size=len(self.train_loader.dataset),
+                uses_ddp=self.distributed,
             )
 
             self._optimizers_step(model_output)

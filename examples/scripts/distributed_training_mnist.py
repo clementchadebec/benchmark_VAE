@@ -8,11 +8,13 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset
 
-from pythae.data.datasets import DatasetOutput
-from pythae.data.datasets import BaseDataset
+from pythae.data.datasets import BaseDataset, DatasetOutput
 from pythae.models import VQVAE, VQVAEConfig
+from pythae.models.nn.benchmarks.mnist import (
+    Decoder_ResNet_VQVAE_MNIST,
+    Encoder_ResNet_VQVAE_MNIST,
+)
 from pythae.trainers import BaseTrainer, BaseTrainerConfig
-from pythae.models.nn.benchmarks.mnist import Encoder_ResNet_VQVAE_MNIST, Decoder_ResNet_VQVAE_MNIST
 
 logger = logging.getLogger(__name__)
 console = logging.StreamHandler()
@@ -69,14 +71,11 @@ def main(args):
     eval_dataset = MNIST(eval_data)
 
     model_config = VQVAEConfig(
-        input_dim=(1, 28, 28),
-        latent_dim=32,
-        use_ema=True,
-        num_embeddings=256
+        input_dim=(1, 28, 28), latent_dim=32, use_ema=True, num_embeddings=256
     )
 
     encoder = Encoder_ResNet_VQVAE_MNIST(model_config)
-    decoder= Decoder_ResNet_VQVAE_MNIST(model_config)
+    decoder = Decoder_ResNet_VQVAE_MNIST(model_config)
 
     model = VQVAE(model_config=model_config, encoder=encoder, decoder=decoder)
 
@@ -85,8 +84,8 @@ def main(args):
     training_config = BaseTrainerConfig(
         num_epochs=1000,
         output_dir="my_models_on_mnist",
-        per_device_train_batch_size = 512 / int(os.environ["SLURM_NTASKS"]),
-        per_device_eval_batch_size = 512 / int(os.environ["SLURM_NTASKS"]),
+        per_device_train_batch_size=512 / int(os.environ["SLURM_NTASKS"]),
+        per_device_eval_batch_size=512 / int(os.environ["SLURM_NTASKS"]),
         learning_rate=1e-3,
         steps_saving=None,
         steps_predict=99,
