@@ -147,6 +147,9 @@ class BaseTrainer:
             device = "cpu"
 
         else:
+            torch.cuda.set_device(self.local_rank)
+            device = torch.device("cuda", self.local_rank)
+
             if not dist.is_initialized():
                 dist.init_process_group(
                     backend="nccl",
@@ -155,8 +158,6 @@ class BaseTrainer:
                     rank=self.rank,
                 )
 
-            torch.cuda.set_device(self.local_rank)
-            device = torch.device("cuda", self.local_rank)
         return device
 
     def get_train_dataloader(
