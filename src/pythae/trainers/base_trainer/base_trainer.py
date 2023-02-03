@@ -101,7 +101,7 @@ class BaseTrainer:
 
         if self.distributed:
             model = DDP(
-                model, device_ids=[self.local_rank], find_unused_parameters=True
+                model, device_ids=[self.local_rank]
             )
 
         self.train_dataset = train_dataset
@@ -126,7 +126,9 @@ class BaseTrainer:
 
         # run sanity check on the model
         self._run_model_sanity_check(model, train_loader)
-        logger.info("Model passed sanity check !\n" "Ready for training.\n")
+
+        if self.is_main_process:
+            logger.info("Model passed sanity check !\n" "Ready for training.\n")
 
         self.model = model
 
