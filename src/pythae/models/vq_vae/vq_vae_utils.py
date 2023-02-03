@@ -1,8 +1,8 @@
-from dis import dis
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import torch.distributed.nn as dist
+import torch.distributed as dist
+import os
 
 from ..base.base_utils import ModelOutput
 from .vq_vae_config import VQVAEConfig
@@ -115,11 +115,11 @@ class QuantizerEMA(nn.Module):
         quantized = one_hot_encoding @ self.embeddings
         quantized = quantized.reshape_as(z)
 
+        pid = os.getpid()
+
         if self.training:
 
             n_i = torch.sum(one_hot_encoding, dim=0)
-
-            print("before first EMA")
 
             if uses_ddp:
                 print("IN first all reduce")

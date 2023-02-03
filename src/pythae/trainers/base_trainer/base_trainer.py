@@ -593,7 +593,7 @@ class BaseTrainer:
                 uses_ddp=self.distributed
             )
 
-            print("out model forward")
+            print(f"{self.rank}, out model forward")
 
             self._optimizers_step(model_output)
 
