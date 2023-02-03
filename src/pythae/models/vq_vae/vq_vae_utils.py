@@ -135,14 +135,14 @@ class QuantizerEMA(nn.Module):
 
             dw = torch.einsum('i k, i j -> j k', z.reshape(-1, self.embedding_dim), one_hot_encoding)
 
-            print("Before reduce: ", dw)
+            #print("Before reduce: ", dw)
 
             if uses_ddp:
-                dist.all_reduce(dw)
+                dist.all_reduce(dw.contiguous())
 
-            print("After reduce: ", dw)
+            #print("After reduce: ", dw)
 
-            self.ema_embed = self.ema_embed * self.decay + dw * (1 - self.decay)
+            ema_embed = self.ema_embed * self.decay + dw * (1 - self.decay)
 
             n = torch.sum(self.cluster_size)
 
@@ -151,8 +151,11 @@ class QuantizerEMA(nn.Module):
             )
 
             self.embeddings.data.copy_(
-                self.ema_embed / self.cluster_size.unsqueeze(-1)
+                ema_embed / self.cluster_size.unsqueeze(-1)
             )
+            self.ema_embed.data.copy_(ema_embed)
+
+
 
         commitment_loss = F.mse_loss(
             quantized.detach().reshape(-1, self.embedding_dim),
