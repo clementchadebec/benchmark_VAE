@@ -379,7 +379,7 @@ class BaseTrainer:
         Args:
             log_output_dir (str): The path in which the log will be stored
         """
-        dist.barrier()
+
         self.prepare_training()
 
         self.callback_handler.on_train_begin(
@@ -585,7 +585,7 @@ class BaseTrainer:
 
             inputs = self._set_inputs_to_device(inputs)
 
-            print(f"{self.rank}, here before forward")
+            print(f"{self.rank},here before forward")
 
             model_output = self.model(
                 inputs,
