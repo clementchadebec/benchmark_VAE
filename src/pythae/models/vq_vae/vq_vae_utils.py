@@ -137,8 +137,12 @@ class QuantizerEMA(nn.Module):
 
             dw = one_hot_encoding.T @ z.reshape(-1, self.embedding_dim)
 
+            print("Before reduce: ", dw)
+
             if uses_ddp:
                 dist.all_reduce(dw)
+
+            print("After reduce: ", dw)
 
             self.ema_embed = nn.Parameter(
                 self.ema_embed * self.decay + dw * (1 - self.decay)
