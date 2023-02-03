@@ -92,8 +92,7 @@ class QuantizerEMA(nn.Module):
 
         self.register_buffer("cluster_size", torch.zeros(self.num_embeddings))
         self.register_buffer('ema_embed', embed.clone())
-
-        self.embeddings = nn.Parameter(embed)
+        self.embeddings = self.register_buffer("embeddings", embed)
 
     def forward(self, z: torch.Tensor, uses_ddp: bool=False):
 
