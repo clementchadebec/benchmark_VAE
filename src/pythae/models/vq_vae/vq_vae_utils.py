@@ -90,26 +90,26 @@ class QuantizerEMA(nn.Module):
         self.commitment_loss_factor = model_config.commitment_loss_factor
         self.decay = model_config.decay
 
-        self.embeddings = nn.Embedding(self.num_embeddings, self.embedding_dim)
+        embeddings = torch.empty(self.num_embeddings, self.embedding_dim)
 
-        self.embeddings.weight.data.uniform_(
+        embeddings.data.uniform_(
             -1 / self.num_embeddings, 1 / self.num_embeddings
         )
 
         self.register_buffer("cluster_size", torch.zeros(self.num_embeddings))
-
-        self.ema_embed = nn.Parameter(
-            torch.Tensor(self.num_embeddings, self.embedding_dim)
+        self.register_buffer("ema_embed", torch.zeros(self.num_embeddings, self.embedding_dim))
+        self.ema_embed.data.uniform_(
+            -1 / self.num_embeddings, 1 / self.num_embeddings
         )
 
-        self.ema_embed.data.uniform_(-1 / self.num_embeddings, 1 / self.num_embeddings)
+        self.embeddings = nn.Parameter(embeddings)
 
     def forward(self, z: torch.Tensor, uses_ddp: bool = False):
 
         distances = (
             (z.reshape(-1, self.embedding_dim) ** 2).sum(dim=-1, keepdim=True)
-            + (self.embeddings.weight ** 2).sum(dim=-1)
-            - 2 * z.reshape(-1, self.embedding_dim) @ self.embeddings.weight.T
+            + (self.embeddings ** 2).sum(dim=-1)
+            - 2 * z.reshape(-1, self.embedding_dim) @ self.embeddings.T
         )
 
         closest = distances.argmin(-1).unsqueeze(-1)
@@ -123,7 +123,7 @@ class QuantizerEMA(nn.Module):
         )
 
         # quantization
-        quantized = one_hot_encoding @ self.embeddings.weight
+        quantized = one_hot_encoding @ self.embeddings
         quantized = quantized.reshape_as(z)
 
         if self.training:
@@ -139,7 +139,7 @@ class QuantizerEMA(nn.Module):
 
             if uses_ddp:
                 dist.all_reduce(dw)
-
+    
             ema_embed = self.ema_embed * self.decay + dw * (1 - self.decay)
 
             n = torch.sum(self.cluster_size)
@@ -148,10 +148,8 @@ class QuantizerEMA(nn.Module):
                 (self.cluster_size + 1e-5) / (n + self.num_embeddings * 1e-5) * n
             )
 
-            self.embeddings.weight.data.copy_(
-                self.ema_embed / self.cluster_size.unsqueeze(-1)
-            )
-            self.ema_embed.data.copy_(self.ema_embed)
+            self.embeddings.data.copy_(ema_embed / self.cluster_size.unsqueeze(-1))
+            self.ema_embed.data.copy_(ema_embed)
 
         commitment_loss = F.mse_loss(
             quantized.detach().reshape(-1, self.embedding_dim),
