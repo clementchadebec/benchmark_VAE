@@ -379,7 +379,7 @@ class BaseTrainer:
         Args:
             log_output_dir (str): The path in which the log will be stored
         """
-
+        dist.barrier()
         self.prepare_training()
 
         self.callback_handler.on_train_begin(
