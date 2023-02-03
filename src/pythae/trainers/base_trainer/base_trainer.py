@@ -5,7 +5,7 @@ from copy import deepcopy
 from typing import Any, Dict, List, Optional
 
 import torch
-import torch.distributed as dist
+import torch.distributed.nn as dist
 import torch.optim as optim
 import torch.optim.lr_scheduler as lr_scheduler
 from torch.nn.parallel import DistributedDataParallel as DDP
