@@ -76,6 +76,7 @@ class BaseTrainer:
         self.world_size = self.training_config.world_size
         self.local_rank = self.training_config.local_rank
         self.rank = self.training_config.rank
+        self.dist_backend = self.training_config.dist_backend
 
         if self.world_size > 1:
             self.distributed = True
@@ -122,9 +123,8 @@ class BaseTrainer:
         self.callbacks = callbacks
 
         # run sanity check on the model
-        if self.is_main_process:
-            self._run_model_sanity_check(model, train_loader)
-            logger.info("Model passed sanity check !\n" "Ready for training.\n")
+        self._run_model_sanity_check(model, train_loader)
+        logger.info("Model passed sanity check !\n" "Ready for training.\n")
 
         self.model = model
 
@@ -152,7 +152,7 @@ class BaseTrainer:
 
             if not dist.is_initialized():
                 dist.init_process_group(
-                    backend="nccl",
+                    backend=self.dist_backend,
                     init_method="env://",
                     world_size=self.world_size,
                     rank=self.rank,

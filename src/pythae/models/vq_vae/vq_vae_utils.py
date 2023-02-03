@@ -125,7 +125,6 @@ class QuantizerEMA(nn.Module):
         if self.training:
 
             n_i = torch.sum(one_hot_encoding, dim=0)
-
             if uses_ddp:
                 dist.all_reduce(n_i)
 
