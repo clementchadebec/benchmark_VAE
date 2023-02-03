@@ -2,7 +2,7 @@ from dis import dis
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import torch.distributed as dist
+import torch.distributed.nn as dist
 
 from ..base.base_utils import ModelOutput
 from .vq_vae_config import VQVAEConfig

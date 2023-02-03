@@ -5,7 +5,7 @@ from copy import deepcopy
 from typing import Any, Dict, List, Optional
 
 import torch
-import torch.distributed.nn as dist
+import torch.distributed as dist
 import torch.optim as optim
 import torch.optim.lr_scheduler as lr_scheduler
 from torch.nn.parallel import DistributedDataParallel as DDP
@@ -99,7 +99,7 @@ class BaseTrainer:
         model.device = device
 
         if self.distributed:
-            model = DDP(model, device_ids=[self.local_rank])
+            model = DDP(model, device_ids=[self.local_rank], find_unused_parameters=True)
 
         self.train_dataset = train_dataset
         self.eval_dataset = eval_dataset
