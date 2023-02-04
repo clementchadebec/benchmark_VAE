@@ -22,6 +22,10 @@ class BaseTrainerConfig(BaseConfig):
         per_device_eval_batch_size (int): The number of evaluation samples per batch and per device.
             Default 64
         num_epochs (int): The maximal number of epochs for training. Default: 100
+        train_dataloader_num_workers (int): Number of subprocesses to use for train data loading. 
+            0 means that the data will be loaded in the main process. Default: 0
+        eval_dataloader_num_workers (int): Number of subprocesses to use for evaluation data 
+            loading. 0 means that the data will be loaded in the main process. Default: 0
         optimizer_cls (str): The name of the `torch.optim.Optimizer` used for
             training. Default: :class:`~torch.optim.Adam`.
         optimizer_params (dict): A dict containing the parameters to use for the
@@ -50,6 +54,8 @@ class BaseTrainerConfig(BaseConfig):
     per_device_train_batch_size: int = 64
     per_device_eval_batch_size: int = 64
     num_epochs: int = 100
+    train_dataloader_num_workers: int = 0
+    eval_dataloader_num_workers: int = 0
     optimizer_cls: str = "Adam"
     optimizer_params: Union[dict, None] = None
     scheduler_cls: Union[str, None] = None

@@ -176,6 +176,7 @@ class BaseTrainer:
         return DataLoader(
             dataset=train_dataset,
             batch_size=self.training_config.per_device_train_batch_size,
+            num_workers=self.training_config.train_dataloader_num_workers,
             shuffle=(train_sampler is None),
             sampler=train_sampler,
         )
@@ -192,6 +193,7 @@ class BaseTrainer:
         return DataLoader(
             dataset=eval_dataset,
             batch_size=self.training_config.per_device_eval_batch_size,
+            num_workers=self.training_config.eval_dataloader_num_workers,
             shuffle=(eval_sampler is None),
             sampler=eval_sampler,
         )
