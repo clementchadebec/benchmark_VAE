@@ -83,6 +83,8 @@ def main(args):
 
     training_config = AdversarialTrainerConfig(
         num_epochs=100,
+        train_dataloader_num_workers=10,
+        eval_dataloader_num_workers=10,
         output_dir="my_models_on_mnist",
         per_device_train_batch_size=1024 / int(os.environ["SLURM_NTASKS"]),
         per_device_eval_batch_size=1024 / int(os.environ["SLURM_NTASKS"]),
