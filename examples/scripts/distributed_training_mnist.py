@@ -100,6 +100,8 @@ def main(args):
         master_port=str(12345 + int(min(gpu_ids))),
     )
 
+    training_config.grad_accumulation = 8
+
     if int(os.environ["SLURM_PROCID"]) == 0:
         logger.info(model)
         logger.info(f"Training config: {training_config}\n")

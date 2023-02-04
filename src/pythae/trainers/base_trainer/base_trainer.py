@@ -346,12 +346,13 @@ class BaseTrainer:
     def _optimizers_step(self, model_output=None, iteration=None):
         loss = model_output.loss
 
-        if iteration % 8 == 0:
+        if iteration % self.training_config.grad_accumulation == 0:
+            print(iteration)
             self.optimizer.zero_grad()
 
         loss.backward()
 
-        if iteration % 8 == 0:
+        if iteration % self.training_config.grad_accumulation == 0:
             self.optimizer.step()
 
     def _schedulers_step(self, metrics=None):
