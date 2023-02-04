@@ -155,13 +155,15 @@ def main(args):
     gpu_ids = os.environ["SLURM_STEP_GPUS"].split(",")
 
     training_config = BaseTrainerConfig(
-        num_epochs=100,
+        num_epochs=50,
+        train_dataloader_num_workers=8,
+        eval_dataloader_num_workers=8,
         output_dir="my_models_on_mnist",
-        per_device_train_batch_size=512,
-        per_device_eval_batch_size=512,
-        learning_rate=1e-3,
+        per_device_train_batch_size=64,
+        per_device_eval_batch_size=64,
+        learning_rate=1e-4,
         steps_saving=None,
-        steps_predict=2,
+        steps_predict=None,
         no_cuda=False,
         world_size=int(os.environ["SLURM_NTASKS"]),
         dist_backend="nccl",
@@ -210,6 +212,9 @@ def main(args):
     end_time = time.time()
 
     logger.info(f"Total execution time: {(end_time - start_time)} seconds")
+
+    logger('Predict')
+    trainer.predict(trainer._best_model)
 
 
 if __name__ == "__main__":
