@@ -691,7 +691,7 @@ class BaseTrainer:
         # with torch.no_grad():
 
         inputs = self.eval_loader.dataset[
-            : min(self.eval_loader.dataset.data.shape[0], 10)
+            : min(len(self.eval_loader.dataset), 10)
         ]
         inputs = self._set_inputs_to_device(inputs)
 
