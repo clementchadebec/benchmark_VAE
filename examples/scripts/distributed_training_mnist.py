@@ -83,8 +83,6 @@ def main(args):
 
     training_config = BaseTrainerConfig(
         num_epochs=100,
-        train_dataloader_num_workers=8,
-        eval_dataloader_num_workers=8,
         output_dir="my_models_on_mnist",
         per_device_train_batch_size=256,
         per_device_eval_batch_size=256,
