@@ -344,7 +344,7 @@ class BaseTrainer:
         return inputs_on_device
 
     def _optimizers_step(self, model_output=None, iteration=None):
-        loss = model_output.loss
+        loss = model_output.loss / self.training_config.grad_accumulation
 
         if iteration % self.training_config.grad_accumulation == 0:
             self.optimizer.zero_grad()

@@ -71,7 +71,7 @@ def main(args):
     eval_dataset = MNIST(eval_data)
 
     model_config = VQVAEConfig(
-        input_dim=(1, 28, 28), latent_dim=32, use_ema=True, num_embeddings=256
+        input_dim=(1, 28, 28), latent_dim=16, use_ema=True, num_embeddings=256
     )
 
     encoder = Encoder_ResNet_VQVAE_MNIST(model_config)
@@ -83,14 +83,14 @@ def main(args):
 
     training_config = BaseTrainerConfig(
         num_epochs=100,
-        train_dataloader_num_workers=10,
-        eval_dataloader_num_workers=10,
+        train_dataloader_num_workers=8,
+        eval_dataloader_num_workers=8,
         output_dir="my_models_on_mnist",
-        per_device_train_batch_size=512,
-        per_device_eval_batch_size=512,
+        per_device_train_batch_size=256,
+        per_device_eval_batch_size=256,
         learning_rate=1e-3,
         steps_saving=None,
-        steps_predict=99,
+        steps_predict=None,
         no_cuda=False,
         world_size=int(os.environ["SLURM_NTASKS"]),
         dist_backend="nccl",

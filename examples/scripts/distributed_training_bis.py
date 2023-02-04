@@ -9,12 +9,12 @@ import torch
 from torch.utils.data import Dataset
 
 from pythae.data.datasets import DatasetOutput
-from pythae.models import Adversarial_AE, Adversarial_AE_Config
+from pythae.models import VAE, VAEConfig
 from pythae.models.nn.benchmarks.mnist import (
     Decoder_ResNet_AE_MNIST,
-    Encoder_ResNet_VAE_MNIST,
+    Encoder_ResNet_VAE_MNIST
 )
-from pythae.trainers import AdversarialTrainer, AdversarialTrainerConfig
+from pythae.trainers import BaseTrainer, BaseTrainerConfig
 
 logger = logging.getLogger(__name__)
 console = logging.StreamHandler()
@@ -59,7 +59,7 @@ class MNIST(Dataset):
 
 def main(args):
 
-     ### Load data
+    ### Load data
     train_data = torch.tensor(
         np.load(os.path.join(PATH, f"data/mnist", "train_data.npz"))["data"] / 255.0
     )
@@ -70,27 +70,27 @@ def main(args):
     train_dataset = MNIST(train_data)
     eval_dataset = MNIST(eval_data)
 
-    model_config = Adversarial_AE_Config(
-        input_dim=(1, 28, 28), latent_dim=32
+    model_config = VAEConfig(
+        input_dim=(1, 28, 28), latent_dim=16
     )
 
     encoder = Encoder_ResNet_VAE_MNIST(model_config)
     decoder = Decoder_ResNet_AE_MNIST(model_config)
 
-    model = Adversarial_AE(model_config=model_config)
+    model = VAE(model_config=model_config, encoder=encoder, decoder=decoder)
 
     gpu_ids = os.environ["SLURM_STEP_GPUS"].split(",")
 
-    training_config = AdversarialTrainerConfig(
+    training_config = BaseTrainerConfig(
         num_epochs=100,
-        train_dataloader_num_workers=10,
-        eval_dataloader_num_workers=10,
+        train_dataloader_num_workers=8,
+        eval_dataloader_num_workers=8,
         output_dir="my_models_on_mnist",
-        per_device_train_batch_size=1024 / int(os.environ["SLURM_NTASKS"]),
-        per_device_eval_batch_size=1024 / int(os.environ["SLURM_NTASKS"]),
+        per_device_train_batch_size=256,
+        per_device_eval_batch_size=256,
         learning_rate=1e-3,
         steps_saving=None,
-        steps_predict=99,
+        steps_predict=None,
         no_cuda=False,
         world_size=int(os.environ["SLURM_NTASKS"]),
         dist_backend="nccl",
@@ -100,13 +100,16 @@ def main(args):
         master_port=str(12345 + int(min(gpu_ids))),
     )
 
+    training_config.grad_accumulation = 8
+
     if int(os.environ["SLURM_PROCID"]) == 0:
         logger.info(model)
         logger.info(f"Training config: {training_config}\n")
 
     callbacks = []
 
-    if args.use_wandb:
+    # Only log to wandb if main process
+    if args.use_wandb and (training_config.rank == 0 or training_config == -1):
         from pythae.trainers.training_callbacks import WandbCallback
 
         wandb_cb = WandbCallback()
@@ -119,7 +122,7 @@ def main(args):
 
         callbacks.append(wandb_cb)
 
-    trainer = AdversarialTrainer(
+    trainer = BaseTrainer(
         model=model,
         train_dataset=train_dataset,
         eval_dataset=eval_dataset,
@@ -134,6 +137,7 @@ def main(args):
     end_time = time.time()
 
     logger.info(f"Total execution time: {(end_time - start_time)} seconds")
+
 
 if __name__ == "__main__":
 
