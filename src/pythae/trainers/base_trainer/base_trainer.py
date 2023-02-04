@@ -347,7 +347,6 @@ class BaseTrainer:
         loss = model_output.loss
 
         if iteration % self.training_config.grad_accumulation == 0:
-            print(iteration)
             self.optimizer.zero_grad()
 
         loss.backward()
