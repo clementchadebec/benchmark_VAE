@@ -690,9 +690,7 @@ class BaseTrainer:
 
         # with torch.no_grad():
 
-        inputs = self.eval_loader.dataset[
-            : min(len(self.eval_loader.dataset), 10)
-        ]
+        inputs = next(iter(self.eval_loader))
         inputs = self._set_inputs_to_device(inputs)
 
         model_out = model(inputs)
