@@ -343,12 +343,16 @@ class BaseTrainer:
 
         return inputs_on_device
 
-    def _optimizers_step(self, model_output=None):
+    def _optimizers_step(self, model_output=None, iteration=None):
         loss = model_output.loss
 
-        self.optimizer.zero_grad()
+        if iteration % 8 == 0:
+            self.optimizer.zero_grad()
+
         loss.backward()
-        self.optimizer.step()
+
+        if iteration % 8 == 0:
+            self.optimizer.step()
 
     def _schedulers_step(self, metrics=None):
         if self.scheduler is None:
@@ -588,7 +592,7 @@ class BaseTrainer:
 
         epoch_loss = 0
 
-        for inputs in self.train_loader:
+        for i, inputs in enumerate(self.train_loader):
 
             inputs = self._set_inputs_to_device(inputs)
 
@@ -599,7 +603,7 @@ class BaseTrainer:
                 uses_ddp=self.distributed,
             )
 
-            self._optimizers_step(model_output)
+            self._optimizers_step(model_output, iteration=i+1)
 
             loss = model_output.loss
 
