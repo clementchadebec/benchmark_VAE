@@ -30,6 +30,11 @@ ap = argparse.ArgumentParser()
 
 # Training setting
 ap.add_argument(
+    "--grad_accumulation",
+    type=int,
+    default=1
+)
+ap.add_argument(
     "--use_wandb",
     help="whether to log the metrics in wandb",
     action="store_true",
@@ -165,7 +170,9 @@ def main(args):
         master_port=str(12345 + int(min(gpu_ids))),
     )
 
-    training_config.grad_accumulation = 8
+    training_config.grad_accumulation = args.grad_accumulation
+
+    logger.info(f'grad accumulation: {training_config.grad_accumulation}')
 
     if int(os.environ["SLURM_PROCID"]) == 0:
         logger.info(model)
