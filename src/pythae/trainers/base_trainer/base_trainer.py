@@ -688,18 +688,16 @@ class BaseTrainer:
 
         model.eval()
 
-        # with torch.no_grad():
-
         inputs = next(iter(self.eval_loader))
         inputs = self._set_inputs_to_device(inputs)
 
         model_out = model(inputs)
-        reconstructions = model_out.recon_x.cpu().detach()
-        z_enc = model_out.z
+        reconstructions = model_out.recon_x.cpu().detach()[:min(inputs['data'].shape[0], 10)]
+        z_enc = model_out.z[:min(inputs['data'].shape[0], 10)]
         z = torch.randn_like(z_enc)
         if self.distributed:
             normal_generation = model.module.decoder(z).reconstruction.detach().cpu()
         else:
             normal_generation = model.decoder(z).reconstruction.detach().cpu()
 
-        return inputs["data"], reconstructions, normal_generation
+        return inputs["data"][:min(inputs['data'].shape[0], 10)], reconstructions, normal_generation
