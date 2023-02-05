@@ -98,7 +98,8 @@ class Decoder_ResNet_VQVAE_ImageNet(BaseDecoder):
                 nn.ConvTranspose2d(128, 128, 4, 2, padding=1),
                 nn.ConvTranspose2d(128, 64, 4, 2, padding=1),
                 nn.ConvTranspose2d(64, 32, 4, 2, padding=1),
-                nn.ConvTranspose2d(32, self.n_channels, 4, 2, padding=1)
+                nn.ConvTranspose2d(32, self.n_channels, 4, 2, padding=1),
+                nn.Sigmoid()
             )
 
 
