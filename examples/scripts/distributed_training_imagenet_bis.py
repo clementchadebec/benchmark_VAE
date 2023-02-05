@@ -121,7 +121,7 @@ class ImageNet(Dataset):
         return len(self.imgs_path)
     
     def __getitem__(self, idx):
-        img = Image.open(self.imgs_path[idx])
+        img = Image.open(self.imgs_path[idx]).convert('RGB')
         if self.transforms is not None:
             img = self.transforms(img)
         return DatasetOutput(data=img)
