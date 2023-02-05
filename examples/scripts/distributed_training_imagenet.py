@@ -114,14 +114,13 @@ class Decoder_ResNet_VQVAE_ImageNet(BaseDecoder):
 class ImageNet(Dataset):
     def __init__(self, data_dir=None, transforms=None):
         self.imgs_path = [os.path.join(data_dir, n) for n in os.listdir(data_dir)]
-        self.imgs_path = self.imgs_path[60000:]
         self.transforms = transforms
     
     def __len__(self):
         return len(self.imgs_path)
     
     def __getitem__(self, idx):
-        img = Image.open(self.imgs_path[idx])
+        img = Image.open(self.imgs_path[idx]).convert('RGB')
         if self.transforms is not None:
             img = self.transforms(img)
         return DatasetOutput(data=img)
