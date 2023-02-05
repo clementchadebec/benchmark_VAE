@@ -51,7 +51,7 @@ ap.add_argument(
 
 args = ap.parse_args()
 
-class Encoder_ResNet_VQVAE_FFHQ(BaseEncoder):
+class Encoder_ResNet_VQVAE_ImageNet(BaseEncoder):
     def __init__(self, args):
         BaseEncoder.__init__(self)
 
@@ -62,15 +62,14 @@ class Encoder_ResNet_VQVAE_FFHQ(BaseEncoder):
             nn.Conv2d(self.n_channels, 32, 4, 2, padding=1),
             nn.Conv2d(32, 64, 4, 2, padding=1),
             nn.Conv2d(64, 128, 4, 2, padding=1),
-            nn.Conv2d(128, 256, 4, 2, padding=1),
-            nn.Conv2d(256, 256, 4, 2, padding=1),
-            ResBlock(in_channels=256, out_channels=64),
-            ResBlock(in_channels=256, out_channels=64),
-            ResBlock(in_channels=256, out_channels=64),
-            ResBlock(in_channels=256, out_channels=64),
+            nn.Conv2d(128, 128, 4, 2, padding=1),
+            ResBlock(in_channels=128, out_channels=64),
+            ResBlock(in_channels=128, out_channels=64),
+            ResBlock(in_channels=128, out_channels=64),
+            ResBlock(in_channels=128, out_channels=64),
         )
 
-        self.pre_qantized = nn.Conv2d(256, self.latent_dim, 1, 1)
+        self.pre_qantized = nn.Conv2d(128, self.latent_dim, 1, 1)
 
     def forward(self, x: torch.Tensor):
         output = ModelOutput()
@@ -81,7 +80,7 @@ class Encoder_ResNet_VQVAE_FFHQ(BaseEncoder):
         return output
 
 
-class Decoder_ResNet_VQVAE_FFHQ(BaseDecoder):
+class Decoder_ResNet_VQVAE_ImageNet(BaseDecoder):
     def __init__(self, args):
         BaseDecoder.__init__(self)
 
@@ -89,19 +88,17 @@ class Decoder_ResNet_VQVAE_FFHQ(BaseDecoder):
         self.n_channels = 3
 
 
-        self.dequantize = nn.ConvTranspose2d(self.latent_dim, 256, 1, 1)
+        self.dequantize = nn.ConvTranspose2d(self.latent_dim, 128, 1, 1)
 
         self.layers= nn.Sequential(
-                ResBlock(in_channels=256, out_channels=64),
-                ResBlock(in_channels=256, out_channels=64),
-                ResBlock(in_channels=256, out_channels=64),
-                ResBlock(in_channels=256, out_channels=64),
-                nn.ConvTranspose2d(256, 256, 4, 2, padding=1),
-                nn.ConvTranspose2d(256, 128, 4, 2, padding=1),
+                ResBlock(in_channels=128, out_channels=64),
+                ResBlock(in_channels=128, out_channels=64),
+                ResBlock(in_channels=128, out_channels=64),
+                ResBlock(in_channels=128, out_channels=64),
+                nn.ConvTranspose2d(128, 128, 4, 2, padding=1),
                 nn.ConvTranspose2d(128, 64, 4, 2, padding=1),
                 nn.ConvTranspose2d(64, 32, 4, 2, padding=1),
-                nn.ConvTranspose2d(32, self.n_channels, 4, 2, padding=1),
-                nn.Sigmoid()
+                nn.ConvTranspose2d(32, self.n_channels, 4, 2, padding=1)
             )
 
 
@@ -114,13 +111,10 @@ class Decoder_ResNet_VQVAE_FFHQ(BaseDecoder):
         return output
 
 
-class FFHQ(Dataset):
-    def __init__(self, data_dir=None, is_train=True, transforms=None):
+class ImageNet(Dataset):
+    def __init__(self, data_dir=None, transforms=None):
         self.imgs_path = [os.path.join(data_dir, n) for n in os.listdir(data_dir)]
-        if is_train:
-            self.imgs_path = self.imgs_path[:60000]
-        else:
-            self.imgs_path = self.imgs_path[60000:]
+        self.imgs_path = self.imgs_path[60000:]
         self.transforms = transforms
     
     def __len__(self):
@@ -136,18 +130,19 @@ class FFHQ(Dataset):
 def main(args):
 
     img_transforms = transforms.Compose([
-            transforms.ToTensor()
-        ])
+        transforms.Resize((128, 128)),
+        transforms.ToTensor()
+    ])
 
-    train_dataset = FFHQ(data_dir='/gpfsscratch/rech/wlr/uhw48em/data/ffhq/images1024x1024/all_images', is_train=True, transforms=img_transforms)
-    eval_dataset = FFHQ(data_dir='/gpfsscratch/rech/wlr/uhw48em/data/ffhq/images1024x1024/all_images', is_train=False, transforms=img_transforms)
+    train_dataset = ImageNet(data_dir='/gpfsscratch/rech/wlr/uhw48em/data/imagenet/data/train', transforms=img_transforms)
+    eval_dataset = ImageNet(data_dir='/gpfsscratch/rech/wlr/uhw48em/data/imagenet/data/val', transforms=img_transforms)
 
     model_config = VQVAEConfig(
-        input_dim=(3, 1024, 1024), latent_dim=128, use_ema=True, num_embeddings=1024
+        input_dim=(3, 128, 128), latent_dim=128, use_ema=True, num_embeddings=1024
     )
 
-    encoder = Encoder_ResNet_VQVAE_FFHQ(model_config)
-    decoder = Decoder_ResNet_VQVAE_FFHQ(model_config)
+    encoder = Encoder_ResNet_VQVAE_ImageNet(model_config)
+    decoder = Decoder_ResNet_VQVAE_ImageNet(model_config)
 
     model = VQVAE(model_config=model_config, encoder=encoder, decoder=decoder)
 
@@ -211,6 +206,10 @@ def main(args):
     end_time = time.time()
 
     logger.info(f"Total execution time: {(end_time - start_time)} seconds")
+
+    logger('Predict')
+    trainer.predict(trainer._best_model)
+
 
 if __name__ == "__main__":
 

@@ -50,7 +50,7 @@ class AdversarialTrainerConfig(BaseTrainerConfig):
             discriminator. Default: 1e-4
         steps_saving (int): A model checkpoint will be saved every `steps_saving` epoch.
             Default: None
-        steps_saving (int): A prediction using the best model will be run every `steps_predict`
+        steps_predict (int): A prediction using the best model will be run every `steps_predict`
             epoch. Default: None
         keep_best_on_train (bool): Whether to keep the best model on the train set. Default: False
         seed (int): The random seed for reproducibility

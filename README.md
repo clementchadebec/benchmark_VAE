@@ -36,6 +36,10 @@ provides the possibility to perform benchmark experiments and comparisons by tra
 the models with the same autoencoding neural network architecture. The feature *make your own autoencoder* 
 allows you to train any of these models with your own data and own Encoder and Decoder neural networks. It integrates experiment monitoring tools such [wandb](https://wandb.ai/), [mlflow](https://mlflow.org/) or [comet-ml](https://www.comet.com/signup?utm_source=pythae&utm_medium=partner&utm_campaign=AMS_US_EN_SNUP_Pythae_Comet_Integration) 🧪 and allows model sharing and loading from the [HuggingFace Hub](https://huggingface.co/models) 🤗 in a few lines of code.
 
+**News** 📢
+
+As of v0.1.0, `Pythae` now supports distributed training using PyTorch's [DDP](https://pytorch.org/docs/stable/notes/ddp.html). You can now train your favorite VAE faster and on larger datasets, still with a few lines of code.
+See our speed-up [benchmark](#benchmark).
 
 ## Quick access:
 - [Installation](#installation)
@@ -143,7 +147,9 @@ To launch a model training, you only need to call a `TrainingPipeline` instance.
 ...	learning_rate=1e-3,
 ...	per_device_train_batch_size=200,
 ... per_device_eval_batch_size=200,
-...	steps_saving=None,
+... train_dataloader_num_workers=2,
+... eval_dataloader_num_workers=2,
+...	steps_saving=20,
 ... optimizer_cls="AdamW",
 ...	optimizer_params={"weight_decay": 0.05, "betas": (0.91, 0.995)},
 ...	scheduler_cls="ReduceLROnPlateau",
@@ -363,12 +369,16 @@ See this [example script](https://github.com/clementchadebec/benchmark_VAE/blob/
 
 ### Benchmark
 
-Below are indicated the training times acheived on GPU V100 16GB for models trained for 100 epochs with `Pythae` on MNIST and ImageNet-1k. 
+Below are indicated the training times acheived by training a VQVAE with `Pythae` on GPU(s) V100 16GBfor 100 epochs on MNIST, GPU(s) V100 32GB for 50 epochs on [FFHQ](https://github.com/NVlabs/ffhq-dataset) (1024x1024 images) and ImageNet-1k. 
 
 | Exec. time | 1 gpu | 4 gpus | 2x4 gpus |
 |:---:|:---:|:---:|---|
-| MNIST | 229.66 s | 92.36 s | 83.26 s |
-| ImageNet-1k |  |  |  |
+| MNIST (VAE) | 221.01 s | 60.32 s | 34.50 s |
+| MNIST (VQ-VAE) | 235.18 s | 62.00 s | 35.86 s |
+| FFHQ 1024x1024 (VQVAE) |  | 5h 6min | 2h 37min |
+
+For each dataset, we provide the benchmarking scripts [here](https://github.com/clementchadebec/benchmark_VAE/tree/main/examples/scripts)
+
 
 ## Sharing your models with the HuggingFace Hub 🤗
 Pythae also allows you to share your models on the [HuggingFace Hub](https://huggingface.co/models). To do so you need:
