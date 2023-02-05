@@ -157,7 +157,7 @@ def main(args):
         num_epochs=50,
         train_dataloader_num_workers=8,
         eval_dataloader_num_workers=8,
-        output_dir="my_models_on_mnist",
+        output_dir="my_models_on_ffhq",
         per_device_train_batch_size=64,
         per_device_eval_batch_size=64,
         learning_rate=1e-4,

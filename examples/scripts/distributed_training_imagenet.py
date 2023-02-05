@@ -62,14 +62,15 @@ class Encoder_ResNet_VQVAE_ImageNet(BaseEncoder):
             nn.Conv2d(self.n_channels, 32, 4, 2, padding=1),
             nn.Conv2d(32, 64, 4, 2, padding=1),
             nn.Conv2d(64, 128, 4, 2, padding=1),
-            nn.Conv2d(128, 128, 4, 2, padding=1),
-            ResBlock(in_channels=128, out_channels=64),
-            ResBlock(in_channels=128, out_channels=64),
-            ResBlock(in_channels=128, out_channels=64),
-            ResBlock(in_channels=128, out_channels=64),
+            nn.Conv2d(128, 256, 4, 2, padding=1),
+            nn.Conv2d(256, 256, 4, 2, padding=1),
+            ResBlock(in_channels=256, out_channels=64),
+            ResBlock(in_channels=256, out_channels=64),
+            ResBlock(in_channels=256, out_channels=64),
+            ResBlock(in_channels=256, out_channels=64),
         )
 
-        self.pre_qantized = nn.Conv2d(128, self.latent_dim, 1, 1)
+        self.pre_qantized = nn.Conv2d(256, self.latent_dim, 1, 1)
 
     def forward(self, x: torch.Tensor):
         output = ModelOutput()
@@ -88,14 +89,15 @@ class Decoder_ResNet_VQVAE_ImageNet(BaseDecoder):
         self.n_channels = 3
 
 
-        self.dequantize = nn.ConvTranspose2d(self.latent_dim, 128, 1, 1)
+        self.dequantize = nn.ConvTranspose2d(self.latent_dim, 256, 1, 1)
 
         self.layers= nn.Sequential(
-                ResBlock(in_channels=128, out_channels=64),
-                ResBlock(in_channels=128, out_channels=64),
-                ResBlock(in_channels=128, out_channels=64),
-                ResBlock(in_channels=128, out_channels=64),
-                nn.ConvTranspose2d(128, 128, 4, 2, padding=1),
+                ResBlock(in_channels=256, out_channels=64),
+                ResBlock(in_channels=256, out_channels=64),
+                ResBlock(in_channels=256, out_channels=64),
+                ResBlock(in_channels=256, out_channels=64),
+                nn.ConvTranspose2d(256, 256, 4, 2, padding=1),
+                nn.ConvTranspose2d(256, 128, 4, 2, padding=1),
                 nn.ConvTranspose2d(128, 64, 4, 2, padding=1),
                 nn.ConvTranspose2d(64, 32, 4, 2, padding=1),
                 nn.ConvTranspose2d(32, self.n_channels, 4, 2, padding=1),
@@ -152,7 +154,7 @@ def main(args):
         num_epochs=50,
         train_dataloader_num_workers=8,
         eval_dataloader_num_workers=8,
-        output_dir="my_models_on_mnist",
+        output_dir="my_models_on_imagenet",
         per_device_train_batch_size=128,
         per_device_eval_batch_size=128,
         learning_rate=1e-4,
