@@ -51,6 +51,7 @@ ap.add_argument(
 
 args = ap.parse_args()
 
+
 class Encoder_ResNet_VQVAE_ImageNet(BaseEncoder):
     def __init__(self, args):
         BaseEncoder.__init__(self)
@@ -62,15 +63,14 @@ class Encoder_ResNet_VQVAE_ImageNet(BaseEncoder):
             nn.Conv2d(self.n_channels, 32, 4, 2, padding=1),
             nn.Conv2d(32, 64, 4, 2, padding=1),
             nn.Conv2d(64, 128, 4, 2, padding=1),
-            nn.Conv2d(128, 256, 4, 2, padding=1),
-            nn.Conv2d(256, 256, 4, 2, padding=1),
-            ResBlock(in_channels=256, out_channels=64),
-            ResBlock(in_channels=256, out_channels=64),
-            ResBlock(in_channels=256, out_channels=64),
-            ResBlock(in_channels=256, out_channels=64),
+            nn.Conv2d(128, 128, 4, 2, padding=1),
+            ResBlock(in_channels=128, out_channels=64),
+            ResBlock(in_channels=128, out_channels=64),
+            ResBlock(in_channels=128, out_channels=64),
+            ResBlock(in_channels=128, out_channels=64),
         )
 
-        self.pre_qantized = nn.Conv2d(256, self.latent_dim, 1, 1)
+        self.pre_qantized = nn.Conv2d(128, self.latent_dim, 1, 1)
 
     def forward(self, x: torch.Tensor):
         output = ModelOutput()
@@ -89,15 +89,14 @@ class Decoder_ResNet_VQVAE_ImageNet(BaseDecoder):
         self.n_channels = 3
 
 
-        self.dequantize = nn.ConvTranspose2d(self.latent_dim, 256, 1, 1)
+        self.dequantize = nn.ConvTranspose2d(self.latent_dim, 128, 1, 1)
 
         self.layers= nn.Sequential(
-                ResBlock(in_channels=256, out_channels=64),
-                ResBlock(in_channels=256, out_channels=64),
-                ResBlock(in_channels=256, out_channels=64),
-                ResBlock(in_channels=256, out_channels=64),
-                nn.ConvTranspose2d(256, 256, 4, 2, padding=1),
-                nn.ConvTranspose2d(256, 128, 4, 2, padding=1),
+                ResBlock(in_channels=128, out_channels=64),
+                ResBlock(in_channels=128, out_channels=64),
+                ResBlock(in_channels=128, out_channels=64),
+                ResBlock(in_channels=128, out_channels=64),
+                nn.ConvTranspose2d(128, 128, 4, 2, padding=1),
                 nn.ConvTranspose2d(128, 64, 4, 2, padding=1),
                 nn.ConvTranspose2d(64, 32, 4, 2, padding=1),
                 nn.ConvTranspose2d(32, self.n_channels, 4, 2, padding=1),
