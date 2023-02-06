@@ -1,11 +1,11 @@
+import numpy as np
 import pytest
 import torch
-import numpy as np
 
 from pythae.models import AEConfig, VAEConfig
-from pythae.models.nn.benchmarks.mnist import *
 from pythae.models.nn.benchmarks.celeba import *
 from pythae.models.nn.benchmarks.cifar import *
+from pythae.models.nn.benchmarks.mnist import *
 from pythae.models.nn.default_architectures import *
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -20,9 +20,11 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 def ae_mnist_config(request):
     return request.param
 
+
 @pytest.fixture()
 def mnist_like_data():
     return torch.rand(3, 1, 28, 28).to(device)
+
 
 #### CIFAR configs ####
 @pytest.fixture(
@@ -34,9 +36,11 @@ def mnist_like_data():
 def ae_cifar_config(request):
     return request.param
 
+
 @pytest.fixture()
 def cifar_like_data():
     return torch.rand(3, 3, 32, 32).to(device)
+
 
 #### CELEBA configs ####
 @pytest.fixture(
@@ -48,13 +52,13 @@ def cifar_like_data():
 def ae_celeba_config(request):
     return request.param
 
+
 @pytest.fixture()
 def celeba_like_data():
     return torch.rand(3, 3, 64, 64).to(device)
 
 
 class Test_MNIST_Default:
-    
     @pytest.fixture(params=[[1], None, [-1]])
     def recon_layers_default(self, request):
         return request.param
@@ -95,9 +99,8 @@ class Test_MNIST_Default:
         if recon_layers_default is None:
             assert encoder_embed["embedding"].shape[1] == ae_mnist_config.latent_dim
             assert (
-                    decoder_recon[f"reconstruction"].shape[1:]
-                    == ae_mnist_config.input_dim
-                )
+                decoder_recon[f"reconstruction"].shape[1:] == ae_mnist_config.input_dim
+            )
 
         else:
             if 1 in recon_layers_default:
@@ -154,16 +157,14 @@ class Test_MNIST_Default:
                     assert "log_covariance" in encoder_embed.keys()
                     assert "reconstruction" in decoder_recon.keys()
 
-
         if recon_layers_default is None:
             assert encoder_embed["embedding"].shape[1] == ae_mnist_config.latent_dim
             assert (
                 encoder_embed["log_covariance"].shape[1] == ae_mnist_config.latent_dim
             )
             assert (
-                    decoder_recon[f"reconstruction"].shape[1:]
-                    == ae_mnist_config.input_dim
-                )
+                decoder_recon[f"reconstruction"].shape[1:] == ae_mnist_config.input_dim
+            )
 
         else:
             if 1 in recon_layers_default:
@@ -173,12 +174,13 @@ class Test_MNIST_Default:
             if -1 in recon_layers_default:
                 assert encoder_embed["embedding"].shape[1] == ae_mnist_config.latent_dim
                 assert (
-                    encoder_embed["log_covariance"].shape[1] == ae_mnist_config.latent_dim
+                    encoder_embed["log_covariance"].shape[1]
+                    == ae_mnist_config.latent_dim
                 )
                 assert (
-                        decoder_recon[f"reconstruction"].shape[1:]
-                        == ae_mnist_config.input_dim
-                    )
+                    decoder_recon[f"reconstruction"].shape[1:]
+                    == ae_mnist_config.input_dim
+                )
 
     def test_svae_encoding_decoding_default(
         self, ae_mnist_config, mnist_like_data, recon_layers_default
@@ -214,7 +216,7 @@ class Test_MNIST_Default:
                 if lev != -1:
                     assert f"embedding_layer_{lev}" in encoder_embed.keys()
                     assert f"reconstruction_layer_{lev}" in decoder_recon.keys()
-                
+
                 else:
                     assert "embedding" in encoder_embed.keys()
                     assert "log_concentration" in encoder_embed.keys()
@@ -224,9 +226,8 @@ class Test_MNIST_Default:
             assert encoder_embed["embedding"].shape[1] == ae_mnist_config.latent_dim
             assert encoder_embed["log_concentration"].shape[1] == 1
             assert (
-                    decoder_recon[f"reconstruction"].shape[1:]
-                    == ae_mnist_config.input_dim
-                )
+                decoder_recon[f"reconstruction"].shape[1:] == ae_mnist_config.input_dim
+            )
 
         else:
             if 1 in recon_layers_default:
@@ -237,9 +238,9 @@ class Test_MNIST_Default:
                 assert encoder_embed["embedding"].shape[1] == ae_mnist_config.latent_dim
                 assert encoder_embed["log_concentration"].shape[1] == 1
                 assert (
-                        decoder_recon[f"reconstruction"].shape[1:]
-                        == ae_mnist_config.input_dim
-                    )
+                    decoder_recon[f"reconstruction"].shape[1:]
+                    == ae_mnist_config.input_dim
+                )
 
     def test_discriminator_default(
         self, ae_mnist_config, mnist_like_data, recon_layers_default
@@ -276,15 +277,13 @@ class Test_MNIST_Default:
             if -1 in recon_layers_default:
                 assert scores["embedding"].shape[1] == 1
 
-class Test_MNIST_ConvNets:
 
+class Test_MNIST_ConvNets:
     @pytest.fixture(params=[[3, 4], [np.random.randint(1, 5)], [1, 2, 4, -1], None])
     def recon_layers(self, request):
         return request.param
 
-    def test_ae_encoding_decoding(
-        self, ae_mnist_config, mnist_like_data, recon_layers
-    ):
+    def test_ae_encoding_decoding(self, ae_mnist_config, mnist_like_data, recon_layers):
         encoder = Encoder_Conv_AE_MNIST(ae_mnist_config).to(device)
         decoder = Decoder_Conv_AE_MNIST(ae_mnist_config).to(device)
 
@@ -296,9 +295,7 @@ class Test_MNIST_ConvNets:
 
         assert reconstruction.shape == mnist_like_data.shape
 
-        encoder_embed = encoder(
-            mnist_like_data, output_layer_levels=recon_layers
-        )
+        encoder_embed = encoder(mnist_like_data, output_layer_levels=recon_layers)
         decoder_recon = decoder(embedding, output_layer_levels=recon_layers)
 
         if recon_layers is None:
@@ -307,7 +304,7 @@ class Test_MNIST_ConvNets:
 
         else:
             for lev in recon_layers:
-                if lev !=-1:
+                if lev != -1:
                     assert f"embedding_layer_{lev}" in encoder_embed.keys()
                     assert f"reconstruction_layer_{lev}" in decoder_recon.keys()
 
@@ -318,9 +315,8 @@ class Test_MNIST_ConvNets:
         if recon_layers is None:
             assert encoder_embed["embedding"].shape[1] == ae_mnist_config.latent_dim
             assert (
-                    decoder_recon[f"reconstruction"].shape[1:]
-                    == ae_mnist_config.input_dim
-                )
+                decoder_recon[f"reconstruction"].shape[1:] == ae_mnist_config.input_dim
+            )
 
         else:
             if 1 in recon_layers:
@@ -371,9 +367,7 @@ class Test_MNIST_ConvNets:
 
         assert reconstruction.shape == mnist_like_data.shape
 
-        encoder_embed = encoder(
-            mnist_like_data, output_layer_levels=recon_layers
-        )
+        encoder_embed = encoder(mnist_like_data, output_layer_levels=recon_layers)
         decoder_recon = decoder(embedding, output_layer_levels=recon_layers)
 
         if recon_layers is None:
@@ -392,16 +386,14 @@ class Test_MNIST_ConvNets:
                     assert "log_covariance" in encoder_embed.keys()
                     assert "reconstruction" in decoder_recon.keys()
 
-
         if recon_layers is None:
             assert encoder_embed["embedding"].shape[1] == ae_mnist_config.latent_dim
             assert (
                 encoder_embed["log_covariance"].shape[1] == ae_mnist_config.latent_dim
             )
             assert (
-                    decoder_recon[f"reconstruction"].shape[1:]
-                    == ae_mnist_config.input_dim
-                )
+                decoder_recon[f"reconstruction"].shape[1:] == ae_mnist_config.input_dim
+            )
 
         else:
             if 1 in recon_layers:
@@ -426,12 +418,13 @@ class Test_MNIST_ConvNets:
             if -1 in recon_layers:
                 assert encoder_embed["embedding"].shape[1] == ae_mnist_config.latent_dim
                 assert (
-                    encoder_embed["log_covariance"].shape[1] == ae_mnist_config.latent_dim
+                    encoder_embed["log_covariance"].shape[1]
+                    == ae_mnist_config.latent_dim
                 )
                 assert (
-                        decoder_recon[f"reconstruction"].shape[1:]
-                        == ae_mnist_config.input_dim
-                    )
+                    decoder_recon[f"reconstruction"].shape[1:]
+                    == ae_mnist_config.input_dim
+                )
 
     def test_svae_encoding_decoding(
         self, ae_mnist_config, mnist_like_data, recon_layers
@@ -452,9 +445,7 @@ class Test_MNIST_ConvNets:
 
         assert reconstruction.shape == mnist_like_data.shape
 
-        encoder_embed = encoder(
-            mnist_like_data, output_layer_levels=recon_layers
-        )
+        encoder_embed = encoder(mnist_like_data, output_layer_levels=recon_layers)
         decoder_recon = decoder(embedding, output_layer_levels=recon_layers)
 
         if recon_layers is None:
@@ -473,14 +464,12 @@ class Test_MNIST_ConvNets:
                     assert "log_concentration" in encoder_embed.keys()
                     assert "reconstruction" in decoder_recon.keys()
 
-
         if recon_layers is None:
             assert encoder_embed["embedding"].shape[1] == ae_mnist_config.latent_dim
             assert encoder_embed["log_concentration"].shape[1] == 1
             assert (
-                    decoder_recon[f"reconstruction"].shape[1:]
-                    == ae_mnist_config.input_dim
-                )
+                decoder_recon[f"reconstruction"].shape[1:] == ae_mnist_config.input_dim
+            )
 
         else:
             if 1 in recon_layers:
@@ -506,21 +495,17 @@ class Test_MNIST_ConvNets:
                 assert encoder_embed["embedding"].shape[1] == ae_mnist_config.latent_dim
                 assert encoder_embed["log_concentration"].shape[1] == 1
                 assert (
-                        decoder_recon[f"reconstruction"].shape[1:]
-                        == ae_mnist_config.input_dim
-                    )
+                    decoder_recon[f"reconstruction"].shape[1:]
+                    == ae_mnist_config.input_dim
+                )
 
-    def test_discriminator(
-        self, ae_mnist_config, mnist_like_data, recon_layers
-    ):
+    def test_discriminator(self, ae_mnist_config, mnist_like_data, recon_layers):
 
         ae_mnist_config.discriminator_input_dim = (1, 28, 28)
 
         discriminator = Discriminator_Conv_MNIST(ae_mnist_config).to(device)
 
-        scores = discriminator(
-            mnist_like_data, output_layer_levels=recon_layers
-        )
+        scores = discriminator(mnist_like_data, output_layer_levels=recon_layers)
 
         if recon_layers is None:
             assert "embedding" in scores.keys()
@@ -550,17 +535,15 @@ class Test_MNIST_ConvNets:
                 assert scores[f"embedding_layer_4"].shape[1] == 1024
 
             if -1 in recon_layers:
-                 assert scores["embedding"].shape[1] == 1
-    
+                assert scores["embedding"].shape[1] == 1
+
 
 class Test_MNIST_ResNets:
     @pytest.fixture(params=[[3, 4], [np.random.randint(1, 5)], [1, 2, 4, -1], None])
     def recon_layers(self, request):
         return request.param
 
-    def test_ae_encoding_decoding(
-        self, ae_mnist_config, mnist_like_data, recon_layers
-    ):
+    def test_ae_encoding_decoding(self, ae_mnist_config, mnist_like_data, recon_layers):
         encoder = Encoder_ResNet_AE_MNIST(ae_mnist_config).to(device)
         decoder = Decoder_ResNet_AE_MNIST(ae_mnist_config).to(device)
 
@@ -572,9 +555,7 @@ class Test_MNIST_ResNets:
 
         assert reconstruction.shape == mnist_like_data.shape
 
-        encoder_embed = encoder(
-            mnist_like_data, output_layer_levels=recon_layers
-        )
+        encoder_embed = encoder(mnist_like_data, output_layer_levels=recon_layers)
         decoder_recon = decoder(embedding, output_layer_levels=recon_layers)
 
         if recon_layers is None:
@@ -589,14 +570,13 @@ class Test_MNIST_ResNets:
 
                 else:
                     assert "embedding" in encoder_embed.keys()
-                    assert "reconstruction" in decoder_recon.keys()                    
+                    assert "reconstruction" in decoder_recon.keys()
 
         if recon_layers is None:
             assert encoder_embed["embedding"].shape[1] == ae_mnist_config.latent_dim
             assert (
-                    decoder_recon[f"reconstruction"].shape[1:]
-                    == ae_mnist_config.input_dim
-                )
+                decoder_recon[f"reconstruction"].shape[1:] == ae_mnist_config.input_dim
+            )
 
         else:
             if 1 in recon_layers:
@@ -614,7 +594,7 @@ class Test_MNIST_ResNets:
             if 4 in recon_layers:
                 assert encoder_embed[f"embedding_layer_4"].shape[1] == 128
                 assert decoder_recon[f"reconstruction_layer_4"].shape[1] == 64
-        
+
             if 5 in recon_layers:
                 assert (
                     decoder_recon[f"reconstruction_layer_5"].shape[1:]
@@ -624,9 +604,9 @@ class Test_MNIST_ResNets:
             if -1 in recon_layers:
                 assert encoder_embed["embedding"].shape[1] == ae_mnist_config.latent_dim
                 assert (
-                        decoder_recon[f"reconstruction"].shape[1:]
-                        == ae_mnist_config.input_dim
-                    )
+                    decoder_recon[f"reconstruction"].shape[1:]
+                    == ae_mnist_config.input_dim
+                )
 
     def test_vae_encoding_decoding(
         self, ae_mnist_config, mnist_like_data, recon_layers
@@ -642,9 +622,7 @@ class Test_MNIST_ResNets:
 
         assert reconstruction.shape == mnist_like_data.shape
 
-        encoder_embed = encoder(
-            mnist_like_data, output_layer_levels=recon_layers
-        )
+        encoder_embed = encoder(mnist_like_data, output_layer_levels=recon_layers)
         decoder_recon = decoder(embedding, output_layer_levels=recon_layers)
 
         if recon_layers is None:
@@ -669,9 +647,8 @@ class Test_MNIST_ResNets:
                 encoder_embed["log_covariance"].shape[1] == ae_mnist_config.latent_dim
             )
             assert (
-                    decoder_recon[f"reconstruction"].shape[1:]
-                    == ae_mnist_config.input_dim
-                )
+                decoder_recon[f"reconstruction"].shape[1:] == ae_mnist_config.input_dim
+            )
 
         else:
             if 1 in recon_layers:
@@ -689,7 +666,7 @@ class Test_MNIST_ResNets:
             if 4 in recon_layers:
                 assert encoder_embed[f"embedding_layer_4"].shape[1] == 128
                 assert decoder_recon[f"reconstruction_layer_4"].shape[1] == 64
-        
+
             if 5 in recon_layers:
                 assert (
                     decoder_recon[f"reconstruction_layer_5"].shape[1:]
@@ -699,12 +676,13 @@ class Test_MNIST_ResNets:
             if -1 in recon_layers:
                 assert encoder_embed["embedding"].shape[1] == ae_mnist_config.latent_dim
                 assert (
-                    encoder_embed["log_covariance"].shape[1] == ae_mnist_config.latent_dim
+                    encoder_embed["log_covariance"].shape[1]
+                    == ae_mnist_config.latent_dim
                 )
                 assert (
-                        decoder_recon[f"reconstruction"].shape[1:]
-                        == ae_mnist_config.input_dim
-                    )
+                    decoder_recon[f"reconstruction"].shape[1:]
+                    == ae_mnist_config.input_dim
+                )
 
     def test_svae_encoding_decoding(
         self, ae_mnist_config, mnist_like_data, recon_layers
@@ -720,9 +698,7 @@ class Test_MNIST_ResNets:
 
         assert reconstruction.shape == mnist_like_data.shape
 
-        encoder_embed = encoder(
-            mnist_like_data, output_layer_levels=recon_layers
-        )
+        encoder_embed = encoder(mnist_like_data, output_layer_levels=recon_layers)
         decoder_recon = decoder(embedding, output_layer_levels=recon_layers)
 
         if recon_layers is None:
@@ -745,9 +721,8 @@ class Test_MNIST_ResNets:
             assert encoder_embed["embedding"].shape[1] == ae_mnist_config.latent_dim
             assert encoder_embed["log_concentration"].shape[1] == 1
             assert (
-                    decoder_recon[f"reconstruction"].shape[1:]
-                    == ae_mnist_config.input_dim
-                )
+                decoder_recon[f"reconstruction"].shape[1:] == ae_mnist_config.input_dim
+            )
 
         else:
             if 1 in recon_layers:
@@ -765,7 +740,7 @@ class Test_MNIST_ResNets:
             if 4 in recon_layers:
                 assert encoder_embed[f"embedding_layer_4"].shape[1] == 128
                 assert decoder_recon[f"reconstruction_layer_4"].shape[1] == 64
-        
+
             if 5 in recon_layers:
                 assert (
                     decoder_recon[f"reconstruction_layer_5"].shape[1:]
@@ -776,10 +751,9 @@ class Test_MNIST_ResNets:
                 assert encoder_embed["embedding"].shape[1] == ae_mnist_config.latent_dim
                 assert encoder_embed["log_concentration"].shape[1] == 1
                 assert (
-                        decoder_recon[f"reconstruction"].shape[1:]
-                        == ae_mnist_config.input_dim
-                    )
-
+                    decoder_recon[f"reconstruction"].shape[1:]
+                    == ae_mnist_config.input_dim
+                )
 
     def test_vqvae_encoding_decoding(
         self, ae_mnist_config, mnist_like_data, recon_layers
@@ -789,15 +763,16 @@ class Test_MNIST_ResNets:
 
         embedding = encoder(mnist_like_data).embedding
 
-        assert embedding.shape[:2] == (mnist_like_data.shape[0], ae_mnist_config.latent_dim)
+        assert embedding.shape[:2] == (
+            mnist_like_data.shape[0],
+            ae_mnist_config.latent_dim,
+        )
 
         reconstruction = decoder(embedding).reconstruction
 
         assert reconstruction.shape == mnist_like_data.shape
 
-        encoder_embed = encoder(
-            mnist_like_data, output_layer_levels=recon_layers
-        )
+        encoder_embed = encoder(mnist_like_data, output_layer_levels=recon_layers)
         decoder_recon = decoder(embedding, output_layer_levels=recon_layers)
 
         if recon_layers is None:
@@ -817,9 +792,8 @@ class Test_MNIST_ResNets:
         if recon_layers is None:
             assert encoder_embed["embedding"].shape[1] == ae_mnist_config.latent_dim
             assert (
-                    decoder_recon[f"reconstruction"].shape[1:]
-                    == ae_mnist_config.input_dim
-                )
+                decoder_recon[f"reconstruction"].shape[1:] == ae_mnist_config.input_dim
+            )
 
         else:
             if 1 in recon_layers:
@@ -847,10 +821,11 @@ class Test_MNIST_ResNets:
             if -1 in recon_layers:
                 assert encoder_embed["embedding"].shape[1] == ae_mnist_config.latent_dim
                 assert (
-                        decoder_recon[f"reconstruction"].shape[1:]
-                        == ae_mnist_config.input_dim
-                    )
-    
+                    decoder_recon[f"reconstruction"].shape[1:]
+                    == ae_mnist_config.input_dim
+                )
+
+
 class Test_CIFAR_ConvNets:
     @pytest.fixture(params=[[3, 4], [np.random.randint(1, 5)], [1, 2, 4, -1], None])
     def recon_layers(self, request):
@@ -888,9 +863,8 @@ class Test_CIFAR_ConvNets:
         if recon_layers is None:
             assert encoder_embed["embedding"].shape[1] == ae_cifar_config.latent_dim
             assert (
-                    decoder_recon[f"reconstruction"].shape[1:]
-                    == ae_cifar_config.input_dim
-                )
+                decoder_recon[f"reconstruction"].shape[1:] == ae_cifar_config.input_dim
+            )
 
         else:
             if 1 in recon_layers:
@@ -915,10 +889,9 @@ class Test_CIFAR_ConvNets:
             if -1 in recon_layers:
                 assert encoder_embed["embedding"].shape[1] == ae_cifar_config.latent_dim
                 assert (
-                        decoder_recon[f"reconstruction"].shape[1:]
-                        == ae_cifar_config.input_dim
-                    )
-
+                    decoder_recon[f"reconstruction"].shape[1:]
+                    == ae_cifar_config.input_dim
+                )
 
     def test_vae_encoding_decoding(
         self, ae_cifar_config, cifar_like_data, recon_layers
@@ -967,9 +940,8 @@ class Test_CIFAR_ConvNets:
                 encoder_embed["log_covariance"].shape[1] == ae_cifar_config.latent_dim
             )
             assert (
-                    decoder_recon[f"reconstruction"].shape[1:]
-                    == ae_cifar_config.input_dim
-                )
+                decoder_recon[f"reconstruction"].shape[1:] == ae_cifar_config.input_dim
+            )
 
         else:
             if 1 in recon_layers:
@@ -990,16 +962,17 @@ class Test_CIFAR_ConvNets:
                     decoder_recon[f"reconstruction_layer_4"].shape[1:]
                     == ae_cifar_config.input_dim
                 )
-            
+
             if -1 in recon_layers:
                 assert encoder_embed["embedding"].shape[1] == ae_cifar_config.latent_dim
                 assert (
-                    encoder_embed["log_covariance"].shape[1] == ae_cifar_config.latent_dim
+                    encoder_embed["log_covariance"].shape[1]
+                    == ae_cifar_config.latent_dim
                 )
                 assert (
-                        decoder_recon[f"reconstruction"].shape[1:]
-                        == ae_cifar_config.input_dim
-                    )
+                    decoder_recon[f"reconstruction"].shape[1:]
+                    == ae_cifar_config.input_dim
+                )
 
     def test_svae_encoding_decoding(
         self, ae_cifar_config, cifar_like_data, recon_layers
@@ -1044,13 +1017,10 @@ class Test_CIFAR_ConvNets:
 
         if recon_layers is None:
             assert encoder_embed["embedding"].shape[1] == ae_cifar_config.latent_dim
+            assert encoder_embed["log_concentration"].shape[1] == 1
             assert (
-                encoder_embed["log_concentration"].shape[1] == 1
+                decoder_recon[f"reconstruction"].shape[1:] == ae_cifar_config.input_dim
             )
-            assert (
-                    decoder_recon[f"reconstruction"].shape[1:]
-                    == ae_cifar_config.input_dim
-                )
 
         else:
             if 1 in recon_layers:
@@ -1074,26 +1044,19 @@ class Test_CIFAR_ConvNets:
 
             if -1 in recon_layers:
                 assert encoder_embed["embedding"].shape[1] == ae_cifar_config.latent_dim
+                assert encoder_embed["log_concentration"].shape[1] == 1
                 assert (
-                    encoder_embed["log_concentration"].shape[1] == 1
+                    decoder_recon[f"reconstruction"].shape[1:]
+                    == ae_cifar_config.input_dim
                 )
-                assert (
-                        decoder_recon[f"reconstruction"].shape[1:]
-                        == ae_cifar_config.input_dim
-                    )
 
-
-    def test_discriminator(
-        self, ae_cifar_config, cifar_like_data, recon_layers
-    ):
+    def test_discriminator(self, ae_cifar_config, cifar_like_data, recon_layers):
 
         ae_cifar_config.discriminator_input_dim = (3, 32, 32)
 
         discriminator = Discriminator_Conv_CIFAR(ae_cifar_config).to(device)
 
-        scores = discriminator(
-            cifar_like_data, output_layer_levels=recon_layers
-        )
+        scores = discriminator(cifar_like_data, output_layer_levels=recon_layers)
 
         if recon_layers is None:
             assert "embedding" in scores.keys()
@@ -1125,14 +1088,13 @@ class Test_CIFAR_ConvNets:
             if -1 in recon_layers:
                 assert scores["embedding"].shape[1] == 1
 
+
 class Test_CIFAR_ResNets:
     @pytest.fixture(params=[[3, 4], [np.random.randint(1, 5)], [1, 2, 4, -1], None])
     def recon_layers(self, request):
         return request.param
 
-    def test_ae_encoding_decoding(
-        self, ae_cifar_config, cifar_like_data, recon_layers
-    ):
+    def test_ae_encoding_decoding(self, ae_cifar_config, cifar_like_data, recon_layers):
         encoder = Encoder_ResNet_AE_CIFAR(ae_cifar_config).to(device)
         decoder = Decoder_ResNet_AE_CIFAR(ae_cifar_config).to(device)
 
@@ -1144,9 +1106,7 @@ class Test_CIFAR_ResNets:
 
         assert reconstruction.shape == cifar_like_data.shape
 
-        encoder_embed = encoder(
-            cifar_like_data, output_layer_levels=recon_layers
-        )
+        encoder_embed = encoder(cifar_like_data, output_layer_levels=recon_layers)
         decoder_recon = decoder(embedding, output_layer_levels=recon_layers)
 
         if recon_layers is None:
@@ -1166,9 +1126,8 @@ class Test_CIFAR_ResNets:
         if recon_layers is None:
             assert encoder_embed["embedding"].shape[1] == ae_cifar_config.latent_dim
             assert (
-                    decoder_recon[f"reconstruction"].shape[1:]
-                    == ae_cifar_config.input_dim
-                )
+                decoder_recon[f"reconstruction"].shape[1:] == ae_cifar_config.input_dim
+            )
 
         else:
             if 1 in recon_layers:
@@ -1193,10 +1152,9 @@ class Test_CIFAR_ResNets:
             if -1 in recon_layers:
                 assert encoder_embed["embedding"].shape[1] == ae_cifar_config.latent_dim
                 assert (
-                        decoder_recon[f"reconstruction"].shape[1:]
-                        == ae_cifar_config.input_dim
-                    )
-                
+                    decoder_recon[f"reconstruction"].shape[1:]
+                    == ae_cifar_config.input_dim
+                )
 
     def test_vae_encoding_decoding(
         self, ae_cifar_config, cifar_like_data, recon_layers
@@ -1212,9 +1170,7 @@ class Test_CIFAR_ResNets:
 
         assert reconstruction.shape == cifar_like_data.shape
 
-        encoder_embed = encoder(
-            cifar_like_data, output_layer_levels=recon_layers
-        )
+        encoder_embed = encoder(cifar_like_data, output_layer_levels=recon_layers)
         decoder_recon = decoder(embedding, output_layer_levels=recon_layers)
 
         if recon_layers is None:
@@ -1239,9 +1195,8 @@ class Test_CIFAR_ResNets:
                 encoder_embed["log_covariance"].shape[1] == ae_cifar_config.latent_dim
             )
             assert (
-                    decoder_recon[f"reconstruction"].shape[1:]
-                    == ae_cifar_config.input_dim
-                )
+                decoder_recon[f"reconstruction"].shape[1:] == ae_cifar_config.input_dim
+            )
 
         else:
             if 1 in recon_layers:
@@ -1266,12 +1221,13 @@ class Test_CIFAR_ResNets:
             if -1 in recon_layers:
                 assert encoder_embed["embedding"].shape[1] == ae_cifar_config.latent_dim
                 assert (
-                    encoder_embed["log_covariance"].shape[1] == ae_cifar_config.latent_dim
+                    encoder_embed["log_covariance"].shape[1]
+                    == ae_cifar_config.latent_dim
                 )
                 assert (
-                        decoder_recon[f"reconstruction"].shape[1:]
-                        == ae_cifar_config.input_dim
-                    )
+                    decoder_recon[f"reconstruction"].shape[1:]
+                    == ae_cifar_config.input_dim
+                )
 
     def test_svae_encoding_decoding(
         self, ae_cifar_config, cifar_like_data, recon_layers
@@ -1287,9 +1243,7 @@ class Test_CIFAR_ResNets:
 
         assert reconstruction.shape == cifar_like_data.shape
 
-        encoder_embed = encoder(
-            cifar_like_data, output_layer_levels=recon_layers
-        )
+        encoder_embed = encoder(cifar_like_data, output_layer_levels=recon_layers)
         decoder_recon = decoder(embedding, output_layer_levels=recon_layers)
 
         if recon_layers is None:
@@ -1312,9 +1266,8 @@ class Test_CIFAR_ResNets:
             assert encoder_embed["embedding"].shape[1] == ae_cifar_config.latent_dim
             assert encoder_embed["log_concentration"].shape[1] == 1
             assert (
-                    decoder_recon[f"reconstruction"].shape[1:]
-                    == ae_cifar_config.input_dim
-                )
+                decoder_recon[f"reconstruction"].shape[1:] == ae_cifar_config.input_dim
+            )
 
         else:
             if 1 in recon_layers:
@@ -1340,9 +1293,9 @@ class Test_CIFAR_ResNets:
                 assert encoder_embed["embedding"].shape[1] == ae_cifar_config.latent_dim
                 assert encoder_embed["log_concentration"].shape[1] == 1
                 assert (
-                        decoder_recon[f"reconstruction"].shape[1:]
-                        == ae_cifar_config.input_dim
-                    )
+                    decoder_recon[f"reconstruction"].shape[1:]
+                    == ae_cifar_config.input_dim
+                )
 
     def test_vqvae_encoding_decoding(
         self, ae_cifar_config, cifar_like_data, recon_layers
@@ -1352,15 +1305,16 @@ class Test_CIFAR_ResNets:
 
         embedding = encoder(cifar_like_data).embedding
 
-        assert embedding.shape[:2] == (cifar_like_data.shape[0], ae_cifar_config.latent_dim)
+        assert embedding.shape[:2] == (
+            cifar_like_data.shape[0],
+            ae_cifar_config.latent_dim,
+        )
 
         reconstruction = decoder(embedding).reconstruction
 
         assert reconstruction.shape == cifar_like_data.shape
 
-        encoder_embed = encoder(
-            cifar_like_data, output_layer_levels=recon_layers
-        )
+        encoder_embed = encoder(cifar_like_data, output_layer_levels=recon_layers)
         decoder_recon = decoder(embedding, output_layer_levels=recon_layers)
 
         if recon_layers is None:
@@ -1380,9 +1334,8 @@ class Test_CIFAR_ResNets:
         if recon_layers is None:
             assert encoder_embed["embedding"].shape[1] == ae_cifar_config.latent_dim
             assert (
-                    decoder_recon[f"reconstruction"].shape[1:]
-                    == ae_cifar_config.input_dim
-                )
+                decoder_recon[f"reconstruction"].shape[1:] == ae_cifar_config.input_dim
+            )
 
         else:
             if 1 in recon_layers:
@@ -1407,16 +1360,16 @@ class Test_CIFAR_ResNets:
             if -1 in recon_layers:
                 assert encoder_embed["embedding"].shape[1] == ae_cifar_config.latent_dim
                 assert (
-                        decoder_recon[f"reconstruction"].shape[1:]
-                        == ae_cifar_config.input_dim
-                    )
+                    decoder_recon[f"reconstruction"].shape[1:]
+                    == ae_cifar_config.input_dim
+                )
+
 
 class Test_CELEBA_ConvNets:
-
     @pytest.fixture(params=[[3, 4], [np.random.randint(1, 5)], [1, 2, 4, -1], None])
     def recon_layers(self, request):
         return request.param
-    
+
     def test_ae_encoding_decoding(
         self, ae_celeba_config, celeba_like_data, recon_layers
     ):
@@ -1454,9 +1407,8 @@ class Test_CELEBA_ConvNets:
         if recon_layers is None:
             assert encoder_embed["embedding"].shape[1] == ae_celeba_config.latent_dim
             assert (
-                    decoder_recon[f"reconstruction"].shape[1:]
-                    == ae_celeba_config.input_dim
-                )
+                decoder_recon[f"reconstruction"].shape[1:] == ae_celeba_config.input_dim
+            )
 
         else:
             if 1 in recon_layers:
@@ -1482,11 +1434,13 @@ class Test_CELEBA_ConvNets:
                 )
 
             if -1 in recon_layers:
-                assert encoder_embed["embedding"].shape[1] == ae_celeba_config.latent_dim
                 assert (
-                        decoder_recon[f"reconstruction"].shape[1:]
-                        == ae_celeba_config.input_dim
-                    )
+                    encoder_embed["embedding"].shape[1] == ae_celeba_config.latent_dim
+                )
+                assert (
+                    decoder_recon[f"reconstruction"].shape[1:]
+                    == ae_celeba_config.input_dim
+                )
 
     def test_vae_encoding_decoding(
         self, ae_celeba_config, celeba_like_data, recon_layers
@@ -1535,9 +1489,8 @@ class Test_CELEBA_ConvNets:
                 encoder_embed["log_covariance"].shape[1] == ae_celeba_config.latent_dim
             )
             assert (
-                    decoder_recon[f"reconstruction"].shape[1:]
-                    == ae_celeba_config.input_dim
-                )
+                decoder_recon[f"reconstruction"].shape[1:] == ae_celeba_config.input_dim
+            )
 
         else:
             if 1 in recon_layers:
@@ -1563,14 +1516,17 @@ class Test_CELEBA_ConvNets:
                 )
 
             if -1 in recon_layers:
-                assert encoder_embed["embedding"].shape[1] == ae_celeba_config.latent_dim
                 assert (
-                    encoder_embed["log_covariance"].shape[1] == ae_celeba_config.latent_dim
+                    encoder_embed["embedding"].shape[1] == ae_celeba_config.latent_dim
                 )
                 assert (
-                        decoder_recon[f"reconstruction"].shape[1:]
-                        == ae_celeba_config.input_dim
-                    )
+                    encoder_embed["log_covariance"].shape[1]
+                    == ae_celeba_config.latent_dim
+                )
+                assert (
+                    decoder_recon[f"reconstruction"].shape[1:]
+                    == ae_celeba_config.input_dim
+                )
 
     def test_svae_encoding_decoding(
         self, ae_celeba_config, celeba_like_data, recon_layers
@@ -1614,9 +1570,8 @@ class Test_CELEBA_ConvNets:
             assert encoder_embed["embedding"].shape[1] == ae_celeba_config.latent_dim
             assert encoder_embed["log_concentration"].shape[1] == 1
             assert (
-                    decoder_recon[f"reconstruction"].shape[1:]
-                    == ae_celeba_config.input_dim
-                )
+                decoder_recon[f"reconstruction"].shape[1:] == ae_celeba_config.input_dim
+            )
 
         else:
             if 1 in recon_layers:
@@ -1642,12 +1597,14 @@ class Test_CELEBA_ConvNets:
                 )
 
             if -1 in recon_layers:
-                assert encoder_embed["embedding"].shape[1] == ae_celeba_config.latent_dim
+                assert (
+                    encoder_embed["embedding"].shape[1] == ae_celeba_config.latent_dim
+                )
                 assert encoder_embed["log_concentration"].shape[1] == 1
                 assert (
-                        decoder_recon[f"reconstruction"].shape[1:]
-                        == ae_celeba_config.input_dim
-                    )
+                    decoder_recon[f"reconstruction"].shape[1:]
+                    == ae_celeba_config.input_dim
+                )
 
     def test_discriminator(self, ae_celeba_config, celeba_like_data, recon_layers):
 
@@ -1692,11 +1649,10 @@ class Test_CELEBA_ConvNets:
 
 
 class Test_CELEBA_ResNets:
-
     @pytest.fixture(params=[[3, 4], [np.random.randint(1, 6)], [1, 2, 4, -1], None])
     def recon_layers(self, request):
         return request.param
-    
+
     def test_ae_encoding_decoding(
         self, ae_celeba_config, celeba_like_data, recon_layers
     ):
@@ -1734,9 +1690,8 @@ class Test_CELEBA_ResNets:
         if recon_layers is None:
             assert encoder_embed["embedding"].shape[1] == ae_celeba_config.latent_dim
             assert (
-                    decoder_recon[f"reconstruction"].shape[1:]
-                    == ae_celeba_config.input_dim
-                )
+                decoder_recon[f"reconstruction"].shape[1:] == ae_celeba_config.input_dim
+            )
 
         else:
             if 1 in recon_layers:
@@ -1766,11 +1721,13 @@ class Test_CELEBA_ResNets:
                 )
 
             if -1 in recon_layers:
-                assert encoder_embed["embedding"].shape[1] == ae_celeba_config.latent_dim
                 assert (
-                        decoder_recon[f"reconstruction"].shape[1:]
-                        == ae_celeba_config.input_dim
-                    )
+                    encoder_embed["embedding"].shape[1] == ae_celeba_config.latent_dim
+                )
+                assert (
+                    decoder_recon[f"reconstruction"].shape[1:]
+                    == ae_celeba_config.input_dim
+                )
 
     def test_vae_encoding_decoding(
         self, ae_celeba_config, celeba_like_data, recon_layers
@@ -1819,9 +1776,8 @@ class Test_CELEBA_ResNets:
                 encoder_embed["log_covariance"].shape[1] == ae_celeba_config.latent_dim
             )
             assert (
-                    decoder_recon[f"reconstruction"].shape[1:]
-                    == ae_celeba_config.input_dim
-                )
+                decoder_recon[f"reconstruction"].shape[1:] == ae_celeba_config.input_dim
+            )
 
         else:
             if 1 in recon_layers:
@@ -1851,14 +1807,17 @@ class Test_CELEBA_ResNets:
                 )
 
             if -1 in recon_layers:
-                assert encoder_embed["embedding"].shape[1] == ae_celeba_config.latent_dim
                 assert (
-                    encoder_embed["log_covariance"].shape[1] == ae_celeba_config.latent_dim
+                    encoder_embed["embedding"].shape[1] == ae_celeba_config.latent_dim
                 )
                 assert (
-                        decoder_recon[f"reconstruction"].shape[1:]
-                        == ae_celeba_config.input_dim
-                    )
+                    encoder_embed["log_covariance"].shape[1]
+                    == ae_celeba_config.latent_dim
+                )
+                assert (
+                    decoder_recon[f"reconstruction"].shape[1:]
+                    == ae_celeba_config.input_dim
+                )
 
     def test_svae_encoding_decoding(
         self, ae_celeba_config, celeba_like_data, recon_layers
@@ -1902,9 +1861,8 @@ class Test_CELEBA_ResNets:
             assert encoder_embed["embedding"].shape[1] == ae_celeba_config.latent_dim
             assert encoder_embed["log_concentration"].shape[1] == 1
             assert (
-                    decoder_recon[f"reconstruction"].shape[1:]
-                    == ae_celeba_config.input_dim
-                )
+                decoder_recon[f"reconstruction"].shape[1:] == ae_celeba_config.input_dim
+            )
 
         else:
             if 1 in recon_layers:
@@ -1934,13 +1892,14 @@ class Test_CELEBA_ResNets:
                 )
 
             if -1 in recon_layers:
-                assert encoder_embed["embedding"].shape[1] == ae_celeba_config.latent_dim
+                assert (
+                    encoder_embed["embedding"].shape[1] == ae_celeba_config.latent_dim
+                )
                 assert encoder_embed["log_concentration"].shape[1] == 1
                 assert (
-                        decoder_recon[f"reconstruction"].shape[1:]
-                        == ae_celeba_config.input_dim
-                    )
-
+                    decoder_recon[f"reconstruction"].shape[1:]
+                    == ae_celeba_config.input_dim
+                )
 
     def test_vqvae_encoding_decoding(
         self, ae_celeba_config, celeba_like_data, recon_layers
@@ -1950,15 +1909,16 @@ class Test_CELEBA_ResNets:
 
         embedding = encoder(celeba_like_data).embedding
 
-        assert embedding.shape[:2] == (celeba_like_data.shape[0], ae_celeba_config.latent_dim)
+        assert embedding.shape[:2] == (
+            celeba_like_data.shape[0],
+            ae_celeba_config.latent_dim,
+        )
 
         reconstruction = decoder(embedding).reconstruction
 
         assert reconstruction.shape == celeba_like_data.shape
 
-        encoder_embed = encoder(
-            celeba_like_data, output_layer_levels=recon_layers
-        )
+        encoder_embed = encoder(celeba_like_data, output_layer_levels=recon_layers)
         decoder_recon = decoder(embedding, output_layer_levels=recon_layers)
 
         if recon_layers is None:
@@ -1978,9 +1938,8 @@ class Test_CELEBA_ResNets:
         if recon_layers is None:
             assert encoder_embed["embedding"].shape[1] == ae_celeba_config.latent_dim
             assert (
-                    decoder_recon[f"reconstruction"].shape[1:]
-                    == ae_celeba_config.input_dim
-                )
+                decoder_recon[f"reconstruction"].shape[1:] == ae_celeba_config.input_dim
+            )
 
         else:
             if 1 in recon_layers:
@@ -2010,8 +1969,10 @@ class Test_CELEBA_ResNets:
                 )
 
             if -1 in recon_layers:
-                assert encoder_embed["embedding"].shape[1] == ae_celeba_config.latent_dim
                 assert (
-                        decoder_recon[f"reconstruction"].shape[1:]
-                        == ae_celeba_config.input_dim
-                    )
+                    encoder_embed["embedding"].shape[1] == ae_celeba_config.latent_dim
+                )
+                assert (
+                    decoder_recon[f"reconstruction"].shape[1:]
+                    == ae_celeba_config.input_dim
+                )

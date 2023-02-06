@@ -3,18 +3,22 @@ from copy import deepcopy
 
 import pytest
 import torch
-from torch.optim import Adam
 
 from pythae.customexception import BadInheritanceError
+from pythae.models import PIWAE, AutoModel, PIWAEConfig
 from pythae.models.base.base_utils import ModelOutput
-from pythae.models import PIWAE, PIWAEConfig, AutoModel
-from pythae.samplers import NormalSamplerConfig, GaussianMixtureSamplerConfig, MAFSamplerConfig, IAFSamplerConfig
+from pythae.pipelines import GenerationPipeline, TrainingPipeline
+from pythae.samplers import (
+    GaussianMixtureSamplerConfig,
+    IAFSamplerConfig,
+    MAFSamplerConfig,
+    NormalSamplerConfig,
+)
 from pythae.trainers import (
+    BaseTrainerConfig,
     CoupledOptimizerTrainer,
     CoupledOptimizerTrainerConfig,
-    BaseTrainerConfig,
 )
-from pythae.pipelines import TrainingPipeline, GenerationPipeline
 from tests.data.custom_architectures import (
     Decoder_AE_Conv,
     Encoder_VAE_Conv,
@@ -31,9 +35,7 @@ def model_configs_no_input_dim(request):
 
 @pytest.fixture(
     params=[
-        PIWAEConfig(
-            input_dim=(1, 28, 28), latent_dim=10, number_gradient_estimates=3
-        ),
+        PIWAEConfig(input_dim=(1, 28, 28), latent_dim=10, number_gradient_estimates=3),
         PIWAEConfig(input_dim=(1, 2, 18), latent_dim=5),
     ]
 )
@@ -122,7 +124,9 @@ class Test_Model_Saving:
 
         model.save(dir_path=dir_path)
 
-        assert set(os.listdir(dir_path)) == set(["model_config.json", "model.pt", "environment.json"])
+        assert set(os.listdir(dir_path)) == set(
+            ["model_config.json", "model.pt", "environment.json"]
+        )
 
         # reload model
         model_rec = AutoModel.load_from_folder(dir_path)
@@ -212,7 +216,7 @@ class Test_Model_Saving:
                 "model.pt",
                 "encoder.pkl",
                 "decoder.pkl",
-                "environment.json"
+                "environment.json",
             ]
         )
 
@@ -276,42 +280,47 @@ class Test_Model_forward:
         return data  # This is an extract of 3 data from MNIST (unnormalized) used to test custom architecture
 
     @pytest.fixture
-    def rae(self, model_configs, demo_data):
+    def piwae(self, model_configs, demo_data):
         model_configs.input_dim = tuple(demo_data["data"][0].shape)
         return PIWAE(model_configs)
 
-    def test_model_train_output(self, rae, demo_data):
+    def test_model_train_output(self, piwae, demo_data):
 
-        rae.train()
+        piwae.train()
 
-        out = rae(demo_data)
+        out = piwae(demo_data)
 
         assert isinstance(out, ModelOutput)
 
-        assert set([
-            "loss",
-            "reconstruction_loss",
-            "encoder_loss",
-            "decoder_loss",
-            "update_encoder",
-            "update_decoder",
-            "reg_loss",
-            "recon_x",
-            "z"]) == set(
-            out.keys()
+        assert (
+            set(
+                [
+                    "loss",
+                    "reconstruction_loss",
+                    "encoder_loss",
+                    "decoder_loss",
+                    "update_encoder",
+                    "update_decoder",
+                    "reg_loss",
+                    "recon_x",
+                    "z",
+                ]
+            )
+            == set(out.keys())
         )
 
         assert out.z.shape[0] == demo_data["data"].shape[0]
         assert out.recon_x.shape == demo_data["data"].shape
+
 
 class Test_Model_interpolate:
     @pytest.fixture(
         params=[
             torch.randn(3, 2, 3, 1),
             torch.randn(3, 2, 2),
-            torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))[
-            :
-        ]['data']
+            torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))[:][
+                "data"
+            ],
         ]
     )
     def demo_data(self, request):
@@ -326,23 +335,30 @@ class Test_Model_interpolate:
         model_configs.input_dim = tuple(demo_data[0].shape)
         return PIWAE(model_configs)
 
-
     def test_interpolate(self, ae, demo_data, granularity):
         with pytest.raises(AssertionError):
             ae.interpolate(demo_data, demo_data[1:], granularity)
 
         interp = ae.interpolate(demo_data, demo_data, granularity)
 
-        assert tuple(interp.shape) == (demo_data.shape[0], granularity,) + (demo_data.shape[1:])
+        assert (
+            tuple(interp.shape)
+            == (
+                demo_data.shape[0],
+                granularity,
+            )
+            + (demo_data.shape[1:])
+        )
+
 
 class Test_Model_reconstruct:
     @pytest.fixture(
         params=[
             torch.randn(3, 2, 3, 1),
             torch.randn(3, 2, 2),
-            torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))[
-            :
-        ]['data']
+            torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))[:][
+                "data"
+            ],
         ]
     )
     def demo_data(self, request):
@@ -353,9 +369,8 @@ class Test_Model_reconstruct:
         model_configs.input_dim = tuple(demo_data[0].shape)
         return PIWAE(model_configs)
 
-
     def test_reconstruct(self, ae, demo_data):
-      
+
         recon = ae.reconstruct(demo_data)
         assert tuple(recon.shape) == demo_data.shape
 
@@ -371,9 +386,10 @@ class Test_PIWAE_Training:
             CoupledOptimizerTrainerConfig(
                 num_epochs=3,
                 steps_saving=2,
-                learning_rate=1e-5,
-                encoder_optim_decay=1e-3,
-                decoder_optim_decay=1e-3,
+                encoder_learning_rate=1e-5,
+                decoder_learning_rate=1e-6,
+                encoder_optimizer_cls="AdamW",
+                decoder_optimizer_cls="SGD",
             )
         ]
     )
@@ -392,7 +408,7 @@ class Test_PIWAE_Training:
             torch.rand(1),
         ]
     )
-    def rae(self, model_configs, custom_encoder, custom_decoder, request):
+    def piwae(self, model_configs, custom_encoder, custom_decoder, request):
         # randomized
 
         alpha = request.param
@@ -407,36 +423,24 @@ class Test_PIWAE_Training:
             model = PIWAE(model_configs, decoder=custom_decoder)
 
         else:
-            model = PIWAE(
-                model_configs, encoder=custom_encoder, decoder=custom_decoder
-            )
+            model = PIWAE(model_configs, encoder=custom_encoder, decoder=custom_decoder)
 
         return model
 
-    @pytest.fixture(params=[Adam])
-    def optimizers(self, request, rae, training_configs):
-        if request.param is not None:
-            encoder_optimizer = request.param(
-                rae.encoder.parameters(), lr=training_configs.learning_rate
-            )
-            decoder_optimizer = request.param(
-                rae.decoder.parameters(), lr=training_configs.learning_rate
-            )
-
-        else:
-            encoder_optimizer = None
-            decoder_optimizer = None
-
-        return (encoder_optimizer, decoder_optimizer)
-
-    def test_rae_train_step(self, rae, train_dataset, training_configs, optimizers):
+    @pytest.fixture
+    def trainer(self, piwae, train_dataset, training_configs):
         trainer = CoupledOptimizerTrainer(
-            model=rae,
+            model=piwae,
             train_dataset=train_dataset,
+            eval_dataset=train_dataset,
             training_config=training_configs,
-            encoder_optimizer=optimizers[0],
-            decoder_optimizer=optimizers[1],
         )
+
+        trainer.prepare_training()
+
+        return trainer
+
+    def test_piwae_train_step(self, trainer):
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -452,15 +456,7 @@ class Test_PIWAE_Training:
             ]
         )
 
-    def test_rae_eval_step(self, rae, train_dataset, training_configs, optimizers):
-        trainer = CoupledOptimizerTrainer(
-            model=rae,
-            train_dataset=train_dataset,
-            eval_dataset=train_dataset,
-            training_config=training_configs,
-            encoder_optimizer=optimizers[0],
-            decoder_optimizer=optimizers[1],
-        )
+    def test_piwae_eval_step(self, trainer):
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -476,17 +472,7 @@ class Test_PIWAE_Training:
             ]
         )
 
-    def test_rae_predict_step(
-        self, rae, train_dataset, training_configs, optimizers
-    ):
-        trainer = CoupledOptimizerTrainer(
-            model=rae,
-            train_dataset=train_dataset,
-            eval_dataset=train_dataset,
-            training_config=training_configs,
-            encoder_optimizer=optimizers[0],
-            decoder_optimizer=optimizers[1],
-        )
+    def test_piwae_predict_step(self, trainer, train_dataset):
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -502,22 +488,11 @@ class Test_PIWAE_Training:
             ]
         )
 
-        assert torch.equal(inputs.cpu(), train_dataset.data.cpu())
+        assert inputs.cpu() in train_dataset.data
         assert recon.shape == inputs.shape
-        assert generated.shape == inputs.shape 
+        assert generated.shape == inputs.shape
 
-    def test_rae_main_train_loop(
-        self, tmpdir, rae, train_dataset, training_configs, optimizers
-    ):
-
-        trainer = CoupledOptimizerTrainer(
-            model=rae,
-            train_dataset=train_dataset,
-            eval_dataset=train_dataset,
-            training_config=training_configs,
-            encoder_optimizer=optimizers[0],
-            decoder_optimizer=optimizers[1],
-        )
+    def test_piwae_main_train_loop(self, trainer):
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -533,19 +508,9 @@ class Test_PIWAE_Training:
             ]
         )
 
-    def test_checkpoint_saving(
-        self, tmpdir, rae, train_dataset, training_configs, optimizers
-    ):
+    def test_checkpoint_saving(self, piwae, trainer, training_configs):
 
         dir_path = training_configs.output_dir
-
-        trainer = CoupledOptimizerTrainer(
-            model=rae,
-            train_dataset=train_dataset,
-            training_config=training_configs,
-            encoder_optimizer=optimizers[0],
-            decoder_optimizer=optimizers[1],
-        )
 
         # Make a training step
         step_1_loss = trainer.train_step(epoch=1)
@@ -572,14 +537,14 @@ class Test_PIWAE_Training:
         ).issubset(set(files_list))
 
         # check pickled custom decoder
-        if not rae.model_config.uses_default_decoder:
+        if not piwae.model_config.uses_default_decoder:
             assert "decoder.pkl" in files_list
 
         else:
             assert not "decoder.pkl" in files_list
 
         # check pickled custom encoder
-        if not rae.model_config.uses_default_encoder:
+        if not piwae.model_config.uses_default_encoder:
             assert "encoder.pkl" in files_list
 
         else:
@@ -660,21 +625,11 @@ class Test_PIWAE_Training:
             ]
         )
 
-    def test_checkpoint_saving_during_training(
-        self, tmpdir, rae, train_dataset, training_configs, optimizers
-    ):
+    def test_checkpoint_saving_during_training(self, piwae, trainer, training_configs):
         #
         target_saving_epoch = training_configs.steps_saving
 
         dir_path = training_configs.output_dir
-
-        trainer = CoupledOptimizerTrainer(
-            model=rae,
-            train_dataset=train_dataset,
-            training_config=training_configs,
-            encoder_optimizer=optimizers[0],
-            decoder_optimizer=optimizers[1],
-        )
 
         model = deepcopy(trainer.model)
 
@@ -704,14 +659,14 @@ class Test_PIWAE_Training:
         ).issubset(set(files_list))
 
         # check pickled custom decoder
-        if not rae.model_config.uses_default_decoder:
+        if not piwae.model_config.uses_default_decoder:
             assert "decoder.pkl" in files_list
 
         else:
             assert not "decoder.pkl" in files_list
 
         # check pickled custom encoder
-        if not rae.model_config.uses_default_encoder:
+        if not piwae.model_config.uses_default_encoder:
             assert "encoder.pkl" in files_list
 
         else:
@@ -728,19 +683,9 @@ class Test_PIWAE_Training:
             ]
         )
 
-    def test_final_model_saving(
-        self, tmpdir, rae, train_dataset, training_configs, optimizers
-    ):
+    def test_final_model_saving(self, piwae, trainer, training_configs):
 
         dir_path = training_configs.output_dir
-
-        trainer = CoupledOptimizerTrainer(
-            model=rae,
-            train_dataset=train_dataset,
-            training_config=training_configs,
-            encoder_optimizer=optimizers[0],
-            decoder_optimizer=optimizers[1],
-        )
 
         trainer.train()
 
@@ -761,14 +706,14 @@ class Test_PIWAE_Training:
         )
 
         # check pickled custom decoder
-        if not rae.model_config.uses_default_decoder:
+        if not piwae.model_config.uses_default_decoder:
             assert "decoder.pkl" in files_list
 
         else:
             assert not "decoder.pkl" in files_list
 
         # check pickled custom encoder
-        if not rae.model_config.uses_default_encoder:
+        if not piwae.model_config.uses_default_encoder:
             assert "encoder.pkl" in files_list
 
         else:
@@ -789,15 +734,19 @@ class Test_PIWAE_Training:
         assert type(model_rec.encoder.cpu()) == type(model.encoder.cpu())
         assert type(model_rec.decoder.cpu()) == type(model.decoder.cpu())
 
-    def test_rae_training_pipeline(self, tmpdir, rae, train_dataset, training_configs):
+    def test_piwae_training_pipeline(
+        self, tmpdir, piwae, train_dataset, training_configs
+    ):
 
         with pytest.raises(AssertionError):
-            pipeline = TrainingPipeline(model=rae, training_config=BaseTrainerConfig())
+            pipeline = TrainingPipeline(
+                model=piwae, training_config=BaseTrainerConfig()
+            )
 
         dir_path = training_configs.output_dir
 
         # build pipeline
-        pipeline = TrainingPipeline(model=rae, training_config=training_configs)
+        pipeline = TrainingPipeline(model=piwae, training_config=training_configs)
 
         assert pipeline.training_config.__dict__ == training_configs.__dict__
 
@@ -824,14 +773,14 @@ class Test_PIWAE_Training:
         )
 
         # check pickled custom decoder
-        if not rae.model_config.uses_default_decoder:
+        if not piwae.model_config.uses_default_decoder:
             assert "decoder.pkl" in files_list
 
         else:
             assert not "decoder.pkl" in files_list
 
         # check pickled custom encoder
-        if not rae.model_config.uses_default_encoder:
+        if not piwae.model_config.uses_default_encoder:
             assert "encoder.pkl" in files_list
 
         else:
@@ -852,10 +801,13 @@ class Test_PIWAE_Training:
         assert type(model_rec.encoder.cpu()) == type(model.encoder.cpu())
         assert type(model_rec.decoder.cpu()) == type(model.decoder.cpu())
 
-class Test_RAE_Generation:
+
+class Test_PIWAE_Generation:
     @pytest.fixture
     def train_data(self):
-        return torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample")).data
+        return torch.load(
+            os.path.join(PATH, "data/mnist_clean_train_dataset_sample")
+        ).data
 
     @pytest.fixture()
     def ae_model(self):
@@ -881,7 +833,7 @@ class Test_RAE_Generation:
             return_gen=True,
             train_data=train_data,
             eval_data=train_data,
-            training_config=BaseTrainerConfig(num_epochs=1)
+            training_config=BaseTrainerConfig(num_epochs=1),
         )
 
         assert gen_data.shape[0] == 11

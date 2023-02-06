@@ -7,13 +7,16 @@ from pythae.data.datasets import BaseDataset
 
 PATH = os.path.dirname(os.path.abspath(__file__))
 
+
 @pytest.fixture
 def data():
     return torch.randn(1000, 2)
 
+
 @pytest.fixture
 def labels():
     return torch.randint(10, (1000,))
+
 
 class Test_Dataset:
     def test_dataset_call(self, data, labels):

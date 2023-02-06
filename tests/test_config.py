@@ -5,9 +5,9 @@ import pytest
 from pydantic import ValidationError
 
 from pythae.config import BaseConfig
-from pythae.models import BaseAEConfig, AEConfig
+from pythae.models import AEConfig, BaseAEConfig
 from pythae.samplers import BaseSamplerConfig, NormalSamplerConfig
-from pythae.trainers import BaseTrainerConfig, AdversarialTrainerConfig
+from pythae.trainers import AdversarialTrainerConfig, BaseTrainerConfig
 
 PATH = os.path.dirname(os.path.abspath(__file__))
 
@@ -35,7 +35,12 @@ class Test_Load_Config_from_JSON:
             ],
             [
                 os.path.join(PATH, "data/baseAE/configs/training_config00.json"),
-                BaseTrainerConfig(batch_size=13, num_epochs=2, learning_rate=1e-5),
+                BaseTrainerConfig(
+                    per_device_train_batch_size=13,
+                    per_device_eval_batch_size=42,
+                    num_epochs=2,
+                    learning_rate=1e-5,
+                ),
             ],
             [
                 os.path.join(PATH, "data/baseAE/configs/generation_config00.json"),
@@ -121,7 +126,11 @@ class Test_Save_Model_JSON_from_Config:
     @pytest.fixture(
         params=[
             BaseTrainerConfig(),
-            BaseTrainerConfig(learning_rate=100, batch_size=15),
+            BaseTrainerConfig(
+                learning_rate=100,
+                per_device_train_batch_size=15,
+                per_device_eval_batch_size=23,
+            ),
         ]
     )
     def training_configs(self, request):

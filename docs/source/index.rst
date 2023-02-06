@@ -10,6 +10,11 @@ Welcome to pythae's documentation!
 This library aims at gathering some of the common (Variational) Autoencoders implementations so that
 we can conduct benchmark analysis and reproducible research!
 
+**News** 📢
+
+As of v0.1.0, `Pythae` now supports distributed training using PyTorch's `DDP <https://pytorch.org/docs/stable/notes/ddp.html>`_). You can now train your favorite VAE faster and on larger datasets, still with a few lines of code.
+See :ref:`Distributed Training`.
+
 .. toctree::
    :maxdepth: 1
    :caption: Pythae

@@ -73,8 +73,14 @@ class TrainingPipeline(Pipeline):
                     f"is expected for training a {model.model_name}"
                 )
             if model.model_name == "RAE_L2":
-                training_config.encoder_optim_decay = 0.0
-                training_config.decoder_optim_decay = model.model_config.reg_weight
+                if training_config.decoder_optimizer_params is None:
+                    training_config.decoder_optimizer_params = {
+                        "weight_decay": model.model_config.reg_weight
+                    }
+                else:
+                    training_config.decoder_optimizer_params[
+                        "weight_decay"
+                    ] = model.model_config.reg_weight
 
         elif model.model_name == "Adversarial_AE" or model.model_name == "FactorVAE":
             if not isinstance(training_config, AdversarialTrainerConfig):
@@ -138,7 +144,7 @@ class TrainingPipeline(Pipeline):
         loader_out = next(iter(dataloader))
         assert loader_out.data.shape[0] == min(
             len(dataset), 2
-        ), "Error when combining dataset wih loader."
+        ), "Error when combining dataset with loader."
 
     def __call__(
         self,

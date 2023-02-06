@@ -1,6 +1,0 @@
-{
-    "name": "RAE_GP_Config",
-    "latent_dim": 16,
-    "embedding_weight": 1e-3,
-    "reg_weight": 1e-6
-  }

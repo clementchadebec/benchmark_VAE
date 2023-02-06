@@ -86,8 +86,6 @@ class PixelCNN(BaseNF):
             x.shape[3],
         )
 
-        # assert 0, (out.reshape(-1, self.model_config.n_embeddings).shape, x.reshape(x.shape[0], -1,).long().shape)
-
         loss = F.cross_entropy(out, x.long())
 
         return ModelOutput(out=out, loss=loss)

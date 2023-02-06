@@ -3,14 +3,13 @@ from copy import deepcopy
 
 import pytest
 import torch
-from torch.optim import Adam
 
 from pythae.customexception import BadInheritanceError
+from pythae.models import SVAE, AutoModel, SVAEConfig
 from pythae.models.base.base_utils import ModelOutput
-from pythae.models import SVAE, SVAEConfig, AutoModel
+from pythae.pipelines import GenerationPipeline, TrainingPipeline
 from pythae.samplers import HypersphereUniformSamplerConfig
 from pythae.trainers import BaseTrainer, BaseTrainerConfig
-from pythae.pipelines import TrainingPipeline, GenerationPipeline
 from tests.data.custom_architectures import (
     Decoder_AE_Conv,
     Encoder_SVAE_Conv,
@@ -116,7 +115,9 @@ class Test_Model_Saving:
 
         model.save(dir_path=dir_path)
 
-        assert set(os.listdir(dir_path)) == set(["model_config.json", "model.pt", "environment.json"])
+        assert set(os.listdir(dir_path)) == set(
+            ["model_config.json", "model.pt", "environment.json"]
+        )
 
         # reload model
         model_rec = AutoModel.load_from_folder(dir_path)
@@ -206,7 +207,7 @@ class Test_Model_Saving:
                 "model.pt",
                 "encoder.pkl",
                 "decoder.pkl",
-                "environment.json"
+                "environment.json",
             ]
         )
 
@@ -289,14 +290,15 @@ class Test_Model_forward:
         assert out.z.shape[0] == demo_data["data"].shape[0]
         assert out.recon_x.shape == demo_data["data"].shape
 
+
 class Test_Model_interpolate:
     @pytest.fixture(
         params=[
             torch.randn(3, 2, 3, 1),
             torch.randn(3, 2, 2),
-            torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))[
-            :
-        ]['data']
+            torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))[:][
+                "data"
+            ],
         ]
     )
     def demo_data(self, request):
@@ -311,23 +313,30 @@ class Test_Model_interpolate:
         model_configs.input_dim = tuple(demo_data[0].shape)
         return SVAE(model_configs)
 
-
     def test_interpolate(self, ae, demo_data, granularity):
         with pytest.raises(AssertionError):
             ae.interpolate(demo_data, demo_data[1:], granularity)
 
         interp = ae.interpolate(demo_data, demo_data, granularity)
 
-        assert tuple(interp.shape) == (demo_data.shape[0], granularity,) + (demo_data.shape[1:])
+        assert (
+            tuple(interp.shape)
+            == (
+                demo_data.shape[0],
+                granularity,
+            )
+            + (demo_data.shape[1:])
+        )
+
 
 class Test_Model_reconstruct:
     @pytest.fixture(
         params=[
             torch.randn(3, 2, 3, 1),
             torch.randn(3, 2, 2),
-            torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))[
-            :
-        ]['data']
+            torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))[:][
+                "data"
+            ],
         ]
     )
     def demo_data(self, request):
@@ -338,9 +347,8 @@ class Test_Model_reconstruct:
         model_configs.input_dim = tuple(demo_data[0].shape)
         return SVAE(model_configs)
 
-
     def test_reconstruct(self, ae, demo_data):
-      
+
         recon = ae.reconstruct(demo_data)
         assert tuple(recon.shape) == demo_data.shape
 
@@ -414,25 +422,20 @@ class Test_SVAE_Training:
 
         return model
 
-    @pytest.fixture(params=[Adam])
-    def optimizers(self, request, svae, training_configs):
-        if request.param is not None:
-            optimizer = request.param(
-                svae.parameters(), lr=training_configs.learning_rate
-            )
-
-        else:
-            optimizer = None
-
-        return optimizer
-
-    def test_svae_train_step(self, svae, train_dataset, training_configs, optimizers):
+    @pytest.fixture
+    def trainer(self, svae, train_dataset, training_configs):
         trainer = BaseTrainer(
             model=svae,
             train_dataset=train_dataset,
+            eval_dataset=train_dataset,
             training_config=training_configs,
-            optimizer=optimizers,
         )
+
+        trainer.prepare_training()
+
+        return trainer
+
+    def test_svae_train_step(self, trainer):
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -448,14 +451,7 @@ class Test_SVAE_Training:
             ]
         )
 
-    def test_svae_eval_step(self, svae, train_dataset, training_configs, optimizers):
-        trainer = BaseTrainer(
-            model=svae,
-            train_dataset=train_dataset,
-            eval_dataset=train_dataset,
-            training_config=training_configs,
-            optimizer=optimizers,
-        )
+    def test_svae_eval_step(self, trainer):
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -471,16 +467,7 @@ class Test_SVAE_Training:
             ]
         )
 
-    def test_svae_predict_step(
-        self, svae, train_dataset, training_configs, optimizers
-    ):
-        trainer = BaseTrainer(
-            model=svae,
-            train_dataset=train_dataset,
-            eval_dataset=train_dataset,
-            training_config=training_configs,
-            optimizer=optimizers,
-        )
+    def test_svae_predict_step(self, trainer, train_dataset):
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -496,21 +483,11 @@ class Test_SVAE_Training:
             ]
         )
 
-        assert torch.equal(inputs.cpu(), train_dataset.data.cpu())
+        assert inputs.cpu() in train_dataset.data
         assert recon.shape == inputs.shape
-        assert generated.shape == inputs.shape 
+        assert generated.shape == inputs.shape
 
-    def test_svae_main_train_loop(
-        self, tmpdir, svae, train_dataset, training_configs, optimizers
-    ):
-
-        trainer = BaseTrainer(
-            model=svae,
-            train_dataset=train_dataset,
-            eval_dataset=train_dataset,
-            training_config=training_configs,
-            optimizer=optimizers,
-        )
+    def test_svae_main_train_loop(self, trainer):
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -526,18 +503,9 @@ class Test_SVAE_Training:
             ]
         )
 
-    def test_checkpoint_saving(
-        self, tmpdir, svae, train_dataset, training_configs, optimizers
-    ):
+    def test_checkpoint_saving(self, svae, trainer, training_configs):
 
         dir_path = training_configs.output_dir
-
-        trainer = BaseTrainer(
-            model=svae,
-            train_dataset=train_dataset,
-            training_config=training_configs,
-            optimizer=optimizers,
-        )
 
         # Make a training step
         step_1_loss = trainer.train_step(epoch=1)
@@ -620,20 +588,11 @@ class Test_SVAE_Training:
             ]
         )
 
-    def test_checkpoint_saving_during_training(
-        self, tmpdir, svae, train_dataset, training_configs, optimizers
-    ):
+    def test_checkpoint_saving_during_training(self, svae, trainer, training_configs):
         #
         target_saving_epoch = training_configs.steps_saving
 
         dir_path = training_configs.output_dir
-
-        trainer = BaseTrainer(
-            model=svae,
-            train_dataset=train_dataset,
-            training_config=training_configs,
-            optimizer=optimizers,
-        )
 
         model = deepcopy(trainer.model)
 
@@ -682,18 +641,9 @@ class Test_SVAE_Training:
             ]
         )
 
-    def test_final_model_saving(
-        self, tmpdir, svae, train_dataset, training_configs, optimizers
-    ):
+    def test_final_model_saving(self, svae, trainer, training_configs):
 
         dir_path = training_configs.output_dir
-
-        trainer = BaseTrainer(
-            model=svae,
-            train_dataset=train_dataset,
-            training_config=training_configs,
-            optimizer=optimizers,
-        )
 
         trainer.train()
 
@@ -742,9 +692,7 @@ class Test_SVAE_Training:
         assert type(model_rec.encoder.cpu()) == type(model.encoder.cpu())
         assert type(model_rec.decoder.cpu()) == type(model.decoder.cpu())
 
-    def test_svae_training_pipeline(
-        self, tmpdir, svae, train_dataset, training_configs
-    ):
+    def test_svae_training_pipeline(self, svae, train_dataset, training_configs):
 
         dir_path = training_configs.output_dir
 
@@ -804,20 +752,19 @@ class Test_SVAE_Training:
         assert type(model_rec.encoder.cpu()) == type(model.encoder.cpu())
         assert type(model_rec.decoder.cpu()) == type(model.decoder.cpu())
 
+
 class Test_SVAE_Generation:
     @pytest.fixture
     def train_data(self):
-        return torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample")).data
+        return torch.load(
+            os.path.join(PATH, "data/mnist_clean_train_dataset_sample")
+        ).data
 
     @pytest.fixture()
     def ae_model(self):
         return SVAE(SVAEConfig(input_dim=(1, 28, 28), latent_dim=7))
 
-    @pytest.fixture(
-        params=[
-            HypersphereUniformSamplerConfig()
-        ]
-    )
+    @pytest.fixture(params=[HypersphereUniformSamplerConfig()])
     def sampler_configs(self, request):
         return request.param
 
@@ -830,7 +777,7 @@ class Test_SVAE_Generation:
             return_gen=True,
             train_data=train_data,
             eval_data=train_data,
-            training_config=BaseTrainerConfig(num_epochs=1)
+            training_config=BaseTrainerConfig(num_epochs=1),
         )
 
         assert gen_data.shape[0] == 11

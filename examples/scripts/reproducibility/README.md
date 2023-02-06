@@ -5,7 +5,7 @@ We validate the implementations by reproducing some results presented in the ori
 We gather here the scripts to train those models. They can be launched with the following commandline
 
 ```bash
-python aae.py --model_config 'configs/celeba/aae/aae_config.json' --training_config 'configs/celeba/aae/base_training_config.json'
+python aae.py
 ```
 
 The folder structure should be as follows:
@@ -13,11 +13,6 @@ The folder structure should be as follows:
 .
 ├── aae.py
 ├── betatcvae.py
-├── configs
-│   ├── binary_mnist
-│   ├── celeba
-│   ├── dsprites
-│   └── mnist
 ├── data
 │   ├── binary_mnist
 │   ├── celeba

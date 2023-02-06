@@ -1,20 +1,15 @@
-import pytest
 import os
-import torch
-import numpy as np
-import shutil
-
 from copy import deepcopy
-from torch.optim import Adam
 
-from pythae.models.base.base_utils import ModelOutput
-from pythae.models.normalizing_flows import MAF, MAFConfig
-from pythae.models.normalizing_flows import NFModel
+import numpy as np
+import pytest
+import torch
+
 from pythae.models import AutoModel
-
-
-from pythae.trainers import BaseTrainer, BaseTrainerConfig
+from pythae.models.base.base_utils import ModelOutput
+from pythae.models.normalizing_flows import MAF, MAFConfig, NFModel
 from pythae.pipelines import TrainingPipeline
+from pythae.trainers import BaseTrainer, BaseTrainerConfig
 
 PATH = os.path.dirname(os.path.abspath(__file__))
 
@@ -72,7 +67,9 @@ class Test_Model_Saving:
 
         model.save(dir_path=dir_path)
 
-        assert set(os.listdir(dir_path)) == set(["model_config.json", "model.pt", "environment.json"])
+        assert set(os.listdir(dir_path)) == set(
+            ["model_config.json", "model.pt", "environment.json"]
+        )
 
         # reload model
         model_rec = AutoModel.load_from_folder(dir_path)
@@ -202,30 +199,23 @@ class Test_MAF_Training:
             torch.eye(np.prod(model_configs.input_dim)).to(device),
         )
 
-    @pytest.fixture(params=[Adam])
-    def optimizers(self, request, maf, training_configs):
-        if request.param is not None:
-            optimizer = request.param(
-                maf.parameters(), lr=training_configs.learning_rate
-            )
-
-        else:
-            optimizer = None
-
-        return optimizer
-
-    def test_maf_train_step(
-        self, maf, prior, train_dataset, training_configs, optimizers
-    ):
+    @pytest.fixture
+    def trainer(self, maf, prior, train_dataset, training_configs):
 
         nf_model = NFModel(prior=prior, flow=maf)
 
         trainer = BaseTrainer(
             model=nf_model,
             train_dataset=train_dataset,
+            eval_dataset=train_dataset,
             training_config=training_configs,
-            optimizer=optimizers,
         )
+
+        trainer.prepare_training()
+
+        return trainer
+
+    def test_maf_train_step(self, trainer):
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -241,19 +231,7 @@ class Test_MAF_Training:
             ]
         )
 
-    def test_maf_eval_step(
-        self, maf, prior, train_dataset, training_configs, optimizers
-    ):
-
-        nf_model = NFModel(prior=prior, flow=maf)
-
-        trainer = BaseTrainer(
-            model=nf_model,
-            train_dataset=train_dataset,
-            eval_dataset=train_dataset,
-            training_config=training_configs,
-            optimizer=optimizers,
-        )
+    def test_maf_eval_step(self, trainer):
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -269,18 +247,7 @@ class Test_MAF_Training:
             ]
         )
 
-    def test_maf_main_train_loop(
-        self, maf, prior, train_dataset, training_configs, optimizers
-    ):
-
-        nf_model = NFModel(prior=prior, flow=maf)
-
-        trainer = BaseTrainer(
-            model=nf_model,
-            train_dataset=train_dataset,
-            training_config=training_configs,
-            optimizer=optimizers,
-        )
+    def test_maf_main_train_loop(self, trainer):
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -296,20 +263,9 @@ class Test_MAF_Training:
             ]
         )
 
-    def test_checkpoint_saving(
-        self, tmpdir, maf, prior, train_dataset, training_configs, optimizers
-    ):
+    def test_checkpoint_saving(self, trainer, training_configs):
 
         dir_path = training_configs.output_dir
-
-        nf_model = NFModel(prior=prior, flow=maf)
-
-        trainer = BaseTrainer(
-            model=nf_model,
-            train_dataset=train_dataset,
-            training_config=training_configs,
-            optimizer=optimizers,
-        )
 
         # Make a training step
         step_1_loss = trainer.train_step(epoch=1)
@@ -375,22 +331,11 @@ class Test_MAF_Training:
             ]
         )
 
-    def test_checkpoint_saving_during_training(
-        self, tmpdir, maf, prior, train_dataset, training_configs, optimizers
-    ):
+    def test_checkpoint_saving_during_training(self, trainer, training_configs):
         #
         target_saving_epoch = training_configs.steps_saving
 
         dir_path = training_configs.output_dir
-
-        nf_model = NFModel(prior=prior, flow=maf)
-
-        trainer = BaseTrainer(
-            model=nf_model,
-            train_dataset=train_dataset,
-            training_config=training_configs,
-            optimizer=optimizers,
-        )
 
         model = deepcopy(trainer.model.flow)
 
@@ -425,20 +370,9 @@ class Test_MAF_Training:
             ]
         )
 
-    def test_final_model_saving(
-        self, tmpdir, maf, prior, train_dataset, training_configs, optimizers
-    ):
+    def test_final_model_saving(self, trainer, training_configs):
 
         dir_path = training_configs.output_dir
-
-        nf_model = NFModel(prior=prior, flow=maf)
-
-        trainer = BaseTrainer(
-            model=nf_model,
-            train_dataset=train_dataset,
-            training_config=training_configs,
-            optimizer=optimizers,
-        )
 
         trainer.train()
 

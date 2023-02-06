@@ -1,18 +1,16 @@
-import argparse
 import logging
 import os
 from typing import List
 
 import numpy as np
 import torch
+import torch.nn as nn
 
 from pythae.data.preprocessors import DataProcessor
-from pythae.trainers import AdversarialTrainer, BaseTrainerConfig
 from pythae.models import Adversarial_AE, Adversarial_AE_Config
-from pythae.models.nn import BaseEncoder, BaseDecoder, BaseDiscriminator
-import torch.nn as nn
 from pythae.models.base.base_utils import ModelOutput
-
+from pythae.models.nn import BaseDecoder, BaseDiscriminator, BaseEncoder
+from pythae.trainers import AdversarialTrainer, AdversarialTrainerConfig
 
 logger = logging.getLogger(__name__)
 console = logging.StreamHandler()
@@ -20,24 +18,6 @@ logger.addHandler(console)
 logger.setLevel(logging.INFO)
 
 PATH = os.path.dirname(os.path.abspath(__file__))
-
-ap = argparse.ArgumentParser()
-
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
-
-ap.add_argument(
-    "--model_config",
-    help="path to model config file (expected json file)",
-    default=None,
-)
-ap.add_argument(
-    "--training_config",
-    help="path to training config_file (expected json file)",
-    default=os.path.join(PATH, "configs/base_training_config.json"),
-)
-
-
-args = ap.parse_args()
 
 ### Define paper encoder network
 class Encoder(BaseEncoder):
@@ -154,8 +134,7 @@ class Decoder(BaseDecoder):
 
         layers.append(
             nn.Sequential(
-                nn.ConvTranspose2d(128, self.n_channels, 5, 1, padding=1),
-                nn.Sigmoid()
+                nn.ConvTranspose2d(128, self.n_channels, 5, 1, padding=1), nn.Sigmoid()
             )
         )
 
@@ -199,6 +178,7 @@ class Decoder(BaseDecoder):
 
         return output
 
+
 ### Define paper discriminator network
 class Discriminator(BaseDiscriminator):
     def __init__(self, args: dict):
@@ -217,7 +197,7 @@ class Discriminator(BaseDiscriminator):
                 nn.Linear(512, 512),
                 nn.ReLU(),
                 nn.Linear(512, 512),
-                nn.ReLU()
+                nn.ReLU(),
             )
         )
 
@@ -261,64 +241,62 @@ class Discriminator(BaseDiscriminator):
         return output
 
 
-def main(args):
+def main():
 
     train_data = (
-        np.load(os.path.join(PATH, f"data/celeba", "train_data.npz"))[
-            "data"
-        ]
-        / 255.0
+        np.load(os.path.join(PATH, f"data/celeba", "train_data.npz"))["data"] / 255.0
     )
-    eval_data = (
-        np.load(os.path.join(PATH, f"data/celeba", "eval_data.npz"))["data"]
-        / 255.0
-    )
-    
+
     data_input_dim = tuple(train_data.shape[1:])
 
-    if args.model_config is not None:
-        model_config = Adversarial_AE_Config.from_json_file(args.model_config)
-
-    else:
-        model_config = Adversarial_AE_Config()
-
-    model_config.input_dim = data_input_dim
+    model_config = Adversarial_AE_Config(
+        input_dim=data_input_dim,
+        latent_dim=64,
+        reconstruction_loss="mse",
+        adversarial_loss_scale=0.5,
+        reconstruction_loss_scale=0.05,
+        deterministic_posterior=True,
+    )
 
     model = Adversarial_AE(
         model_config=model_config,
         encoder=Encoder(model_config),
         decoder=Decoder(model_config),
-        discriminator=Discriminator(model_config)
+        discriminator=Discriminator(model_config),
     )
 
     ### Set training config
-    training_config = BaseTrainerConfig.from_json_file(args.training_config)
+    training_config = AdversarialTrainerConfig(
+        output_dir="my_models_on_celeba",
+        per_device_train_batch_size=100,
+        per_device_eval_batch_size=100,
+        num_epochs=100,
+        autoencoder_learning_rate=3e-4,
+        discriminator_learning_rate=1e-3,
+        steps_saving=3,
+        steps_predict=1000,
+        no_cuda=False,
+        autoencoder_scheduler_cls="LambdaLR",
+        autoencoder_scheduler_params={
+            "lr_lambda": lambda epoch: 1 * (epoch < 30)
+            + 0.5 * (30 <= epoch < 50)
+            + 0.2 * (50 <= epoch),
+            "verbose": True,
+        },
+        discriminator_scheduler_cls="LambdaLR",
+        discriminator_scheduler_params={
+            "lr_lambda": lambda epoch: 1 * (epoch < 30)
+            + 0.5 * (30 <= epoch < 50)
+            + 0.2 * (50 <= epoch),
+            "verbose": True,
+        },
+    )
 
     ### Process data
     data_processor = DataProcessor()
     logger.info("Preprocessing train data...")
     train_data = data_processor.process_data(train_data)
     train_dataset = data_processor.to_dataset(train_data)
-
-    logger.info("Preprocessing eval data...\n")
-    eval_data = data_processor.process_data(eval_data)
-    eval_dataset = data_processor.to_dataset(eval_data)
-
-    import itertools
-
-    ### Optimizers
-    ae_optimizer = torch.optim.Adam(itertools.chain(model.encoder.parameters(), model.decoder.parameters()), lr=3e-4)
-    dis_optimizer = torch.optim.Adam(model.discriminator.parameters(), lr=1e-3)
-
-    ### Schedulers
-    lambda_lr = lambda epoch: 1 * (epoch < 30) + 0.5 * (30 <= epoch < 50) + 0.2 * (50 <= epoch)
-
-    ae_scheduler = torch.optim.lr_scheduler.LambdaLR(
-        ae_optimizer, lr_lambda=lambda_lr, verbose=True
-    )
-    dis_scheduler = torch.optim.lr_scheduler.LambdaLR(
-        dis_optimizer, lr_lambda=lambda_lr, verbose=True
-    )
 
     seed = 123
     torch.manual_seed(seed)
@@ -329,15 +307,12 @@ def main(args):
         model=model,
         train_dataset=train_dataset,
         training_config=training_config,
-        autoencoder_optimizer=ae_optimizer,
-        discriminator_optimizer=dis_optimizer,
-        autoencoder_scheduler=ae_scheduler,
-        discriminator_scheduler=dis_scheduler,
         callbacks=None,
     )
 
     trainer.train()
 
+
 if __name__ == "__main__":
 
-    main(args)
+    main()

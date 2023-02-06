@@ -1,7 +1,0 @@
-{
-    "name": "CIWAEConfig",
-    "latent_dim": 50,
-    "reconstruction_loss": "bce",
-    "number_samples": 64,
-    "beta": 0.5
-}

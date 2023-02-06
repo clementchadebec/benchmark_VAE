@@ -1,22 +1,17 @@
-import argparse
 import logging
 import os
 from typing import List
 
 import numpy as np
 import torch
-
-from pythae.data.preprocessors import DataProcessor
-from pythae.models import SVAE, SVAEConfig
-from pythae.models import AutoModel
-from pythae.trainers import BaseTrainerConfig, BaseTrainer
-from pythae.data.datasets import DatasetOutput
+import torch.nn as nn
 from torch.utils.data import Dataset
 
-from pythae.models.nn import BaseEncoder, BaseDecoder
-import torch.nn as nn
+from pythae.data.datasets import DatasetOutput
+from pythae.models import SVAE, AutoModel, SVAEConfig
 from pythae.models.base.base_utils import ModelOutput
-
+from pythae.models.nn import BaseDecoder, BaseEncoder
+from pythae.trainers import BaseTrainer, BaseTrainerConfig
 
 logger = logging.getLogger(__name__)
 console = logging.StreamHandler()
@@ -25,23 +20,7 @@ logger.setLevel(logging.INFO)
 
 PATH = os.path.dirname(os.path.abspath(__file__))
 
-ap = argparse.ArgumentParser()
-
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
-
-
-ap.add_argument(
-    "--model_config",
-    help="path to model config file (expected json file)",
-    default=None,
-)
-ap.add_argument(
-    "--training_config",
-    help="path to training config_file (expected json file)",
-    default=os.path.join(PATH, "configs/base_training_config.json"),
-)
-
-args = ap.parse_args()
+device = "cuda" if torch.cuda.is_available() else "cpu"
 
 ### Define paper encoder network
 class Encoder(BaseEncoder):
@@ -57,7 +36,7 @@ class Encoder(BaseEncoder):
                 nn.Linear(np.prod(args.input_dim), 256),
                 nn.ReLU(),
                 nn.Linear(256, 128),
-                nn.ReLU()
+                nn.ReLU(),
             )
         )
 
@@ -66,7 +45,6 @@ class Encoder(BaseEncoder):
 
         self.embedding = nn.Linear(128, self.latent_dim)
         self.log_concentration = nn.Linear(128, 1)
-
 
     def forward(self, x, output_layer_levels: List[int] = None):
         output = ModelOutput()
@@ -78,9 +56,7 @@ class Encoder(BaseEncoder):
             assert all(
                 self.depth >= levels > 0 or levels == -1
                 for levels in output_layer_levels
-            ), (
-                f"Cannot output layer deeper than depth ({self.depth}). Got ({output_layer_levels})."
-            )
+            ), f"Cannot output layer deeper than depth ({self.depth}). Got ({output_layer_levels})."
 
             if -1 in output_layer_levels:
                 max_depth = self.depth
@@ -101,14 +77,13 @@ class Encoder(BaseEncoder):
 
         return output
 
+
 ### Define paper decoder network
 class Decoder(BaseDecoder):
     def __init__(self, args: dict):
         BaseDecoder.__init__(self)
 
         self.input_dim = args.input_dim
-
-        # assert 0, np.prod(args.input_dim)
 
         layers = nn.ModuleList()
 
@@ -117,15 +92,12 @@ class Decoder(BaseDecoder):
                 nn.Linear(args.latent_dim, 128),
                 nn.ReLU(),
                 nn.Linear(128, 256),
-                nn.ReLU()
+                nn.ReLU(),
             )
         )
 
         layers.append(
-            nn.Sequential(
-                nn.Linear(256, np.prod(args.input_dim)),
-                nn.Sigmoid()
-            )
+            nn.Sequential(nn.Linear(256, np.prod(args.input_dim)), nn.Sigmoid())
         )
 
         self.layers = layers
@@ -165,6 +137,7 @@ class Decoder(BaseDecoder):
 
         return output
 
+
 class DynBinarizedMNIST(Dataset):
     def __init__(self, data):
         self.data = data.type(torch.float)
@@ -177,37 +150,28 @@ class DynBinarizedMNIST(Dataset):
         x = (x > torch.distributions.Uniform(0, 1).sample(x.shape)).float()
         return DatasetOutput(data=x)
 
-def main(args):
+
+def main():
 
     ### Load data
     train_data = torch.tensor(
-        np.load(os.path.join(PATH, f"data/mnist", "train_data.npz"))[
-            "data"
-        ]
-        / 255.0
+        np.load(os.path.join(PATH, f"data/mnist", "train_data.npz"))["data"] / 255.0
     )
     eval_data = torch.tensor(
-        np.load(os.path.join(PATH, f"data/mnist", "eval_data.npz"))["data"]
-        / 255.0
+        np.load(os.path.join(PATH, f"data/mnist", "eval_data.npz"))["data"] / 255.0
     )
 
     train_data = torch.cat((train_data, eval_data))
 
     test_data = (
-        np.load(os.path.join(PATH, f"data/mnist", "test_data.npz"))["data"]
-        / 255.0
+        np.load(os.path.join(PATH, f"data/mnist", "test_data.npz"))["data"] / 255.0
     )
 
     data_input_dim = tuple(train_data.shape[1:])
 
-
-    if args.model_config is not None:
-        model_config = SVAEConfig.from_json_file(args.model_config)
-
-    else:
-        model_config = SVAEConfig()
-
-    model_config.input_dim = data_input_dim
+    model_config = SVAEConfig(
+        input_dim=data_input_dim, latent_dim=11, reconstruction_loss="bce"
+    )
 
     model = SVAE(
         model_config=model_config,
@@ -216,21 +180,19 @@ def main(args):
     )
 
     ### Set training config
-    training_config = BaseTrainerConfig.from_json_file(args.training_config)
+    training_config = BaseTrainerConfig(
+        output_dir="reproducibility/binary_mnist",
+        per_device_train_batch_size=64,
+        per_device_eval_batch_size=64,
+        num_epochs=500,
+        learning_rate=1e-3,
+        steps_saving=50,
+        steps_predict=None,
+        no_cuda=False,
+    )
 
     logger.info("Preprocessing train data...")
     train_dataset = DynBinarizedMNIST(train_data)
-
-    logger.info("Preprocessing eval data...\n")
-    eval_dataset = DynBinarizedMNIST(eval_data)
-
-    ### Optimizer
-    optimizer = torch.optim.Adam(model.parameters(), lr=training_config.learning_rate)
-
-    ### Scheduler
-    scheduler = torch.optim.lr_scheduler.MultiStepLR(
-        optimizer, milestones=[10000000], gamma=10**(-1/3), verbose=True
-    )
 
     seed = 123
     torch.manual_seed(seed)
@@ -240,20 +202,31 @@ def main(args):
     trainer = BaseTrainer(
         model=model,
         train_dataset=train_dataset,
-        eval_dataset=None,#eval_dataset,
+        eval_dataset=None,  # eval_dataset,
         training_config=training_config,
-        optimizer=optimizer,
-        scheduler=scheduler,
         callbacks=None,
     )
 
     ### Launch training
     trainer.train()
-    
-    trained_model = AutoModel.load_from_folder(os.path.join(training_config.output_dir, f'{trainer.model.model_name}_training_{trainer._training_signature}', 'final_model')).to(device).eval()
+
+    trained_model = (
+        AutoModel.load_from_folder(
+            os.path.join(
+                training_config.output_dir,
+                f"{trainer.model.model_name}_training_{trainer._training_signature}",
+                "final_model",
+            )
+        )
+        .to(device)
+        .eval()
+    )
 
     test_data = torch.tensor(test_data).to(device).type(torch.float)
-    test_data = (test_data > torch.distributions.Uniform(0, 1).sample(test_data.shape).to(test_data.device)).float()
+    test_data = (
+        test_data
+        > torch.distributions.Uniform(0, 1).sample(test_data.shape).to(test_data.device)
+    ).float()
 
     ### Compute NLL
     with torch.no_grad():
@@ -262,14 +235,11 @@ def main(args):
             nll_i = trained_model.get_nll(test_data, n_samples=500, batch_size=500)
             logger.info(f"Round {i+1} nll: {nll_i}")
             nll.append(nll_i)
-    
-    logger.info(
-        f'\nmean_nll: {np.mean(nll)}'
-    )
-    logger.info(
-        f'\std_nll: {np.std(nll)}'
-    )
+
+    logger.info(f"\nmean_nll: {np.mean(nll)}")
+    logger.info(f"\std_nll: {np.std(nll)}")
+
 
 if __name__ == "__main__":
 
-    main(args)
+    main()

@@ -117,13 +117,11 @@ class CallbackHandler:
     Class to handle list of Callback.
     """
 
-    def __init__(self, callbacks, model, optimizer, scheduler):
+    def __init__(self, callbacks, model):
         self.callbacks = []
         for cb in callbacks:
             self.add_callback(cb)
         self.model = model
-        self.optimizer = optimizer
-        self.scheduler = scheduler
 
     def add_callback(self, callback):
         cb = callback() if isinstance(callback, type) else callback
@@ -187,8 +185,6 @@ class CallbackHandler:
             result = getattr(callback, event)(
                 training_config,
                 model=self.model,
-                optimizer=self.optimizer,
-                scheduler=self.scheduler,
                 **kwargs,
             )
 
@@ -207,9 +203,11 @@ class MetricConsolePrinterCallback(TrainingCallback):
         self.logger.setLevel(logging.INFO)
 
     def on_log(self, training_config: BaseTrainerConfig, logs, **kwargs):
-        logger = kwargs.pop("logger", self.logger)
 
-        if logger is not None:
+        logger = kwargs.pop("logger", self.logger)
+        rank = kwargs.pop("rank", -1)
+
+        if logger is not None and (rank == -1 or rank == 0):
             epoch_train_loss = logs.get("train_epoch_loss", None)
             epoch_eval_loss = logs.get("eval_epoch_loss", None)
 
@@ -237,22 +235,26 @@ class ProgressBarCallback(TrainingCallback):
     def on_train_step_begin(self, training_config: BaseTrainerConfig, **kwargs):
         epoch = kwargs.pop("epoch", None)
         train_loader = kwargs.pop("train_loader", None)
+        rank = kwargs.pop("rank", -1)
         if train_loader is not None:
-            self.train_progress_bar = tqdm(
-                total=len(train_loader),
-                unit="batch",
-                desc=f"Training of epoch {epoch}/{training_config.num_epochs}",
-            )
+            if rank == 0 or rank == -1:
+                self.train_progress_bar = tqdm(
+                    total=len(train_loader),
+                    unit="batch",
+                    desc=f"Training of epoch {epoch}/{training_config.num_epochs}",
+                )
 
     def on_eval_step_begin(self, training_config: BaseTrainerConfig, **kwargs):
         epoch = kwargs.pop("epoch", None)
         eval_loader = kwargs.pop("eval_loader", None)
+        rank = kwargs.pop("rank", -1)
         if eval_loader is not None:
-            self.eval_progress_bar = tqdm(
-                total=len(eval_loader),
-                unit="batch",
-                desc=f"Eval of epoch {epoch}/{training_config.num_epochs}",
-            )
+            if rank == 0 or rank == -1:
+                self.eval_progress_bar = tqdm(
+                    total=len(eval_loader),
+                    unit="batch",
+                    desc=f"Eval of epoch {epoch}/{training_config.num_epochs}",
+                )
 
     def on_train_step_end(self, training_config: BaseTrainerConfig, **kwargs):
         if self.train_progress_bar is not None:
@@ -581,12 +583,8 @@ class CometCallback(TrainingCallback):  # pragma: no cover
             )
             experiment.log_other("Created from", "pythae")
 
-        experiment.log_parameters(
-            training_config, prefix="training_config/"
-        )
-        experiment.log_parameters(
-            model_config, prefix="model_config/"
-        )
+        experiment.log_parameters(training_config, prefix="training_config/")
+        experiment.log_parameters(model_config, prefix="model_config/")
 
     def on_train_begin(self, training_config: BaseTrainerConfig, **kwargs):
         model_config = kwargs.pop("model_config", None)

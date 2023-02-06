@@ -1,24 +1,26 @@
 import os
-import numpy as np
 from copy import deepcopy
 
 import pytest
 import torch
-from torch.optim import Adam
 
-from pythae.data.preprocessors import DataProcessor
 from pythae.customexception import BadInheritanceError
+from pythae.data.preprocessors import DataProcessor
+from pythae.models import AutoModel, FactorVAE, FactorVAEConfig
 from pythae.models.base.base_utils import ModelOutput
-from pythae.models import FactorVAE, FactorVAEConfig, AutoModel
+from pythae.pipelines import GenerationPipeline, TrainingPipeline
+from pythae.samplers import (
+    GaussianMixtureSamplerConfig,
+    IAFSamplerConfig,
+    MAFSamplerConfig,
+    NormalSamplerConfig,
+    TwoStageVAESamplerConfig,
+)
 from pythae.trainers import (
     AdversarialTrainer,
     AdversarialTrainerConfig,
     BaseTrainerConfig,
 )
-from pythae.samplers import NormalSamplerConfig, GaussianMixtureSamplerConfig, MAFSamplerConfig, TwoStageVAESamplerConfig, IAFSamplerConfig
-
-from pythae.pipelines import TrainingPipeline, GenerationPipeline
-
 from tests.data.custom_architectures import (
     Decoder_AE_Conv,
     Encoder_VAE_Conv,
@@ -79,10 +81,7 @@ class Test_Model_Building:
             factor_ae = FactorVAE(model_configs, decoder=bad_net)
 
     def test_raises_no_input_dim(
-        self,
-        model_configs_no_input_dim,
-        custom_encoder,
-        custom_decoder
+        self, model_configs_no_input_dim, custom_encoder, custom_decoder
     ):
         with pytest.raises(AttributeError):
             factor_ae = FactorVAE(model_configs_no_input_dim)
@@ -94,14 +93,10 @@ class Test_Model_Building:
             factor_ae = FactorVAE(model_configs_no_input_dim, decoder=custom_decoder)
 
         factor_ae = FactorVAE(
-            model_configs_no_input_dim,
-            encoder=custom_encoder,
-            decoder=custom_decoder
+            model_configs_no_input_dim, encoder=custom_encoder, decoder=custom_decoder
         )
 
-    def test_build_custom_arch(
-        self, model_configs, custom_encoder, custom_decoder
-    ):
+    def test_build_custom_arch(self, model_configs, custom_encoder, custom_decoder):
 
         factor_ae = FactorVAE(
             model_configs, encoder=custom_encoder, decoder=custom_decoder
@@ -115,6 +110,7 @@ class Test_Model_Building:
 
         assert factor_ae.model_config.uses_default_discriminator
 
+
 class Test_Model_Saving:
     def test_default_model_saving(self, tmpdir, model_configs):
 
@@ -127,7 +123,9 @@ class Test_Model_Saving:
 
         model.save(dir_path=dir_path)
 
-        assert set(os.listdir(dir_path)) == set(["model_config.json", "model.pt", "environment.json"])
+        assert set(os.listdir(dir_path)) == set(
+            ["model_config.json", "model.pt", "environment.json"]
+        )
 
         # reload model
         model_rec = AutoModel.load_from_folder(dir_path)
@@ -198,23 +196,14 @@ class Test_Model_Saving:
             ]
         )
 
-
     def test_full_custom_model_saving(
-        self,
-        tmpdir,
-        model_configs,
-        custom_encoder,
-        custom_decoder
+        self, tmpdir, model_configs, custom_encoder, custom_decoder
     ):
 
         tmpdir.mkdir("dummy_folder")
         dir_path = dir_path = os.path.join(tmpdir, "dummy_folder")
 
-        model = FactorVAE(
-            model_configs,
-            encoder=custom_encoder,
-            decoder=custom_decoder
-        )
+        model = FactorVAE(model_configs, encoder=custom_encoder, decoder=custom_decoder)
 
         model.state_dict()["encoder.layers.0.0.weight"][0] = 0
 
@@ -226,7 +215,7 @@ class Test_Model_Saving:
                 "model.pt",
                 "encoder.pkl",
                 "decoder.pkl",
-                "environment.json"
+                "environment.json",
             ]
         )
 
@@ -244,21 +233,13 @@ class Test_Model_Saving:
         )
 
     def test_raises_missing_files(
-        self,
-        tmpdir,
-        model_configs,
-        custom_encoder,
-        custom_decoder
+        self, tmpdir, model_configs, custom_encoder, custom_decoder
     ):
 
         tmpdir.mkdir("dummy_folder")
         dir_path = dir_path = os.path.join(tmpdir, "dummy_folder")
 
-        model = FactorVAE(
-            model_configs,
-            encoder=custom_encoder,
-            decoder=custom_decoder
-        )
+        model = FactorVAE(model_configs, encoder=custom_encoder, decoder=custom_decoder)
 
         model.state_dict()["encoder.layers.0.0.weight"][0] = 0
 
@@ -309,40 +290,49 @@ class Test_Model_forward:
         # factor_ae = FactorVAE(model_configs)
 
         with pytest.raises(ArithmeticError):
-            factor_ae({'data': demo_data['data'][0]})
+            factor_ae({"data": demo_data["data"][0]})
 
         factor_ae.train()
-       
+
         out = factor_ae(demo_data)
 
         assert isinstance(out, ModelOutput)
 
-        assert set(
-            [
-                "loss",
-                "recon_loss",
-                "autoencoder_loss",
-                "discriminator_loss",
-                "recon_x",
-                "z",
-                "z_bis_permuted"
-            ]
-        ) == set(out.keys())
+        assert (
+            set(
+                [
+                    "loss",
+                    "recon_loss",
+                    "autoencoder_loss",
+                    "discriminator_loss",
+                    "recon_x",
+                    "z",
+                    "z_bis_permuted",
+                ]
+            )
+            == set(out.keys())
+        )
 
-        assert out.z.shape[0] == int(demo_data["data"].shape[0] / 2) + 1 * (demo_data["data"].shape[0] % 2 != 0)
+        assert out.z.shape[0] == int(demo_data["data"].shape[0] / 2) + 1 * (
+            demo_data["data"].shape[0] % 2 != 0
+        )
         assert out.z_bis_permuted.shape[0] == int(demo_data["data"].shape[0] / 2)
-        assert out.recon_x.shape == (int(demo_data["data"].shape[0] / 2) + 1 * (demo_data["data"].shape[0] % 2 != 0),) + (demo_data["data"].shape[1:])
-        
+        assert out.recon_x.shape == (
+            int(demo_data["data"].shape[0] / 2)
+            + 1 * (demo_data["data"].shape[0] % 2 != 0),
+        ) + (demo_data["data"].shape[1:])
+
         assert not torch.equal(out.z, out.z_bis_permuted)
+
 
 class Test_Model_interpolate:
     @pytest.fixture(
         params=[
             torch.randn(3, 2, 3, 1),
             torch.randn(3, 2, 2),
-            torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))[
-            :
-        ]['data']
+            torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))[:][
+                "data"
+            ],
         ]
     )
     def demo_data(self, request):
@@ -357,23 +347,30 @@ class Test_Model_interpolate:
         model_configs.input_dim = tuple(demo_data[0].shape)
         return FactorVAE(model_configs)
 
-
     def test_interpolate(self, ae, demo_data, granularity):
         with pytest.raises(AssertionError):
             ae.interpolate(demo_data, demo_data[1:], granularity)
 
         interp = ae.interpolate(demo_data, demo_data, granularity)
 
-        assert tuple(interp.shape) == (demo_data.shape[0], granularity,) + (demo_data.shape[1:])
+        assert (
+            tuple(interp.shape)
+            == (
+                demo_data.shape[0],
+                granularity,
+            )
+            + (demo_data.shape[1:])
+        )
+
 
 class Test_Model_reconstruct:
     @pytest.fixture(
         params=[
             torch.randn(3, 2, 3, 1),
             torch.randn(3, 2, 2),
-            torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))[
-            :
-        ]['data']
+            torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))[:][
+                "data"
+            ],
         ]
     )
     def demo_data(self, request):
@@ -384,9 +381,8 @@ class Test_Model_reconstruct:
         model_configs.input_dim = tuple(demo_data[0].shape)
         return FactorVAE(model_configs)
 
-
     def test_reconstruct(self, ae, demo_data):
-      
+
         recon = ae.reconstruct(demo_data)
         assert tuple(recon.shape) == demo_data.shape
 
@@ -424,7 +420,7 @@ class Test_FactorVAE_Training:
         data = torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))[
             :
         ]
-        return DataProcessor().to_dataset(data['data'])
+        return DataProcessor().to_dataset(data["data"])
 
     @pytest.fixture(
         params=[
@@ -446,13 +442,7 @@ class Test_FactorVAE_Training:
             torch.rand(1),
         ]
     )
-    def factor_ae(
-        self,
-        model_configs,
-        custom_encoder,
-        custom_decoder,
-        request
-    ):
+    def factor_ae(self, model_configs, custom_encoder, custom_decoder, request):
         # randomized
 
         alpha = request.param
@@ -475,53 +465,32 @@ class Test_FactorVAE_Training:
             )
 
         elif 0.625 <= alpha < 0:
-            model = FactorVAE(
-                model_configs,
-                encoder=custom_encoder
-            )
+            model = FactorVAE(model_configs, encoder=custom_encoder)
 
         elif 0.750 <= alpha < 0.875:
-            model = FactorVAE(
-                model_configs,
-                decoder=custom_decoder
-            )
+            model = FactorVAE(model_configs, decoder=custom_decoder)
 
         else:
             model = FactorVAE(
-                model_configs,
-                encoder=custom_encoder,
-                decoder=custom_decoder
+                model_configs, encoder=custom_encoder, decoder=custom_decoder
             )
 
         return model
 
-    @pytest.fixture(params=[Adam])
-    def optimizers(self, request, factor_ae, training_configs):
-        if request.param is not None:
-            encoder_optimizer = request.param(
-                factor_ae.encoder.parameters(), lr=training_configs.learning_rate
-            )
-            decoder_optimizer = request.param(
-                factor_ae.discriminator.parameters(),
-                lr=training_configs.learning_rate,
-            )
-
-        else:
-            encoder_optimizer = None
-            decoder_optimizer = None
-
-        return (encoder_optimizer, decoder_optimizer)
-
-    def test_factor_ae_train_step(
-        self, factor_ae, train_dataset, training_configs, optimizers
-    ):
+    @pytest.fixture
+    def trainer(self, factor_ae, train_dataset, training_configs):
         trainer = AdversarialTrainer(
             model=factor_ae,
             train_dataset=train_dataset,
+            eval_dataset=train_dataset,
             training_config=training_configs,
-            autoencoder_optimizer=optimizers[0],
-            discriminator_optimizer=optimizers[1],
         )
+
+        trainer.prepare_training()
+
+        return trainer
+
+    def test_factor_ae_train_step(self, trainer):
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -537,17 +506,7 @@ class Test_FactorVAE_Training:
             ]
         )
 
-    def test_factor_ae_eval_step(
-        self, factor_ae, train_dataset, training_configs, optimizers
-    ):
-        trainer = AdversarialTrainer(
-            model=factor_ae,
-            train_dataset=train_dataset,
-            eval_dataset=train_dataset,
-            training_config=training_configs,
-            autoencoder_optimizer=optimizers[0],
-            discriminator_optimizer=optimizers[1],
-        )
+    def test_factor_ae_eval_step(self, trainer):
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -563,17 +522,7 @@ class Test_FactorVAE_Training:
             ]
         )
 
-    def test_factor_ae_predict_step(
-        self, factor_ae, train_dataset, training_configs, optimizers
-    ):
-        trainer = AdversarialTrainer(
-            model=factor_ae,
-            train_dataset=train_dataset,
-            eval_dataset=train_dataset,
-            training_config=training_configs,
-            autoencoder_optimizer=optimizers[0],
-            discriminator_optimizer=optimizers[1],
-        )
+    def test_factor_ae_predict_step(self, trainer, train_dataset):
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -589,22 +538,15 @@ class Test_FactorVAE_Training:
             ]
         )
 
-        assert torch.equal(inputs.cpu(), train_dataset.data.cpu())
-        assert recon.shape == (int(inputs.shape[0] / 2) + 1 * (inputs.shape[0] % 2 != 0),) + (inputs.shape[1:])
-        assert generated.shape == (int(inputs.shape[0] / 2) + 1 * (inputs.shape[0] % 2 != 0),) + (inputs.shape[1:])
+        assert inputs.cpu() in train_dataset.data
+        assert recon.shape == (
+            int(inputs.shape[0] / 2) + 1 * (inputs.shape[0] % 2 != 0),
+        ) + (inputs.shape[1:])
+        assert generated.shape == (
+            int(inputs.shape[0] / 2) + 1 * (inputs.shape[0] % 2 != 0),
+        ) + (inputs.shape[1:])
 
-    def test_factor_ae_main_train_loop(
-        self, tmpdir, factor_ae, train_dataset, training_configs, optimizers
-    ):
-
-        trainer = AdversarialTrainer(
-            model=factor_ae,
-            train_dataset=train_dataset,
-            eval_dataset=train_dataset,
-            training_config=training_configs,
-            autoencoder_optimizer=optimizers[0],
-            discriminator_optimizer=optimizers[1],
-        )
+    def test_factor_ae_main_train_loop(self, trainer):
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -620,19 +562,9 @@ class Test_FactorVAE_Training:
             ]
         )
 
-    def test_checkpoint_saving(
-        self, tmpdir, factor_ae, train_dataset, training_configs, optimizers
-    ):
+    def test_checkpoint_saving(self, factor_ae, trainer, training_configs):
 
         dir_path = training_configs.output_dir
-
-        trainer = AdversarialTrainer(
-            model=factor_ae,
-            train_dataset=train_dataset,
-            training_config=training_configs,
-            autoencoder_optimizer=optimizers[0],
-            discriminator_optimizer=optimizers[1],
-        )
 
         # Make a training step
         step_1_loss = trainer.train_step(epoch=1)
@@ -753,20 +685,12 @@ class Test_FactorVAE_Training:
         )
 
     def test_checkpoint_saving_during_training(
-        self, tmpdir, factor_ae, train_dataset, training_configs, optimizers
+        self, factor_ae, trainer, training_configs
     ):
         #
         target_saving_epoch = training_configs.steps_saving
 
         dir_path = training_configs.output_dir
-
-        trainer = AdversarialTrainer(
-            model=factor_ae,
-            train_dataset=train_dataset,
-            training_config=training_configs,
-            autoencoder_optimizer=optimizers[0],
-            discriminator_optimizer=optimizers[1],
-        )
 
         model = deepcopy(trainer.model)
 
@@ -820,19 +744,9 @@ class Test_FactorVAE_Training:
             ]
         )
 
-    def test_final_model_saving(
-        self, tmpdir, factor_ae, train_dataset, training_configs, optimizers
-    ):
+    def test_final_model_saving(self, factor_ae, trainer, training_configs):
 
         dir_path = training_configs.output_dir
-
-        trainer = AdversarialTrainer(
-            model=factor_ae,
-            train_dataset=train_dataset,
-            training_config=training_configs,
-            autoencoder_optimizer=optimizers[0],
-            discriminator_optimizer=optimizers[1],
-        )
 
         trainer.train()
 
@@ -883,7 +797,7 @@ class Test_FactorVAE_Training:
         assert type(model_rec.discriminator.cpu()) == type(model.discriminator.cpu())
 
     def test_factor_ae_training_pipeline(
-        self, tmpdir, factor_ae, train_dataset, training_configs
+        self, factor_ae, train_dataset, training_configs
     ):
 
         with pytest.raises(AssertionError):
@@ -948,10 +862,13 @@ class Test_FactorVAE_Training:
         assert type(model_rec.decoder.cpu()) == type(model.decoder.cpu())
         assert type(model_rec.discriminator.cpu()) == type(model.discriminator.cpu())
 
+
 class Test_FactorVAE_Generation:
     @pytest.fixture
     def train_data(self):
-        return torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample")).data
+        return torch.load(
+            os.path.join(PATH, "data/mnist_clean_train_dataset_sample")
+        ).data
 
     @pytest.fixture()
     def ae_model(self):
@@ -963,7 +880,7 @@ class Test_FactorVAE_Generation:
             GaussianMixtureSamplerConfig(),
             MAFSamplerConfig(),
             IAFSamplerConfig(),
-            TwoStageVAESamplerConfig()
+            TwoStageVAESamplerConfig(),
         ]
     )
     def sampler_configs(self, request):
@@ -978,7 +895,7 @@ class Test_FactorVAE_Generation:
             return_gen=True,
             train_data=train_data,
             eval_data=train_data,
-            training_config=BaseTrainerConfig(num_epochs=1)
+            training_config=BaseTrainerConfig(num_epochs=1),
         )
 
         assert gen_data.shape[0] == 11

@@ -1,30 +1,30 @@
 import os
-import numpy as np
 from copy import deepcopy
 
+import numpy as np
 import pytest
 import torch
-from torch.optim import Adam
 
 from pythae.customexception import BadInheritanceError
-from pythae.models.base.base_utils import ModelOutput
 from pythae.models import Adversarial_AE, Adversarial_AE_Config, AutoModel
+from pythae.models.base.base_utils import ModelOutput
+from pythae.pipelines import GenerationPipeline, TrainingPipeline
+from pythae.samplers import (
+    GaussianMixtureSamplerConfig,
+    IAFSamplerConfig,
+    MAFSamplerConfig,
+    NormalSamplerConfig,
+    TwoStageVAESamplerConfig,
+)
 from pythae.trainers import (
     AdversarialTrainer,
     AdversarialTrainerConfig,
     BaseTrainerConfig,
 )
-from pythae.samplers import NormalSamplerConfig, GaussianMixtureSamplerConfig, MAFSamplerConfig, TwoStageVAESamplerConfig, IAFSamplerConfig
-from pythae.pipelines import TrainingPipeline, GenerationPipeline
-from pythae.models.nn.default_architectures import (
-    Decoder_AE_MLP,
-    Encoder_VAE_MLP,
-    Discriminator_MLP,
-)
 from tests.data.custom_architectures import (
     Decoder_AE_Conv,
-    Encoder_VAE_Conv,
     Discriminator_MLP_Custom,
+    Encoder_VAE_Conv,
     NetBadInheritance,
 )
 
@@ -178,7 +178,9 @@ class Test_Model_Saving:
 
         model.save(dir_path=dir_path)
 
-        assert set(os.listdir(dir_path)) == set(["model_config.json", "model.pt", "environment.json"])
+        assert set(os.listdir(dir_path)) == set(
+            ["model_config.json", "model.pt", "environment.json"]
+        )
 
         # reload model
         model_rec = AutoModel.load_from_folder(dir_path)
@@ -309,7 +311,7 @@ class Test_Model_Saving:
                 "encoder.pkl",
                 "decoder.pkl",
                 "discriminator.pkl",
-                "environment.json"
+                "environment.json",
             ]
         )
 
@@ -405,28 +407,32 @@ class Test_Model_forward:
 
         assert isinstance(out, ModelOutput)
 
-        assert set(
-            [
-                "loss",
-                "recon_loss",
-                "autoencoder_loss",
-                "discriminator_loss",
-                "recon_x",
-                "z",
-            ]
-        ) == set(out.keys())
+        assert (
+            set(
+                [
+                    "loss",
+                    "recon_loss",
+                    "autoencoder_loss",
+                    "discriminator_loss",
+                    "recon_x",
+                    "z",
+                ]
+            )
+            == set(out.keys())
+        )
 
         assert out.z.shape[0] == demo_data["data"].shape[0]
         assert out.recon_x.shape == demo_data["data"].shape
+
 
 class Test_Model_interpolate:
     @pytest.fixture(
         params=[
             torch.randn(3, 2, 3, 1),
             torch.randn(3, 2, 2),
-            torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))[
-            :
-        ]['data']
+            torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))[:][
+                "data"
+            ],
         ]
     )
     def demo_data(self, request):
@@ -441,23 +447,30 @@ class Test_Model_interpolate:
         model_configs.input_dim = tuple(demo_data[0].shape)
         return Adversarial_AE(model_configs)
 
-
     def test_interpolate(self, adversarial_ae, demo_data, granularity):
         with pytest.raises(AssertionError):
             adversarial_ae.interpolate(demo_data, demo_data[1:], granularity)
 
         interp = adversarial_ae.interpolate(demo_data, demo_data, granularity)
 
-        assert tuple(interp.shape) == (demo_data.shape[0], granularity,) + (demo_data.shape[1:])
+        assert (
+            tuple(interp.shape)
+            == (
+                demo_data.shape[0],
+                granularity,
+            )
+            + (demo_data.shape[1:])
+        )
+
 
 class Test_Model_reconstruct:
     @pytest.fixture(
         params=[
             torch.randn(3, 2, 3, 1),
             torch.randn(3, 2, 2),
-            torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))[
-            :
-        ]['data']
+            torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))[:][
+                "data"
+            ],
         ]
     )
     def demo_data(self, request):
@@ -468,9 +481,8 @@ class Test_Model_reconstruct:
         model_configs.input_dim = tuple(demo_data[0].shape)
         return Adversarial_AE(model_configs)
 
-
     def test_reconstruct(self, adversarial_ae, demo_data):
-      
+
         recon = adversarial_ae.reconstruct(demo_data)
         assert tuple(recon.shape) == demo_data.shape
 
@@ -554,33 +566,20 @@ class Test_Adversarial_AE_Training:
 
         return model
 
-    @pytest.fixture(params=[Adam])
-    def optimizers(self, request, adversarial_ae, training_configs):
-        if request.param is not None:
-            encoder_optimizer = request.param(
-                adversarial_ae.encoder.parameters(), lr=training_configs.learning_rate
-            )
-            decoder_optimizer = request.param(
-                adversarial_ae.discriminator.parameters(),
-                lr=training_configs.learning_rate,
-            )
-
-        else:
-            encoder_optimizer = None
-            decoder_optimizer = None
-
-        return (encoder_optimizer, decoder_optimizer)
-
-    def test_adversarial_ae_train_step(
-        self, adversarial_ae, train_dataset, training_configs, optimizers
-    ):
+    @pytest.fixture
+    def trainer(self, adversarial_ae, train_dataset, training_configs):
         trainer = AdversarialTrainer(
             model=adversarial_ae,
             train_dataset=train_dataset,
+            eval_dataset=train_dataset,
             training_config=training_configs,
-            autoencoder_optimizer=optimizers[0],
-            discriminator_optimizer=optimizers[1],
         )
+
+        trainer.prepare_training()
+
+        return trainer
+
+    def test_adversarial_ae_train_step(self, trainer):
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -596,17 +595,7 @@ class Test_Adversarial_AE_Training:
             ]
         )
 
-    def test_adversarial_ae_eval_step(
-        self, adversarial_ae, train_dataset, training_configs, optimizers
-    ):
-        trainer = AdversarialTrainer(
-            model=adversarial_ae,
-            train_dataset=train_dataset,
-            eval_dataset=train_dataset,
-            training_config=training_configs,
-            autoencoder_optimizer=optimizers[0],
-            discriminator_optimizer=optimizers[1],
-        )
+    def test_adversarial_ae_eval_step(self, trainer):
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -622,17 +611,7 @@ class Test_Adversarial_AE_Training:
             ]
         )
 
-    def test_adversarial_ae_predict_step(
-        self, adversarial_ae, train_dataset, training_configs, optimizers
-    ):
-        trainer = AdversarialTrainer(
-            model=adversarial_ae,
-            train_dataset=train_dataset,
-            eval_dataset=train_dataset,
-            training_config=training_configs,
-            autoencoder_optimizer=optimizers[0],
-            discriminator_optimizer=optimizers[1],
-        )
+    def test_adversarial_ae_predict_step(self, trainer, train_dataset):
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -648,22 +627,11 @@ class Test_Adversarial_AE_Training:
             ]
         )
 
-        assert torch.equal(inputs.cpu(), train_dataset.data.cpu())
+        assert inputs.cpu() in train_dataset.data
         assert recon.shape == inputs.shape
-        assert generated.shape == inputs.shape 
+        assert generated.shape == inputs.shape
 
-    def test_adversarial_ae_main_train_loop(
-        self, tmpdir, adversarial_ae, train_dataset, training_configs, optimizers
-    ):
-
-        trainer = AdversarialTrainer(
-            model=adversarial_ae,
-            train_dataset=train_dataset,
-            eval_dataset=train_dataset,
-            training_config=training_configs,
-            autoencoder_optimizer=optimizers[0],
-            discriminator_optimizer=optimizers[1],
-        )
+    def test_adversarial_ae_main_train_loop(self, trainer):
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -679,19 +647,9 @@ class Test_Adversarial_AE_Training:
             ]
         )
 
-    def test_checkpoint_saving(
-        self, tmpdir, adversarial_ae, train_dataset, training_configs, optimizers
-    ):
+    def test_checkpoint_saving(self, adversarial_ae, trainer, training_configs):
 
         dir_path = training_configs.output_dir
-
-        trainer = AdversarialTrainer(
-            model=adversarial_ae,
-            train_dataset=train_dataset,
-            training_config=training_configs,
-            autoencoder_optimizer=optimizers[0],
-            discriminator_optimizer=optimizers[1],
-        )
 
         # Make a training step
         step_1_loss = trainer.train_step(epoch=1)
@@ -819,20 +777,12 @@ class Test_Adversarial_AE_Training:
         )
 
     def test_checkpoint_saving_during_training(
-        self, tmpdir, adversarial_ae, train_dataset, training_configs, optimizers
+        self, adversarial_ae, trainer, training_configs
     ):
         #
         target_saving_epoch = training_configs.steps_saving
 
         dir_path = training_configs.output_dir
-
-        trainer = AdversarialTrainer(
-            model=adversarial_ae,
-            train_dataset=train_dataset,
-            training_config=training_configs,
-            autoencoder_optimizer=optimizers[0],
-            discriminator_optimizer=optimizers[1],
-        )
 
         model = deepcopy(trainer.model)
 
@@ -893,19 +843,9 @@ class Test_Adversarial_AE_Training:
             ]
         )
 
-    def test_final_model_saving(
-        self, tmpdir, adversarial_ae, train_dataset, training_configs, optimizers
-    ):
+    def test_final_model_saving(self, adversarial_ae, trainer, training_configs):
 
         dir_path = training_configs.output_dir
-
-        trainer = AdversarialTrainer(
-            model=adversarial_ae,
-            train_dataset=train_dataset,
-            training_config=training_configs,
-            autoencoder_optimizer=optimizers[0],
-            discriminator_optimizer=optimizers[1],
-        )
 
         trainer.train()
 
@@ -963,7 +903,7 @@ class Test_Adversarial_AE_Training:
         assert type(model_rec.discriminator.cpu()) == type(model.discriminator.cpu())
 
     def test_adversarial_ae_training_pipeline(
-        self, tmpdir, adversarial_ae, train_dataset, training_configs
+        self, adversarial_ae, train_dataset, training_configs
     ):
 
         with pytest.raises(AssertionError):
@@ -1037,14 +977,19 @@ class Test_Adversarial_AE_Training:
         assert type(model_rec.decoder.cpu()) == type(model.decoder.cpu())
         assert type(model_rec.discriminator.cpu()) == type(model.discriminator.cpu())
 
+
 class Test_Adversarial_AE_Generation:
     @pytest.fixture
     def train_data(self):
-        return torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample")).data
+        return torch.load(
+            os.path.join(PATH, "data/mnist_clean_train_dataset_sample")
+        ).data
 
     @pytest.fixture()
     def ae_model(self):
-        return Adversarial_AE(Adversarial_AE_Config(input_dim=(1, 28, 28), latent_dim=7))
+        return Adversarial_AE(
+            Adversarial_AE_Config(input_dim=(1, 28, 28), latent_dim=7)
+        )
 
     @pytest.fixture(
         params=[
@@ -1052,7 +997,7 @@ class Test_Adversarial_AE_Generation:
             GaussianMixtureSamplerConfig(),
             MAFSamplerConfig(),
             IAFSamplerConfig(),
-            TwoStageVAESamplerConfig()
+            TwoStageVAESamplerConfig(),
         ]
     )
     def sampler_configs(self, request):
@@ -1067,7 +1012,7 @@ class Test_Adversarial_AE_Generation:
             return_gen=True,
             train_data=train_data,
             eval_data=train_data,
-            training_config=BaseTrainerConfig(num_epochs=1)
+            training_config=BaseTrainerConfig(num_epochs=1),
         )
 
         assert gen_data.shape[0] == 11

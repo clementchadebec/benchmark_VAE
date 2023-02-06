@@ -1,5 +1,0 @@
-{
-    "name": "VAEConfig",
-    "latent_dim": 40,
-    "reconstruction_loss": "bce"
-}

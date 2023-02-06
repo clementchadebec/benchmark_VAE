@@ -1,23 +1,17 @@
-import argparse
 import logging
 import os
 from typing import List
 
 import numpy as np
 import torch
-
-from pythae.data.preprocessors import DataProcessor
-from pythae.models import AutoModel
-from pythae.models import PIWAE, PIWAEConfig
-from pythae.trainers import CoupledOptimizerTrainerConfig, CoupledOptimizerTrainer
-from pythae.data.datasets import DatasetOutput
+import torch.nn as nn
 from torch.utils.data import Dataset
 
-
-from pythae.models.nn import BaseEncoder, BaseDecoder
-import torch.nn as nn
+from pythae.data.datasets import DatasetOutput
+from pythae.models import PIWAE, AutoModel, PIWAEConfig
 from pythae.models.base.base_utils import ModelOutput
-
+from pythae.models.nn import BaseDecoder, BaseEncoder
+from pythae.trainers import CoupledOptimizerTrainer, CoupledOptimizerTrainerConfig
 
 logger = logging.getLogger(__name__)
 console = logging.StreamHandler()
@@ -26,29 +20,14 @@ logger.setLevel(logging.INFO)
 
 PATH = os.path.dirname(os.path.abspath(__file__))
 
-ap = argparse.ArgumentParser()
+device = "cuda" if torch.cuda.is_available() else "cpu"
 
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
-
-ap.add_argument(
-    "--model_config",
-    help="path to model config file (expected json file)",
-    default=None,
-)
-ap.add_argument(
-    "--training_config",
-    help="path to training config_file (expected json file)",
-    default=os.path.join(PATH, "configs/base_training_config.json"),
-)
-
-args = ap.parse_args()
 
 def unif_init(m, n_in, n_out):
-    scale = np.sqrt(6./(n_in+n_out))
-    m.weight.data.uniform_(
-            -scale, scale
-        )
+    scale = np.sqrt(6.0 / (n_in + n_out))
+    m.weight.data.uniform_(-scale, scale)
     m.bias.data = torch.zeros((1, n_out))
+
 
 ### Define paper encoder network
 class Encoder(BaseEncoder):
@@ -56,7 +35,6 @@ class Encoder(BaseEncoder):
         BaseEncoder.__init__(self)
         self.input_dim = args.input_dim
         self.latent_dim = args.latent_dim
-
 
         self.fc1 = nn.Linear(np.prod(args.input_dim), 200)
         self.fc2 = nn.Linear(200, 200)
@@ -78,6 +56,7 @@ class Encoder(BaseEncoder):
 
         return output
 
+
 class DynBinarizedMNIST(Dataset):
     def __init__(self, data):
         self.data = data.type(torch.float)
@@ -89,6 +68,7 @@ class DynBinarizedMNIST(Dataset):
         x = self.data[index]
         x = (x > torch.distributions.Uniform(0, 1).sample(x.shape)).float()
         return DatasetOutput(data=x)
+
 
 ### Define paper decoder network
 class Decoder(BaseDecoder):
@@ -119,38 +99,30 @@ class Decoder(BaseDecoder):
         return output
 
 
+def main():
 
-def main(args):
-
-    
-    
     ### Load data
     train_data = torch.tensor(
-        np.load(os.path.join(PATH, f"data/mnist", "train_data.npz"))[
-            "data"
-        ]
-        / 255.0
+        np.load(os.path.join(PATH, f"data/mnist", "train_data.npz"))["data"] / 255.0
     )
     eval_data = torch.tensor(
-        np.load(os.path.join(PATH, f"data/mnist", "eval_data.npz"))["data"]
-        / 255.0
+        np.load(os.path.join(PATH, f"data/mnist", "eval_data.npz"))["data"] / 255.0
     )
 
     train_data = torch.cat((train_data, eval_data))
 
     test_data = (
-        np.load(os.path.join(PATH, f"data/mnist", "test_data.npz"))["data"]
-        / 255.0
+        np.load(os.path.join(PATH, f"data/mnist", "test_data.npz"))["data"] / 255.0
     )
     data_input_dim = tuple(train_data.shape[1:])
 
-    if args.model_config is not None:
-        model_config = PIWAEConfig.from_json_file(args.model_config)
-
-    else:
-        model_config = PIWAEConfig()
-
-    model_config.input_dim = data_input_dim
+    model_config = PIWAEConfig(
+        input_dim=data_input_dim,
+        latent_dim=50,
+        reconstruction_loss="bce",
+        number_samples=8,
+        number_gradient_estimates=8,
+    )
 
     model = PIWAE(
         model_config=model_config,
@@ -159,22 +131,35 @@ def main(args):
     )
 
     ### Set training config
-    training_config = CoupledOptimizerTrainerConfig.from_json_file(args.training_config)
+    training_config = CoupledOptimizerTrainerConfig(
+        output_dir="reproducibility/mnist",
+        per_device_train_batch_size=20,
+        per_device_eval_batch_size=20,
+        num_epochs=3280,
+        learning_rate=1e-3,
+        steps_saving=1000,
+        steps_predict=None,
+        no_cuda=False,
+        encoder_optimizer_cls="Adam",
+        encoder_optimizer_params={"eps": 1e-4},
+        decoder_optimizer_cls="Adam",
+        decoder_optimizer_params={"eps": 1e-4},
+        encoder_scheduler_cls="MultiStepLR",
+        encoder_scheduler_params={
+            "milestones": [2, 5, 14, 28, 41, 122, 365, 1094],
+            "gamma": 10 ** (-1 / 7),
+            "verbose": True,
+        },
+        decoder_scheduler_cls="MultiStepLR",
+        decoder_scheduler_params={
+            "milestones": [2, 5, 14, 28, 41, 122, 365, 1094],
+            "gamma": 10 ** (-1 / 7),
+            "verbose": True,
+        },
+    )
 
     logger.info("Preprocessing train data...")
     train_dataset = DynBinarizedMNIST(train_data)
-
-    ### Optimizers
-    enc_optimizer = torch.optim.Adam(model.encoder.parameters(), lr=training_config.learning_rate, eps=1e-4)
-    dec_optimizer = torch.optim.Adam(model.decoder.parameters(), lr=training_config.learning_rate, eps=1e-4)
-
-    ### Schedulers
-    enc_scheduler = torch.optim.lr_scheduler.MultiStepLR(
-        enc_optimizer, milestones=[2, 5, 14, 28, 41, 122, 365, 1094], gamma=10**(-1/7), verbose=True
-    )
-    dec_scheduler = torch.optim.lr_scheduler.MultiStepLR(
-        dec_optimizer, milestones=[2, 5, 14, 28, 41, 122, 365, 1094], gamma=10**(-1/7), verbose=True
-    )
 
     seed = 123
     torch.manual_seed(seed)
@@ -183,22 +168,31 @@ def main(args):
     trainer = CoupledOptimizerTrainer(
         model=model,
         train_dataset=train_dataset,
-        eval_dataset=None,#eval_dataset,
+        eval_dataset=None,  # eval_dataset,
         training_config=training_config,
-        encoder_optimizer=enc_optimizer,
-        decoder_optimizer=dec_optimizer,
-        encoder_scheduler=enc_scheduler,
-        decoder_scheduler=dec_scheduler,
         callbacks=None,
     )
 
     trainer.train()
 
     ### Reload model
-    trained_model = AutoModel.load_from_folder(os.path.join(training_config.output_dir, f'{trainer.model.model_name}_training_{trainer._training_signature}', 'final_model')).to(device).eval()
+    trained_model = (
+        AutoModel.load_from_folder(
+            os.path.join(
+                training_config.output_dir,
+                f"{trainer.model.model_name}_training_{trainer._training_signature}",
+                "final_model",
+            )
+        )
+        .to(device)
+        .eval()
+    )
 
     test_data = torch.tensor(test_data).to(device).type(torch.float)
-    test_data = (test_data > torch.distributions.Uniform(0, 1).sample(test_data.shape).to(test_data.device)).float()
+    test_data = (
+        test_data
+        > torch.distributions.Uniform(0, 1).sample(test_data.shape).to(test_data.device)
+    ).float()
 
     ### Compute NLL
     with torch.no_grad():
@@ -207,14 +201,11 @@ def main(args):
             nll_i = trained_model.get_nll(test_data, n_samples=5000, batch_size=5000)
             logger.info(f"Round {i+1} nll: {nll_i}")
             nll.append(nll_i)
-    
-    logger.info(
-        f'\nmean_nll: {np.mean(nll)}'
-    )
-    logger.info(
-        f'\std_nll: {np.std(nll)}'
-    )
+
+    logger.info(f"\nmean_nll: {np.mean(nll)}")
+    logger.info(f"\std_nll: {np.std(nll)}")
+
 
 if __name__ == "__main__":
 
-    main(args)
+    main()

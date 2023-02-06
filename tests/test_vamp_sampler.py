@@ -5,8 +5,13 @@ import pytest
 import torch
 
 from pythae.models import VAMP, VAMPConfig
-from pythae.samplers import NormalSampler, NormalSamplerConfig, VAMPSampler, VAMPSamplerConfig
 from pythae.pipelines import GenerationPipeline
+from pythae.samplers import (
+    NormalSampler,
+    NormalSamplerConfig,
+    VAMPSampler,
+    VAMPSamplerConfig,
+)
 
 PATH = os.path.dirname(os.path.abspath(__file__))
 
@@ -25,6 +30,7 @@ def dummy_data():
 )
 def model(request):
     return request.param
+
 
 @pytest.fixture(
     params=[
@@ -142,16 +148,19 @@ class Test_VAMPSampler_Sampling:
         assert isinstance(pipe.sampler, NormalSampler)
         assert pipe.sampler.sampler_config == NormalSamplerConfig()
 
-        gen_data = pipe(num_samples=num_samples,
+        gen_data = pipe(
+            num_samples=num_samples,
             batch_size=batch_size,
             output_dir=dir_path,
             return_gen=True,
             save_sampler_config=True,
             train_data=dummy_data,
-            eval_data=None
+            eval_data=None,
         )
 
-        assert tuple(gen_data.shape) == (num_samples,) + tuple(model.model_config.input_dim)
+        assert tuple(gen_data.shape) == (num_samples,) + tuple(
+            model.model_config.input_dim
+        )
         assert len(os.listdir(dir_path)) == num_samples + 1
         assert "sampler_config.json" in os.listdir(dir_path)
 
@@ -166,13 +175,14 @@ class Test_VAMPSampler_Sampling:
             assert isinstance(pipe.sampler, VAMPSampler)
             assert pipe.sampler.sampler_config == sampler_config
 
-        gen_data = pipe(num_samples=num_samples,
+        gen_data = pipe(
+            num_samples=num_samples,
             batch_size=batch_size,
             output_dir=dir_path,
             return_gen=False,
             save_sampler_config=False,
             train_data=dummy_data,
-            eval_data=dummy_data
+            eval_data=dummy_data,
         )
 
         assert gen_data is None

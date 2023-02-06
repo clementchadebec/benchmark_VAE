@@ -1,19 +1,16 @@
-import argparse
 import logging
 import os
 from typing import List
 
 import numpy as np
 import torch
+import torch.nn as nn
 
 from pythae.data.preprocessors import DataProcessor
 from pythae.models import BetaTCVAE, BetaTCVAEConfig
-from pythae.trainers import BaseTrainer, BaseTrainerConfig
-
-from pythae.models.nn import BaseEncoder, BaseDecoder
-import torch.nn as nn
 from pythae.models.base.base_utils import ModelOutput
-
+from pythae.models.nn import BaseDecoder, BaseEncoder
+from pythae.trainers import BaseTrainer, BaseTrainerConfig
 
 logger = logging.getLogger(__name__)
 console = logging.StreamHandler()
@@ -21,23 +18,6 @@ logger.addHandler(console)
 logger.setLevel(logging.INFO)
 
 PATH = os.path.dirname(os.path.abspath(__file__))
-
-ap = argparse.ArgumentParser()
-
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
-
-ap.add_argument(
-    "--model_config",
-    help="path to model config file (expected json file)",
-    default=None,
-)
-ap.add_argument(
-    "--training_config",
-    help="path to training config_file (expected json file)",
-    default=os.path.join(PATH, "configs/base_training_config.json"),
-)
-
-args = ap.parse_args()
 
 ### Define paper encoder network
 class Encoder(BaseEncoder):
@@ -53,7 +33,7 @@ class Encoder(BaseEncoder):
                 nn.Linear(np.prod(args.input_dim), 1200),
                 nn.ReLU(inplace=True),
                 nn.Linear(1200, 1200),
-                nn.ReLU(inplace=True)
+                nn.ReLU(inplace=True),
             )
         )
 
@@ -62,7 +42,6 @@ class Encoder(BaseEncoder):
 
         self.layers = layers
         self.depth = len(layers)
-
 
     def forward(self, x, output_layer_levels: List[int] = None):
         output = ModelOutput()
@@ -74,9 +53,7 @@ class Encoder(BaseEncoder):
             assert all(
                 self.depth >= levels > 0 or levels == -1
                 for levels in output_layer_levels
-            ), (
-                f"Cannot output layer deeper than depth ({self.depth}). Got ({output_layer_levels})."
-            )
+            ), f"Cannot output layer deeper than depth ({self.depth}). Got ({output_layer_levels})."
 
             if -1 in output_layer_levels:
                 max_depth = self.depth
@@ -97,6 +74,7 @@ class Encoder(BaseEncoder):
 
         return output
 
+
 ### Define paper decoder network
 class Decoder(BaseDecoder):
     def __init__(self, args: dict):
@@ -115,7 +93,7 @@ class Decoder(BaseDecoder):
             nn.Linear(1200, 1200),
             nn.Tanh(),
             nn.Linear(1200, np.prod(args.input_dim)),
-            nn.Sigmoid()
+            nn.Sigmoid(),
         )
 
         self.layers = layers
@@ -156,22 +134,27 @@ class Decoder(BaseDecoder):
         return output
 
 
+def main():
 
-def main(args):
+    data = np.load(
+        os.path.join(
+            PATH, f"data/dsprites", "dsprites_ndarray_co1sh3sc6or40x32y32_64x64.npz"
+        ),
+        encoding="latin1",
+    )
+    train_data = torch.from_numpy(data["imgs"]).float()
 
-    data = np.load(os.path.join(PATH, f"data/dsprites", "dsprites_ndarray_co1sh3sc6or40x32y32_64x64.npz"), encoding='latin1')
-    train_data = torch.from_numpy(data['imgs']).float()
-        
     data_input_dim = tuple(train_data.shape[1:])
 
-    ### Build the model
-    if args.model_config is not None:
-        model_config = BetaTCVAEConfig.from_json_file(args.model_config)
-
-    else:
-        model_config = BetaTCVAEConfig()
-
-    model_config.input_dim = data_input_dim
+    model_config = BetaTCVAEConfig(
+        input_dim=data_input_dim,
+        latent_dim=10,
+        reconstruction_loss="bce",
+        beta=6,
+        gamma=1,
+        alpha=1,
+        use_mss=False,
+    )
 
     model = BetaTCVAE(
         model_config=model_config,
@@ -180,21 +163,24 @@ def main(args):
     )
 
     ### Set the training config
-    training_config = BaseTrainerConfig.from_json_file(args.training_config)
+    training_config = BaseTrainerConfig(
+        output_dir="reproducibility/dsprites",
+        per_device_train_batch_size=1000,
+        per_device_eval_batch_size=1000,
+        num_epochs=50,
+        learning_rate=1e-3,
+        steps_saving=None,
+        steps_predict=None,
+        no_cuda=False,
+        optimizer_cls="Adam",
+        optimizer_params={"eps": 1e-4},
+    )
 
     ### Process data
     data_processor = DataProcessor()
     logger.info("Preprocessing train data...")
     train_data = data_processor.process_data(train_data)
     train_dataset = data_processor.to_dataset(train_data)
-
-    ### Optimizer
-    optimizer = torch.optim.Adam(model.parameters(), lr=training_config.learning_rate, eps=1e-4)
-
-    ### Scheduler
-    scheduler = torch.optim.lr_scheduler.MultiStepLR(
-        optimizer, milestones=[1000], gamma=10**(-1/7), verbose=True
-    )
 
     seed = 123
     torch.manual_seed(seed)
@@ -205,15 +191,12 @@ def main(args):
         model=model,
         train_dataset=train_dataset,
         training_config=training_config,
-        optimizer=optimizer,
-        scheduler=scheduler,
         callbacks=None,
     )
 
-    print(trainer.scheduler)
-
     trainer.train()
-    
+
+
 if __name__ == "__main__":
 
-    main(args)
+    main()

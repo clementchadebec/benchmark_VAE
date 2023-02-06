@@ -3,14 +3,19 @@ from copy import deepcopy
 
 import pytest
 import torch
-from torch.optim import Adam
 
 from pythae.customexception import BadInheritanceError
+from pythae.models import MSSSIM_VAE, AutoModel, MSSSIM_VAEConfig
 from pythae.models.base.base_utils import ModelOutput
-from pythae.models import MSSSIM_VAE, MSSSIM_VAEConfig, AutoModel
-from pythae.samplers import NormalSamplerConfig, GaussianMixtureSamplerConfig, MAFSamplerConfig, TwoStageVAESamplerConfig, IAFSamplerConfig
+from pythae.pipelines import GenerationPipeline, TrainingPipeline
+from pythae.samplers import (
+    GaussianMixtureSamplerConfig,
+    IAFSamplerConfig,
+    MAFSamplerConfig,
+    NormalSamplerConfig,
+    TwoStageVAESamplerConfig,
+)
 from pythae.trainers import BaseTrainer, BaseTrainerConfig
-from pythae.pipelines import TrainingPipeline, GenerationPipeline
 from tests.data.custom_architectures import (
     Decoder_AE_Conv,
     Encoder_VAE_Conv,
@@ -122,7 +127,9 @@ class Test_Model_Saving:
 
         model.save(dir_path=dir_path)
 
-        assert set(os.listdir(dir_path)) == set(["model_config.json", "model.pt", "environment.json"])
+        assert set(os.listdir(dir_path)) == set(
+            ["model_config.json", "model.pt", "environment.json"]
+        )
 
         # reload model
         model_rec = AutoModel.load_from_folder(dir_path)
@@ -214,7 +221,7 @@ class Test_Model_Saving:
                 "model.pt",
                 "encoder.pkl",
                 "decoder.pkl",
-                "environment.json"
+                "environment.json",
             ]
         )
 
@@ -299,12 +306,13 @@ class Test_Model_forward:
         assert out.z.shape[0] == demo_data["data"].shape[0]
         assert out.recon_x.shape == demo_data["data"].shape
 
+
 class Test_Model_interpolate:
     @pytest.fixture(
         params=[
-            torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))[
-            :
-        ]['data']
+            torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))[:][
+                "data"
+            ]
         ]
     )
     def demo_data(self, request):
@@ -319,21 +327,28 @@ class Test_Model_interpolate:
         model_configs.input_dim = tuple(demo_data[0].shape)
         return MSSSIM_VAE(model_configs)
 
-
     def test_interpolate(self, ae, demo_data, granularity):
         with pytest.raises(AssertionError):
             ae.interpolate(demo_data, demo_data[1:], granularity)
 
         interp = ae.interpolate(demo_data, demo_data, granularity)
 
-        assert tuple(interp.shape) == (demo_data.shape[0], granularity,) + (demo_data.shape[1:])
+        assert (
+            tuple(interp.shape)
+            == (
+                demo_data.shape[0],
+                granularity,
+            )
+            + (demo_data.shape[1:])
+        )
+
 
 class Test_Model_reconstruct:
     @pytest.fixture(
         params=[
-            torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))[
-            :
-        ]['data']
+            torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))[:][
+                "data"
+            ]
         ]
     )
     def demo_data(self, request):
@@ -344,11 +359,11 @@ class Test_Model_reconstruct:
         model_configs.input_dim = tuple(demo_data[0].shape)
         return MSSSIM_VAE(model_configs)
 
-
     def test_reconstruct(self, ae, demo_data):
-      
+
         recon = ae.reconstruct(demo_data)
         assert tuple(recon.shape) == demo_data.shape
+
 
 class Test_NLL_Compute:
     @pytest.fixture
@@ -421,27 +436,20 @@ class Test_MSSSIM_VAE_Training:
 
         return model
 
-    @pytest.fixture(params=[Adam])
-    def optimizers(self, request, msssim_vae, training_configs):
-        if request.param is not None:
-            optimizer = request.param(
-                msssim_vae.parameters(), lr=training_configs.learning_rate
-            )
-
-        else:
-            optimizer = None
-
-        return optimizer
-
-    def test_msssim_vae_train_step(
-        self, msssim_vae, train_dataset, training_configs, optimizers
-    ):
+    @pytest.fixture
+    def trainer(self, msssim_vae, train_dataset, training_configs):
         trainer = BaseTrainer(
             model=msssim_vae,
             train_dataset=train_dataset,
+            eval_dataset=train_dataset,
             training_config=training_configs,
-            optimizer=optimizers,
         )
+
+        trainer.prepare_training()
+
+        return trainer
+
+    def test_msssim_vae_train_step(self, trainer):
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -457,16 +465,7 @@ class Test_MSSSIM_VAE_Training:
             ]
         )
 
-    def test_msssim_vae_eval_step(
-        self, msssim_vae, train_dataset, training_configs, optimizers
-    ):
-        trainer = BaseTrainer(
-            model=msssim_vae,
-            train_dataset=train_dataset,
-            eval_dataset=train_dataset,
-            training_config=training_configs,
-            optimizer=optimizers,
-        )
+    def test_msssim_vae_eval_step(self, trainer):
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -482,16 +481,7 @@ class Test_MSSSIM_VAE_Training:
             ]
         )
 
-    def test_msssim_vae_predict_step(
-        self, msssim_vae, train_dataset, training_configs, optimizers
-    ):
-        trainer = BaseTrainer(
-            model=msssim_vae,
-            train_dataset=train_dataset,
-            eval_dataset=train_dataset,
-            training_config=training_configs,
-            optimizer=optimizers,
-        )
+    def test_msssim_vae_predict_step(self, trainer, train_dataset):
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -507,21 +497,11 @@ class Test_MSSSIM_VAE_Training:
             ]
         )
 
-        assert torch.equal(inputs.cpu(), train_dataset.data.cpu())
+        assert inputs.cpu() in train_dataset.data
         assert recon.shape == inputs.shape
-        assert generated.shape == inputs.shape 
+        assert generated.shape == inputs.shape
 
-    def test_msssim_vae_main_train_loop(
-        self, tmpdir, msssim_vae, train_dataset, training_configs, optimizers
-    ):
-
-        trainer = BaseTrainer(
-            model=msssim_vae,
-            train_dataset=train_dataset,
-            eval_dataset=train_dataset,
-            training_config=training_configs,
-            optimizer=optimizers,
-        )
+    def test_msssim_vae_main_train_loop(self, trainer):
 
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
@@ -537,18 +517,9 @@ class Test_MSSSIM_VAE_Training:
             ]
         )
 
-    def test_checkpoint_saving(
-        self, tmpdir, msssim_vae, train_dataset, training_configs, optimizers
-    ):
+    def test_checkpoint_saving(self, msssim_vae, trainer, training_configs):
 
         dir_path = training_configs.output_dir
-
-        trainer = BaseTrainer(
-            model=msssim_vae,
-            train_dataset=train_dataset,
-            training_config=training_configs,
-            optimizer=optimizers,
-        )
 
         # Make a training step
         step_1_loss = trainer.train_step(epoch=1)
@@ -632,19 +603,12 @@ class Test_MSSSIM_VAE_Training:
         )
 
     def test_checkpoint_saving_during_training(
-        self, tmpdir, msssim_vae, train_dataset, training_configs, optimizers
+        self, msssim_vae, trainer, training_configs
     ):
         #
         target_saving_epoch = training_configs.steps_saving
 
         dir_path = training_configs.output_dir
-
-        trainer = BaseTrainer(
-            model=msssim_vae,
-            train_dataset=train_dataset,
-            training_config=training_configs,
-            optimizer=optimizers,
-        )
 
         model = deepcopy(trainer.model)
 
@@ -693,18 +657,9 @@ class Test_MSSSIM_VAE_Training:
             ]
         )
 
-    def test_final_model_saving(
-        self, tmpdir, msssim_vae, train_dataset, training_configs, optimizers
-    ):
+    def test_final_model_saving(self, msssim_vae, trainer, training_configs):
 
         dir_path = training_configs.output_dir
-
-        trainer = BaseTrainer(
-            model=msssim_vae,
-            train_dataset=train_dataset,
-            training_config=training_configs,
-            optimizer=optimizers,
-        )
 
         trainer.train()
 
@@ -754,7 +709,7 @@ class Test_MSSSIM_VAE_Training:
         assert type(model_rec.decoder.cpu()) == type(model.decoder.cpu())
 
     def test_msssim_vae_training_pipeline(
-        self, tmpdir, msssim_vae, train_dataset, training_configs
+        self, msssim_vae, train_dataset, training_configs
     ):
 
         dir_path = training_configs.output_dir
@@ -815,10 +770,13 @@ class Test_MSSSIM_VAE_Training:
         assert type(model_rec.encoder.cpu()) == type(model.encoder.cpu())
         assert type(model_rec.decoder.cpu()) == type(model.decoder.cpu())
 
+
 class Test_MSSSIM_VAE_Generation:
     @pytest.fixture
     def train_data(self):
-        return torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample")).data
+        return torch.load(
+            os.path.join(PATH, "data/mnist_clean_train_dataset_sample")
+        ).data
 
     @pytest.fixture()
     def ae_model(self):
@@ -830,7 +788,7 @@ class Test_MSSSIM_VAE_Generation:
             GaussianMixtureSamplerConfig(),
             MAFSamplerConfig(),
             IAFSamplerConfig(),
-            TwoStageVAESamplerConfig()
+            TwoStageVAESamplerConfig(),
         ]
     )
     def sampler_configs(self, request):
@@ -845,7 +803,7 @@ class Test_MSSSIM_VAE_Generation:
             return_gen=True,
             train_data=train_data,
             eval_data=train_data,
-            training_config=BaseTrainerConfig(num_epochs=1)
+            training_config=BaseTrainerConfig(num_epochs=1),
         )
 
         assert gen_data.shape[0] == 11

@@ -41,11 +41,11 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
     "sphinx.ext.autosectionlabel",
-    "sphinxcontrib.bibtex"
+    "sphinxcontrib.bibtex",
 ]
 
 
-suppress_warnings = ['autosectionlabel.*']
+suppress_warnings = ["autosectionlabel.*"]
 
 bibtex_bibfiles = ["references.bib"]
 

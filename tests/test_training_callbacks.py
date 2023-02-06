@@ -1,20 +1,21 @@
+import os
+from collections import Counter
+
 import pytest
 import torch
-import os
 
-from pythae.trainers.training_callbacks import *
-from collections import Counter
-from pythae.trainers import *
 from pythae.models import (
     AE,
-    AEConfig,
     RAE_L2,
-    RAE_L2_Config,
+    VAEGAN,
     Adversarial_AE,
     Adversarial_AE_Config,
-    VAEGAN,
+    AEConfig,
+    RAE_L2_Config,
     VAEGANConfig,
 )
+from pythae.trainers import *
+from pythae.trainers.training_callbacks import *
 
 PATH = os.path.dirname(os.path.abspath(__file__))
 
@@ -110,9 +111,7 @@ def init_callback():
 
 @pytest.fixture()
 def dummy_handler(init_callback):
-    return CallbackHandler(
-        callbacks=[init_callback], model=None, optimizer=None, scheduler=None
-    )
+    return CallbackHandler(callbacks=[init_callback], model=None)
 
 
 @pytest.fixture(params=[MetricConsolePrinterCallback(), CustomCallback()])
@@ -150,6 +149,8 @@ class Test_TrainerCallbacks:
 
         trainer = BaseTrainer(model=ae, train_dataset=train_dataset)
 
+        trainer.prepare_training()
+
         assert callbacks not in trainer.callback_handler.callbacks
 
         assert ProgressBarCallback().__class__ in [
@@ -159,6 +160,8 @@ class Test_TrainerCallbacks:
         trainer = BaseTrainer(
             model=ae, callbacks=[callbacks], train_dataset=train_dataset
         )
+
+        trainer.prepare_training()
 
         assert callbacks in trainer.callback_handler.callbacks
 
@@ -234,6 +237,8 @@ class Test_TrainersCalls:
             training_config=configs_and_models[1],
             callbacks=[dummy_callback],
         )
+
+        trainer.prepare_training()
 
         assert "on_train_step_begin" not in dummy_callback.step_list
         assert "on_train_step_end" not in dummy_callback.step_list
