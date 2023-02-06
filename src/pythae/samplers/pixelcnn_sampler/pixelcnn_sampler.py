@@ -188,7 +188,7 @@ class PixelCNNSampler(BaseSampler):
                     probs = F.softmax(out[:, :, k, l], dim=-1)
                     z[:, :, k, l] = torch.multinomial(probs, 1).float()
 
-            z_quant = self.model.quantizer.embeddings(z.reshape(z.shape[0], -1).long())
+            z_quant = self.model.quantizer(z.reshape(z.shape[0], -1).long()).quantized_vector
 
             if self.needs_reshape:
                 z_quant = z_quant.reshape(z.shape[0], -1)
@@ -217,7 +217,7 @@ class PixelCNNSampler(BaseSampler):
                     probs = F.softmax(out[:, :, k, l], dim=-1)
                     z[:, :, k, l] = torch.multinomial(probs, 1).float()
 
-            z_quant = self.model.quantizer.embeddings(z.reshape(z.shape[0], -1).long())
+            z_quant = self.model.quantizer(z.reshape(z.shape[0], -1).long()).quantized_vector
 
             if self.needs_reshape:
                 z_quant = z_quant.reshape(z_quant.shape[0], -1)
