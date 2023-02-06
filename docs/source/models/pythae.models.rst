@@ -110,8 +110,10 @@ instance.
     ... )
 
 
-Distributed Training
-~~~~~~~~~~~~~~~~~~~~~
+.. _Distributed Training:
+
+Distributed Training with Pythae
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 As of v0.1.0, Pythae now supports distributed training using PyTorch's  `DDP <https://pytorch.org/docs/stable/notes/ddp.html>`_. It allows you to train your favorite VAE faster and on larger dataset using multi-node and/or multi-gpu training.
 
 To do so, you can built a python script that will then be launched by a launcher (such as `srun` on a cluster). The only thing that is needed in the script is to specify some elements relative to the environment (such as the number of nodes/gpus) directly in the training configuration as follows
@@ -125,7 +127,7 @@ To do so, you can built a python script that will then be launched by a launcher
     ...     per_device_eval_batch_size=64,
     ...     dist_backend="nccl", # distributed backend
     ...     world_size=8 # number of gpus to use (n_nodes x n_gpus_per_node),
-    ...     rank=0 # process/gpu id,
+    ...     rank=5 # process/gpu id,
     ...     local_rank=1 # node id,
     ...     master_addr="localhost" # master address,
     ...     master_port="1
@@ -134,23 +136,33 @@ To do so, you can built a python script that will then be launched by a launcher
 See this `example script <https://github.com/clementchadebec/benchmark_VAE/tree/main/examples/scripts/distributed_training.py>`_ that defines a multi-gpu VQVAE training. Be carefull, the way the environnement (`world_size`, `rank` ...) may be specific to the cluster and launcher you use. 
 
 Benchmark
------------
+############
 
-Below are indicated the training times acheived on GPU V100 16GB for models trained for 100 epochs with `Pythae` on MNIST and ImageNet-1k. 
+Below are indicated the training times for a Vector Quantized VAE (VQ-VAE) with `Pythae` for 100 epochs 
+on MNIST on V100 16GB GPU(s), for 50 epochs on `FFHQ <https://github.com/NVlabs/ffhq-dataset>`_ (1024x1024 images) 
+and for 20 epochs on `ImageNet-1k <https://huggingface.co/datasets/imagenet-1k>`_ on V100 32GB GPU(s).
 
-.. list-table:: Title
-   :widths: 25 25 25 25
+.. list-table:: Training times of a VQ-VAE with Pythae
+   :widths: 25 25 25 25 25
    :header-rows: 1
 
-   * - Exec. time
+   * - Dataset
+     - Data type (train size)
      - 1 GPU
      - 4 GPUs
      - 2x4 GPUs
    * - MNIST
-     - 229.66 s
-     - 92.36 s
-     - 83.26 s
+     - 28x28 images (50k)
+     - 221.01s
+     - 60.32s
+     - 34.50s
+   * - FFHQ
+     - 1024x1024 RGB images (60k)
+     - 19h 1min
+     - 5h 6min
+     - 2h 37min
    * - ImageNet-1k
+     - 128x128 RGB images (~ 1.2M)
      - 
-     - 
-     -
+     - 1h 41min
+     - 51min 26s

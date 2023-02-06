@@ -27,7 +27,6 @@ PATH = os.path.dirname(os.path.abspath(__file__))
 ap = argparse.ArgumentParser()
 
 # Training setting
-ap.add_argument("--grad_accumulation", type=int, default=1)
 ap.add_argument(
     "--use_wandb",
     help="whether to log the metrics in wandb",
@@ -36,12 +35,12 @@ ap.add_argument(
 ap.add_argument(
     "--wandb_project",
     help="wandb project name",
-    default="test-distributed",
+    default="imagenet-distributed",
 )
 ap.add_argument(
     "--wandb_entity",
     help="wandb entity name",
-    default="clementchadebec",
+    default="pythae",
 )
 
 args = ap.parse_args()
@@ -151,7 +150,7 @@ def main(args):
         num_epochs=20,
         train_dataloader_num_workers=8,
         eval_dataloader_num_workers=8,
-        output_dir="my_models_on_ffhq",
+        output_dir="my_models_on_imagenet",
         per_device_train_batch_size=128,
         per_device_eval_batch_size=128,
         learning_rate=1e-4,
@@ -165,10 +164,6 @@ def main(args):
         master_addr=hostlist.expand_hostlist(os.environ["SLURM_JOB_NODELIST"])[0],
         master_port=str(12345 + int(min(gpu_ids))),
     )
-
-    training_config.grad_accumulation = args.grad_accumulation
-
-    logger.info(f"grad accumulation: {training_config.grad_accumulation}")
 
     if int(os.environ["SLURM_PROCID"]) == 0:
         logger.info(model)

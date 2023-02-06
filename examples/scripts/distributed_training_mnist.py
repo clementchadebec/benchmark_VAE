@@ -34,7 +34,7 @@ ap.add_argument(
 ap.add_argument(
     "--wandb_project",
     help="wandb project name",
-    default="test-distributed",
+    default="mnist-distributed",
 )
 ap.add_argument(
     "--wandb_entity",
@@ -97,8 +97,6 @@ def main(args):
         master_addr=hostlist.expand_hostlist(os.environ["SLURM_JOB_NODELIST"])[0],
         master_port=str(12345 + int(min(gpu_ids))),
     )
-
-    training_config.grad_accumulation = 8
 
     if int(os.environ["SLURM_PROCID"]) == 0:
         logger.info(model)

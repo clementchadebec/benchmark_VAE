@@ -346,9 +346,9 @@ You can also find predefined neural network architectures for the most common da
 Replace *mnist* by cifar or celeba to access to other neural nets.
 
 ## Distributed Training with `Pythae`
-As of v0.1.0, Pythae now supports distributed training using PyTorch's [DDP](https://pytorch.org/docs/stable/notes/ddp.html). It allows you to train your favorite VAE faster and on larger dataset using multi-node and/or multi-gpu training.
+As of `v0.1.0`, Pythae now supports distributed training using PyTorch's [DDP](https://pytorch.org/docs/stable/notes/ddp.html). It allows you to train your favorite VAE faster and on larger dataset using multi-gpu and/or multi-node training.
 
-To do so, you can built a python script that will then be launched by a launcher (such as `srun` on a cluster). The only thing that is needed in the script is to specify some elements relative to the environment (such as the number of nodes/gpus) directly in the training configuration as follows
+To do so, you can build a python script that will then be launched by a launcher (such as `srun` on a cluster). The only thing that is needed in the script is to specify some elements relative to the distributed environment (such as the number of nodes/gpus) directly in the training configuration as follows
 
 ```python
 >>> training_config = BaseTrainerConfig(
@@ -356,6 +356,8 @@ To do so, you can built a python script that will then be launched by a launcher
 ...     learning_rate=1e-3,
 ...     per_device_train_batch_size=64,
 ...     per_device_eval_batch_size=64,
+...     train_dataloader_num_workers=8,
+...     eval_dataloader_num_workers=8,
 ...     dist_backend="nccl", # distributed backend
 ...     world_size=8 # number of gpus to use (n_nodes x n_gpus_per_node),
 ...     rank=5 # process/gpu id,
@@ -365,7 +367,7 @@ To do so, you can built a python script that will then be launched by a launcher
 ... )
 ```
 
-See this [example script](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/scripts/distributed_training.py) that defines a multi-gpu VQVAE training. Be carefull, the way the distributed environnement variables (`world_size`, `rank` ...) are recovered may be specific to the cluster and launcher you use. 
+See this [example script](https://github.com/clementchadebec/benchmark_VAE/blob/main/examples/scripts/distributed_training_imagenet.py) that defines a multi-gpu VQVAE training on ImageNet dataset. Please note that the way the distributed environnement variables (`world_size`, `rank` ...) are recovered may be specific to the cluster and launcher you use. 
 
 ### Benchmark
 

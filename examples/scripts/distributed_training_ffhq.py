@@ -27,7 +27,6 @@ PATH = os.path.dirname(os.path.abspath(__file__))
 ap = argparse.ArgumentParser()
 
 # Training setting
-ap.add_argument("--grad_accumulation", type=int, default=1)
 ap.add_argument(
     "--use_wandb",
     help="whether to log the metrics in wandb",
@@ -36,12 +35,12 @@ ap.add_argument(
 ap.add_argument(
     "--wandb_project",
     help="wandb project name",
-    default="test-distributed",
+    default="ffhq-distributed",
 )
 ap.add_argument(
     "--wandb_entity",
     help="wandb entity name",
-    default="clementchadebec",
+    default="pythae",
 )
 
 args = ap.parse_args()
@@ -171,10 +170,6 @@ def main(args):
         master_addr=hostlist.expand_hostlist(os.environ["SLURM_JOB_NODELIST"])[0],
         master_port=str(12345 + int(min(gpu_ids))),
     )
-
-    training_config.grad_accumulation = args.grad_accumulation
-
-    logger.info(f"grad accumulation: {training_config.grad_accumulation}")
 
     if int(os.environ["SLURM_PROCID"]) == 0:
         logger.info(model)
