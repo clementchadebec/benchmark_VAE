@@ -136,7 +136,7 @@ def main(args):
     )
 
     model_config = VQVAEConfig(
-        input_dim=(3, 1024, 1024), latent_dim=128, use_ema=True, num_embeddings=1024
+        input_dim=(3, 128, 128), latent_dim=128, use_ema=True, num_embeddings=1024
     )
 
     encoder = Encoder_ResNet_VQVAE_ImageNet(model_config)
