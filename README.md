@@ -377,7 +377,7 @@ Below are indicated the training times for a Vector Quantized VAE (VQ-VAE) with 
 |:---:|:---:|:---:|:---:|---|
 | MNIST (VQ-VAE) | 28x28 images (50k) | 235.18 s | 62.00 s | 35.86 s |
 | FFHQ 1024x1024 (VQVAE) | 1024x1024 RGB images (60k) | 19h 1min | 5h 6min | 2h 37min |
-| ImageNet-1k 128x128 (VQVAE) | 128x128 RGB images ($\approx$ 1.2M) | 6h 25min | 1h 41min | 51min 26s |
+| ImageNet-1k 128x128 (VQVAE) | 128x128 RGB images (~ 1.2M) | 6h 25min | 1h 41min | 51min 26s |
 
 
 For each dataset, we provide the benchmarking scripts [here](https://github.com/clementchadebec/benchmark_VAE/tree/main/examples/scripts)
