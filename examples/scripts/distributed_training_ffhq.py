@@ -6,16 +6,15 @@ import time
 import hostlist
 import torch
 import torch.nn as nn
+from PIL import Image
 from torch.utils.data import Dataset
 from torchvision import transforms
-from PIL import Image
 
 from pythae.data.datasets import DatasetOutput
-
+from pythae.models import VQVAE, VQVAEConfig
 from pythae.models.base.base_utils import ModelOutput
 from pythae.models.nn.base_architectures import BaseDecoder, BaseEncoder
 from pythae.models.nn.benchmarks.utils import ResBlock
-from pythae.models import VQVAE, VQVAEConfig
 from pythae.trainers import BaseTrainer, BaseTrainerConfig
 
 logger = logging.getLogger(__name__)
@@ -28,11 +27,7 @@ PATH = os.path.dirname(os.path.abspath(__file__))
 ap = argparse.ArgumentParser()
 
 # Training setting
-ap.add_argument(
-    "--grad_accumulation",
-    type=int,
-    default=1
-)
+ap.add_argument("--grad_accumulation", type=int, default=1)
 ap.add_argument(
     "--use_wandb",
     help="whether to log the metrics in wandb",
@@ -50,6 +45,7 @@ ap.add_argument(
 )
 
 args = ap.parse_args()
+
 
 class Encoder_ResNet_VQVAE_FFHQ(BaseEncoder):
     def __init__(self, args):
@@ -75,7 +71,7 @@ class Encoder_ResNet_VQVAE_FFHQ(BaseEncoder):
     def forward(self, x: torch.Tensor):
         output = ModelOutput()
         out = x
-        out = self.layers(out)   
+        out = self.layers(out)
         output["embedding"] = self.pre_qantized(out)
 
         return output
@@ -88,22 +84,20 @@ class Decoder_ResNet_VQVAE_FFHQ(BaseDecoder):
         self.latent_dim = args.latent_dim
         self.n_channels = 3
 
-
         self.dequantize = nn.ConvTranspose2d(self.latent_dim, 256, 1, 1)
 
-        self.layers= nn.Sequential(
-                ResBlock(in_channels=256, out_channels=64),
-                ResBlock(in_channels=256, out_channels=64),
-                ResBlock(in_channels=256, out_channels=64),
-                ResBlock(in_channels=256, out_channels=64),
-                nn.ConvTranspose2d(256, 256, 4, 2, padding=1),
-                nn.ConvTranspose2d(256, 128, 4, 2, padding=1),
-                nn.ConvTranspose2d(128, 64, 4, 2, padding=1),
-                nn.ConvTranspose2d(64, 32, 4, 2, padding=1),
-                nn.ConvTranspose2d(32, self.n_channels, 4, 2, padding=1),
-                nn.Sigmoid()
-            )
-
+        self.layers = nn.Sequential(
+            ResBlock(in_channels=256, out_channels=64),
+            ResBlock(in_channels=256, out_channels=64),
+            ResBlock(in_channels=256, out_channels=64),
+            ResBlock(in_channels=256, out_channels=64),
+            nn.ConvTranspose2d(256, 256, 4, 2, padding=1),
+            nn.ConvTranspose2d(256, 128, 4, 2, padding=1),
+            nn.ConvTranspose2d(128, 64, 4, 2, padding=1),
+            nn.ConvTranspose2d(64, 32, 4, 2, padding=1),
+            nn.ConvTranspose2d(32, self.n_channels, 4, 2, padding=1),
+            nn.Sigmoid(),
+        )
 
     def forward(self, z: torch.Tensor):
         output = ModelOutput()
@@ -122,10 +116,10 @@ class FFHQ(Dataset):
         else:
             self.imgs_path = self.imgs_path[60000:]
         self.transforms = transforms
-    
+
     def __len__(self):
         return len(self.imgs_path)
-    
+
     def __getitem__(self, idx):
         img = Image.open(self.imgs_path[idx])
         if self.transforms is not None:
@@ -135,12 +129,18 @@ class FFHQ(Dataset):
 
 def main(args):
 
-    img_transforms = transforms.Compose([
-            transforms.ToTensor()
-        ])
+    img_transforms = transforms.Compose([transforms.ToTensor()])
 
-    train_dataset = FFHQ(data_dir='/gpfsscratch/rech/wlr/uhw48em/data/ffhq/images1024x1024/all_images', is_train=True, transforms=img_transforms)
-    eval_dataset = FFHQ(data_dir='/gpfsscratch/rech/wlr/uhw48em/data/ffhq/images1024x1024/all_images', is_train=False, transforms=img_transforms)
+    train_dataset = FFHQ(
+        data_dir="/gpfsscratch/rech/wlr/uhw48em/data/ffhq/images1024x1024/all_images",
+        is_train=True,
+        transforms=img_transforms,
+    )
+    eval_dataset = FFHQ(
+        data_dir="/gpfsscratch/rech/wlr/uhw48em/data/ffhq/images1024x1024/all_images",
+        is_train=False,
+        transforms=img_transforms,
+    )
 
     model_config = VQVAEConfig(
         input_dim=(3, 1024, 1024), latent_dim=128, use_ema=True, num_embeddings=1024
@@ -174,7 +174,7 @@ def main(args):
 
     training_config.grad_accumulation = args.grad_accumulation
 
-    logger.info(f'grad accumulation: {training_config.grad_accumulation}')
+    logger.info(f"grad accumulation: {training_config.grad_accumulation}")
 
     if int(os.environ["SLURM_PROCID"]) == 0:
         logger.info(model)
@@ -211,6 +211,7 @@ def main(args):
     end_time = time.time()
 
     logger.info(f"Total execution time: {(end_time - start_time)} seconds")
+
 
 if __name__ == "__main__":
 

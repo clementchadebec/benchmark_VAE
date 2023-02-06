@@ -146,11 +146,11 @@ To launch a model training, you only need to call a `TrainingPipeline` instance.
 ...	num_epochs=50,
 ...	learning_rate=1e-3,
 ...	per_device_train_batch_size=200,
-... per_device_eval_batch_size=200,
-... train_dataloader_num_workers=2,
-... eval_dataloader_num_workers=2,
+...	per_device_eval_batch_size=200,
+...	train_dataloader_num_workers=2,
+...	eval_dataloader_num_workers=2,
 ...	steps_saving=20,
-... optimizer_cls="AdamW",
+...	optimizer_cls="AdamW",
 ...	optimizer_params={"weight_decay": 0.05, "betas": (0.91, 0.995)},
 ...	scheduler_cls="ReduceLROnPlateau",
 ...	scheduler_params={"patience": 5, "factor": 0.5}
@@ -358,7 +358,7 @@ To do so, you can built a python script that will then be launched by a launcher
 ...     per_device_eval_batch_size=64,
 ...     dist_backend="nccl", # distributed backend
 ...     world_size=8 # number of gpus to use (n_nodes x n_gpus_per_node),
-...     rank=0 # process/gpu id,
+...     rank=5 # process/gpu id,
 ...     local_rank=1 # node id,
 ...     master_addr="localhost" # master address,
 ...     master_port="12345" # master port,
@@ -369,13 +369,14 @@ See this [example script](https://github.com/clementchadebec/benchmark_VAE/blob/
 
 ### Benchmark
 
-Below are indicated the training times acheived by training a VQVAE with `Pythae` on GPU(s) V100 16GBfor 100 epochs on MNIST, GPU(s) V100 32GB for 50 epochs on [FFHQ](https://github.com/NVlabs/ffhq-dataset) (1024x1024 images) and ImageNet-1k. 
+Below are indicated the training times for a Vector Quantized VAE (VQ-VAE) with `Pythae` for 100 epochs on MNIST on V100 16GB GPU(s), for 50 epochs on [FFHQ](https://github.com/NVlabs/ffhq-dataset) (1024x1024 images) and for 20 epochs on [ImageNet-1k](https://huggingface.co/datasets/imagenet-1k) on V100 32GB GPU(s).
 
-| Exec. time | 1 gpu | 4 gpus | 2x4 gpus |
-|:---:|:---:|:---:|---|
-| MNIST (VAE) | 221.01 s | 60.32 s | 34.50 s |
-| MNIST (VQ-VAE) | 235.18 s | 62.00 s | 35.86 s |
-| FFHQ 1024x1024 (VQVAE) |  | 5h 6min | 2h 37min |
+|  | Train Data | 1 GPU | 4 GPUs | 2x4 GPUs |
+|:---:|:---:|:---:|:---:|---|
+| MNIST (VQ-VAE) | 28x28 images (50k) | 235.18 s | 62.00 s | 35.86 s |
+| FFHQ 1024x1024 (VQVAE) | 1024x1024 RGB images (60k) | 19h 1min | 5h 6min | 2h 37min |
+| ImageNet-1k 128x128 (VQVAE) | 128x128 RGB images ($\approx$ 1.2M) |  | 1h 41min | 51min 26s |
+
 
 For each dataset, we provide the benchmarking scripts [here](https://github.com/clementchadebec/benchmark_VAE/tree/main/examples/scripts)
 

@@ -20,9 +20,9 @@ class CoupledOptimizerAdversarialTrainerConfig(BaseTrainerConfig):
         per_device_eval_batch_size (int): The number of evaluation samples per batch and per device.
             Default 64
         num_epochs (int): The maximal number of epochs for training. Default: 100
-        train_dataloader_num_workers (int): Number of subprocesses to use for train data loading. 
+        train_dataloader_num_workers (int): Number of subprocesses to use for train data loading.
             0 means that the data will be loaded in the main process. Default: 0
-        eval_dataloader_num_workers (int): Number of subprocesses to use for evaluation data 
+        eval_dataloader_num_workers (int): Number of subprocesses to use for evaluation data
             loading. 0 means that the data will be loaded in the main process. Default: 0
         encoder_optimizer_cls (str): The name of the `torch.optim.Optimizer` used for
             the training of the encoder. Default: :class:`~torch.optim.Adam`.

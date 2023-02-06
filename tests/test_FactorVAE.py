@@ -298,17 +298,20 @@ class Test_Model_forward:
 
         assert isinstance(out, ModelOutput)
 
-        assert set(
-            [
-                "loss",
-                "recon_loss",
-                "autoencoder_loss",
-                "discriminator_loss",
-                "recon_x",
-                "z",
-                "z_bis_permuted",
-            ]
-        ) == set(out.keys())
+        assert (
+            set(
+                [
+                    "loss",
+                    "recon_loss",
+                    "autoencoder_loss",
+                    "discriminator_loss",
+                    "recon_x",
+                    "z",
+                    "z_bis_permuted",
+                ]
+            )
+            == set(out.keys())
+        )
 
         assert out.z.shape[0] == int(demo_data["data"].shape[0] / 2) + 1 * (
             demo_data["data"].shape[0] % 2 != 0

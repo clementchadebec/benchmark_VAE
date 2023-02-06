@@ -92,16 +92,14 @@ class QuantizerEMA(nn.Module):
 
         embeddings = torch.empty(self.num_embeddings, self.embedding_dim)
 
-        embeddings.data.uniform_(
-            -1 / self.num_embeddings, 1 / self.num_embeddings
-        )
+        embeddings.data.uniform_(-1 / self.num_embeddings, 1 / self.num_embeddings)
 
         self.register_buffer("cluster_size", torch.zeros(self.num_embeddings))
-        self.register_buffer("ema_embed", torch.zeros(self.num_embeddings, self.embedding_dim))
-        self.ema_embed.data.uniform_(
-            -1 / self.num_embeddings, 1 / self.num_embeddings
+        self.register_buffer(
+            "ema_embed", torch.zeros(self.num_embeddings, self.embedding_dim)
         )
-    
+        self.ema_embed.data.uniform_(-1 / self.num_embeddings, 1 / self.num_embeddings)
+
         self.register_buffer("embeddings", embeddings)
 
     def forward(self, z: torch.Tensor, uses_ddp: bool = False):
@@ -139,7 +137,7 @@ class QuantizerEMA(nn.Module):
 
             if uses_ddp:
                 dist.all_reduce(dw)
-    
+
             ema_embed = self.ema_embed * self.decay + dw * (1 - self.decay)
 
             n = torch.sum(self.cluster_size)

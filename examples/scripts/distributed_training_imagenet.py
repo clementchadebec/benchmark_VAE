@@ -6,16 +6,15 @@ import time
 import hostlist
 import torch
 import torch.nn as nn
+from PIL import Image
 from torch.utils.data import Dataset
 from torchvision import transforms
-from PIL import Image
 
 from pythae.data.datasets import DatasetOutput
-
+from pythae.models import VQVAE, VQVAEConfig
 from pythae.models.base.base_utils import ModelOutput
 from pythae.models.nn.base_architectures import BaseDecoder, BaseEncoder
 from pythae.models.nn.benchmarks.utils import ResBlock
-from pythae.models import VQVAE, VQVAEConfig
 from pythae.trainers import BaseTrainer, BaseTrainerConfig
 
 logger = logging.getLogger(__name__)
@@ -28,11 +27,7 @@ PATH = os.path.dirname(os.path.abspath(__file__))
 ap = argparse.ArgumentParser()
 
 # Training setting
-ap.add_argument(
-    "--grad_accumulation",
-    type=int,
-    default=1
-)
+ap.add_argument("--grad_accumulation", type=int, default=1)
 ap.add_argument(
     "--use_wandb",
     help="whether to log the metrics in wandb",
@@ -75,7 +70,7 @@ class Encoder_ResNet_VQVAE_ImageNet(BaseEncoder):
     def forward(self, x: torch.Tensor):
         output = ModelOutput()
         out = x
-        out = self.layers(out)   
+        out = self.layers(out)
         output["embedding"] = self.pre_qantized(out)
 
         return output
@@ -88,21 +83,19 @@ class Decoder_ResNet_VQVAE_ImageNet(BaseDecoder):
         self.latent_dim = args.latent_dim
         self.n_channels = 3
 
-
         self.dequantize = nn.ConvTranspose2d(self.latent_dim, 128, 1, 1)
 
-        self.layers= nn.Sequential(
-                ResBlock(in_channels=128, out_channels=64),
-                ResBlock(in_channels=128, out_channels=64),
-                ResBlock(in_channels=128, out_channels=64),
-                ResBlock(in_channels=128, out_channels=64),
-                nn.ConvTranspose2d(128, 128, 4, 2, padding=1),
-                nn.ConvTranspose2d(128, 64, 4, 2, padding=1),
-                nn.ConvTranspose2d(64, 32, 4, 2, padding=1),
-                nn.ConvTranspose2d(32, self.n_channels, 4, 2, padding=1),
-                nn.Sigmoid()
-            )
-
+        self.layers = nn.Sequential(
+            ResBlock(in_channels=128, out_channels=64),
+            ResBlock(in_channels=128, out_channels=64),
+            ResBlock(in_channels=128, out_channels=64),
+            ResBlock(in_channels=128, out_channels=64),
+            nn.ConvTranspose2d(128, 128, 4, 2, padding=1),
+            nn.ConvTranspose2d(128, 64, 4, 2, padding=1),
+            nn.ConvTranspose2d(64, 32, 4, 2, padding=1),
+            nn.ConvTranspose2d(32, self.n_channels, 4, 2, padding=1),
+            nn.Sigmoid(),
+        )
 
     def forward(self, z: torch.Tensor):
         output = ModelOutput()
@@ -117,12 +110,12 @@ class ImageNet(Dataset):
     def __init__(self, data_dir=None, transforms=None):
         self.imgs_path = [os.path.join(data_dir, n) for n in os.listdir(data_dir)]
         self.transforms = transforms
-    
+
     def __len__(self):
         return len(self.imgs_path)
-    
+
     def __getitem__(self, idx):
-        img = Image.open(self.imgs_path[idx]).convert('RGB')
+        img = Image.open(self.imgs_path[idx]).convert("RGB")
         if self.transforms is not None:
             img = self.transforms(img)
         return DatasetOutput(data=img)
@@ -130,16 +123,21 @@ class ImageNet(Dataset):
 
 def main(args):
 
-    img_transforms = transforms.Compose([
-        transforms.Resize((128, 128)),
-        transforms.ToTensor()
-    ])
+    img_transforms = transforms.Compose(
+        [transforms.Resize((128, 128)), transforms.ToTensor()]
+    )
 
-    train_dataset = ImageNet(data_dir='/gpfsscratch/rech/wlr/uhw48em/data/imagenet/data/train', transforms=img_transforms)
-    eval_dataset = ImageNet(data_dir='/gpfsscratch/rech/wlr/uhw48em/data/imagenet/data/val', transforms=img_transforms)
+    train_dataset = ImageNet(
+        data_dir="/gpfsscratch/rech/wlr/uhw48em/data/imagenet/train",
+        transforms=img_transforms,
+    )
+    eval_dataset = ImageNet(
+        data_dir="/gpfsscratch/rech/wlr/uhw48em/data/imagenet/val",
+        transforms=img_transforms,
+    )
 
     model_config = VQVAEConfig(
-        input_dim=(3, 128, 128), latent_dim=128, use_ema=True, num_embeddings=1024
+        input_dim=(3, 1024, 1024), latent_dim=128, use_ema=True, num_embeddings=1024
     )
 
     encoder = Encoder_ResNet_VQVAE_ImageNet(model_config)
@@ -150,10 +148,10 @@ def main(args):
     gpu_ids = os.environ["SLURM_STEP_GPUS"].split(",")
 
     training_config = BaseTrainerConfig(
-        num_epochs=50,
+        num_epochs=20,
         train_dataloader_num_workers=8,
         eval_dataloader_num_workers=8,
-        output_dir="my_models_on_imagenet",
+        output_dir="my_models_on_ffhq",
         per_device_train_batch_size=128,
         per_device_eval_batch_size=128,
         learning_rate=1e-4,
@@ -170,7 +168,7 @@ def main(args):
 
     training_config.grad_accumulation = args.grad_accumulation
 
-    logger.info(f'grad accumulation: {training_config.grad_accumulation}')
+    logger.info(f"grad accumulation: {training_config.grad_accumulation}")
 
     if int(os.environ["SLURM_PROCID"]) == 0:
         logger.info(model)
@@ -207,9 +205,6 @@ def main(args):
     end_time = time.time()
 
     logger.info(f"Total execution time: {(end_time - start_time)} seconds")
-
-    logger('Predict')
-    trainer.predict(trainer._best_model)
 
 
 if __name__ == "__main__":

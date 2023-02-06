@@ -100,9 +100,7 @@ class BaseTrainer:
         model.device = device
 
         if self.distributed:
-            model = DDP(
-                model, device_ids=[self.local_rank]
-            )
+            model = DDP(model, device_ids=[self.local_rank])
 
         self.train_dataset = train_dataset
         self.eval_dataset = eval_dataset
@@ -343,16 +341,13 @@ class BaseTrainer:
 
         return inputs_on_device
 
-    def _optimizers_step(self, model_output=None, iteration=None):
-        loss = model_output.loss / self.training_config.grad_accumulation
+    def _optimizers_step(self, model_output=None):
 
-        if iteration % self.training_config.grad_accumulation == 0:
-            self.optimizer.zero_grad()
+        loss = model_output.loss
 
+        self.optimizer.zero_grad()
         loss.backward()
-
-        if iteration % self.training_config.grad_accumulation == 0:
-            self.optimizer.step()
+        self.optimizer.step()
 
     def _schedulers_step(self, metrics=None):
         if self.scheduler is None:
@@ -592,7 +587,7 @@ class BaseTrainer:
 
         epoch_loss = 0
 
-        for i, inputs in enumerate(self.train_loader):
+        for inputs in self.train_loader:
 
             inputs = self._set_inputs_to_device(inputs)
 
@@ -603,7 +598,7 @@ class BaseTrainer:
                 uses_ddp=self.distributed,
             )
 
-            self._optimizers_step(model_output, iteration=i+1)
+            self._optimizers_step(model_output)
 
             loss = model_output.loss
 
@@ -692,12 +687,18 @@ class BaseTrainer:
         inputs = self._set_inputs_to_device(inputs)
 
         model_out = model(inputs)
-        reconstructions = model_out.recon_x.cpu().detach()[:min(inputs['data'].shape[0], 10)]
-        z_enc = model_out.z[:min(inputs['data'].shape[0], 10)]
+        reconstructions = model_out.recon_x.cpu().detach()[
+            : min(inputs["data"].shape[0], 10)
+        ]
+        z_enc = model_out.z[: min(inputs["data"].shape[0], 10)]
         z = torch.randn_like(z_enc)
         if self.distributed:
             normal_generation = model.module.decoder(z).reconstruction.detach().cpu()
         else:
             normal_generation = model.decoder(z).reconstruction.detach().cpu()
 
-        return inputs["data"][:min(inputs['data'].shape[0], 10)], reconstructions, normal_generation
+        return (
+            inputs["data"][: min(inputs["data"].shape[0], 10)],
+            reconstructions,
+            normal_generation,
+        )
