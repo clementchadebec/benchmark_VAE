@@ -163,6 +163,6 @@ and for 20 epochs on `ImageNet-1k <https://huggingface.co/datasets/imagenet-1k>`
      - 2h 37min
    * - ImageNet-1k
      - 128x128 RGB images (~ 1.2M)
-     - 
+     - 6h 25min
      - 1h 41min
      - 51min 26s
