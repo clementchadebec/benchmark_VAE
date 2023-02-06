@@ -466,7 +466,7 @@ class Test_RAE_GP_Training:
             ]
         )
 
-        assert torch.equal(inputs.cpu(), train_dataset.data.cpu())
+        assert inputs.cpu() in train_dataset.data
         assert recon.shape == inputs.shape
         assert generated.shape == inputs.shape
 

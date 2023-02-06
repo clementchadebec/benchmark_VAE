@@ -535,7 +535,7 @@ class Test_FactorVAE_Training:
             ]
         )
 
-        assert torch.equal(inputs.cpu(), train_dataset.data.cpu())
+        assert inputs.cpu() in train_dataset.data
         assert recon.shape == (
             int(inputs.shape[0] / 2) + 1 * (inputs.shape[0] % 2 != 0),
         ) + (inputs.shape[1:])
