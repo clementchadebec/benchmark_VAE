@@ -78,16 +78,16 @@ instance.
 
     >>> # Set up the training configuration
     >>> my_training_config = BaseTrainerConfig(
-    ...	output_dir='my_model',
-    ...	num_epochs=50,
-    ...	learning_rate=1e-3,
-    ...	per_device_train_batch_size=200,
-    ... per_device_eval_batch_size=200,
-    ...	steps_saving=None,
-    ... optimizer_cls="AdamW",
-    ...	optimizer_params={"weight_decay": 0.05, "betas": (0.91, 0.995)},
-    ...	scheduler_cls="ReduceLROnPlateau",
-    ...	scheduler_params={"patience": 5, "factor": 0.5}
+    ...	    output_dir='my_model',
+    ...	    num_epochs=50,
+    ...	    learning_rate=1e-3,
+    ...	    per_device_train_batch_size=200,
+    ...     per_device_eval_batch_size=200,
+    ...	    steps_saving=None,
+    ...     optimizer_cls="AdamW",
+    ...	    optimizer_params={"weight_decay": 0.05, "betas": (0.91, 0.995)},
+    ...	    scheduler_cls="ReduceLROnPlateau",
+    ...	    scheduler_params={"patience": 5, "factor": 0.5}
     ... )
     >>> # Set up the model configuration 
     >>> my_vae_config = model_config = VAEConfig(
