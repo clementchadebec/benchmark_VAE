@@ -117,17 +117,16 @@ class BaseAE(nn.Module):
         """
         return self(DatasetOutput(data=inputs)).recon_x
 
-    def predict(self, inputs: BaseDataset, **kwargs) -> ModelOutput:
+    def predict(self, inputs: torch.Tensor) -> ModelOutput:
         """The input data is encoded and decoded without computing loss
+
         Args:
-            inputs (BaseDataset): An instance of pythae's datasets
+            inputs (torch.Tensor): The input data to be reconstructed, as well as to generate the embedding.
+
         Returns:
             ModelOutput: An instance of ModelOutput containing reconstruction and embedding
         """
-
-        x = inputs["data"]
-
-        z = self.encoder(x).embedding
+        z = self.encoder(inputs).embedding
         recon_x = self.decoder(z)["reconstruction"]
 
         output = ModelOutput(

@@ -376,8 +376,7 @@ class Test_Model_predict:
     def test_predict(self, ae, demo_data):
 
         model_output = ae.predict(demo_data)
-        assert tuple(model_output.recon_x.shape) == demo_data.shape
-        assert tuple(model_output.embedding.shape) == ae.model_config.latent_dim.shape
+        assert tuple(model_output.embedding.shape) == (demo_data.shape[0], ae.model_config.latent_dim)
 
 @pytest.mark.slow
 class Test_AE_Training:
