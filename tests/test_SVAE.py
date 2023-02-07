@@ -283,7 +283,7 @@ class Test_Model_forward:
 
         assert isinstance(out, ModelOutput)
 
-        assert set(["reconstruction_loss", "reg_loss", "loss", "recon_x", "z"]) == set(
+        assert set(["recon_loss", "reg_loss", "loss", "recon_x", "z"]) == set(
             out.keys()
         )
 

@@ -78,7 +78,7 @@ class CIWAE(VAE):
         loss, recon_loss, kld = self.loss_function(recon_x, x, mu, log_var, z)
 
         output = ModelOutput(
-            reconstruction_loss=recon_loss,
+            recon_loss=recon_loss,
             reg_loss=kld,
             loss=loss,
             recon_x=recon_x.reshape(x.shape[0], self.n_samples, -1)[:, 0, :].reshape_as(

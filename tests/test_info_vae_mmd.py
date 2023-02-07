@@ -301,7 +301,7 @@ class Test_Model_forward:
         assert isinstance(out, ModelOutput)
 
         assert set(
-            ["reconstruction_loss", "reg_loss", "loss", "mmd_loss", "recon_x", "z"]
+            ["recon_loss", "reg_loss", "loss", "mmd_loss", "recon_x", "z"]
         ) == set(out.keys())
 
         assert out.z.shape[0] == demo_data["data"].shape[0]
