@@ -77,7 +77,7 @@ class INFOVAE_MMD(VAE):
 
         output = ModelOutput(
             loss=loss,
-            reconstruction_loss=recon_loss,
+            recon_loss=recon_loss,
             reg_loss=kld_loss,
             mmd_loss=mmd_loss,
             recon_x=recon_x,

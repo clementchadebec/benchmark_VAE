@@ -115,7 +115,7 @@ class PoincareVAE(VAE):
         loss, recon_loss, kld = self.loss_function(recon_x, x, z, qz_x)
 
         output = ModelOutput(
-            reconstruction_loss=recon_loss,
+            recon_loss=recon_loss,
             reg_loss=kld,
             loss=loss,
             recon_x=recon_x,

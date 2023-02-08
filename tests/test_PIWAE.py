@@ -296,7 +296,7 @@ class Test_Model_forward:
             set(
                 [
                     "loss",
-                    "reconstruction_loss",
+                    "recon_loss",
                     "encoder_loss",
                     "decoder_loss",
                     "update_encoder",

@@ -117,6 +117,25 @@ class BaseAE(nn.Module):
         """
         return self(DatasetOutput(data=inputs)).recon_x
 
+    def predict(self, inputs: torch.Tensor) -> ModelOutput:
+        """The input data is encoded and decoded without computing loss
+
+        Args:
+            inputs (torch.Tensor): The input data to be reconstructed, as well as to generate the embedding.
+
+        Returns:
+            ModelOutput: An instance of ModelOutput containing reconstruction and embedding
+        """
+        z = self.encoder(inputs).embedding
+        recon_x = self.decoder(z)["reconstruction"]
+
+        output = ModelOutput(
+            recon_x=recon_x,
+            embedding=z,
+        )
+
+        return output
+
     def interpolate(
         self,
         starting_inputs: torch.Tensor,
