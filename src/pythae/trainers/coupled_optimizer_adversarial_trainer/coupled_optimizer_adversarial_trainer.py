@@ -391,7 +391,7 @@ class CoupledOptimizerAdversarialTrainer(BaseTrainer):
         logger.info("Training ended!")
         logger.info(f"Saved final model in {final_dir}")
 
-        return self.callback_handler.on_train_end(training_config=self.training_config)
+        self.callback_handler.on_train_end(training_config=self.training_config)
 
     def eval_step(self, epoch: int):
         """Perform an evaluation step

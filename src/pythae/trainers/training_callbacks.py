@@ -165,7 +165,7 @@ class CallbackHandler:
         self.call_event("on_train_begin", training_config, **kwargs)
 
     def on_train_end(self, training_config: BaseTrainerConfig, **kwargs):
-        return self.call_event("on_train_end", training_config, **kwargs)
+        self.call_event("on_train_end", training_config, **kwargs)
 
     def on_epoch_begin(self, training_config: BaseTrainerConfig, **kwargs):
         self.call_event("on_epoch_begin", training_config, **kwargs)
