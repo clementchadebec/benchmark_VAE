@@ -248,9 +248,6 @@ class TrainHistoryCallback(MetricConsolePrinterCallback):
             self.history["train_loss"].append(epoch_train_loss)
             self.history["eval_loss"].append(epoch_eval_loss)
 
-    def on_train_end(self, training_config: BaseTrainerConfig, **kwargs):
-        return self.history
-
 
 class ProgressBarCallback(TrainingCallback):
     """
