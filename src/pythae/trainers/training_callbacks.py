@@ -111,6 +111,9 @@ class TrainingCallback:
         Event called after logging the last logs.
         """
 
+    def __repr__(self) -> str:
+        return self.__class__.__name__
+
 
 class CallbackHandler:
     """
@@ -221,6 +224,24 @@ class MetricConsolePrinterCallback(TrainingCallback):
             logger.info(
                 "--------------------------------------------------------------------------"
             )
+
+
+class TrainHistoryCallback(MetricConsolePrinterCallback):
+    def __init__(self):
+        self.history = {"train_loss": [], "eval_loss": []}
+        super().__init__()
+
+    def on_train_begin(self, training_config: BaseTrainerConfig, **kwargs):
+        self.history = {"train_loss": [], "eval_loss": []}
+
+    def on_log(self, training_config: BaseTrainerConfig, logs, **kwargs):
+        logger = kwargs.pop("logger", self.logger)
+
+        if logger is not None:
+            epoch_train_loss = logs.get("train_epoch_loss", None)
+            epoch_eval_loss = logs.get("eval_epoch_loss", None)
+            self.history["train_loss"].append(epoch_train_loss)
+            self.history["eval_loss"].append(epoch_eval_loss)
 
 
 class ProgressBarCallback(TrainingCallback):
