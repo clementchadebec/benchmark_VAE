@@ -186,7 +186,6 @@ class CallbackHandler:
         self.call_event("on_prediction_step", training_config, **kwargs)
 
     def call_event(self, event, training_config, **kwargs):
-        results = {}
         for callback in self.callbacks:
             result = getattr(callback, event)(
                 training_config,
@@ -195,8 +194,6 @@ class CallbackHandler:
                 scheduler=self.scheduler,
                 **kwargs,
             )
-            results[str(callback)] = result
-        return results
 
 
 class MetricConsolePrinterCallback(TrainingCallback):
