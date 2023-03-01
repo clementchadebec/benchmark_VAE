@@ -378,6 +378,29 @@ class Test_Model_predict:
         model_output = ae.predict(demo_data)
         assert tuple(model_output.embedding.shape) == (demo_data.shape[0], ae.model_config.latent_dim)
 
+class Test_Model_embed:
+    @pytest.fixture(
+        params=[
+            torch.randn(3, 2, 3, 1),
+            torch.randn(3, 2, 2),
+            torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))[:][
+                "data"
+            ],
+        ]
+    )
+    def demo_data(self, request):
+        return request.param
+
+    @pytest.fixture()
+    def ae(self, model_configs, demo_data):
+        model_configs.input_dim = tuple(demo_data[0].shape)
+        return AE(model_configs)
+
+    def test_embed(self, ae, demo_data):
+
+        embedding = ae.embed(demo_data)
+        assert tuple(embedding.shape) == (demo_data.shape[0], ae.model_config.latent_dim)
+
 @pytest.mark.slow
 class Test_AE_Training:
     @pytest.fixture
