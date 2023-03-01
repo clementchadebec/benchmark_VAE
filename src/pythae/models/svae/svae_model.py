@@ -147,7 +147,8 @@ class SVAE(VAE):
 
         w = self._acc_rej_steps(m=loc.shape[-1], k=concentration)
 
-        z = torch.cat((w, (1 - w ** 2).sqrt() * v), dim=-1)
+        w_ = torch.sqrt(torch.clamp(1 - (w ** 2), 1e-10))
+        z = torch.cat((w, w_ * v), dim=-1)
 
         return self._householder_rotation(loc, z)
 
