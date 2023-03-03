@@ -306,6 +306,7 @@ class Test_Model_forward:
                     "autoencoder_loss",
                     "discriminator_loss",
                     "recon_x",
+                    "recon_x_indices",
                     "z",
                     "z_bis_permuted",
                 ]
@@ -321,6 +322,7 @@ class Test_Model_forward:
             int(demo_data["data"].shape[0] / 2)
             + 1 * (demo_data["data"].shape[0] % 2 != 0),
         ) + (demo_data["data"].shape[1:])
+        assert out.recon_x_indices.shape[0] == int(demo_data["data"].shape[0] / 2)
 
         assert not torch.equal(out.z, out.z_bis_permuted)
 
