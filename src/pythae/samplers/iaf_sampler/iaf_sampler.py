@@ -5,6 +5,7 @@ import torch
 from torch.distributions import MultivariateNormal
 from torch.utils.data import DataLoader
 
+from ...data.datasets import collate_dataset_output
 from ...data.preprocessors import DataProcessor
 from ...models import BaseAE
 from ...models.normalizing_flows import IAF, IAFConfig, NFModel
@@ -78,7 +79,12 @@ class IAFSampler(BaseSampler):
         data_processor = DataProcessor()
         train_data = data_processor.process_data(train_data).to(self.device)
         train_dataset = data_processor.to_dataset(train_data)
-        train_loader = DataLoader(dataset=train_dataset, batch_size=100, shuffle=True)
+        train_loader = DataLoader(
+            dataset=train_dataset,
+            batch_size=100,
+            shuffle=True,
+            collate_fn=collate_dataset_output,
+        )
 
         z = []
 
@@ -109,7 +115,10 @@ class IAFSampler(BaseSampler):
             eval_data = data_processor.process_data(eval_data).to(self.device)
             eval_dataset = data_processor.to_dataset(eval_data)
             eval_loader = DataLoader(
-                dataset=eval_dataset, batch_size=100, shuffle=False
+                dataset=eval_dataset,
+                batch_size=100,
+                shuffle=False,
+                collate_fn=collate_dataset_output,
             )
 
             z = []

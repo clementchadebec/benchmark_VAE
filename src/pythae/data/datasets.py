@@ -8,6 +8,7 @@ from typing import Any, Tuple
 
 import torch
 from torch.utils.data import Dataset
+from torch.utils.data._utils.collate import default_collate
 
 
 class DatasetOutput(OrderedDict):
@@ -34,6 +35,15 @@ class DatasetOutput(OrderedDict):
         Convert self to a tuple containing all the attributes/keys that are not ``None``.
         """
         return tuple(self[k] for k in self.keys())
+
+
+def collate_dataset_output(batch):
+    """Collate function that treats the `DatasetOutput` class correctly."""
+    if isinstance(batch[0], DatasetOutput):
+        # `default_collate` returns a dict for older versions of PyTorch.
+        return DatasetOutput(**default_collate(batch))
+    else:
+        return default_collate(batch)
 
 
 class BaseDataset(Dataset):

@@ -5,6 +5,7 @@ import numpy as np
 import torch
 
 from ..customexception import DatasetError
+from ..data.datasets import collate_dataset_output
 from ..data.preprocessors import BaseDataset, DataProcessor
 from ..models import BaseAE
 from ..trainers import *
@@ -140,7 +141,11 @@ class TrainingPipeline(Pipeline):
         # check everything if fine when combined with data loader
         from torch.utils.data import DataLoader
 
-        dataloader = DataLoader(dataset=dataset, batch_size=min(len(dataset), 2))
+        dataloader = DataLoader(
+            dataset=dataset,
+            batch_size=min(len(dataset), 2),
+            collate_fn=collate_dataset_output,
+        )
         loader_out = next(iter(dataloader))
         assert loader_out.data.shape[0] == min(
             len(dataset), 2
