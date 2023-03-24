@@ -14,6 +14,7 @@ from torch.utils.data.distributed import DistributedSampler
 
 from ...customexception import ModelError
 from ...data.datasets import BaseDataset
+from ...data.datasets import collate_dataset_output
 from ...models import BaseAE
 from ..trainer_utils import set_seed
 from ..training_callbacks import (
@@ -177,6 +178,7 @@ class BaseTrainer:
             num_workers=self.training_config.train_dataloader_num_workers,
             shuffle=(train_sampler is None),
             sampler=train_sampler,
+            collate_fn=collate_dataset_output,
         )
 
     def get_eval_dataloader(
@@ -194,6 +196,7 @@ class BaseTrainer:
             num_workers=self.training_config.eval_dataloader_num_workers,
             shuffle=(eval_sampler is None),
             sampler=eval_sampler,
+            collate_fn=collate_dataset_output,
         )
 
     def set_optimizer(self):
