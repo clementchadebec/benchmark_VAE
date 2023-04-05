@@ -11,7 +11,7 @@ class DisentangledBetaVAEConfig(VAEConfig):
     Parameters:
         input_dim (tuple): The input_data dimension.
         latent_dim (int): The latent space dimension. Default: None.
-        reconstruction_loss (str): The reconstruction loss to use ['bce', 'mse']. Default: 'mse'
+        reconstruction_loss (str): The reconstruction loss to use ['bce', 'l1', 'mse']. Default: 'mse'
         beta (float): The balancing factor. Default: 10.
         C (float): The value of the KL divergence term of the ELBO we wish to approach, measured in
             nats. Default: 50.

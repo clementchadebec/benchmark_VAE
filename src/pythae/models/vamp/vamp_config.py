@@ -10,7 +10,7 @@ class VAMPConfig(VAEConfig):
     Parameters:
         input_dim (tuple): The input_data dimension.
         latent_dim (int): The latent space dimension. Default: None.
-        reconstruction_loss (str): The reconstruction loss to use ['bce', 'mse']. Default: 'mse'
+        reconstruction_loss (str): The reconstruction loss to use ['bce', 'l1', 'mse']. Default: 'mse'
         number_components (int): The number of components to use in the VAMP prior. Default: 50
         linear_scheduling_steps (int): The number of warmup steps to perform using a linear
             scheduling. Default: 0

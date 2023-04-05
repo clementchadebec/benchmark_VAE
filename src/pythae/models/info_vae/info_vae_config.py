@@ -14,7 +14,7 @@ class INFOVAE_MMD_Config(VAEConfig):
     Parameters:
         input_dim (tuple): The input_data dimension.
         latent_dim (int): The latent space dimension. Default: None.
-        reconstruction_loss (str): The reconstruction loss to use ['bce', 'mse']. Default: 'mse'
+        reconstruction_loss (str): The reconstruction loss to use ['bce', 'l1', 'mse']. Default: 'mse'
         kernel_choice (str): The kernel to choose. Available options are ['rbf', 'imq'] i.e.
             radial basis functions or inverse multiquadratic kernel. Default: 'imq'.
         alpha (float): The alpha factor balancing the weigth: Default: 0.5

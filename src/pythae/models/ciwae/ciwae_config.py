@@ -10,7 +10,7 @@ class CIWAEConfig(VAEConfig):
     Parameters:
         input_dim (tuple): The input_data dimension.
         latent_dim (int): The latent space dimension. Default: None.
-        reconstruction_loss (str): The reconstruction loss to use ['bce', 'mse']. Default: 'mse'
+        reconstruction_loss (str): The reconstruction loss to use ['bce', 'l1', 'mse']. Default: 'mse'
         number_samples (int): Number of samples to use on the Monte-Carlo estimation
         beta (float): The value of the factor in the convex combination of the VAE and IWAE ELBO.
             Default: 0.5.
