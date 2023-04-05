@@ -33,6 +33,7 @@ def model_configs_no_input_dim(request):
 @pytest.fixture(
     params=[
         VAE_IAF_Config(input_dim=(1, 28, 28), latent_dim=10, reconstruction_loss="bce"),
+        VAE_IAF_Config(input_dim=(1, 28, 28), latent_dim=10, reconstruction_loss="l1"),
         VAE_IAF_Config(
             input_dim=(1, 28),
             latent_dim=5,

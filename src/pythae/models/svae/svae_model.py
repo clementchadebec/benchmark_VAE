@@ -115,6 +115,14 @@ class SVAE(VAE):
                 reduction="none",
             ).sum(dim=-1)
 
+        elif self.model_config.reconstruction_loss == "l1":
+
+            recon_loss = F.l1_loss(
+                recon_x.reshape(x.shape[0], -1),
+                x.reshape(x.shape[0], -1),
+                reduction="none",
+            ).sum(dim=-1)
+
         KLD = self._compute_kl(m=loc.shape[-1], concentration=concentration)
 
         return (recon_loss + KLD).mean(dim=0), recon_loss.mean(dim=0), KLD.mean(dim=0)
@@ -285,6 +293,18 @@ class SVAE(VAE):
                         x_rep.reshape(x_rep.shape[0], -1),
                         reduction="none",
                     ).sum(dim=-1)
+
+                elif self.model_config.reconstruction_loss == "l1":
+
+                    log_p_x_given_z = -0.5 * F.l1_loss(
+                        recon_x.reshape(x_rep.shape[0], -1),
+                        x_rep.reshape(x_rep.shape[0], -1),
+                        reduction="none",
+                    ).sum(dim=-1) - torch.tensor(
+                        [np.prod(self.input_dim) / 2 * np.log(np.pi * 2)]
+                    ).to(
+                        data.device
+                    )  # decoding distribution is assumed unit variance  N(mu, I)
 
                 log_p_x.append(
                     log_p_x_given_z + log_p_z - log_q_z_given_x

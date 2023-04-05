@@ -27,6 +27,7 @@ def model_configs_no_input_dim(request):
 @pytest.fixture(
     params=[
         VAMPConfig(input_dim=(1, 28, 28), latent_dim=10, reconstruction_loss="bce"),
+        VAMPConfig(input_dim=(1, 28, 28), latent_dim=10, reconstruction_loss="l1"),
         VAMPConfig(input_dim=(1, 2, 18), number_components=10, latent_dim=5),
     ]
 )

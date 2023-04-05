@@ -424,6 +424,20 @@ class RHVAE(VAE):
                 reduction="none",
             ).sum(dim=-1)
 
+        elif self.model_config.reconstruction_loss == "l1":
+            # sigma is taken as I_D
+            recon_loss = (
+                -0.5
+                * F.l1_loss(
+                    recon_x.reshape(x.shape[0], -1),
+                    x.reshape(x.shape[0], -1),
+                    reduction="none",
+                ).sum(dim=-1)
+            )
+            -torch.log(torch.tensor([2 * np.pi]).to(x.device)) * np.prod(
+                self.input_dim
+            ) / 2
+
         return recon_loss
 
     def _log_z(self, z):
@@ -571,6 +585,18 @@ class RHVAE(VAE):
                         x_rep.reshape(x_rep.shape[0], -1),
                         reduction="none",
                     ).sum(dim=-1)
+
+                elif self.model_config.reconstruction_loss == "l1":
+
+                    log_p_x_given_z = -0.5 * F.l1_loss(
+                        recon_x.reshape(x_rep.shape[0], -1),
+                        x_rep.reshape(x_rep.shape[0], -1),
+                        reduction="none",
+                    ).sum(dim=-1) - torch.tensor(
+                        [np.prod(self.input_dim) / 2 * np.log(np.pi * 2)]
+                    ).to(
+                        data.device
+                    )  # decoding distribution is assumed unit variance  N(mu, I)
 
                 log_p_x.append(
                     log_p_x_given_z

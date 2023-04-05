@@ -33,6 +33,7 @@ def model_configs_no_input_dim(request):
 @pytest.fixture(
     params=[
         VAEConfig(input_dim=(1, 28, 28), latent_dim=10, reconstruction_loss="bce"),
+        VAEConfig(input_dim=(1, 28, 28), latent_dim=10, reconstruction_loss="l1"),
         VAEConfig(input_dim=(1, 28), latent_dim=5),
     ]
 )

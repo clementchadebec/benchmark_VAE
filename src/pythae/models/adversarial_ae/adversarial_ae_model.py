@@ -168,6 +168,14 @@ class Adversarial_AE(VAE):
                 reduction="none",
             ).sum(dim=-1)
 
+        elif self.model_config.reconstruction_loss == "l1":
+
+            recon_loss = F.l1_loss(
+                recon_x.reshape(x.shape[0], -1),
+                x.reshape(x.shape[0], -1),
+                reduction="none",
+            ).sum(dim=-1)
+
         gen_adversarial_score = self.discriminator(z).embedding.flatten()
         prior_adversarial_score = self.discriminator(z_prior).embedding.flatten()
 

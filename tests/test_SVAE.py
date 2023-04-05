@@ -27,6 +27,7 @@ def model_configs_no_input_dim(request):
 @pytest.fixture(
     params=[
         SVAEConfig(input_dim=(1, 28, 28), latent_dim=10, reconstruction_loss="bce"),
+        SVAEConfig(input_dim=(1, 28, 28), latent_dim=10, reconstruction_loss="l1"),
         SVAEConfig(input_dim=(1, 28), latent_dim=5),
     ]
 )

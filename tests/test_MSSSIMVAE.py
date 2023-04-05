@@ -37,6 +37,9 @@ def model_configs_no_input_dim(request):
         MSSSIM_VAEConfig(
             input_dim=(1, 28, 28), latent_dim=10, reconstruction_loss="bce"
         ),
+        MSSSIM_VAEConfig(
+            input_dim=(1, 28, 28), latent_dim=10, reconstruction_loss="l1"
+        ),
         MSSSIM_VAEConfig(input_dim=(1, 28), latent_dim=5, beta=5.2),
     ]
 )
