@@ -635,11 +635,14 @@ Here, we show the generated samples using using each model implemented in the li
 If you find this work useful or use it in your research, please consider citing us
 
 ```bibtex
-@article{chadebec2022pythae,
-	title={Pythae: Unifying Generative Autoencoders in Python -- A Benchmarking Use Case},
-  	author={Chadebec, Clément and Vincent, Louis J. and Allassonnière, Stéphanie},
-  	journal={arXiv preprint arXiv:2206.08309},
-	url = {https://arxiv.org/abs/2206.08309},
-  	year = {2022}
+@inproceedings{chadebec2022pythae,
+ author = {Chadebec, Cl\'{e}ment and Vincent, Louis and Allassonniere, Stephanie},
+ booktitle = {Advances in Neural Information Processing Systems},
+ editor = {S. Koyejo and S. Mohamed and A. Agarwal and D. Belgrave and K. Cho and A. Oh},
+ pages = {21575--21589},
+ publisher = {Curran Associates, Inc.},
+ title = {Pythae: Unifying Generative Autoencoders in Python - A Benchmarking Use Case},
+ volume = {35},
+ year = {2022}
 }
 ```

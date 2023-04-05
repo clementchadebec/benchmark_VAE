@@ -124,8 +124,9 @@ class FactorVAE(VAE):
             autoencoder_loss=autoencoder_loss,
             discriminator_loss=discriminator_loss,
             recon_x=recon_x,
+            recon_x_indices=idx_1,
             z=z,
-            z_bis_permuted=z_bis_permuted,
+            z_bis_permuted=z_bis_permuted
         )
 
         return output

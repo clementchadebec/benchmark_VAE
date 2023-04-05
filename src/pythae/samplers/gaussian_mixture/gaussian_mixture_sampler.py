@@ -4,6 +4,7 @@ import torch
 from sklearn import mixture
 from torch.utils.data import DataLoader
 
+from ...data.datasets import collate_dataset_output
 from ...data.preprocessors import DataProcessor
 from ...models import BaseAE
 from ..base import BaseSampler
@@ -60,7 +61,12 @@ class GaussianMixtureSampler(BaseSampler):
         data_processor = DataProcessor()
         train_data = data_processor.process_data(train_data).to(self.device)
         train_dataset = data_processor.to_dataset(train_data)
-        train_loader = DataLoader(dataset=train_dataset, batch_size=100, shuffle=False)
+        train_loader = DataLoader(
+            dataset=train_dataset,
+            batch_size=100,
+            shuffle=False,
+            collate_fn=collate_dataset_output,
+        )
 
         z = []
         try:
