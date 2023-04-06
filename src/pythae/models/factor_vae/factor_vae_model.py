@@ -1,5 +1,5 @@
 import os
-from typing import Optional
+from typing import Optional, Union, Callable
 
 import torch
 import torch.nn.functional as F
@@ -31,6 +31,11 @@ class FactorVAE(VAE):
             architectures if desired. If None is provided, a simple Multi Layer Preception
             (https://en.wikipedia.org/wiki/Multilayer_perceptron) is used. Default: None.
 
+        custom_recon_loss_func: (torch.nn.Module or Callable): A custom loss function for calculation the reconstruction loss. 
+            This is only used when the `reconstruction_loss` parameter in `model_config` is set to `custom`. This can be either
+            an instance of `torch.nn.Module` or a callable function. In either case, the function must take the following arguments:
+            - `recon_x`: The reconstructed data
+            - `x`: The original data. Default: None.
 
     .. note::
         For high dimensional data we advice you to provide you own network architectures. With the
@@ -42,6 +47,7 @@ class FactorVAE(VAE):
         model_config: FactorVAEConfig,
         encoder: Optional[BaseEncoder] = None,
         decoder: Optional[BaseDecoder] = None,
+        custom_recon_loss_func: Optional[Union[torch.nn.Module, Callable]] = None,
     ):
 
         VAE.__init__(self, model_config=model_config, encoder=encoder, decoder=decoder)
@@ -50,6 +56,7 @@ class FactorVAE(VAE):
 
         self.model_name = "FactorVAE"
         self.gamma = model_config.gamma
+        self.custom_recon_loss_func = custom_recon_loss_func
 
     def set_discriminator(self, discriminator: BaseDiscriminator) -> None:
         r"""This method is called to set the discriminator network
@@ -158,6 +165,10 @@ class FactorVAE(VAE):
                 x.reshape(x.shape[0], -1),
                 reduction="none",
             ).sum(dim=-1)
+
+        elif self.model_config.reconstruction_loss == "custom":
+
+            recon_loss = self.custom_recon_loss_func(recon_x, x)
 
         KLD = -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp(), dim=-1)
 
