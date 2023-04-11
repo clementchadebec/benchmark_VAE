@@ -111,7 +111,7 @@ class PIWAE(VAE):
 
         if self.model_config.reconstruction_loss == "mse":
 
-            recon_loss = F.mse_loss(
+            recon_loss = 0.5 * F.mse_loss(
                 recon_x,
                 x.reshape(recon_x.shape[0], -1)
                 .unsqueeze(1)

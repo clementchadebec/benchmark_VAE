@@ -192,7 +192,7 @@ class VAEGAN(VAE):
         )[f"embedding_layer_{self.reconstruction_layer}"]
 
         # MSE in feature space
-        recon_loss = F.mse_loss(
+        recon_loss = 0.5 * F.mse_loss(
             true_discr_layer.reshape(N, -1),
             recon_discr_layer.reshape(N, -1),
             reduction="none",
