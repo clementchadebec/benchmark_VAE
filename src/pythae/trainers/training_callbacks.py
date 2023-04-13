@@ -169,7 +169,7 @@ class CallbackHandler:
         self.call_event("on_epoch_begin", training_config, **kwargs)
 
     def on_epoch_end(self, training_config: BaseTrainerConfig, **kwargs):
-        self.call_event("on_epoch_end", training_config)
+        self.call_event("on_epoch_end", training_config, **kwargs)
 
     def on_evaluate(self, training_config: BaseTrainerConfig, **kwargs):
         self.call_event("on_evaluate", **kwargs)
@@ -285,7 +285,7 @@ class ProgressBarCallback(TrainingCallback):
         if self.eval_progress_bar is not None:
             self.eval_progress_bar.update(1)
 
-    def on_epoch_end(self, training_config: BaseTrainerConfig, **kwags):
+    def on_epoch_end(self, training_config: BaseTrainerConfig, **kwargs):
         if self.train_progress_bar is not None:
             self.train_progress_bar.close()
 
