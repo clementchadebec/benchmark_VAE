@@ -1,5 +1,6 @@
 {
     "latent_dim": 16,
     "reconstruction_loss": "mse",
-    "number_components": 50
+    "number_components": 50,
+    "name": "BetaVAE"
 }
