@@ -1,7 +1,7 @@
+import contextlib
 import datetime
 import logging
 import os
-import contextlib
 from copy import deepcopy
 from typing import Any, Dict, List, Optional
 
@@ -14,8 +14,7 @@ from torch.utils.data import DataLoader
 from torch.utils.data.distributed import DistributedSampler
 
 from ...customexception import ModelError
-from ...data.datasets import BaseDataset
-from ...data.datasets import collate_dataset_output
+from ...data.datasets import BaseDataset, collate_dataset_output
 from ...models import BaseAE
 from ..trainer_utils import set_seed
 from ..training_callbacks import (
@@ -95,7 +94,14 @@ class BaseTrainer:
                 else "cpu"
             )
 
-        self.amp_context = torch.autocast("cuda") if self.training_config.amp else contextlib.nullcontext()
+        self.amp_context = (
+            torch.autocast("cuda")
+            if self.training_config.amp
+            else contextlib.nullcontext()
+        )
+
+        if model.model_config.reconstruction_loss == "bce":
+            self.amp_context = contextlib.nullcontext()
 
         self.device = device
 
@@ -567,7 +573,9 @@ class BaseTrainer:
                 if epoch_loss != epoch_loss:
                     raise ArithmeticError("NaN detected in eval loss")
 
-                self.callback_handler.on_eval_step_end(training_config=self.training_config)
+                self.callback_handler.on_eval_step_end(
+                    training_config=self.training_config
+                )
 
         epoch_loss /= len(self.eval_loader)
 
@@ -702,7 +710,9 @@ class BaseTrainer:
             z_enc = model_out.z[: min(inputs["data"].shape[0], 10)]
             z = torch.randn_like(z_enc)
             if self.distributed:
-                normal_generation = model.module.decoder(z).reconstruction.detach().cpu()
+                normal_generation = (
+                    model.module.decoder(z).reconstruction.detach().cpu()
+                )
             else:
                 normal_generation = model.decoder(z).reconstruction.detach().cpu()
 
