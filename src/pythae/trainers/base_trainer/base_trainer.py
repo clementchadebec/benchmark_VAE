@@ -100,7 +100,10 @@ class BaseTrainer:
             else contextlib.nullcontext()
         )
 
-        if model.model_config.reconstruction_loss == "bce":
+        if (
+            hasattr(model.model_config, "reconstruction_loss")
+            and model.model_config.reconstruction_loss == "bce"
+        ):
             self.amp_context = contextlib.nullcontext()
 
         self.device = device
