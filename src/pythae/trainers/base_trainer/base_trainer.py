@@ -95,7 +95,7 @@ class BaseTrainer:
                 else "cpu"
             )
 
-        self.amp_context = torch.autocast if self.training_config.amp else contextlib.nullcontext
+        self.amp_context = torch.autocast("cuda") if self.training_config.amp else contextlib.nullcontext()
 
         self.device = device
 
@@ -537,7 +537,7 @@ class BaseTrainer:
 
         epoch_loss = 0
 
-        with self.amp_context():
+        with self.amp_context:
             for inputs in self.eval_loader:
 
                 inputs = self._set_inputs_to_device(inputs)
@@ -598,7 +598,7 @@ class BaseTrainer:
 
             inputs = self._set_inputs_to_device(inputs)
 
-            with self.amp_context():
+            with self.amp_context:
                 model_output = self.model(
                     inputs,
                     epoch=epoch,
@@ -691,7 +691,7 @@ class BaseTrainer:
 
         model.eval()
 
-        with self.amp_context():
+        with self.amp_context:
             inputs = next(iter(self.eval_loader))
             inputs = self._set_inputs_to_device(inputs)
 
