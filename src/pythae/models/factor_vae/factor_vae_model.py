@@ -99,6 +99,13 @@ class FactorVAE(VAE):
         # first batch
         x = inputs["data"][idx_1]
 
+        if self.model_config.reconstruction_loss == "custom_masked":
+            if "mask" not in inputs.keys():
+                raise ValueError(
+                    "No mask not present in the input for `custom_masked` reconstruction loss"
+                )
+            mask = inputs["mask"][idx_1]
+
         encoder_output = self.encoder(x)
 
         mu, log_var = encoder_output.embedding, encoder_output.log_covariance
@@ -119,9 +126,15 @@ class FactorVAE(VAE):
 
         z_bis_permuted = self._permute_dims(z_bis).detach()
 
-        recon_loss, autoencoder_loss, discriminator_loss = self.loss_function(
-            recon_x, x, mu, log_var, z, z_bis_permuted
-        )
+        if not self.model_config.reconstruction_loss == "custom_masked":
+            recon_loss, autoencoder_loss, discriminator_loss = self.loss_function(
+                recon_x, x, mu, log_var, z, z_bis_permuted
+            )
+        else:
+            recon_loss, autoencoder_loss, discriminator_loss = self.loss_function(
+                recon_x, x, mu, log_var, z, z_bis_permuted, mask
+            )
+
 
         loss = autoencoder_loss + discriminator_loss
 
@@ -138,7 +151,7 @@ class FactorVAE(VAE):
 
         return output
 
-    def loss_function(self, recon_x, x, mu, log_var, z, z_bis_permuted):
+    def loss_function(self, recon_x, x, mu, log_var, z, z_bis_permuted, mask=None):
 
         N = z.shape[0]  # batch size
 
@@ -169,6 +182,10 @@ class FactorVAE(VAE):
         elif self.model_config.reconstruction_loss == "custom":
 
             recon_loss = self.custom_recon_loss_func(recon_x, x)
+
+        elif self.model_config.reconstruction_loss == "custom_masked":
+
+            recon_loss = self.custom_recon_loss_func(recon_x, x, mask)
 
         KLD = -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp(), dim=-1)
 
