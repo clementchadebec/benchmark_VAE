@@ -1,6 +1,7 @@
 import datetime
 import logging
 import os
+import contextlib
 from copy import deepcopy
 from typing import Any, Dict, List, Optional
 
@@ -93,6 +94,8 @@ class BaseTrainer:
                 if torch.cuda.is_available() and not self.training_config.no_cuda
                 else "cpu"
             )
+
+        self.amp_context = torch.autocast if self.training_config.amp else contextlib.nullcontext
 
         self.device = device
 
@@ -534,13 +537,22 @@ class BaseTrainer:
 
         epoch_loss = 0
 
-        for inputs in self.eval_loader:
+        with self.amp_context():
+            for inputs in self.eval_loader:
 
-            inputs = self._set_inputs_to_device(inputs)
+                inputs = self._set_inputs_to_device(inputs)
 
-            try:
-                with torch.no_grad():
+                try:
+                    with torch.no_grad():
 
+                        model_output = self.model(
+                            inputs,
+                            epoch=epoch,
+                            dataset_size=len(self.eval_loader.dataset),
+                            uses_ddp=self.distributed,
+                        )
+
+                except RuntimeError:
                     model_output = self.model(
                         inputs,
                         epoch=epoch,
@@ -548,22 +560,14 @@ class BaseTrainer:
                         uses_ddp=self.distributed,
                     )
 
-            except RuntimeError:
-                model_output = self.model(
-                    inputs,
-                    epoch=epoch,
-                    dataset_size=len(self.eval_loader.dataset),
-                    uses_ddp=self.distributed,
-                )
+                loss = model_output.loss
 
-            loss = model_output.loss
+                epoch_loss += loss.item()
 
-            epoch_loss += loss.item()
+                if epoch_loss != epoch_loss:
+                    raise ArithmeticError("NaN detected in eval loss")
 
-            if epoch_loss != epoch_loss:
-                raise ArithmeticError("NaN detected in eval loss")
-
-            self.callback_handler.on_eval_step_end(training_config=self.training_config)
+                self.callback_handler.on_eval_step_end(training_config=self.training_config)
 
         epoch_loss /= len(self.eval_loader)
 
@@ -594,12 +598,13 @@ class BaseTrainer:
 
             inputs = self._set_inputs_to_device(inputs)
 
-            model_output = self.model(
-                inputs,
-                epoch=epoch,
-                dataset_size=len(self.train_loader.dataset),
-                uses_ddp=self.distributed,
-            )
+            with self.amp_context():
+                model_output = self.model(
+                    inputs,
+                    epoch=epoch,
+                    dataset_size=len(self.train_loader.dataset),
+                    uses_ddp=self.distributed,
+                )
 
             self._optimizers_step(model_output)
 
@@ -686,19 +691,20 @@ class BaseTrainer:
 
         model.eval()
 
-        inputs = next(iter(self.eval_loader))
-        inputs = self._set_inputs_to_device(inputs)
+        with self.amp_context():
+            inputs = next(iter(self.eval_loader))
+            inputs = self._set_inputs_to_device(inputs)
 
-        model_out = model(inputs)
-        reconstructions = model_out.recon_x.cpu().detach()[
-            : min(inputs["data"].shape[0], 10)
-        ]
-        z_enc = model_out.z[: min(inputs["data"].shape[0], 10)]
-        z = torch.randn_like(z_enc)
-        if self.distributed:
-            normal_generation = model.module.decoder(z).reconstruction.detach().cpu()
-        else:
-            normal_generation = model.decoder(z).reconstruction.detach().cpu()
+            model_out = model(inputs)
+            reconstructions = model_out.recon_x.cpu().detach()[
+                : min(inputs["data"].shape[0], 10)
+            ]
+            z_enc = model_out.z[: min(inputs["data"].shape[0], 10)]
+            z = torch.randn_like(z_enc)
+            if self.distributed:
+                normal_generation = model.module.decoder(z).reconstruction.detach().cpu()
+            else:
+                normal_generation = model.decoder(z).reconstruction.detach().cpu()
 
         return (
             inputs["data"][: min(inputs["data"].shape[0], 10)],
