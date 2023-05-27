@@ -10,7 +10,7 @@ from ..base.base_utils import ModelOutput
 from ..nn import BaseDecoder, BaseDiscriminator, BaseEncoder
 from ..vae import VAE
 from .factor_vae_config import FactorVAEConfig
-from .factor_vae_utils import FactorVAEDiscriminator
+from .factor_vae_utils import FactorVAEDiscriminator, CVFactorVAEDiscriminator
 
 
 class FactorVAE(VAE):
@@ -51,8 +51,11 @@ class FactorVAE(VAE):
     ):
 
         VAE.__init__(self, model_config=model_config, encoder=encoder, decoder=decoder)
-
-        self.discriminator = FactorVAEDiscriminator(latent_dim=model_config.latent_dim)
+        
+        if model_config.is_cv:
+            self.discriminator = CVFactorVAEDiscriminator(latent_dim=model_config.latent_dim)
+        else:
+            self.discriminator = FactorVAEDiscriminator(latent_dim=model_config.latent_dim)
 
         self.model_name = "FactorVAE"
         self.gamma = model_config.gamma
@@ -207,6 +210,10 @@ class FactorVAE(VAE):
             .type(torch.LongTensor)
             .to(z.device)
         )
+
+        if torch.is_complex(latent_adversarial_score):
+            latent_adversarial_score = torch.abs(latent_adversarial_score)
+            permuted_latent_adversarial_score = torch.abs(permuted_latent_adversarial_score)
 
         TC_permuted = F.cross_entropy(
             latent_adversarial_score, fake_labels
