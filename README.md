@@ -600,7 +600,7 @@ First let's have a look at the reconstructed samples taken from the evaluation s
 ----------------------------
 ### Generation
 
-Here, we show the generated samples using using each model implemented in the library and different samplers.
+Here, we show the generated samples using each model implemented in the library and different samplers.
 
 |               Models               |                                                                                    MNIST                                                                     |                     CELEBA             
 |:----------------------------------:|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|:--------------------------------------------:|
