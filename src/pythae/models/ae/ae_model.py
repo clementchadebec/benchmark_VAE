@@ -81,10 +81,31 @@ class AE(BaseAE):
         output = ModelOutput(loss=loss, recon_x=recon_x, z=z)
 
         return output
-
+    
     def loss_function(self, recon_x, x):
 
-        MSE = F.mse_loss(
-            recon_x.reshape(x.shape[0], -1), x.reshape(x.shape[0], -1), reduction="none"
-        ).sum(dim=-1)
-        return MSE.mean(dim=0)
+        if self.model_config.reconstruction_loss == "mse":
+
+            recon_loss = F.mse_loss(
+                recon_x.reshape(x.shape[0], -1),
+                x.reshape(x.shape[0], -1),
+                reduction="none",
+            ).sum(dim=-1)
+
+        elif self.model_config.reconstruction_loss == "bce":
+
+            recon_loss = F.binary_cross_entropy(
+                recon_x.reshape(x.shape[0], -1),
+                x.reshape(x.shape[0], -1),
+                reduction="none",
+            ).sum(dim=-1)
+
+        elif self.model_config.reconstruction_loss == "l1":
+
+            recon_loss = F.l1_loss(
+                recon_x.reshape(x.shape[0], -1),
+                x.reshape(x.shape[0], -1),
+                reduction="none",
+            ).sum(dim=-1)
+
+        return recon_loss.mean(dim=0)
