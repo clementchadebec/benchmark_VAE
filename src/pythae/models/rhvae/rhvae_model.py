@@ -263,6 +263,72 @@ class RHVAE(VAE):
 
         return output
 
+    def predict(self, inputs: torch.Tensor) -> ModelOutput:
+        """The input data is encoded and decoded without computing loss
+
+        Args:
+            inputs (torch.Tensor): The input data to be reconstructed, as well as to generate the embedding.
+
+        Returns:
+            ModelOutput: An instance of ModelOutput containing reconstruction, raw embedding (output of encoder), and the final embedding (output of metric)
+        """
+        encoder_output = self.encoder(inputs)
+        mu, log_var = encoder_output.embedding, encoder_output.log_covariance
+
+        std = torch.exp(0.5 * log_var)
+        z0, _ = self._sample_gauss(mu, std)
+
+        z = z0
+
+        G = self.G(z)
+        G_inv = self.G_inv(z)
+        L = torch.linalg.cholesky(G)
+
+        G_log_det = -torch.logdet(G_inv)
+
+        gamma = torch.randn_like(z0, device=inputs.device)
+        rho = gamma / self.beta_zero_sqrt
+        beta_sqrt_old = self.beta_zero_sqrt
+
+        # sample \rho from N(0, G)
+        rho = (L @ rho.unsqueeze(-1)).squeeze(-1)
+
+        recon_x = self.decoder(z)["reconstruction"]
+
+        for k in range(self.n_lf):
+
+            # perform leapfrog steps
+
+            # step 1
+            rho_ = self._leap_step_1(recon_x, inputs, z, rho, G_inv, G_log_det)
+
+            # step 2
+            z = self._leap_step_2(recon_x, inputs, z, rho_, G_inv, G_log_det)
+
+            recon_x = self.decoder(z)["reconstruction"]
+            
+            # compute metric value on new z using final metric
+            G = self.G(z)
+            G_inv = self.G_inv(z)
+
+            G_log_det = -torch.logdet(G_inv)
+
+            # step 3
+            rho__ = self._leap_step_3(recon_x, inputs, z, rho_, G_inv, G_log_det)
+
+            # tempering
+            beta_sqrt = self._tempering(k + 1, self.n_lf)
+            rho = (beta_sqrt_old / beta_sqrt) * rho__
+            beta_sqrt_old = beta_sqrt
+
+        output = ModelOutput(
+            recon_x=recon_x,
+            raw_embedding=encoder_output.embedding,
+            embedding=z if self.n_lf > 0 else encoder_output.embedding,
+        )
+
+        return output
+    
     def _leap_step_1(self, recon_x, x, z, rho, G_inv, G_log_det, steps=3):
         """
         Resolves first equation of generalized leapfrog integrator
@@ -424,20 +490,6 @@ class RHVAE(VAE):
                 reduction="none",
             ).sum(dim=-1)
 
-        elif self.model_config.reconstruction_loss == "l1":
-            # sigma is taken as I_D
-            recon_loss = (
-                -0.5
-                * F.l1_loss(
-                    recon_x.reshape(x.shape[0], -1),
-                    x.reshape(x.shape[0], -1),
-                    reduction="none",
-                ).sum(dim=-1)
-            )
-            -torch.log(torch.tensor([2 * np.pi]).to(x.device)) * np.prod(
-                self.input_dim
-            ) / 2
-
         return recon_loss
 
     def _log_z(self, z):
@@ -585,18 +637,6 @@ class RHVAE(VAE):
                         x_rep.reshape(x_rep.shape[0], -1),
                         reduction="none",
                     ).sum(dim=-1)
-
-                elif self.model_config.reconstruction_loss == "l1":
-
-                    log_p_x_given_z = -0.5 * F.l1_loss(
-                        recon_x.reshape(x_rep.shape[0], -1),
-                        x_rep.reshape(x_rep.shape[0], -1),
-                        reduction="none",
-                    ).sum(dim=-1) - torch.tensor(
-                        [np.prod(self.input_dim) / 2 * np.log(np.pi * 2)]
-                    ).to(
-                        data.device
-                    )  # decoding distribution is assumed unit variance  N(mu, I)
 
                 log_p_x.append(
                     log_p_x_given_z
