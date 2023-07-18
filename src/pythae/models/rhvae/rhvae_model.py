@@ -288,13 +288,14 @@ class RHVAE(VAE):
 
         gamma = torch.randn_like(z0, device=inputs.device)
         rho = gamma / self.beta_zero_sqrt
+        beta_sqrt_old = self.beta_zero_sqrt
 
         # sample \rho from N(0, G)
         rho = (L @ rho.unsqueeze(-1)).squeeze(-1)
 
         recon_x = self.decoder(z)["reconstruction"]
 
-        for _ in range(self.n_lf):
+        for k in range(self.n_lf):
 
             # perform leapfrog steps
 
@@ -305,6 +306,20 @@ class RHVAE(VAE):
             z = self._leap_step_2(recon_x, inputs, z, rho_, G_inv, G_log_det)
 
             recon_x = self.decoder(z)["reconstruction"]
+            
+            # compute metric value on new z using final metric
+            G = self.G(z)
+            G_inv = self.G_inv(z)
+
+            G_log_det = -torch.logdet(G_inv)
+
+            # step 3
+            rho__ = self._leap_step_3(recon_x, inputs, z, rho_, G_inv, G_log_det)
+
+            # tempering
+            beta_sqrt = self._tempering(k + 1, self.n_lf)
+            rho = (beta_sqrt_old / beta_sqrt) * rho__
+            beta_sqrt_old = beta_sqrt
 
         output = ModelOutput(
             recon_x=recon_x,
