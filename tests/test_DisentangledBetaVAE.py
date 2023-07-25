@@ -41,6 +41,9 @@ def model_configs_no_input_dim(request):
             input_dim=(1, 28, 28), latent_dim=10, reconstruction_loss="bce"
         ),
         DisentangledBetaVAEConfig(
+            input_dim=(1, 28, 28), latent_dim=10, reconstruction_loss="l1"
+        ),
+        DisentangledBetaVAEConfig(
             input_dim=(1, 28), latent_dim=5, beta=5.2, warmup_epoch=0
         ),
     ]

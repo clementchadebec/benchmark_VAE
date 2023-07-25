@@ -54,6 +54,14 @@ def model_configs_no_input_dim(request):
             curvature=0.7,
         ),
         PoincareVAEConfig(
+            input_dim=(1, 28, 28),
+            latent_dim=2,
+            reconstruction_loss="l1",
+            prior_distribution="wrapped_normal",
+            posterior_distribution="wrapped_normal",
+            curvature=0.7,
+        ),
+        PoincareVAEConfig(
             input_dim=(1, 28),
             latent_dim=5,
             prior_distribution="riemannian_normal",

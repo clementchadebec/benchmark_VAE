@@ -43,6 +43,9 @@ def model_configs_no_input_dim(request):
         Adversarial_AE_Config(
             input_dim=(1, 28, 28), latent_dim=10, reconstruction_loss="bce"
         ),
+        Adversarial_AE_Config(
+            input_dim=(1, 28, 28), latent_dim=10, reconstruction_loss="l1"
+        ),
         Adversarial_AE_Config(input_dim=(1, 2, 18), latent_dim=5),
     ]
 )

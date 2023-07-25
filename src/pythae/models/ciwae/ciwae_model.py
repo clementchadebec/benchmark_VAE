@@ -113,6 +113,16 @@ class CIWAE(VAE):
                 reduction="none",
             ).sum(dim=-1)
 
+        elif self.model_config.reconstruction_loss == "l1":
+
+            recon_loss = F.l1_loss(
+                recon_x,
+                x.reshape(recon_x.shape[0], -1)
+                .unsqueeze(1)
+                .repeat(1, self.n_samples, 1),
+                reduction="none",
+            ).sum(dim=-1)
+
         log_q_z = (-0.5 * (log_var + torch.pow(z - mu, 2) / log_var.exp())).sum(dim=-1)
         log_p_z = -0.5 * (z ** 2).sum(dim=-1)
 

@@ -36,6 +36,8 @@ def model_configs_no_input_dim(request):
 @pytest.fixture(
     params=[
         PIWAEConfig(input_dim=(1, 28, 28), latent_dim=10, number_gradient_estimates=3),
+        PIWAEConfig(input_dim=(1, 28, 28), latent_dim=10, number_gradient_estimates=3, reconstruction_loss="bce"),
+        PIWAEConfig(input_dim=(1, 28, 28), latent_dim=10, number_gradient_estimates=3, reconstruction_loss="l1"),
         PIWAEConfig(input_dim=(1, 2, 18), latent_dim=5),
     ]
 )

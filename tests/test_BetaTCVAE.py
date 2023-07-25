@@ -41,6 +41,9 @@ def model_configs_no_input_dim(request):
             input_dim=(1, 28, 28), latent_dim=10, reconstruction_loss="bce"
         ),
         BetaTCVAEConfig(
+            input_dim=(1, 28, 28), latent_dim=10, reconstruction_loss="l1"
+        ),
+        BetaTCVAEConfig(
             input_dim=(1, 28), latent_dim=5, beta=5.2, alpha=10, gamma=2, use_mss=False
         ),
     ]

@@ -11,7 +11,7 @@ class BetaVAEConfig(VAEConfig):
     Parameters:
         input_dim (tuple): The input_data dimension.
         latent_dim (int): The latent space dimension. Default: None.
-        reconstruction_loss (str): The reconstruction loss to use ['bce', 'mse']. Default: 'mse'
+        reconstruction_loss (str): The reconstruction loss to use ['bce', 'l1', 'mse']. Default: 'mse'
         beta (float): The balancing factor. Default: 1
     """
 

@@ -39,6 +39,12 @@ def model_configs_no_input_dim(request):
             flows=["Planar", "Radial", "Planar"],
         ),
         VAE_LinNF_Config(
+            input_dim=(1, 28, 28),
+            latent_dim=10,
+            reconstruction_loss="l1",
+            flows=["Planar", "Radial", "Planar"],
+        ),
+        VAE_LinNF_Config(
             input_dim=(1, 28), latent_dim=5, flows=["Radial", "Radial", "Radial"]
         ),
     ]

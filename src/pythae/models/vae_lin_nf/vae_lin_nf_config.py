@@ -13,7 +13,7 @@ class VAE_LinNF_Config(VAEConfig):
     Parameters:
         input_dim (int): The input_data dimension
         latent_dim (int): The latent space dimension. Default: None.
-        reconstruction_loss (str): The reconstruction loss to use ['bce', 'mse']. Default: 'mse'
+        reconstruction_loss (str): The reconstruction loss to use ['bce', 'l1', 'mse']. Default: 'mse'
         flows (List[str]):  A list of strings corresponding to the class of each flow to be applied.
             Default: ['Plannar', 'Planar']. Flow choices: ['Planar', 'Radial'].
     """

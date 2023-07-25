@@ -106,6 +106,14 @@ class BetaTCVAE(VAE):
                 reduction="none",
             ).sum(dim=-1)
 
+        elif self.model_config.reconstruction_loss == "l1":
+
+            recon_loss = F.l1_loss(
+                recon_x.reshape(x.shape[0], -1),
+                x.reshape(x.shape[0], -1),
+                reduction="none",
+            ).sum(dim=-1)
+
         log_q_z_given_x = self._compute_log_gauss_density(z, mu, log_var).sum(
             dim=-1
         )  # [B]

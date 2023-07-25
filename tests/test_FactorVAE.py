@@ -42,6 +42,9 @@ def model_configs_no_input_dim(request):
         FactorVAEConfig(
             input_dim=(1, 28, 28), latent_dim=10, reconstruction_loss="bce"
         ),
+        FactorVAEConfig(
+            input_dim=(1, 28, 28), latent_dim=10, reconstruction_loss="l1"
+        ),
         FactorVAEConfig(input_dim=(1, 2, 18), latent_dim=5, gamma=10),
     ]
 )

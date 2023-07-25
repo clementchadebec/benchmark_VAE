@@ -38,6 +38,9 @@ def model_configs_no_input_dim(request):
         RHVAEConfig(
             input_dim=(1, 28, 28), latent_dim=1, n_lf=1, reconstruction_loss="bce"
         ),
+        RHVAEConfig(
+            input_dim=(1, 28, 28), latent_dim=1, n_lf=1, reconstruction_loss="l1"
+        ),
         RHVAEConfig(input_dim=(1, 2, 18), latent_dim=2, n_lf=1),
     ]
 )
