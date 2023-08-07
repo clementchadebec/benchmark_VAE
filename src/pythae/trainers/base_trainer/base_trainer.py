@@ -380,19 +380,19 @@ class BaseTrainer:
         set_seed(self.training_config.seed)
 
         # set optimizer
-        if self.scheduler is None:
+        if not hasattr(self,'optimizer'):
             self.set_optimizer()
 
         # set scheduler
-        if self.scheduler is None:
+        if not hasattr(self,'scheduler'):
             self.set_scheduler()
 
         # create folder for saving
-        if self.training_dir is None:
+        if not hasattr(self,'training_dir'):
             self._set_output_dir()
 
         # set callbacks
-        if self.callback_handler is None:
+        if not hasattr(self,'callback_handler'):
             self._setup_callbacks()
 
     def train(self, log_output_dir: str = None, start_epoch: int = 1):
