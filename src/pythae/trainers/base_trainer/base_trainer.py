@@ -380,16 +380,20 @@ class BaseTrainer:
         set_seed(self.training_config.seed)
 
         # set optimizer
-        self.set_optimizer()
+        if self.scheduler is None:
+            self.set_optimizer()
 
         # set scheduler
-        self.set_scheduler()
+        if self.scheduler is None:
+            self.set_scheduler()
 
         # create folder for saving
-        self._set_output_dir()
+        if self.training_dir is None:
+            self._set_output_dir()
 
         # set callbacks
-        self._setup_callbacks()
+        if self.callback_handler is None:
+            self._setup_callbacks()
 
     def train(self, log_output_dir: str = None, start_epoch: int = 1):
         """This function is the main training function
