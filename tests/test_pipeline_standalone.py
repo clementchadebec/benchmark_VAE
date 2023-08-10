@@ -2,7 +2,7 @@ import os
 
 import pytest
 import torch
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, DataLoader
 
 from pythae.customexception import DatasetError
 from pythae.data.datasets import DatasetOutput
@@ -69,6 +69,10 @@ class Test_Pipeline_Standalone:
         return CustomWrongOutputDataset(
             os.path.join(PATH, "data/mnist_clean_train_dataset_sample")
         )
+
+    @pytest.fixture
+    def train_dataloader(self, custom_train_dataset):
+        return DataLoader(dataset=custom_train_dataset, batch_size=32)
 
     @pytest.fixture
     def training_pipeline(self, train_dataset):
@@ -179,3 +183,16 @@ class Test_Pipeline_Standalone:
         assert tuple(gen_data.shape) == (1,) + (1, 2, 3)
         assert len(os.listdir(dir_path)) == 1 + 1
         assert "sampler_config.json" in os.listdir(dir_path)
+
+    def test_training_pipeline_with_dataloader(
+        self, tmpdir, training_pipeline, train_dataloader
+    ):
+        # Simulate a training run with a DataLoader
+        tmpdir.mkdir("dataloader_test")
+        dir_path = os.path.join(tmpdir, "dataloader_test")
+        training_pipeline.training_config.output_dir = dir_path
+        training_pipeline.training_config.num_epochs = 1
+        training_pipeline(train_data=train_dataloader, eval_data=train_dataloader)
+
+        assert isinstance(training_pipeline.trainer.train_loader, DataLoader)
+        assert isinstance(training_pipeline.trainer.eval_loader, DataLoader)
