@@ -51,8 +51,8 @@ class TrainingPipeline(Pipeline):
         if training_config is None:
             if model.model_name == "RAE_L2":
                 training_config = CoupledOptimizerTrainerConfig(
-                    encoder_optim_decay=0,
-                    decoder_optim_decay=model.model_config.reg_weight,
+                    encoder_optimizer_params={"weight_decay": 0},
+                    decoder_optimizer_params={"weight_decay": model.model_config.reg_weight},
                 )
 
             elif (
@@ -216,7 +216,6 @@ class TrainingPipeline(Pipeline):
                 model=self.model,
                 train_dataset=train_dataloader or train_dataset,
                 eval_dataset=eval_dataloader or eval_dataset,
-                eval_dataloader=eval_dataloader,
                 training_config=self.training_config,
                 callbacks=callbacks,
             )

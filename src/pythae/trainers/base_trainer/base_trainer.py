@@ -121,12 +121,20 @@ class BaseTrainer:
         # Define the loaders
         if isinstance(train_dataset, DataLoader):
             train_loader = train_dataset
+            logger.warn(
+                "Using the provided train dataloader! Carefull this may overwrite some "
+                "parameters provided in your training config."
+            )
         else:
             train_loader = self.get_train_dataloader(train_dataset)
 
         if eval_dataset is not None:
             if isinstance(eval_dataset, DataLoader):
                 eval_loader = eval_dataset
+                logger.warn(
+                    "Using the provided eval dataloader! Carefull this may overwrite some "
+                    "parameters provided in your training config."
+                )
             else:
                 eval_loader = self.get_eval_dataloader(eval_dataset)
         else:
