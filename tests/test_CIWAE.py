@@ -4,6 +4,7 @@ from copy import deepcopy
 import pytest
 import torch
 
+from pydantic import ValidationError
 from pythae.customexception import BadInheritanceError
 from pythae.models import CIWAE, AutoModel, CIWAEConfig
 from pythae.models.base.base_utils import ModelOutput
@@ -69,7 +70,7 @@ class Test_Model_Building:
             ]
         )
 
-        with pytest.raises(AssertionError):
+        with pytest.raises(ValidationError):
             CIWAEConfig(beta=1.2)
 
     def test_raises_bad_inheritance(self, model_configs, bad_net):

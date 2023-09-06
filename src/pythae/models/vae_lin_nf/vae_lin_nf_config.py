@@ -20,7 +20,8 @@ class VAE_LinNF_Config(VAEConfig):
 
     flows: List[str] = field(default_factory=lambda: ["Planar", "Planar"])
 
-    def __post_init_post_parse__(self):
+    def __post_init__(self):
+        super().__post_init__()
         for i, f in enumerate(self.flows):
             assert f in ["Planar", "Radial"], (
                 f"Flow name number {i+1}: '{f}' doesn't correspond "

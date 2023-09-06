@@ -16,4 +16,3 @@ class FactorVAEConfig(VAEConfig):
     """
     gamma: float = 2.0
     uses_default_discriminator: bool = True
-    discriminator_input_dim: int = None

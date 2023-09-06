@@ -51,7 +51,7 @@ class BaseTrainerConfig(BaseConfig):
         amp (bool): Whether to use auto mixed precision in training. Default: False
     """
 
-    output_dir: str = None
+    output_dir: Union[str, None] = None
     per_device_train_batch_size: int = 64
     per_device_eval_batch_size: int = 64
     num_epochs: int = 100
@@ -76,6 +76,7 @@ class BaseTrainerConfig(BaseConfig):
     amp: bool = False
 
     def __post_init__(self):
+        """Check compatibility and sets up distributed training"""
         super().__post_init__()
         env_local_rank = int(os.environ.get("LOCAL_RANK", -1))
         if self.local_rank == -1 and env_local_rank != -1:
@@ -98,9 +99,7 @@ class BaseTrainerConfig(BaseConfig):
         if self.master_port == "12345" and env_master_port != "12345":
             self.master_port = env_master_port
         os.environ["MASTER_PORT"] = self.master_port
-
-    def __post_init_post_parse__(self):
-        """Check compatibilty"""
+        
         try:
             import torch.optim as optim
 

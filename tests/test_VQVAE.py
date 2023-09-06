@@ -4,6 +4,7 @@ from copy import deepcopy
 import pytest
 import torch
 
+from pydantic import ValidationError
 from pythae.customexception import BadInheritanceError
 from pythae.models import VQVAE, AutoModel, VQVAEConfig
 from pythae.models.base.base_utils import ModelOutput
@@ -68,7 +69,7 @@ class Test_Model_Building:
             ]
         )
 
-        with pytest.raises(AssertionError):
+        with pytest.raises(ValidationError):
             VQVAEConfig(decay=10, use_ema=True)
 
     def build_quantizer(self, model_configs):

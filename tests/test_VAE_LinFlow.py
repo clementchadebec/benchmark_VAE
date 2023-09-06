@@ -4,6 +4,7 @@ from copy import deepcopy
 import pytest
 import torch
 
+from pydantic import ValidationError
 from pythae.customexception import BadInheritanceError
 from pythae.models import AutoModel, VAE_LinNF, VAE_LinNF_Config
 from pythae.models.base.base_utils import ModelOutput
@@ -64,7 +65,7 @@ class Test_Model_Building:
 
     def test_raises_wrong_flows(self):
 
-        with pytest.raises(AssertionError):
+        with pytest.raises(ValidationError):
             conf = VAE_LinNF_Config(
                 input_dim=(1, 28), latent_dim=5, flows=["Planar", "WrongFlow"]
             )
