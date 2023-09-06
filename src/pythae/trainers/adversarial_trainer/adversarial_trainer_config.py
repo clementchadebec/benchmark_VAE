@@ -77,7 +77,7 @@ class AdversarialTrainerConfig(BaseTrainerConfig):
     def __post_init__(self):
         """Check compatibilty"""
         super().__post_init__()
-        
+
         # Autoencoder optimizer and scheduler
         try:
             import torch.optim as optim

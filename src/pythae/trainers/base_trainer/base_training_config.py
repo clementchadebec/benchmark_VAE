@@ -99,7 +99,7 @@ class BaseTrainerConfig(BaseConfig):
         if self.master_port == "12345" and env_master_port != "12345":
             self.master_port = env_master_port
         os.environ["MASTER_PORT"] = self.master_port
-        
+
         try:
             import torch.optim as optim
 
