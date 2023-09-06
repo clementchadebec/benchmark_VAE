@@ -48,6 +48,7 @@ class BaseTrainerConfig(BaseConfig):
         dist_backend (str): The distributed backend to use. Default: 'nccl'
         master_addr (str): The master address for distributed training. Default: 'localhost'
         master_port (str): The master port for distributed training. Default: '12345'
+        amp (bool): Whether to use auto mixed precision in training. Default: False
     """
 
     output_dir: str = None
@@ -72,6 +73,7 @@ class BaseTrainerConfig(BaseConfig):
     dist_backend: str = field(default="nccl")
     master_addr: str = field(default="localhost")
     master_port: str = field(default="12345")
+    amp: bool = False
 
     def __post_init__(self):
         super().__post_init__()
@@ -149,3 +151,6 @@ class BaseTrainerConfig(BaseConfig):
                         f"Got {self.scheduler_params} as parameters.\n"
                         f"Exception raised: {type(e)} with message: " + str(e)
                     ) from e
+
+        if self.no_cuda:
+            self.amp = False
