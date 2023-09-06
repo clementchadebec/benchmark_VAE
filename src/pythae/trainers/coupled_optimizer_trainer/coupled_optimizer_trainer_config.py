@@ -75,8 +75,9 @@ class CoupledOptimizerTrainerConfig(BaseTrainerConfig):
     encoder_learning_rate: float = 1e-4
     decoder_learning_rate: float = 1e-4
 
-    def __post_init_post_parse__(self):
+    def __post_init__(self):
         """Check compatibilty"""
+        super().__post_init__()
 
         # encoder optimizer and scheduler
         try:

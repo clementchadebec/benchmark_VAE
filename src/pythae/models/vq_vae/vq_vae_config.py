@@ -23,7 +23,8 @@ class VQVAEConfig(AEConfig):
     use_ema: bool = False
     decay: float = 0.99
 
-    def __post_init_post_parse__(self):
+    def __post_init__(self):
+        super().__post_init__()
         if self.use_ema:
             assert 0 <= self.decay <= 1, (
                 "The decay in the EMA update must be in [0, 1]. " f"Got {self.decay}."

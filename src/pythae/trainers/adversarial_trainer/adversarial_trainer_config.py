@@ -74,8 +74,9 @@ class AdversarialTrainerConfig(BaseTrainerConfig):
     autoencoder_learning_rate: float = 1e-4
     discriminator_learning_rate: float = 1e-4
 
-    def __post_init_post_parse__(self):
+    def __post_init__(self):
         """Check compatibilty"""
+        super().__post_init__()
 
         # Autoencoder optimizer and scheduler
         try:

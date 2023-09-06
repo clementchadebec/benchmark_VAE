@@ -5,6 +5,7 @@ import numpy as np
 import pytest
 import torch
 
+from pydantic import ValidationError
 from pythae.models import AutoModel
 from pythae.models.base.base_utils import ModelOutput
 from pythae.models.normalizing_flows import PixelCNN, PixelCNNConfig
@@ -38,7 +39,7 @@ class Test_Model_Building:
             ]
         )
 
-        with pytest.raises(AssertionError):
+        with pytest.raises(ValidationError):
             conf = PixelCNNConfig(kernel_size=2)
 
     def test_raises_no_input_output_dim(self, model_configs_no_input_output_dim):

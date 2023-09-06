@@ -94,13 +94,16 @@ class IWAE(VAE):
 
         if self.model_config.reconstruction_loss == "mse":
 
-            recon_loss = 0.5 * F.mse_loss(
-                recon_x,
-                x.reshape(recon_x.shape[0], -1)
-                .unsqueeze(1)
-                .repeat(1, self.n_samples, 1),
-                reduction="none",
-            ).sum(dim=-1)
+            recon_loss = (
+                0.5
+                * F.mse_loss(
+                    recon_x,
+                    x.reshape(recon_x.shape[0], -1)
+                    .unsqueeze(1)
+                    .repeat(1, self.n_samples, 1),
+                    reduction="none",
+                ).sum(dim=-1)
+            )
 
         elif self.model_config.reconstruction_loss == "bce":
 

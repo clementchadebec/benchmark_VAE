@@ -116,7 +116,7 @@ class BaseAE(nn.Module):
             torch.Tensor: A tensor of shape [B x input_dim] containing the reconstructed samples.
         """
         return self(DatasetOutput(data=inputs)).recon_x
-    
+
     def embed(self, inputs: torch.Tensor) -> torch.Tensor:
         """Return the embeddings of the input data.
 
@@ -127,7 +127,7 @@ class BaseAE(nn.Module):
             torch.Tensor: A tensor of shape [B x latent_dim] containing the embeddings.
         """
         return self(DatasetOutput(data=inputs)).z
-    
+
     def predict(self, inputs: torch.Tensor) -> ModelOutput:
         """The input data is encoded and decoded without computing loss
 

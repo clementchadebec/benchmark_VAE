@@ -306,7 +306,7 @@ class RHVAE(VAE):
             z = self._leap_step_2(recon_x, inputs, z, rho_, G_inv, G_log_det)
 
             recon_x = self.decoder(z)["reconstruction"]
-            
+
             # compute metric value on new z using final metric
             G = self.G(z)
             G_inv = self.G_inv(z)
@@ -328,7 +328,7 @@ class RHVAE(VAE):
         )
 
         return output
-    
+
     def _leap_step_1(self, recon_x, x, z, rho, G_inv, G_log_det, steps=3):
         """
         Resolves first equation of generalized leapfrog integrator

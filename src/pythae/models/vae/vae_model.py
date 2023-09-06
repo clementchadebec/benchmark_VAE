@@ -100,11 +100,14 @@ class VAE(BaseAE):
     def loss_function(self, recon_x, x, mu, log_var, z):
 
         if self.model_config.reconstruction_loss == "mse":
-            recon_loss = 0.5 * F.mse_loss(
-                recon_x.reshape(x.shape[0], -1),
-                x.reshape(x.shape[0], -1),
-                reduction="none",
-            ).sum(dim=-1)
+            recon_loss = (
+                0.5
+                * F.mse_loss(
+                    recon_x.reshape(x.shape[0], -1),
+                    x.reshape(x.shape[0], -1),
+                    reduction="none",
+                ).sum(dim=-1)
+            )
 
         elif self.model_config.reconstruction_loss == "bce":
 
@@ -161,7 +164,7 @@ class VAE(BaseAE):
                 log_q_z_given_x = -0.5 * (
                     log_var + (z - mu) ** 2 / torch.exp(log_var)
                 ).sum(dim=-1)
-                log_p_z = -0.5 * (z**2).sum(dim=-1)
+                log_p_z = -0.5 * (z ** 2).sum(dim=-1)
 
                 recon_x = self.decoder(z)["reconstruction"]
 

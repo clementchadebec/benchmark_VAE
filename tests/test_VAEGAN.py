@@ -4,7 +4,6 @@ from copy import deepcopy
 import numpy as np
 import pytest
 import torch
-from torch.optim import Adam
 
 from pythae.customexception import BadInheritanceError
 from pythae.models import VAEGAN, AutoModel, VAEGANConfig
@@ -99,7 +98,7 @@ class Test_Model_Building:
         conf = VAEGANConfig(
             input_dim=(1, 2, 18),
             latent_dim=5,
-            reconstruction_layer=5 + np.random.rand(),
+            reconstruction_layer=5 + np.random.randint(1, 3),
         )
         with pytest.raises(AssertionError):
             a = VAEGAN(conf)

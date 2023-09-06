@@ -19,5 +19,6 @@ class CIWAEConfig(VAEConfig):
     number_samples: int = 10
     beta: float = 0.5
 
-    def __post_init_post_parse__(self):
+    def __post_init__(self):
+        super().__post_init__()
         assert 0 <= self.beta <= 1, f"Beta parameter must be in [0-1]. Got {self.beta}."

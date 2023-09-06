@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="pythae",
-    version="0.1.1",
+    version="0.1.2",
     author="Clement Chadebec (HekA team INRIA)",
     author_email="clement.chadebec@inria.fr",
     description="Unifying Generative Autoencoders in Python",
@@ -29,7 +29,7 @@ setup(
         "cloudpickle>=2.1.0",
         "imageio",
         "numpy>=1.19",
-        "pydantic==1.8.2",
+        "pydantic>=2.0",
         "scikit-learn",
         "scipy>=1.7.1",
         "torch>=1.10.1",

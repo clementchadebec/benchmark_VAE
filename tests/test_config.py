@@ -138,7 +138,7 @@ class Test_Save_Model_JSON_from_Config:
 
     def test_save_json(self, tmpdir, training_configs):
         tmpdir.mkdir("dummy_folder")
-        dir_path = dir_path = os.path.join(tmpdir, "dummy_folder")
+        dir_path = os.path.join(tmpdir, "dummy_folder")
 
         training_configs.save_json(dir_path, "dummy_json")
 

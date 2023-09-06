@@ -15,7 +15,8 @@ class PlanarFlowConfig(BaseNFConfig):
 
     activation: str = "tanh"
 
-    def __post_init_post_parse__(self):
+    def __post_init__(self):
+        super().__post_init__()
         assert self.activation in ["linear", "tanh", "elu"], (
             f"'{self.activation}' doesn't correspond to an activation handled by the model. "
             "Available activations ['linear', 'tanh', 'elu']"
