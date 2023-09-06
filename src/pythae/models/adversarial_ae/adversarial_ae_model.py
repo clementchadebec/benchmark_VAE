@@ -154,7 +154,7 @@ class Adversarial_AE(VAE):
 
         if self.model_config.reconstruction_loss == "mse":
 
-            recon_loss = F.mse_loss(
+            recon_loss = 0.5 * F.mse_loss(
                 recon_x.reshape(x.shape[0], -1),
                 x.reshape(x.shape[0], -1),
                 reduction="none",
