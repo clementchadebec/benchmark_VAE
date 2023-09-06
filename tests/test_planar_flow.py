@@ -5,6 +5,7 @@ import numpy as np
 import pytest
 import torch
 
+from pydantic import ValidationError
 from pythae.data.datasets import BaseDataset
 from pythae.models import AutoModel
 from pythae.models.base.base_utils import ModelOutput
@@ -46,7 +47,7 @@ class Test_Model_Building:
             model = PlanarFlow(model_configs_no_input_output_dim)
 
     def test_raises_wrong_activation(self):
-        with pytest.raises(AssertionError):
+        with pytest.raises(ValidationError):
             conf = PlanarFlowConfig(input_dim=(1,), activation="relu")
 
 

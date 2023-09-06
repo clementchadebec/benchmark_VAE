@@ -98,7 +98,7 @@ class Test_Model_Building:
         conf = VAEGANConfig(
             input_dim=(1, 2, 18),
             latent_dim=5,
-            reconstruction_layer=np.random.randint(1, 5),
+            reconstruction_layer=5 + np.random.randint(1, 3),
         )
         with pytest.raises(AssertionError):
             a = VAEGAN(conf)
