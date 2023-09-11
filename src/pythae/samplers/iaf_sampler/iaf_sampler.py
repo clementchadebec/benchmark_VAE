@@ -64,17 +64,11 @@ class IAFSampler(BaseSampler):
 
         Args:
             train_data (torch.Tensor): The train data needed to retreive the training embeddings
-                    and fit the mixture in the latent space. Must be of shape n_imgs x im_channels x
-                    ... and in range [0-1]
+                    and fit the flows in the latent space.
             eval_data (torch.Tensor): The train data needed to retreive the evaluation embeddings
-                    and fit the mixture in the latent space. Must be of shape n_imgs x im_channels x
-                    ... and in range [0-1]
+                    and fit the flows in the latent space.
             training_config (BaseTrainerConfig): the training config to use to fit the flow.
         """
-
-        assert (
-            train_data.max() >= 1 and train_data.min() >= 0
-        ), "Train data must in the range [0-1]"
 
         data_processor = DataProcessor()
         train_data = data_processor.process_data(train_data).to(self.device)
@@ -107,10 +101,6 @@ class IAFSampler(BaseSampler):
         eval_dataset = None
 
         if eval_data is not None:
-
-            assert (
-                eval_data.max() >= 1 and eval_data.min() >= 0
-            ), "Eval data must in the range [0-1]"
 
             eval_data = data_processor.process_data(eval_data).to(self.device)
             eval_dataset = data_processor.to_dataset(eval_data)

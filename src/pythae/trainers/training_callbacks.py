@@ -140,10 +140,6 @@ class CallbackHandler:
     def callback_list(self):
         return "\n".join(cb.__class__.__name__ for cb in self.callbacks)
 
-    @property
-    def callback_list(self):
-        return "\n".join(cb.__class__.__name__ for cb in self.callbacks)
-
     def on_init_end(self, training_config: BaseTrainerConfig, **kwargs):
         self.call_event("on_init_end", training_config, **kwargs)
 
