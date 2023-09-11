@@ -1,9 +1,9 @@
 import logging
 import os
+from typing import Any, Dict
 
 import numpy as np
 import torch
-from typing import Any, Dict
 from imageio import imwrite
 
 from ...models import BaseAE

@@ -1,11 +1,11 @@
 import os
 import shutil
+from typing import Union
 
-import torch
 import numpy as np
+import torch
 from torch.distributions import MultivariateNormal
 from torch.utils.data import DataLoader, Dataset
-from typing import Union
 
 from ...data.datasets import collate_dataset_output
 from ...data.preprocessors import DataProcessor
@@ -60,16 +60,21 @@ class MAFSampler(BaseSampler):
         self.flow_contained_model.to(self.device)
 
     def fit(
-        self, train_data: Union[torch.Tensor, np.ndarray, Dataset], eval_data: Union[torch.Tensor, np.ndarray, Dataset, None]=None, training_config: BaseTrainerConfig = None
+        self,
+        train_data: Union[torch.Tensor, np.ndarray, Dataset],
+        eval_data: Union[torch.Tensor, np.ndarray, Dataset, None] = None,
+        training_config: BaseTrainerConfig = None,
+        batch_size: int = 64,
     ):
         """Method to fit the sampler from the training data
 
         Args:
-            train_data (Union[torch.Tensor, np.ndarray, Dataset]): The train data needed to 
+            train_data (Union[torch.Tensor, np.ndarray, Dataset]): The train data needed to
                 retrieve the training embeddings and fit the flows in the latent space.
-            eval_data (Union[torch.Tensor, np.ndarray, Dataset]): The train data needed to retrieve 
+            eval_data (Union[torch.Tensor, np.ndarray, Dataset]): The train data needed to retrieve
                 the evaluation embeddings and fit the flows in the latent space.
             training_config (BaseTrainerConfig): the training config to use to fit the flow.
+            batch_size (int): The batch size to use to retrieve the embeddings. Default: 64.
         """
 
         data_processor = DataProcessor()
@@ -82,7 +87,7 @@ class MAFSampler(BaseSampler):
 
         train_loader = DataLoader(
             dataset=train_dataset,
-            batch_size=100,
+            batch_size=batch_size,
             shuffle=False,
             collate_fn=collate_dataset_output,
         )
@@ -120,7 +125,7 @@ class MAFSampler(BaseSampler):
 
             eval_loader = DataLoader(
                 dataset=eval_dataset,
-                batch_size=100,
+                batch_size=batch_size,
                 shuffle=False,
                 collate_fn=collate_dataset_output,
             )

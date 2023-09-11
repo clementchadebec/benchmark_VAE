@@ -1,8 +1,8 @@
 import logging
-
-import torch
-import numpy as np
 from typing import Union
+
+import numpy as np
+import torch
 from sklearn import mixture
 from torch.utils.data import DataLoader, Dataset
 
@@ -46,12 +46,15 @@ class GaussianMixtureSampler(BaseSampler):
 
         self.n_components = sampler_config.n_components
 
-    def fit(self, train_data: Union[torch.Tensor, np.ndarray, Dataset], **kwargs):
+    def fit(
+        self, train_data: Union[torch.Tensor, np.ndarray, Dataset], batch_size: int = 64
+    ):
         """Method to fit the sampler from the training data
 
         Args:
-            train_data (Union[torch.Tensor, np.ndarray, Dataset]): The train data needed to 
+            train_data (Union[torch.Tensor, np.ndarray, Dataset]): The train data needed to
                 retrieve the training embeddings and fit the mixture in the latent space.
+            batch_size (int): The batch size to use to retrieve the embeddings. Default: 64.
         """
         self.is_fitted = True
 
@@ -65,7 +68,7 @@ class GaussianMixtureSampler(BaseSampler):
 
         train_loader = DataLoader(
             dataset=train_dataset,
-            batch_size=100,
+            batch_size=batch_size,
             shuffle=False,
             collate_fn=collate_dataset_output,
         )
