@@ -47,7 +47,7 @@ class GaussianMixtureSampler(BaseSampler):
         self.n_components = sampler_config.n_components
 
     def fit(
-        self, train_data: Union[torch.Tensor, np.ndarray, Dataset], batch_size: int = 64
+        self, train_data: Union[torch.Tensor, np.ndarray, Dataset], batch_size: int = 64, **kwargs
     ):
         """Method to fit the sampler from the training data
 
