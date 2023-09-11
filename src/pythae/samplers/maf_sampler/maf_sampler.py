@@ -1,9 +1,11 @@
 import os
 import shutil
+from typing import Union
 
+import numpy as np
 import torch
 from torch.distributions import MultivariateNormal
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Dataset
 
 from ...data.datasets import collate_dataset_output
 from ...data.preprocessors import DataProcessor
@@ -58,25 +60,35 @@ class MAFSampler(BaseSampler):
         self.flow_contained_model.to(self.device)
 
     def fit(
-        self, train_data, eval_data=None, training_config: BaseTrainerConfig = None
+        self,
+        train_data: Union[torch.Tensor, np.ndarray, Dataset],
+        eval_data: Union[torch.Tensor, np.ndarray, Dataset, None] = None,
+        training_config: BaseTrainerConfig = None,
+        batch_size: int = 64,
     ):
         """Method to fit the sampler from the training data
 
         Args:
-            train_data (torch.Tensor): The train data needed to retreive the training embeddings
-                    and fit the flows in the latent space.
-            eval_data (torch.Tensor): The train data needed to retreive the evaluation embeddings
-                    and fit the flows in the latent space.
+            train_data (Union[torch.Tensor, np.ndarray, Dataset]): The train data needed to
+                retrieve the training embeddings and fit the flows in the latent space.
+            eval_data (Union[torch.Tensor, np.ndarray, Dataset]): The train data needed to retrieve
+                the evaluation embeddings and fit the flows in the latent space.
             training_config (BaseTrainerConfig): the training config to use to fit the flow.
+            batch_size (int): The batch size to use to retrieve the embeddings. Default: 64.
         """
 
         data_processor = DataProcessor()
-        train_data = data_processor.process_data(train_data).to(self.device)
-        train_dataset = data_processor.to_dataset(train_data)
+        if not isinstance(train_data, Dataset):
+            train_data = data_processor.process_data(train_data)
+            train_dataset = data_processor.to_dataset(train_data)
+
+        else:
+            train_dataset = train_data
+
         train_loader = DataLoader(
             dataset=train_dataset,
-            batch_size=100,
-            shuffle=True,
+            batch_size=batch_size,
+            shuffle=False,
             collate_fn=collate_dataset_output,
         )
 
@@ -85,12 +97,14 @@ class MAFSampler(BaseSampler):
         try:
             with torch.no_grad():
                 for _, inputs in enumerate(train_loader):
+                    inputs = self._set_inputs_to_device(inputs)
                     encoder_output = self.model(inputs)
                     z_ = encoder_output.z
                     z.append(z_)
 
         except RuntimeError:
             for _, inputs in enumerate(train_loader):
+                inputs = self._set_inputs_to_device(inputs)
                 encoder_output = self.model(inputs)
                 z_ = encoder_output.z.detach()
                 z.append(z_)
@@ -102,11 +116,16 @@ class MAFSampler(BaseSampler):
 
         if eval_data is not None:
 
-            eval_data = data_processor.process_data(eval_data).to(self.device)
-            eval_dataset = data_processor.to_dataset(eval_data)
+            if not isinstance(eval_data, Dataset):
+                eval_data = data_processor.process_data(eval_data)
+                eval_dataset = data_processor.to_dataset(eval_data)
+
+            else:
+                eval_dataset = eval_data
+
             eval_loader = DataLoader(
                 dataset=eval_dataset,
-                batch_size=100,
+                batch_size=batch_size,
                 shuffle=False,
                 collate_fn=collate_dataset_output,
             )
@@ -115,12 +134,14 @@ class MAFSampler(BaseSampler):
             try:
                 with torch.no_grad():
                     for _, inputs in enumerate(eval_loader):
+                        inputs = self._set_inputs_to_device(inputs)
                         encoder_output = self.model(inputs)
                         z_ = encoder_output.z
                         z.append(z_)
 
             except RuntimeError:
                 for _, inputs in enumerate(eval_loader):
+                    inputs = self._set_inputs_to_device(inputs)
                     encoder_output = self.model(inputs)
                     z_ = encoder_output.z.detach()
                     z.append(z_)

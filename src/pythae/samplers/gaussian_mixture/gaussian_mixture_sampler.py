@@ -1,8 +1,10 @@
 import logging
+from typing import Union
 
+import numpy as np
 import torch
 from sklearn import mixture
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Dataset
 
 from ...data.datasets import collate_dataset_output
 from ...data.preprocessors import DataProcessor
@@ -44,21 +46,32 @@ class GaussianMixtureSampler(BaseSampler):
 
         self.n_components = sampler_config.n_components
 
-    def fit(self, train_data, **kwargs):
+    def fit(
+        self,
+        train_data: Union[torch.Tensor, np.ndarray, Dataset],
+        batch_size: int = 64,
+        **kwargs,
+    ):
         """Method to fit the sampler from the training data
 
         Args:
-            train_data (torch.Tensor): The train data needed to retreive the training embeddings
-                    and fit the mixture in the latent space.
+            train_data (Union[torch.Tensor, np.ndarray, Dataset]): The train data needed to
+                retrieve the training embeddings and fit the mixture in the latent space.
+            batch_size (int): The batch size to use to retrieve the embeddings. Default: 64.
         """
         self.is_fitted = True
 
-        data_processor = DataProcessor()
-        train_data = data_processor.process_data(train_data).to(self.device)
-        train_dataset = data_processor.to_dataset(train_data)
+        if not isinstance(train_data, Dataset):
+            data_processor = DataProcessor()
+            train_data = data_processor.process_data(train_data)
+            train_dataset = data_processor.to_dataset(train_data)
+
+        else:
+            train_dataset = train_data
+
         train_loader = DataLoader(
             dataset=train_dataset,
-            batch_size=100,
+            batch_size=batch_size,
             shuffle=False,
             collate_fn=collate_dataset_output,
         )
@@ -67,11 +80,13 @@ class GaussianMixtureSampler(BaseSampler):
         try:
             with torch.no_grad():
                 for _, inputs in enumerate(train_loader):
+                    inputs = self._set_inputs_to_device(inputs)
                     z_ = self.model(inputs).z
                     z.append(z_)
 
         except RuntimeError:
             for _, inputs in enumerate(train_loader):
+                inputs = self._set_inputs_to_device(inputs)
                 z_ = self.model(inputs).z.detach()
                 z.append(z_)
 
