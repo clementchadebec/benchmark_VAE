@@ -49,14 +49,9 @@ class GaussianMixtureSampler(BaseSampler):
 
         Args:
             train_data (torch.Tensor): The train data needed to retreive the training embeddings
-                    and fit the mixture in the latent space. Must be of shape n_imgs x im_channels x ...
-                    and in range [0-1]
+                    and fit the mixture in the latent space.
         """
         self.is_fitted = True
-
-        assert (
-            train_data.max() <= 1 and train_data.min() >= 0
-        ), "Train data must in the range [0-1]"
 
         data_processor = DataProcessor()
         train_data = data_processor.process_data(train_data).to(self.device)
