@@ -55,7 +55,7 @@ class GaussianMixtureSampler(BaseSampler):
         self.is_fitted = True
 
         assert (
-            train_data.max() >= 1 and train_data.min() >= 0
+            train_data.max() <= 1 and train_data.min() >= 0
         ), "Train data must in the range [0-1]"
 
         data_processor = DataProcessor()
