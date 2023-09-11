@@ -3,6 +3,7 @@ import os
 
 import numpy as np
 import torch
+from typing import Any, Dict
 from imageio import imwrite
 
 from ...models import BaseAE
@@ -93,3 +94,20 @@ class BaseSampler:
 
         img = img.astype("uint8")
         imwrite(os.path.join(dir_path, f"{img_name}"), img)
+
+    def _set_inputs_to_device(self, inputs: Dict[str, Any]):
+
+        inputs_on_device = inputs
+
+        if self.device == "cuda":
+            cuda_inputs = dict.fromkeys(inputs)
+
+            for key in inputs.keys():
+                if torch.is_tensor(inputs[key]):
+                    cuda_inputs[key] = inputs[key].cuda()
+
+                else:
+                    cuda_inputs[key] = inputs[key]
+            inputs_on_device = cuda_inputs
+
+        return inputs_on_device

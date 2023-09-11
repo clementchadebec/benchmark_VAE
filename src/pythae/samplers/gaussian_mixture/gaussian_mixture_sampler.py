@@ -57,7 +57,7 @@ class GaussianMixtureSampler(BaseSampler):
 
         if not isinstance(train_data, Dataset):
             data_processor = DataProcessor()
-            train_data = data_processor.process_data(train_data).to(self.device)
+            train_data = data_processor.process_data(train_data)
             train_dataset = data_processor.to_dataset(train_data)
 
         else:
@@ -74,11 +74,13 @@ class GaussianMixtureSampler(BaseSampler):
         try:
             with torch.no_grad():
                 for _, inputs in enumerate(train_loader):
+                    inputs = self._set_inputs_to_device(inputs)
                     z_ = self.model(inputs).z
                     z.append(z_)
 
         except RuntimeError:
             for _, inputs in enumerate(train_loader):
+                inputs = self._set_inputs_to_device(inputs)
                 z_ = self.model(inputs).z.detach()
                 z.append(z_)
 

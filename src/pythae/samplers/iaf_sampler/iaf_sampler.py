@@ -73,7 +73,7 @@ class IAFSampler(BaseSampler):
         """
         data_processor = DataProcessor()
         if not isinstance(train_data, Dataset):
-            train_data = data_processor.process_data(train_data).to(self.device)
+            train_data = data_processor.process_data(train_data)
             train_dataset = data_processor.to_dataset(train_data)
 
         else:
@@ -91,12 +91,14 @@ class IAFSampler(BaseSampler):
         try:
             with torch.no_grad():
                 for _, inputs in enumerate(train_loader):
+                    inputs = self._set_inputs_to_device(inputs)
                     encoder_output = self.model(inputs)
                     z_ = encoder_output.z
                     z.append(z_)
 
         except RuntimeError:
             for _, inputs in enumerate(train_loader):
+                inputs = self._set_inputs_to_device(inputs)
                 encoder_output = self.model(inputs)
                 z_ = encoder_output.z.detach()
                 z.append(z_)
@@ -109,7 +111,7 @@ class IAFSampler(BaseSampler):
         if eval_data is not None:
 
             if not isinstance(eval_data, Dataset):
-                eval_data = data_processor.process_data(eval_data).to(self.device)
+                eval_data = data_processor.process_data(eval_data)
                 eval_dataset = data_processor.to_dataset(eval_data)
 
             else:
@@ -127,12 +129,14 @@ class IAFSampler(BaseSampler):
             try:
                 with torch.no_grad():
                     for _, inputs in enumerate(eval_loader):
+                        inputs = self._set_inputs_to_device(inputs)
                         encoder_output = self.model(inputs)
                         z_ = encoder_output.z
                         z.append(z_)
 
             except RuntimeError:
                 for _, inputs in enumerate(eval_loader):
+                    inputs = self._set_inputs_to_device(inputs)
                     encoder_output = self.model(inputs)
                     z_ = encoder_output.z.detach()
                     z.append(z_)
