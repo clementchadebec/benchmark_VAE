@@ -3,7 +3,9 @@ import shutil
 
 import torch
 import torch.nn.functional as F
-from torch.utils.data import DataLoader
+import numpy as np
+from typing import Union
+from torch.utils.data import DataLoader, Dataset
 
 from ...data.datasets import collate_dataset_output
 from ...data.preprocessors import DataProcessor
@@ -58,25 +60,30 @@ class PixelCNNSampler(BaseSampler):
         self.pixelcnn_model = PixelCNN(model_config=pixelcnn_config).to(self.device)
 
     def fit(
-        self, train_data, eval_data=None, training_config: BaseTrainerConfig = None
+        self, train_data: Union[torch.Tensor, np.ndarray, Dataset], eval_data: Union[torch.Tensor, np.ndarray, Dataset, None]=None, training_config: BaseTrainerConfig = None
     ):
         """Method to fit the sampler from the training data
 
         Args:
-            train_data (torch.Tensor): The train data needed to retreive the training embeddings
-                    and fit the PixelCNN model in the latent space.
-            eval_data (torch.Tensor): The train data needed to retreive the evaluation embeddings
-                    and fit the PixelCNN model in the latent space.
+            train_data (Union[torch.Tensor, np.ndarray, Dataset]): The train data needed to 
+                retrieve the training embeddings and fit the PixelCNN model in the latent space.
+            eval_data (Union[torch.Tensor, np.ndarray, Dataset]): The train data needed to retrieve 
+                the evaluation embeddings and fit the PixelCNN model in the latent space.
             training_config (BaseTrainerConfig): the training config to use to fit the flow.
         """
 
         data_processor = DataProcessor()
-        train_data = data_processor.process_data(train_data).to(self.device)
-        train_dataset = data_processor.to_dataset(train_data)
+        if not isinstance(train_data, Dataset):
+            train_data = data_processor.process_data(train_data).to(self.device)
+            train_dataset = data_processor.to_dataset(train_data)
+
+        else:
+            train_dataset = train_data
+
         train_loader = DataLoader(
             dataset=train_dataset,
             batch_size=100,
-            shuffle=True,
+            shuffle=False,
             collate_fn=collate_dataset_output,
         )
 
@@ -99,8 +106,13 @@ class PixelCNNSampler(BaseSampler):
 
         if eval_data is not None:
 
-            eval_data = data_processor.process_data(eval_data).to(self.device)
-            eval_dataset = data_processor.to_dataset(eval_data)
+            if not isinstance(eval_data, Dataset):
+                eval_data = data_processor.process_data(eval_data).to(self.device)
+                eval_dataset = data_processor.to_dataset(eval_data)
+
+            else:
+                eval_dataset = eval_data
+
             eval_loader = DataLoader(
                 dataset=eval_dataset,
                 batch_size=100,

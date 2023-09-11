@@ -12,14 +12,19 @@ from pythae.samplers import (
     NormalSampler,
     NormalSamplerConfig,
 )
+from pythae.data.preprocessors import DataProcessor
 
 PATH = os.path.dirname(os.path.abspath(__file__))
 
 
-@pytest.fixture
-def dummy_data():
+@pytest.fixture(
+        params=[
+            torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample")).data,
+            DataProcessor().to_dataset(torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample")).data)]
+)
+def dummy_data(request):
     ### 3 imgs from mnist that are used to simulated generated ones
-    return torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample")).data
+    return request.param
 
 
 @pytest.fixture(
