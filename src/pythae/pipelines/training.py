@@ -51,8 +51,8 @@ class TrainingPipeline(Pipeline):
         if training_config is None:
             if model.model_name == "RAE_L2":
                 training_config = CoupledOptimizerTrainerConfig(
-                    encoder_optim_decay=0,
-                    decoder_optim_decay=model.model_config.reg_weight,
+                    encoder_optimizer_params={"weight_decay": 0},
+                    decoder_optimizer_params={"weight_decay": model.model_config.reg_weight},
                 )
 
             elif (
@@ -153,59 +153,69 @@ class TrainingPipeline(Pipeline):
 
     def __call__(
         self,
-        train_data: Union[np.ndarray, torch.Tensor, torch.utils.data.Dataset],
-        eval_data: Union[np.ndarray, torch.Tensor, torch.utils.data.Dataset] = None,
+        train_data: Union[
+            np.ndarray,
+            torch.Tensor,
+            torch.utils.data.Dataset,
+            torch.utils.data.DataLoader,
+        ] = None,
+        eval_data: Union[
+            np.ndarray,
+            torch.Tensor,
+            torch.utils.data.Dataset,
+            torch.utils.data.DataLoader,
+        ] = None,
         callbacks: List[TrainingCallback] = None,
     ):
         """
         Launch the model training on the provided data.
 
         Args:
-            training_data (Union[~numpy.ndarray, ~torch.Tensor]): The training data as a
-                :class:`numpy.ndarray` or :class:`torch.Tensor` of shape (mini_batch x
-                n_channels x ...)
+            train_data: The training data or DataLoader.
 
-            eval_data (Optional[Union[~numpy.ndarray, ~torch.Tensor]]): The evaluation data as a
-                :class:`numpy.ndarray` or :class:`torch.Tensor` of shape (mini_batch x
-                n_channels x ...). If None, only uses train_fata for training. Default: None.
+            eval_data: The evaluation data or DataLoader. If None, only uses train_data for training. Default: None
 
             callbacks (List[~pythae.trainers.training_callbacks.TrainingCallbacks]):
                 A list of callbacks to use during training.
         """
 
-        if isinstance(train_data, np.ndarray) or isinstance(train_data, torch.Tensor):
+        # Initialize variables for datasets and dataloaders
+        train_dataset, eval_dataset = None, None
+        train_dataloader, eval_dataloader = None, None
 
+        if isinstance(train_data, torch.utils.data.DataLoader):
+            train_dataloader = train_data
+        elif isinstance(train_data, (np.ndarray, torch.Tensor)):
             logger.info("Preprocessing train data...")
             train_data = self.data_processor.process_data(train_data)
             train_dataset = self.data_processor.to_dataset(train_data)
-
+            logger.info("Checking train dataset...")
+            self._check_dataset(train_dataset)
         else:
             train_dataset = train_data
-
-        logger.info("Checking train dataset...")
-        self._check_dataset(train_dataset)
+            logger.info("Checking train dataset...")
+            self._check_dataset(train_dataset)
 
         if eval_data is not None:
-            if isinstance(eval_data, np.ndarray) or isinstance(eval_data, torch.Tensor):
+            if isinstance(eval_data, torch.utils.data.DataLoader):
+                eval_dataloader = eval_data
+            elif isinstance(eval_data, (np.ndarray, torch.Tensor)):
                 logger.info("Preprocessing eval data...\n")
                 eval_data = self.data_processor.process_data(eval_data)
                 eval_dataset = self.data_processor.to_dataset(eval_data)
-
+                logger.info("Checking eval dataset...")
+                self._check_dataset(eval_dataset)
             else:
                 eval_dataset = eval_data
-
-            logger.info("Checking eval dataset...")
-            self._check_dataset(eval_dataset)
-
-        else:
-            eval_dataset = None
+                logger.info("Checking eval dataset...")
+                self._check_dataset(eval_dataset)
 
         if isinstance(self.training_config, CoupledOptimizerTrainerConfig):
             logger.info("Using Coupled Optimizer Trainer\n")
             trainer = CoupledOptimizerTrainer(
                 model=self.model,
-                train_dataset=train_dataset,
-                eval_dataset=eval_dataset,
+                train_dataset=train_dataloader or train_dataset,
+                eval_dataset=eval_dataloader or eval_dataset,
                 training_config=self.training_config,
                 callbacks=callbacks,
             )
@@ -214,8 +224,8 @@ class TrainingPipeline(Pipeline):
             logger.info("Using Adversarial Trainer\n")
             trainer = AdversarialTrainer(
                 model=self.model,
-                train_dataset=train_dataset,
-                eval_dataset=eval_dataset,
+                train_dataset=train_dataloader or train_dataset,
+                eval_dataset=eval_dataloader or eval_dataset,
                 training_config=self.training_config,
                 callbacks=callbacks,
             )
@@ -224,8 +234,8 @@ class TrainingPipeline(Pipeline):
             logger.info("Using Coupled Optimizer Adversarial Trainer\n")
             trainer = CoupledOptimizerAdversarialTrainer(
                 model=self.model,
-                train_dataset=train_dataset,
-                eval_dataset=eval_dataset,
+                train_dataset=train_dataloader or train_dataset,
+                eval_dataset=eval_dataloader or eval_dataset,
                 training_config=self.training_config,
                 callbacks=callbacks,
             )
@@ -234,8 +244,8 @@ class TrainingPipeline(Pipeline):
             logger.info("Using Base Trainer\n")
             trainer = BaseTrainer(
                 model=self.model,
-                train_dataset=train_dataset,
-                eval_dataset=eval_dataset,
+                train_dataset=train_dataloader or train_dataset,
+                eval_dataset=eval_dataloader or eval_dataset,
                 training_config=self.training_config,
                 callbacks=callbacks,
             )
@@ -243,5 +253,4 @@ class TrainingPipeline(Pipeline):
             raise ValueError("The provided training config is not supported.")
 
         self.trainer = trainer
-
         trainer.train()

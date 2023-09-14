@@ -3,14 +3,14 @@ import datetime
 import logging
 import os
 from copy import deepcopy
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 import torch
 import torch.distributed as dist
 import torch.optim as optim
 import torch.optim.lr_scheduler as lr_scheduler
 from torch.nn.parallel import DistributedDataParallel as DDP
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Dataset
 from torch.utils.data.distributed import DistributedSampler
 
 from ...customexception import ModelError
@@ -56,8 +56,8 @@ class BaseTrainer:
     def __init__(
         self,
         model: BaseAE,
-        train_dataset: BaseDataset,
-        eval_dataset: Optional[BaseDataset] = None,
+        train_dataset: Union[BaseDataset, DataLoader],
+        eval_dataset: Optional[Union[BaseDataset, DataLoader]] = None,
         training_config: Optional[BaseTrainerConfig] = None,
         callbacks: List[TrainingCallback] = None,
     ):
@@ -119,11 +119,24 @@ class BaseTrainer:
         self.eval_dataset = eval_dataset
 
         # Define the loaders
-        train_loader = self.get_train_dataloader(train_dataset)
+        if isinstance(train_dataset, DataLoader):
+            train_loader = train_dataset
+            logger.warn(
+                "Using the provided train dataloader! Carefull this may overwrite some "
+                "parameters provided in your training config."
+            )
+        else:
+            train_loader = self.get_train_dataloader(train_dataset)
 
         if eval_dataset is not None:
-            eval_loader = self.get_eval_dataloader(eval_dataset)
-
+            if isinstance(eval_dataset, DataLoader):
+                eval_loader = eval_dataset
+                logger.warn(
+                    "Using the provided eval dataloader! Carefull this may overwrite some "
+                    "parameters provided in your training config."
+                )
+            else:
+                eval_loader = self.get_eval_dataloader(eval_dataset)
         else:
             logger.info(
                 "! No eval dataset provided ! -> keeping best model on train.\n"
