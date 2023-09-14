@@ -6,7 +6,7 @@ from torch.utils.data import Dataset, DataLoader
 
 from pythae.customexception import DatasetError
 from pythae.data.datasets import DatasetOutput
-from pythae.models import VAE, FactorVAE, FactorVAEConfig, VAEConfig
+from pythae.models import VAE, VAEConfig, Adversarial_AE, Adversarial_AE_Config, RAE_L2, RAE_L2_Config, VAEGAN, VAEGANConfig
 from pythae.pipelines import *
 from pythae.samplers import NormalSampler, NormalSamplerConfig
 from pythae.trainers import BaseTrainerConfig
@@ -69,18 +69,31 @@ class Test_Pipeline_Standalone:
         return CustomWrongOutputDataset(
             os.path.join(PATH, "data/mnist_clean_train_dataset_sample")
         )
+    
+    @pytest.fixture(
+            params=[
+                (VAE, VAEConfig),
+                (Adversarial_AE, Adversarial_AE_Config),
+                (RAE_L2, RAE_L2_Config),
+                (VAEGAN, VAEGANConfig)
+            ]
+    )
+    def model(self, request, train_dataset):
+        model = request.param[0](request.param[1](input_dim=tuple(train_dataset.data[0].shape), latent_dim=2))
+        
+        return model
 
     @pytest.fixture
     def train_dataloader(self, custom_train_dataset):
         return DataLoader(dataset=custom_train_dataset, batch_size=32)
 
     @pytest.fixture
-    def training_pipeline(self, train_dataset):
+    def training_pipeline(self, model, train_dataset):
         vae_config = VAEConfig(
             input_dim=tuple(train_dataset.data[0].shape), latent_dim=2
         )
         vae = VAE(vae_config)
-        pipe = TrainingPipeline(model=vae)
+        pipe = TrainingPipeline(model=model)
         return pipe
 
     def test_base_pipeline(self):
@@ -88,7 +101,7 @@ class Test_Pipeline_Standalone:
             pipe = Pipeline()
             pipe()
 
-    def test_training_pipeline(self, tmpdir, training_pipeline, train_dataset):
+    def test_training_pipeline(self, tmpdir, training_pipeline, train_dataset, model):
 
         with pytest.raises(AssertionError):
             pipeline = TrainingPipeline(
@@ -100,7 +113,10 @@ class Test_Pipeline_Standalone:
         training_pipeline.training_config.output_dir = dir_path
         training_pipeline.training_config.num_epochs = 1
         training_pipeline(train_dataset.data)
-        assert isinstance(training_pipeline.model, VAE)
+        assert isinstance(training_pipeline.model, model.__class__)
+
+        if model.__class__ == RAE_L2:
+            assert training_pipeline.trainer.decoder_optimizer.state_dict()['param_groups'][0]['weight_decay'] == model.model_config.reg_weight
 
     def test_training_pipeline_wrong_output_dataset(
         self,
