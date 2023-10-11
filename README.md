@@ -360,8 +360,8 @@ To do so, you can build a python script that will then be launched by a launcher
 ...     eval_dataloader_num_workers=8,
 ...     dist_backend="nccl", # distributed backend
 ...     world_size=8 # number of gpus to use (n_nodes x n_gpus_per_node),
-...     rank=5 # process/gpu id,
-...     local_rank=1 # node id,
+...     rank=5 # global gpu id,
+...     local_rank=1 # gpu id within a node,
 ...     master_addr="localhost" # master address,
 ...     master_port="12345" # master port,
 ... )
