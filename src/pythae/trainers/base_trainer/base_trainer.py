@@ -393,22 +393,27 @@ class BaseTrainer:
         set_seed(self.training_config.seed)
 
         # set optimizer
-        self.set_optimizer()
+        if not hasattr(self,'optimizer'):
+            self.set_optimizer()
 
         # set scheduler
-        self.set_scheduler()
+        if not hasattr(self,'scheduler'):
+            self.set_scheduler()
 
         # create folder for saving
-        self._set_output_dir()
+        if not hasattr(self,'training_dir'):
+            self._set_output_dir()
 
         # set callbacks
-        self._setup_callbacks()
+        if not hasattr(self,'callback_handler'):
+            self._setup_callbacks()
 
-    def train(self, log_output_dir: str = None):
+    def train(self, log_output_dir: str = None, start_epoch: int = 1):
         """This function is the main training function
 
         Args:
             log_output_dir (str): The path in which the log will be stored
+            start_epoch (int): The starting epoch for training. Useful to continue at correct epoch if resuming training
         """
 
         self.prepare_training()
@@ -447,7 +452,7 @@ class BaseTrainer:
         best_train_loss = 1e10
         best_eval_loss = 1e10
 
-        for epoch in range(1, self.training_config.num_epochs + 1):
+        for epoch in range(start_epoch, self.training_config.num_epochs + start_epoch):
 
             self.callback_handler.on_epoch_begin(
                 training_config=self.training_config,
