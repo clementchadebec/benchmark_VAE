@@ -11,7 +11,6 @@ from .vq_vae_config import VQVAEConfig
 
 class Quantizer(nn.Module):
     def __init__(self, model_config: VQVAEConfig):
-
         nn.Module.__init__(self)
 
         self.model_config = model_config
@@ -28,10 +27,9 @@ class Quantizer(nn.Module):
         )
 
     def forward(self, z: torch.Tensor, uses_ddp: bool = False):
-
         distances = (
             (z.reshape(-1, self.embedding_dim) ** 2).sum(dim=-1, keepdim=True)
-            + (self.embeddings.weight ** 2).sum(dim=-1)
+            + (self.embeddings.weight**2).sum(dim=-1)
             - 2 * z.reshape(-1, self.embedding_dim) @ self.embeddings.weight.T
         )
 
@@ -80,7 +78,6 @@ class Quantizer(nn.Module):
 
 class QuantizerEMA(nn.Module):
     def __init__(self, model_config: VQVAEConfig):
-
         nn.Module.__init__(self)
 
         self.model_config = model_config
@@ -103,10 +100,9 @@ class QuantizerEMA(nn.Module):
         self.register_buffer("embeddings", embeddings)
 
     def forward(self, z: torch.Tensor, uses_ddp: bool = False):
-
         distances = (
             (z.reshape(-1, self.embedding_dim) ** 2).sum(dim=-1, keepdim=True)
-            + (self.embeddings ** 2).sum(dim=-1)
+            + (self.embeddings**2).sum(dim=-1)
             - 2 * z.reshape(-1, self.embedding_dim) @ self.embeddings.T
         )
 
@@ -125,7 +121,6 @@ class QuantizerEMA(nn.Module):
         quantized = quantized.reshape_as(z)
 
         if self.training:
-
             n_i = torch.sum(one_hot_encoding, dim=0)
 
             if uses_ddp:

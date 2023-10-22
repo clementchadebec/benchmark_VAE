@@ -61,7 +61,6 @@ class BaseTrainer:
         training_config: Optional[BaseTrainerConfig] = None,
         callbacks: List[TrainingCallback] = None,
     ):
-
         if training_config is None:
             training_config = BaseTrainerConfig()
 
@@ -353,7 +352,6 @@ class BaseTrainer:
         return optim
 
     def _set_inputs_to_device(self, inputs: Dict[str, Any]):
-
         inputs_on_device = inputs
 
         if self.device == "cuda":
@@ -370,7 +368,6 @@ class BaseTrainer:
         return inputs_on_device
 
     def _optimizers_step(self, model_output=None):
-
         loss = model_output.loss
 
         self.optimizer.zero_grad()
@@ -448,7 +445,6 @@ class BaseTrainer:
         best_eval_loss = 1e10
 
         for epoch in range(1, self.training_config.num_epochs + 1):
-
             self.callback_handler.on_epoch_begin(
                 training_config=self.training_config,
                 epoch=epoch,
@@ -561,12 +557,10 @@ class BaseTrainer:
 
         with self.amp_context:
             for inputs in self.eval_loader:
-
                 inputs = self._set_inputs_to_device(inputs)
 
                 try:
                     with torch.no_grad():
-
                         model_output = self.model(
                             inputs,
                             epoch=epoch,
@@ -619,7 +613,6 @@ class BaseTrainer:
         epoch_loss = 0
 
         for inputs in self.train_loader:
-
             inputs = self._set_inputs_to_device(inputs)
 
             with self.amp_context:
@@ -712,7 +705,6 @@ class BaseTrainer:
         self.training_config.save_json(checkpoint_dir, "training_config")
 
     def predict(self, model: BaseAE):
-
         model.eval()
 
         with self.amp_context:

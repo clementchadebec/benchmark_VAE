@@ -43,7 +43,6 @@ class SVAE(VAE):
         encoder: Optional[BaseEncoder] = None,
         decoder: Optional[BaseDecoder] = None,
     ):
-
         VAE.__init__(self, model_config=model_config, encoder=encoder, decoder=decoder)
 
         self.model_name = "SVAE"
@@ -98,20 +97,14 @@ class SVAE(VAE):
         return output
 
     def loss_function(self, recon_x, x, loc, concentration, z):
-
         if self.model_config.reconstruction_loss == "mse":
-
-            recon_loss = (
-                0.5
-                * F.mse_loss(
-                    recon_x.reshape(x.shape[0], -1),
-                    x.reshape(x.shape[0], -1),
-                    reduction="none",
-                ).sum(dim=-1)
-            )
+            recon_loss = 0.5 * F.mse_loss(
+                recon_x.reshape(x.shape[0], -1),
+                x.reshape(x.shape[0], -1),
+                reduction="none",
+            ).sum(dim=-1)
 
         elif self.model_config.reconstruction_loss == "bce":
-
             recon_loss = F.binary_cross_entropy(
                 recon_x.reshape(x.shape[0], -1),
                 x.reshape(x.shape[0], -1),
@@ -143,14 +136,13 @@ class SVAE(VAE):
         return (term1 + term2 + term3).squeeze(-1)
 
     def _sample_von_mises(self, loc, concentration):
-
         # Generate uniformly on sphere
         v = torch.randn_like(loc[:, 1:])
         v = v / v.norm(dim=-1, keepdim=True)
 
         w = self._acc_rej_steps(m=loc.shape[-1], k=concentration)
 
-        w_ = torch.sqrt(torch.clamp(1 - (w ** 2), 1e-10))
+        w_ = torch.sqrt(torch.clamp(1 - (w**2), 1e-10))
         z = torch.cat((w, w_ * v), dim=-1)
 
         return self._householder_rotation(loc, z)
@@ -164,10 +156,9 @@ class SVAE(VAE):
         return z - 2 * u * (u * z).sum(dim=-1, keepdim=True)
 
     def _acc_rej_steps(self, m: int, k: torch.Tensor, device: str = "cpu"):
-
         batch_size = k.shape[0]
 
-        c = torch.sqrt(4 * k ** 2 + (m - 1) ** 2)
+        c = torch.sqrt(4 * k**2 + (m - 1) ** 2)
 
         b = (-2 * k + c) / (m - 1)
         a = (m - 1 + 2 * k + c) / 4
@@ -183,7 +174,6 @@ class SVAE(VAE):
         i = 0
 
         while stopping_mask.sum() > 0 and i < 100:
-
             i += 1
 
             eps = (
@@ -234,7 +224,6 @@ class SVAE(VAE):
             log_p_x = []
 
             for j in range(n_full_batch):
-
                 x_rep = torch.cat(batch_size * [x])
 
                 encoder_output = self.encoder(x_rep)
@@ -270,7 +259,6 @@ class SVAE(VAE):
                 recon_x = self.decoder(z)["reconstruction"]
 
                 if self.model_config.reconstruction_loss == "mse":
-
                     log_p_x_given_z = -0.5 * F.mse_loss(
                         recon_x.reshape(x_rep.shape[0], -1),
                         x_rep.reshape(x_rep.shape[0], -1),
@@ -282,7 +270,6 @@ class SVAE(VAE):
                     )  # decoding distribution is assumed unit variance  N(mu, I)
 
                 elif self.model_config.reconstruction_loss == "bce":
-
                     log_p_x_given_z = -F.binary_cross_entropy(
                         recon_x.reshape(x_rep.shape[0], -1),
                         x_rep.reshape(x_rep.shape[0], -1),

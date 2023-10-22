@@ -58,7 +58,6 @@ class VAEGAN(VAE):
         decoder: Optional[BaseDecoder] = None,
         discriminator: Optional[BaseDiscriminator] = None,
     ):
-
         VAE.__init__(self, model_config=model_config, encoder=encoder, decoder=decoder)
 
         if discriminator is None:
@@ -76,7 +75,6 @@ class VAEGAN(VAE):
             self.model_config.uses_default_discriminator = True
 
         else:
-
             self.model_config.uses_default_discriminator = False
 
         self.set_discriminator(discriminator)
@@ -175,7 +173,6 @@ class VAEGAN(VAE):
         return output
 
     def loss_function(self, recon_x, x, z, z_prior, mu, log_var):
-
         N = z.shape[0]  # batch size
 
         # KL between prior and posterior
@@ -192,14 +189,11 @@ class VAEGAN(VAE):
         )[f"embedding_layer_{self.reconstruction_layer}"]
 
         # MSE in feature space
-        recon_loss = (
-            0.5
-            * F.mse_loss(
-                true_discr_layer.reshape(N, -1),
-                recon_discr_layer.reshape(N, -1),
-                reduction="none",
-            ).sum(dim=-1)
-        )
+        recon_loss = 0.5 * F.mse_loss(
+            true_discr_layer.reshape(N, -1),
+            recon_discr_layer.reshape(N, -1),
+            reduction="none",
+        ).sum(dim=-1)
 
         encoder_loss = KLD + recon_loss
 
@@ -296,7 +290,6 @@ class VAEGAN(VAE):
 
     @classmethod
     def _load_custom_discriminator_from_folder(cls, dir_path):
-
         file_list = os.listdir(dir_path)
         cls._check_python_version_from_folder(dir_path=dir_path)
 
@@ -425,7 +418,6 @@ class VAEGAN(VAE):
             )
 
         else:
-
             if not model_config.uses_default_encoder:
                 _ = hf_hub_download(repo_id=hf_hub_path, filename="encoder.pkl")
                 encoder = cls._load_custom_encoder_from_folder(dir_path)

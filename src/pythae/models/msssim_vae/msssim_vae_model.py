@@ -40,7 +40,6 @@ class MSSSIM_VAE(VAE):
         encoder: Optional[BaseEncoder] = None,
         decoder: Optional[BaseDecoder] = None,
     ):
-
         VAE.__init__(self, model_config=model_config, encoder=encoder, decoder=decoder)
 
         self.model_name = "MSSSIM_VAE"
@@ -82,7 +81,6 @@ class MSSSIM_VAE(VAE):
         return output
 
     def loss_function(self, recon_x, x, mu, log_var, z):
-
         recon_loss = self.msssim(recon_x, x)
 
         KLD = -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp(), dim=-1)

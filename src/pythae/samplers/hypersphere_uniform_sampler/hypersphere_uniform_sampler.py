@@ -18,7 +18,6 @@ class HypersphereUniformSampler(BaseSampler):
     def __init__(
         self, model: BaseAE, sampler_config: HypersphereUniformSamplerConfig = None
     ):
-
         if sampler_config is None:
             sampler_config = HypersphereUniformSamplerConfig()
 

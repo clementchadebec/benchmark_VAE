@@ -47,12 +47,13 @@ class TrainingPipeline(Pipeline):
         model: Optional[BaseAE],
         training_config: Optional[BaseTrainerConfig] = None,
     ):
-
         if training_config is None:
             if model.model_name == "RAE_L2":
                 training_config = CoupledOptimizerTrainerConfig(
                     encoder_optimizer_params={"weight_decay": 0},
-                    decoder_optimizer_params={"weight_decay": model.model_config.reg_weight},
+                    decoder_optimizer_params={
+                        "weight_decay": model.model_config.reg_weight
+                    },
                 )
 
             elif (
@@ -68,7 +69,6 @@ class TrainingPipeline(Pipeline):
 
         elif model.model_name == "RAE_L2" or model.model_name == "PIWAE":
             if not isinstance(training_config, CoupledOptimizerTrainerConfig):
-
                 raise AssertionError(
                     "A 'CoupledOptimizerTrainerConfig' "
                     f"is expected for training a {model.model_name}"
@@ -85,7 +85,6 @@ class TrainingPipeline(Pipeline):
 
         elif model.model_name == "Adversarial_AE" or model.model_name == "FactorVAE":
             if not isinstance(training_config, AdversarialTrainerConfig):
-
                 raise AssertionError(
                     "A 'AdversarialTrainer' "
                     f"is expected for training a {model.model_name}"
@@ -95,7 +94,6 @@ class TrainingPipeline(Pipeline):
             if not isinstance(
                 training_config, CoupledOptimizerAdversarialTrainerConfig
             ):
-
                 raise AssertionError(
                     "A 'CoupledOptimizerAdversarialTrainer' "
                     "is expected for training a VAEGAN"
@@ -111,7 +109,6 @@ class TrainingPipeline(Pipeline):
         self.training_config = training_config
 
     def _check_dataset(self, dataset: BaseDataset):
-
         try:
             dataset_output = dataset[0]
 

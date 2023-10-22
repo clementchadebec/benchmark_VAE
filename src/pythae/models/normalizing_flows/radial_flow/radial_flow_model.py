@@ -17,7 +17,6 @@ class RadialFlow(BaseNF):
     """
 
     def __init__(self, model_config: RadialFlowConfig):
-
         BaseNF.__init__(self, model_config)
 
         self.x0 = nn.Parameter(torch.randn(1, self.input_dim))

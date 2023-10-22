@@ -37,7 +37,6 @@ class GenerationPipeline(Pipeline):
         model: Optional[BaseAE],
         sampler_config: Optional[BaseSamplerConfig] = None,
     ):
-
         if sampler_config is None:
             sampler_config = NormalSamplerConfig()
 

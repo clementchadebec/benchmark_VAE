@@ -39,7 +39,6 @@ class INFOVAE_MMD(VAE):
         encoder: Optional[BaseEncoder] = None,
         decoder: Optional[BaseDecoder] = None,
     ):
-
         VAE.__init__(self, model_config=model_config, encoder=encoder, decoder=decoder)
 
         self.model_name = "INFOVAE_MMD"
@@ -87,22 +86,16 @@ class INFOVAE_MMD(VAE):
         return output
 
     def loss_function(self, recon_x, x, z, z_prior, mu, log_var):
-
         N = z.shape[0]  # batch size
 
         if self.model_config.reconstruction_loss == "mse":
-
-            recon_loss = (
-                0.5
-                * F.mse_loss(
-                    recon_x.reshape(x.shape[0], -1),
-                    x.reshape(x.shape[0], -1),
-                    reduction="none",
-                ).sum(dim=-1)
-            )
+            recon_loss = 0.5 * F.mse_loss(
+                recon_x.reshape(x.shape[0], -1),
+                x.reshape(x.shape[0], -1),
+                reduction="none",
+            ).sum(dim=-1)
 
         elif self.model_config.reconstruction_loss == "bce":
-
             recon_loss = F.binary_cross_entropy(
                 recon_x.reshape(x.shape[0], -1),
                 x.reshape(x.shape[0], -1),
@@ -123,7 +116,7 @@ class INFOVAE_MMD(VAE):
 
         mmd_z = (k_z - k_z.diag().diag()).sum() / ((N - 1) * N)
         mmd_z_prior = (k_z_prior - k_z_prior.diag().diag()).sum() / ((N - 1) * N)
-        mmd_cross = k_cross.sum() / (N ** 2)
+        mmd_cross = k_cross.sum() / (N**2)
 
         mmd_loss = mmd_z + mmd_z_prior - 2 * mmd_cross
 
@@ -148,7 +141,7 @@ class INFOVAE_MMD(VAE):
         """Returns a matrix of shape [batch x batch] containing the pairwise kernel computation"""
 
         Cbase = (
-            2.0 * self.model_config.latent_dim * self.model_config.kernel_bandwidth ** 2
+            2.0 * self.model_config.latent_dim * self.model_config.kernel_bandwidth**2
         )
 
         k = 0
@@ -162,7 +155,7 @@ class INFOVAE_MMD(VAE):
     def rbf_kernel(self, z1, z2):
         """Returns a matrix of shape [batch x batch] containing the pairwise kernel computation"""
 
-        C = 2.0 * self.model_config.latent_dim * self.model_config.kernel_bandwidth ** 2
+        C = 2.0 * self.model_config.latent_dim * self.model_config.kernel_bandwidth**2
 
         k = torch.exp(-torch.norm(z1.unsqueeze(1) - z2.unsqueeze(0), dim=-1) ** 2 / C)
 

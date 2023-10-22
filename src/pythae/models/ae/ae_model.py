@@ -39,7 +39,6 @@ class AE(BaseAE):
         encoder: Optional[BaseEncoder] = None,
         decoder: Optional[BaseDecoder] = None,
     ):
-
         BaseAE.__init__(self, model_config=model_config, decoder=decoder)
 
         self.model_name = "AE"
@@ -83,7 +82,6 @@ class AE(BaseAE):
         return output
 
     def loss_function(self, recon_x, x):
-
         MSE = F.mse_loss(
             recon_x.reshape(x.shape[0], -1), x.reshape(x.shape[0], -1), reduction="none"
         ).sum(dim=-1)

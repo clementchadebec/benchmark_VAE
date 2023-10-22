@@ -22,7 +22,6 @@ class BaseNF(nn.Module):
     """
 
     def __init__(self, model_config: BaseNFConfig):
-
         nn.Module.__init__(self)
 
         if model_config.input_dim is None:

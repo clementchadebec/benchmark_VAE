@@ -40,7 +40,6 @@ class WAE_MMD(AE):
         encoder: Optional[BaseEncoder] = None,
         decoder: Optional[BaseDecoder] = None,
     ):
-
         AE.__init__(self, model_config=model_config, encoder=encoder, decoder=decoder)
 
         self.model_name = "WAE_MMD"
@@ -75,7 +74,6 @@ class WAE_MMD(AE):
         return output
 
     def loss_function(self, recon_x, x, z, z_prior):
-
         N = z.shape[0]  # batch size
 
         recon_loss = self.reconstruction_loss_scale * F.mse_loss(
@@ -94,7 +92,7 @@ class WAE_MMD(AE):
 
         mmd_z = (k_z - k_z.diag().diag()).sum() / ((N - 1) * N)
         mmd_z_prior = (k_z_prior - k_z_prior.diag().diag()).sum() / ((N - 1) * N)
-        mmd_cross = k_cross.sum() / (N ** 2)
+        mmd_cross = k_cross.sum() / (N**2)
 
         mmd_loss = mmd_z + mmd_z_prior - 2 * mmd_cross
 
@@ -108,7 +106,7 @@ class WAE_MMD(AE):
         """Returns a matrix of shape [batch x batch] containing the pairwise kernel computation"""
 
         Cbase = (
-            2.0 * self.model_config.latent_dim * self.model_config.kernel_bandwidth ** 2
+            2.0 * self.model_config.latent_dim * self.model_config.kernel_bandwidth**2
         )
 
         k = 0
@@ -122,7 +120,7 @@ class WAE_MMD(AE):
     def rbf_kernel(self, z1, z2):
         """Returns a matrix of shape [batch x batch] containing the pairwise kernel computation"""
 
-        C = 2.0 * self.model_config.latent_dim * self.model_config.kernel_bandwidth ** 2
+        C = 2.0 * self.model_config.latent_dim * self.model_config.kernel_bandwidth**2
 
         k = torch.exp(-torch.norm(z1.unsqueeze(1) - z2.unsqueeze(0), dim=-1) ** 2 / C)
 

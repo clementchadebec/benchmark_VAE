@@ -128,7 +128,6 @@ class Encoder_Conv_AE_CIFAR(BaseEncoder):
         max_depth = self.depth
 
         if output_layer_levels is not None:
-
             assert all(
                 self.depth >= levels > 0 or levels == -1
                 for levels in output_layer_levels
@@ -284,7 +283,6 @@ class Encoder_Conv_VAE_CIFAR(BaseEncoder):
         max_depth = self.depth
 
         if output_layer_levels is not None:
-
             assert all(
                 self.depth >= levels > 0 or levels == -1
                 for levels in output_layer_levels
@@ -443,7 +441,6 @@ class Encoder_Conv_SVAE_CIFAR(BaseEncoder):
         max_depth = self.depth
 
         if output_layer_levels is not None:
-
             assert all(
                 self.depth >= levels > 0 or levels == -1
                 for levels in output_layer_levels
@@ -584,7 +581,6 @@ class Decoder_Conv_AE_CIFAR(BaseDecoder):
         max_depth = self.depth
 
         if output_layer_levels is not None:
-
             assert all(
                 self.depth >= levels > 0 or levels == -1
                 for levels in output_layer_levels
@@ -728,7 +724,6 @@ class Discriminator_Conv_CIFAR(BaseDiscriminator):
         max_depth = self.depth
 
         if output_layer_levels is not None:
-
             assert all(
                 self.depth >= levels > 0 or levels == -1
                 for levels in output_layer_levels
@@ -745,7 +740,6 @@ class Discriminator_Conv_CIFAR(BaseDiscriminator):
         out = x
 
         for i in range(max_depth):
-
             if i == 4:
                 out = out.reshape(x.shape[0], -1)
 

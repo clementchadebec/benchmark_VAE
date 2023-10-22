@@ -59,7 +59,6 @@ class RHVAE(VAE):
         decoder: Optional[BaseDecoder] = None,
         metric: Optional[BaseMetric] = None,
     ):
-
         VAE.__init__(self, model_config=model_config, encoder=encoder, decoder=decoder)
 
         self.model_name = "RHVAE"
@@ -182,7 +181,7 @@ class RHVAE(VAE):
                 M.unsqueeze(0)
                 * torch.exp(
                     -torch.norm(mu.unsqueeze(0) - z.unsqueeze(1), dim=-1) ** 2
-                    / (self.temperature ** 2)
+                    / (self.temperature**2)
                 )
                 .unsqueeze(-1)
                 .unsqueeze(-1)
@@ -205,7 +204,6 @@ class RHVAE(VAE):
         recon_x = self.decoder(z)["reconstruction"]
 
         for k in range(self.n_lf):
-
             # perform leapfrog steps
 
             # step 1
@@ -217,12 +215,11 @@ class RHVAE(VAE):
             recon_x = self.decoder(z)["reconstruction"]
 
             if self.training:
-
                 G_inv = (
                     M.unsqueeze(0)
                     * torch.exp(
                         -torch.norm(mu.unsqueeze(0) - z.unsqueeze(1), dim=-1) ** 2
-                        / (self.temperature ** 2)
+                        / (self.temperature**2)
                     )
                     .unsqueeze(-1)
                     .unsqueeze(-1)
@@ -296,7 +293,6 @@ class RHVAE(VAE):
         recon_x = self.decoder(z)["reconstruction"]
 
         for k in range(self.n_lf):
-
             # perform leapfrog steps
 
             # step 1
@@ -398,7 +394,7 @@ class RHVAE(VAE):
                             self.centroids_tens.unsqueeze(0) - z.unsqueeze(1), dim=-1
                         )
                         ** 2
-                        / (self.temperature ** 2)
+                        / (self.temperature**2)
                     )
                     .unsqueeze(-1)
                     .unsqueeze(-1)
@@ -414,7 +410,7 @@ class RHVAE(VAE):
                         self.centroids_tens.unsqueeze(0) - z.unsqueeze(1), dim=-1
                     )
                     ** 2
-                    / (self.temperature ** 2)
+                    / (self.temperature**2)
                 )
                 .unsqueeze(-1)
                 .unsqueeze(-1)
@@ -428,7 +424,6 @@ class RHVAE(VAE):
     def loss_function(
         self, recon_x, x, z0, zK, rhoK, eps0, gamma, mu, log_var, G_inv, G_log_det
     ):
-
         logpxz = self._log_p_xz(recon_x, x, zK)  # log p(x, z_K)
         logrhoK = (
             -0.5
@@ -467,23 +462,18 @@ class RHVAE(VAE):
         return 1 / beta_k
 
     def _log_p_x_given_z(self, recon_x, x):
-
         if self.model_config.reconstruction_loss == "mse":
             # sigma is taken as I_D
-            recon_loss = (
-                -0.5
-                * F.mse_loss(
-                    recon_x.reshape(x.shape[0], -1),
-                    x.reshape(x.shape[0], -1),
-                    reduction="none",
-                ).sum(dim=-1)
-            )
+            recon_loss = -0.5 * F.mse_loss(
+                recon_x.reshape(x.shape[0], -1),
+                x.reshape(x.shape[0], -1),
+                reduction="none",
+            ).sum(dim=-1)
             -torch.log(torch.tensor([2 * np.pi]).to(x.device)) * np.prod(
                 self.input_dim
             ) / 2
 
         elif self.model_config.reconstruction_loss == "bce":
-
             recon_loss = -F.binary_cross_entropy(
                 recon_x.reshape(x.shape[0], -1),
                 x.reshape(x.shape[0], -1),
@@ -542,7 +532,6 @@ class RHVAE(VAE):
             log_p_x = []
 
             for j in range(n_full_batch):
-
                 x_rep = torch.cat(batch_size * [x])
 
                 encoder_output = self.encoder(x_rep)
@@ -573,7 +562,6 @@ class RHVAE(VAE):
                 recon_x = self.decoder(z)["reconstruction"]
 
                 for k in range(self.n_lf):
-
                     # perform leapfrog steps
 
                     # step 1
@@ -598,7 +586,7 @@ class RHVAE(VAE):
                 log_q_z0_given_x = -0.5 * (
                     log_var + (z0 - mu) ** 2 / torch.exp(log_var)
                 ).sum(dim=-1)
-                log_p_z = -0.5 * (z ** 2).sum(dim=-1)
+                log_p_z = -0.5 * (z**2).sum(dim=-1)
 
                 log_p_rho0 = normal.log_prob(gamma) - torch.logdet(
                     L / self.beta_zero_sqrt
@@ -619,7 +607,6 @@ class RHVAE(VAE):
                 ) * self.latent_dim / 2  # rho0 ~ N(0, G(z))
 
                 if self.model_config.reconstruction_loss == "mse":
-
                     log_p_x_given_z = -0.5 * F.mse_loss(
                         recon_x.reshape(x_rep.shape[0], -1),
                         x_rep.reshape(x_rep.shape[0], -1),
@@ -631,7 +618,6 @@ class RHVAE(VAE):
                     )  # decoding distribution is assumed unit variance  N(mu, I)
 
                 elif self.model_config.reconstruction_loss == "bce":
-
                     log_p_x_given_z = -F.binary_cross_entropy(
                         recon_x.reshape(x_rep.shape[0], -1),
                         x_rep.reshape(x_rep.shape[0], -1),
@@ -680,7 +666,6 @@ class RHVAE(VAE):
 
     @classmethod
     def _load_custom_metric_from_folder(cls, dir_path):
-
         file_list = os.listdir(dir_path)
         cls._check_python_version_from_folder(dir_path=dir_path)
 
@@ -844,7 +829,6 @@ class RHVAE(VAE):
             )
 
         else:
-
             if not model_config.uses_default_encoder:
                 _ = hf_hub_download(repo_id=hf_hub_path, filename="encoder.pkl")
                 encoder = cls._load_custom_encoder_from_folder(dir_path)

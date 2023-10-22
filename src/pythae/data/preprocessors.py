@@ -92,7 +92,6 @@ class DataProcessor:
         return dataset
 
     def _process_data_array(self, data: np.ndarray, batch_size: int = 100):
-
         num_samples = data.shape[0]
         samples_shape = data.shape
 
@@ -102,7 +101,6 @@ class DataProcessor:
         full_data = []
 
         for i in range(num_complete_batch):
-
             # Detect potential nan
             if DataProcessor.has_nan(data[i * batch_size : (i + 1) * batch_size]):
                 raise ValueError("Nan detected in input data!")

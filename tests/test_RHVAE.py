@@ -110,7 +110,6 @@ class Test_Model_Building:
     def test_build_custom_arch(
         self, model_configs, custom_encoder, custom_decoder, custom_metric
     ):
-
         rhvae = RHVAE(model_configs, encoder=custom_encoder, decoder=custom_decoder)
 
         assert rhvae.encoder == custom_encoder
@@ -132,7 +131,6 @@ class Test_Model_Building:
 
 class Test_Model_Saving:
     def test_default_model_saving(self, tmpdir, model_configs):
-
         tmpdir.mkdir("dummy_folder")
         dir_path = dir_path = os.path.join(tmpdir, "dummy_folder")
 
@@ -170,7 +168,6 @@ class Test_Model_Saving:
         assert callable(model_rec.G_inv)
 
     def test_custom_encoder_model_saving(self, tmpdir, model_configs, custom_encoder):
-
         tmpdir.mkdir("dummy_folder")
         dir_path = dir_path = os.path.join(tmpdir, "dummy_folder")
 
@@ -204,7 +201,6 @@ class Test_Model_Saving:
         assert callable(model_rec.G_inv)
 
     def test_custom_decoder_model_saving(self, tmpdir, model_configs, custom_decoder):
-
         tmpdir.mkdir("dummy_folder")
         dir_path = dir_path = os.path.join(tmpdir, "dummy_folder")
 
@@ -238,7 +234,6 @@ class Test_Model_Saving:
         assert callable(model_rec.G_inv)
 
     def test_custom_metric_model_saving(self, tmpdir, model_configs, custom_metric):
-
         tmpdir.mkdir("dummy_folder")
         dir_path = dir_path = os.path.join(tmpdir, "dummy_folder")
 
@@ -274,7 +269,6 @@ class Test_Model_Saving:
     def test_full_custom_model_saving(
         self, tmpdir, model_configs, custom_encoder, custom_decoder, custom_metric
     ):
-
         tmpdir.mkdir("dummy_folder")
         dir_path = dir_path = os.path.join(tmpdir, "dummy_folder")
 
@@ -337,7 +331,6 @@ class Test_Model_Saving:
     def test_raises_missing_files(
         self, tmpdir, model_configs, custom_encoder, custom_decoder, custom_metric
     ):
-
         tmpdir.mkdir("dummy_folder")
         dir_path = dir_path = os.path.join(tmpdir, "dummy_folder")
 
@@ -397,7 +390,6 @@ class Test_Model_forward:
         return RHVAE(model_configs)
 
     def test_model_train_output(self, rhvae, demo_data):
-
         # model_configs.input_dim = demo_data['data'][0].shape[-1]
 
         # rhvae = RHVAE(model_configs)
@@ -405,52 +397,45 @@ class Test_Model_forward:
         rhvae.train()
 
         out = rhvae(demo_data)
-        assert (
-            set(
-                [
-                    "loss",
-                    "recon_x",
-                    "z",
-                    "z0",
-                    "rho",
-                    "eps0",
-                    "gamma",
-                    "mu",
-                    "log_var",
-                    "G_inv",
-                    "G_log_det",
-                ]
-            )
-            == set(out.keys())
-        )
+        assert set(
+            [
+                "loss",
+                "recon_x",
+                "z",
+                "z0",
+                "rho",
+                "eps0",
+                "gamma",
+                "mu",
+                "log_var",
+                "G_inv",
+                "G_log_det",
+            ]
+        ) == set(out.keys())
 
         rhvae.update()
 
     def test_model_output(self, rhvae, demo_data):
-
         # model_configs.input_dim = demo_data['data'][0].shape[-1]
 
         rhvae.eval()
 
         out = rhvae(demo_data)
-        assert (
-            set(
-                [
-                    "loss",
-                    "recon_x",
-                    "z",
-                    "z0",
-                    "rho",
-                    "eps0",
-                    "gamma",
-                    "mu",
-                    "log_var",
-                    "G_inv",
-                    "G_log_det",
-                ]
-            )
-            == set(out.keys())
-        )
+        assert set(
+            [
+                "loss",
+                "recon_x",
+                "z",
+                "z0",
+                "rho",
+                "eps0",
+                "gamma",
+                "mu",
+                "log_var",
+                "G_inv",
+                "G_log_det",
+            ]
+        ) == set(out.keys())
 
         assert out.z.shape[0] == demo_data["data"].shape[0]
         assert out.recon_x.shape == demo_data["data"].shape
@@ -459,8 +444,8 @@ class Test_Model_forward:
 class Test_Model_interpolate:
     @pytest.fixture(
         params=[
-            torch.randn(3, 2, 3, 1),
-            torch.randn(3, 2, 2),
+            torch.rand(3, 2, 3, 1),
+            torch.rand(3, 2, 2),
             torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))[:][
                 "data"
             ],
@@ -484,21 +469,17 @@ class Test_Model_interpolate:
 
         interp = ae.interpolate(demo_data, demo_data, granularity)
 
-        assert (
-            tuple(interp.shape)
-            == (
-                demo_data.shape[0],
-                granularity,
-            )
-            + (demo_data.shape[1:])
-        )
+        assert tuple(interp.shape) == (
+            demo_data.shape[0],
+            granularity,
+        ) + (demo_data.shape[1:])
 
 
 class Test_Model_reconstruct:
     @pytest.fixture(
         params=[
-            torch.randn(3, 2, 3, 1),
-            torch.randn(3, 2, 2),
+            torch.rand(3, 2, 3, 1),
+            torch.rand(3, 2, 2),
             torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))[:][
                 "data"
             ],
@@ -513,7 +494,6 @@ class Test_Model_reconstruct:
         return RHVAE(model_configs)
 
     def test_reconstruct(self, ae, demo_data):
-
         recon = ae.reconstruct(demo_data)
         assert tuple(recon.shape) == demo_data.shape
 
@@ -613,7 +593,6 @@ class Test_RHVAE_Training:
         return optimizer
 
     def test_rhvae_train_step(self, trainer):
-
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
         step_1_loss = trainer.train_step(epoch=1)
@@ -629,7 +608,6 @@ class Test_RHVAE_Training:
         )
 
     def test_rhvae_eval_step(self, trainer):
-
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
         step_1_loss = trainer.eval_step(epoch=1)
@@ -645,7 +623,6 @@ class Test_RHVAE_Training:
         )
 
     def test_rhvae_predict_step(self, trainer, train_dataset):
-
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
         inputs, recon, generated = trainer.predict(trainer.model)
@@ -665,7 +642,6 @@ class Test_RHVAE_Training:
         assert generated.shape == inputs.shape
 
     def test_rhvae_main_train_loop(self, trainer):
-
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
         trainer.train()
@@ -681,7 +657,6 @@ class Test_RHVAE_Training:
         )
 
     def test_checkpoint_saving(self, rhvae, trainer, training_configs):
-
         dir_path = training_configs.output_dir
 
         # Make a training step
@@ -840,7 +815,6 @@ class Test_RHVAE_Training:
         )
 
     def test_final_model_saving(self, rhvae, trainer, training_configs):
-
         dir_path = training_configs.output_dir
 
         trainer.train()
@@ -901,7 +875,6 @@ class Test_RHVAE_Training:
         assert type(model_rec.metric.cpu()) == type(model.metric.cpu())
 
     def test_rhvae_training_pipeline(self, rhvae, train_dataset, training_configs):
-
         dir_path = training_configs.output_dir
 
         # build pipeline

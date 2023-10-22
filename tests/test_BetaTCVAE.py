@@ -97,7 +97,6 @@ class Test_Model_Building:
         )
 
     def test_build_custom_arch(self, model_configs, custom_encoder, custom_decoder):
-
         model = BetaTCVAE(model_configs, encoder=custom_encoder, decoder=custom_decoder)
 
         assert model.encoder == custom_encoder
@@ -120,7 +119,6 @@ class Test_Model_Building:
 
 class Test_Model_Saving:
     def test_default_model_saving(self, tmpdir, model_configs):
-
         tmpdir.mkdir("dummy_folder")
         dir_path = dir_path = os.path.join(tmpdir, "dummy_folder")
 
@@ -148,7 +146,6 @@ class Test_Model_Saving:
         )
 
     def test_custom_encoder_model_saving(self, tmpdir, model_configs, custom_encoder):
-
         tmpdir.mkdir("dummy_folder")
         dir_path = dir_path = os.path.join(tmpdir, "dummy_folder")
 
@@ -176,7 +173,6 @@ class Test_Model_Saving:
         )
 
     def test_custom_decoder_model_saving(self, tmpdir, model_configs, custom_decoder):
-
         tmpdir.mkdir("dummy_folder")
         dir_path = dir_path = os.path.join(tmpdir, "dummy_folder")
 
@@ -206,7 +202,6 @@ class Test_Model_Saving:
     def test_full_custom_model_saving(
         self, tmpdir, model_configs, custom_encoder, custom_decoder
     ):
-
         tmpdir.mkdir("dummy_folder")
         dir_path = dir_path = os.path.join(tmpdir, "dummy_folder")
 
@@ -242,7 +237,6 @@ class Test_Model_Saving:
     def test_raises_missing_files(
         self, tmpdir, model_configs, custom_encoder, custom_decoder
     ):
-
         tmpdir.mkdir("dummy_folder")
         dir_path = dir_path = os.path.join(tmpdir, "dummy_folder")
 
@@ -291,7 +285,6 @@ class Test_Model_forward:
         return BetaTCVAE(model_configs)
 
     def test_model_train_output(self, betavae, demo_data):
-
         betavae.train()
 
         out = betavae(demo_data)
@@ -309,8 +302,8 @@ class Test_Model_forward:
 class Test_Model_interpolate:
     @pytest.fixture(
         params=[
-            torch.randn(3, 2, 3, 1),
-            torch.randn(3, 2, 2),
+            torch.rand(3, 2, 3, 1),
+            torch.rand(3, 2, 2),
             torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))[:][
                 "data"
             ],
@@ -334,21 +327,17 @@ class Test_Model_interpolate:
 
         interp = ae.interpolate(demo_data, demo_data, granularity)
 
-        assert (
-            tuple(interp.shape)
-            == (
-                demo_data.shape[0],
-                granularity,
-            )
-            + (demo_data.shape[1:])
-        )
+        assert tuple(interp.shape) == (
+            demo_data.shape[0],
+            granularity,
+        ) + (demo_data.shape[1:])
 
 
 class Test_Model_reconstruct:
     @pytest.fixture(
         params=[
-            torch.randn(3, 2, 3, 1),
-            torch.randn(3, 2, 2),
+            torch.rand(3, 2, 3, 1),
+            torch.rand(3, 2, 2),
             torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))[:][
                 "data"
             ],
@@ -363,7 +352,6 @@ class Test_Model_reconstruct:
         return BetaTCVAE(model_configs)
 
     def test_reconstruct(self, ae, demo_data):
-
         recon = ae.reconstruct(demo_data)
         assert tuple(recon.shape) == demo_data.shape
 
@@ -453,7 +441,6 @@ class Test_BetaTCVAE_Training:
         return trainer
 
     def test_betavae_train_step(self, trainer):
-
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
         step_1_loss = trainer.train_step(epoch=1)
@@ -469,7 +456,6 @@ class Test_BetaTCVAE_Training:
         )
 
     def test_betavae_eval_step(self, trainer):
-
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
         step_1_loss = trainer.eval_step(epoch=1)
@@ -485,7 +471,6 @@ class Test_BetaTCVAE_Training:
         )
 
     def test_betavae_predict_step(self, trainer, train_dataset):
-
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
         inputs, recon, generated = trainer.predict(trainer.model)
@@ -505,7 +490,6 @@ class Test_BetaTCVAE_Training:
         assert generated.shape == inputs.shape
 
     def test_betavae_main_train_loop(self, trainer):
-
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
         trainer.train()
@@ -521,7 +505,6 @@ class Test_BetaTCVAE_Training:
         )
 
     def test_checkpoint_saving(self, betavae, trainer, training_configs):
-
         dir_path = training_configs.output_dir
 
         # Make a training step
@@ -661,7 +644,6 @@ class Test_BetaTCVAE_Training:
         )
 
     def test_final_model_saving(self, betavae, trainer, training_configs):
-
         dir_path = training_configs.output_dir
 
         trainer.train()
@@ -714,7 +696,6 @@ class Test_BetaTCVAE_Training:
     def test_betavae_training_pipeline(
         self, tmpdir, betavae, train_dataset, training_configs
     ):
-
         dir_path = training_configs.output_dir
 
         # build pipeline

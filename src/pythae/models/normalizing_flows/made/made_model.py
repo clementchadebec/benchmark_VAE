@@ -20,7 +20,6 @@ class MADE(BaseNF):
     """
 
     def __init__(self, model_config: MADEConfig):
-
         BaseNF.__init__(self, model_config=model_config)
 
         self.net = []
@@ -52,7 +51,6 @@ class MADE(BaseNF):
         masks = self._make_mask(ordering=self.model_config.degrees_ordering)
 
         for inp, out, mask in zip(hidden_sizes[:-1], hidden_sizes[1:-1], masks[:-1]):
-
             self.net.extend([MaskedLinear(inp, out, mask), nn.ReLU()])
 
         # outputs mean and logvar
@@ -67,7 +65,6 @@ class MADE(BaseNF):
         self.net = nn.Sequential(*self.net)
 
     def _make_mask(self, ordering="sequential"):
-
         # Get degrees for mask creation
 
         if ordering == "sequential":

@@ -58,7 +58,6 @@ class Adversarial_AE(VAE):
         decoder: Optional[BaseDecoder] = None,
         discriminator: Optional[BaseDiscriminator] = None,
     ):
-
         VAE.__init__(self, model_config=model_config, encoder=encoder, decoder=decoder)
 
         if discriminator is None:
@@ -149,22 +148,16 @@ class Adversarial_AE(VAE):
         return output
 
     def loss_function(self, recon_x, x, z, z_prior):
-
         N = z.shape[0]  # batch size
 
         if self.model_config.reconstruction_loss == "mse":
-
-            recon_loss = (
-                0.5
-                * F.mse_loss(
-                    recon_x.reshape(x.shape[0], -1),
-                    x.reshape(x.shape[0], -1),
-                    reduction="none",
-                ).sum(dim=-1)
-            )
+            recon_loss = 0.5 * F.mse_loss(
+                recon_x.reshape(x.shape[0], -1),
+                x.reshape(x.shape[0], -1),
+                reduction="none",
+            ).sum(dim=-1)
 
         elif self.model_config.reconstruction_loss == "bce":
-
             recon_loss = F.binary_cross_entropy(
                 recon_x.reshape(x.shape[0], -1),
                 x.reshape(x.shape[0], -1),
@@ -232,7 +225,6 @@ class Adversarial_AE(VAE):
 
     @classmethod
     def _load_custom_discriminator_from_folder(cls, dir_path):
-
         file_list = os.listdir(dir_path)
         cls._check_python_version_from_folder(dir_path=dir_path)
 
@@ -361,7 +353,6 @@ class Adversarial_AE(VAE):
             )
 
         else:
-
             if not model_config.uses_default_encoder:
                 _ = hf_hub_download(repo_id=hf_hub_path, filename="encoder.pkl")
                 encoder = cls._load_custom_encoder_from_folder(dir_path)

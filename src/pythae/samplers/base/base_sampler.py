@@ -27,7 +27,6 @@ class BaseSampler:
     """
 
     def __init__(self, model: BaseAE, sampler_config: BaseSamplerConfig = None):
-
         if sampler_config is None:
             sampler_config = BaseSamplerConfig()
 
@@ -96,7 +95,6 @@ class BaseSampler:
         imwrite(os.path.join(dir_path, f"{img_name}"), img)
 
     def _set_inputs_to_device(self, inputs: Dict[str, Any]):
-
         inputs_on_device = inputs
 
         if self.device == "cuda":

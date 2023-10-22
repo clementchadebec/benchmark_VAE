@@ -19,7 +19,6 @@ class PoincareDiskSampler(BaseSampler):
     def __init__(
         self, model: PoincareVAE, sampler_config: PoincareDiskSamplerConfig = None
     ):
-
         assert isinstance(
             model, PoincareVAE
         ), "This sampler is only suitable for PoincareVAE model"
@@ -64,7 +63,6 @@ class PoincareDiskSampler(BaseSampler):
         x_gen_list = []
 
         for i in range(full_batch_nbr):
-
             z = self.gen_distribution.rsample(torch.Size([batch_size])).reshape(
                 batch_size, -1
             )
@@ -79,7 +77,6 @@ class PoincareDiskSampler(BaseSampler):
             x_gen_list.append(x_gen)
 
         if last_batch_samples_nbr > 0:
-
             z = self.gen_distribution.rsample(
                 torch.Size([last_batch_samples_nbr])
             ).reshape(last_batch_samples_nbr, -1)

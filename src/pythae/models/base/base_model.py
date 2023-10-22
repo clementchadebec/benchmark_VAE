@@ -57,10 +57,9 @@ class BaseAE(nn.Module):
     def __init__(
         self,
         model_config: BaseAEConfig,
-        encoder: Optional[BaseDecoder] = None,
+        encoder: Optional[BaseEncoder] = None,
         decoder: Optional[BaseDecoder] = None,
     ):
-
         nn.Module.__init__(self)
 
         self.model_name = "BaseAE"
@@ -374,7 +373,6 @@ class BaseAE(nn.Module):
 
     @classmethod
     def _load_custom_encoder_from_folder(cls, dir_path):
-
         file_list = os.listdir(dir_path)
         cls._check_python_version_from_folder(dir_path=dir_path)
 
@@ -393,7 +391,6 @@ class BaseAE(nn.Module):
 
     @classmethod
     def _load_custom_decoder_from_folder(cls, dir_path):
-
         file_list = os.listdir(dir_path)
         cls._check_python_version_from_folder(dir_path=dir_path)
 
@@ -510,7 +507,6 @@ class BaseAE(nn.Module):
             )
 
         else:
-
             if not model_config.uses_default_encoder:
                 _ = hf_hub_download(repo_id=hf_hub_path, filename="encoder.pkl")
                 encoder = cls._load_custom_encoder_from_folder(dir_path)

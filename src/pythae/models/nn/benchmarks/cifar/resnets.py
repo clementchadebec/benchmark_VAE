@@ -124,7 +124,6 @@ class Encoder_ResNet_AE_CIFAR(BaseEncoder):
         max_depth = self.depth
 
         if output_layer_levels is not None:
-
             assert all(
                 self.depth >= levels > 0 or levels == -1
                 for levels in output_layer_levels
@@ -267,7 +266,6 @@ class Encoder_ResNet_VAE_CIFAR(BaseEncoder):
         max_depth = self.depth
 
         if output_layer_levels is not None:
-
             assert all(
                 self.depth >= levels > 0 or levels == -1
                 for levels in output_layer_levels
@@ -411,7 +409,6 @@ class Encoder_ResNet_SVAE_CIFAR(BaseEncoder):
         max_depth = self.depth
 
         if output_layer_levels is not None:
-
             assert all(
                 self.depth >= levels > 0 or levels == -1
                 for levels in output_layer_levels
@@ -555,7 +552,6 @@ class Encoder_ResNet_VQVAE_CIFAR(BaseEncoder):
         max_depth = self.depth
 
         if output_layer_levels is not None:
-
             assert all(
                 self.depth >= levels > 0 or levels == -1
                 for levels in output_layer_levels
@@ -695,7 +691,6 @@ class Decoder_ResNet_AE_CIFAR(BaseDecoder):
         max_depth = self.depth
 
         if output_layer_levels is not None:
-
             assert all(
                 self.depth >= levels > 0 or levels == -1
                 for levels in output_layer_levels
@@ -836,7 +831,6 @@ class Decoder_ResNet_VQVAE_CIFAR(BaseDecoder):
         max_depth = self.depth
 
         if output_layer_levels is not None:
-
             assert all(
                 self.depth >= levels > 0 or levels == -1
                 for levels in output_layer_levels

@@ -40,7 +40,6 @@ class VAMP(VAE):
         encoder: Optional[BaseEncoder] = None,
         decoder: Optional[BaseDecoder] = None,
     ):
-
         VAE.__init__(self, model_config=model_config, encoder=encoder, decoder=decoder)
 
         self.model_name = "VAMP"
@@ -101,20 +100,14 @@ class VAMP(VAE):
         return output
 
     def loss_function(self, recon_x, x, mu, log_var, z, epoch):
-
         if self.model_config.reconstruction_loss == "mse":
-
-            recon_loss = (
-                0.5
-                * F.mse_loss(
-                    recon_x.reshape(x.shape[0], -1),
-                    x.reshape(x.shape[0], -1),
-                    reduction="none",
-                ).sum(dim=-1)
-            )
+            recon_loss = 0.5 * F.mse_loss(
+                recon_x.reshape(x.shape[0], -1),
+                x.reshape(x.shape[0], -1),
+                reduction="none",
+            ).sum(dim=-1)
 
         elif self.model_config.reconstruction_loss == "bce":
-
             recon_loss = F.binary_cross_entropy(
                 recon_x.reshape(x.shape[0], -1),
                 x.reshape(x.shape[0], -1),
@@ -160,17 +153,11 @@ class VAMP(VAE):
         prior_mu = prior_mu.unsqueeze(0)
         prior_log_var = prior_log_var.unsqueeze(0)
 
-        log_p_z = (
-            torch.sum(
-                -0.5
-                * (
-                    prior_log_var
-                    + (z_expand - prior_mu) ** 2 / torch.exp(prior_log_var)
-                ),
-                dim=2,
-            )
-            - torch.log(torch.tensor(C).type(torch.float))
-        )
+        log_p_z = torch.sum(
+            -0.5
+            * (prior_log_var + (z_expand - prior_mu) ** 2 / torch.exp(prior_log_var)),
+            dim=2,
+        ) - torch.log(torch.tensor(C).type(torch.float))
 
         log_p_z = torch.logsumexp(log_p_z, dim=1)
 
@@ -210,7 +197,6 @@ class VAMP(VAE):
             log_p_x = []
 
             for j in range(n_full_batch):
-
                 x_rep = torch.cat(batch_size * [x])
 
                 encoder_output = self.encoder(x_rep)
@@ -227,7 +213,6 @@ class VAMP(VAE):
                 recon_x = self.decoder(z)["reconstruction"]
 
                 if self.model_config.reconstruction_loss == "mse":
-
                     log_p_x_given_z = -0.5 * F.mse_loss(
                         recon_x.reshape(x_rep.shape[0], -1),
                         x_rep.reshape(x_rep.shape[0], -1),
@@ -239,7 +224,6 @@ class VAMP(VAE):
                     )  # decoding distribution is assumed unit variance  N(mu, I)
 
                 elif self.model_config.reconstruction_loss == "bce":
-
                     log_p_x_given_z = -F.binary_cross_entropy(
                         recon_x.reshape(x_rep.shape[0], -1),
                         x_rep.reshape(x_rep.shape[0], -1),

@@ -30,7 +30,6 @@ class Encoder_AE_MLP(BaseEncoder):
         max_depth = self.depth
 
         if output_layer_levels is not None:
-
             assert all(
                 self.depth >= levels > 0 or levels == -1
                 for levels in output_layer_levels
@@ -80,7 +79,6 @@ class Encoder_VAE_MLP(BaseEncoder):
         max_depth = self.depth
 
         if output_layer_levels is not None:
-
             assert all(
                 self.depth >= levels > 0 or levels == -1
                 for levels in output_layer_levels
@@ -131,7 +129,6 @@ class Encoder_SVAE_MLP(BaseEncoder):
         max_depth = self.depth
 
         if output_layer_levels is not None:
-
             assert all(
                 self.depth >= levels > 0 or levels == -1
                 for levels in output_layer_levels
@@ -178,13 +175,11 @@ class Decoder_AE_MLP(BaseDecoder):
         self.depth = len(layers)
 
     def forward(self, z: torch.Tensor, output_layer_levels: List[int] = None):
-
         output = ModelOutput()
 
         max_depth = self.depth
 
         if output_layer_levels is not None:
-
             assert all(
                 self.depth >= levels > 0 or levels == -1
                 for levels in output_layer_levels
@@ -233,7 +228,6 @@ class Metric_MLP(BaseMetric):
         self.lower = nn.Linear(400, k)
 
     def forward(self, x):
-
         h1 = self.layers(x.reshape(-1, np.prod(self.input_dim)))
         h21, h22 = self.diag(h1), self.lower(h1)
 
@@ -284,7 +278,6 @@ class Discriminator_MLP(BaseDiscriminator):
         max_depth = self.depth
 
         if output_layer_levels is not None:
-
             assert all(
                 self.depth >= levels > 0 or levels == -1
                 for levels in output_layer_levels

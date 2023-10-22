@@ -32,7 +32,6 @@ class PixelCNNSampler(BaseSampler):
     """
 
     def __init__(self, model: VQVAE, sampler_config: PixelCNNSamplerConfig = None):
-
         self.is_fitted = False
 
         if sampler_config is None:
@@ -111,7 +110,6 @@ class PixelCNNSampler(BaseSampler):
         eval_dataset = None
 
         if eval_data is not None:
-
             if not isinstance(eval_data, Dataset):
                 eval_data = data_processor.process_data(eval_data)
                 eval_dataset = data_processor.to_dataset(eval_data)
@@ -196,7 +194,6 @@ class PixelCNNSampler(BaseSampler):
         x_gen_list = []
 
         for i in range(full_batch_nbr):
-
             z = torch.zeros(
                 (batch_size,) + self.pixelcnn_model.model_config.input_dim
             ).to(self.device)

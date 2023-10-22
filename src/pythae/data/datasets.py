@@ -55,7 +55,6 @@ class BaseDataset(Dataset):
     """
 
     def __init__(self, data, labels):
-
         self.labels = labels.type(torch.float)
         self.data = data.type(torch.float)
 

@@ -61,7 +61,6 @@ class CoupledOptimizerAdversarialTrainer(BaseTrainer):
         training_config: Optional[CoupledOptimizerAdversarialTrainerConfig] = None,
         callbacks: List[TrainingCallback] = None,
     ):
-
         BaseTrainer.__init__(
             self,
             model=model,
@@ -226,7 +225,6 @@ class CoupledOptimizerAdversarialTrainer(BaseTrainer):
         self.discriminator_scheduler = scheduler
 
     def _optimizers_step(self, model_output):
-
         encoder_loss = model_output.encoder_loss
         decoder_loss = model_output.decoder_loss
         discriminator_loss = model_output.discriminator_loss
@@ -355,7 +353,6 @@ class CoupledOptimizerAdversarialTrainer(BaseTrainer):
         best_eval_loss = 1e10
 
         for epoch in range(1, self.training_config.num_epochs + 1):
-
             self.callback_handler.on_epoch_begin(
                 training_config=self.training_config,
                 epoch=epoch,
@@ -427,7 +424,6 @@ class CoupledOptimizerAdversarialTrainer(BaseTrainer):
                 and epoch % self.training_config.steps_predict == 0
                 and self.is_main_process
             ):
-
                 true_data, reconstructions, generations = self.predict(best_model)
 
                 self.callback_handler.on_prediction_step(
@@ -499,12 +495,10 @@ class CoupledOptimizerAdversarialTrainer(BaseTrainer):
         epoch_loss = 0
 
         for inputs in self.eval_loader:
-
             inputs = self._set_inputs_to_device(inputs)
 
             try:
                 with torch.no_grad():
-
                     model_output = self.model(
                         inputs,
                         epoch=epoch,
@@ -573,7 +567,6 @@ class CoupledOptimizerAdversarialTrainer(BaseTrainer):
         epoch_loss = 0
 
         for inputs in self.train_loader:
-
             inputs = self._set_inputs_to_device(inputs)
 
             model_output = self.model(

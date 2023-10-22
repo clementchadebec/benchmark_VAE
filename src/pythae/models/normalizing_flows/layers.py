@@ -72,7 +72,6 @@ class BatchNorm(nn.Module):
 
     def inverse(self, y):
         if self.training:
-
             if not hasattr(self, "batch_mean") or not hasattr(self, "batch_var"):
                 mean = torch.zeros(1).to(y.device)
                 var = torch.ones(1).to(y.device)

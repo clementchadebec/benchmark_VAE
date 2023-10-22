@@ -130,7 +130,6 @@ class Encoder_ResNet_AE_CELEBA(BaseEncoder):
         max_depth = self.depth
 
         if output_layer_levels is not None:
-
             assert all(
                 self.depth >= levels > 0 or levels == -1
                 for levels in output_layer_levels
@@ -276,7 +275,6 @@ class Encoder_ResNet_VAE_CELEBA(BaseEncoder):
         max_depth = self.depth
 
         if output_layer_levels is not None:
-
             assert all(
                 self.depth >= levels > 0 or levels == -1
                 for levels in output_layer_levels
@@ -425,7 +423,6 @@ class Encoder_ResNet_SVAE_CELEBA(BaseEncoder):
         max_depth = self.depth
 
         if output_layer_levels is not None:
-
             assert all(
                 self.depth >= levels > 0 or levels == -1
                 for levels in output_layer_levels
@@ -589,7 +586,6 @@ class Encoder_ResNet_VQVAE_CELEBA(BaseEncoder):
         max_depth = self.depth
 
         if output_layer_levels is not None:
-
             assert all(
                 self.depth >= levels > 0 or levels == -1
                 for levels in output_layer_levels
@@ -743,7 +739,6 @@ class Decoder_ResNet_AE_CELEBA(BaseDecoder):
         max_depth = self.depth
 
         if output_layer_levels is not None:
-
             assert all(
                 self.depth >= levels > 0 or levels == -1
                 for levels in output_layer_levels
@@ -913,7 +908,6 @@ class Decoder_ResNet_VQVAE_CELEBA(BaseDecoder):
         max_depth = self.depth
 
         if output_layer_levels is not None:
-
             assert all(
                 self.depth >= levels > 0 or levels == -1
                 for levels in output_layer_levels

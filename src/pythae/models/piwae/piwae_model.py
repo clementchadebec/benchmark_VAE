@@ -39,7 +39,6 @@ class PIWAE(VAE):
         encoder: Optional[BaseEncoder] = None,
         decoder: Optional[BaseDecoder] = None,
     ):
-
         VAE.__init__(self, model_config=model_config, encoder=encoder, decoder=decoder)
 
         self.model_name = "PIWAE"
@@ -108,23 +107,17 @@ class PIWAE(VAE):
         return output
 
     def loss_function(self, recon_x, x, mu, log_var, z):
-
         if self.model_config.reconstruction_loss == "mse":
-
-            recon_loss = (
-                0.5
-                * F.mse_loss(
-                    recon_x,
-                    x.reshape(recon_x.shape[0], -1)
-                    .unsqueeze(1)
-                    .unsqueeze(1)
-                    .repeat(1, self.gradient_n_estimates, self.n_samples, 1),
-                    reduction="none",
-                ).sum(dim=-1)
-            )
+            recon_loss = 0.5 * F.mse_loss(
+                recon_x,
+                x.reshape(recon_x.shape[0], -1)
+                .unsqueeze(1)
+                .unsqueeze(1)
+                .repeat(1, self.gradient_n_estimates, self.n_samples, 1),
+                reduction="none",
+            ).sum(dim=-1)
 
         elif self.model_config.reconstruction_loss == "bce":
-
             recon_loss = F.binary_cross_entropy(
                 recon_x,
                 x.reshape(recon_x.shape[0], -1)
@@ -135,7 +128,7 @@ class PIWAE(VAE):
             ).sum(dim=-1)
 
         log_q_z = (-0.5 * (log_var + torch.pow(z - mu, 2) / log_var.exp())).sum(dim=-1)
-        log_p_z = -0.5 * (z ** 2).sum(dim=-1)
+        log_p_z = -0.5 * (z**2).sum(dim=-1)
 
         KLD = -(log_p_z - log_q_z)
 
