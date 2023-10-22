@@ -11,13 +11,13 @@ jobs:
         os: [ubuntu-latest]
     env:
       OS: ${{ matrix.os }}
-      PYTHON: '3.11'
+      PYTHON: '3.9'
     steps:
     - uses: actions/checkout@main
     - name: Setup Python
       uses: actions/setup-python@main
       with:
-        python-version: 3.11
+        python-version: 3.9
     - name: Generate coverage report
       run: |
         pip install .
