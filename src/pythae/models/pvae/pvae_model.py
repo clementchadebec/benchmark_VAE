@@ -43,7 +43,6 @@ class PoincareVAE(VAE):
         encoder: Optional[BaseEncoder] = None,
         decoder: Optional[BaseDecoder] = None,
     ):
-
         VAE.__init__(self, model_config=model_config, encoder=encoder, decoder=decoder)
 
         self.model_name = "PoincareVAE"
@@ -125,20 +124,14 @@ class PoincareVAE(VAE):
         return output
 
     def loss_function(self, recon_x, x, z, qz_x):
-
         if self.model_config.reconstruction_loss == "mse":
-
-            recon_loss = (
-                0.5
-                * F.mse_loss(
-                    recon_x.reshape(x.shape[0], -1),
-                    x.reshape(x.shape[0], -1),
-                    reduction="none",
-                ).sum(dim=-1)
-            )
+            recon_loss = 0.5 * F.mse_loss(
+                recon_x.reshape(x.shape[0], -1),
+                x.reshape(x.shape[0], -1),
+                reduction="none",
+            ).sum(dim=-1)
 
         elif self.model_config.reconstruction_loss == "bce":
-
             recon_loss = F.binary_cross_entropy(
                 recon_x.reshape(x.shape[0], -1),
                 x.reshape(x.shape[0], -1),
@@ -230,7 +223,6 @@ class PoincareVAE(VAE):
             log_p_x = []
 
             for j in range(n_full_batch):
-
                 x_rep = torch.cat(batch_size * [x])
 
                 encoder_output = self.encoder(x_rep)
@@ -262,7 +254,6 @@ class PoincareVAE(VAE):
                 recon_x = self.decoder(z.squeeze(0))["reconstruction"]
 
                 if self.model_config.reconstruction_loss == "mse":
-
                     log_p_x_given_z = -0.5 * F.mse_loss(
                         recon_x.reshape(x_rep.shape[0], -1),
                         x_rep.reshape(x_rep.shape[0], -1),
@@ -274,7 +265,6 @@ class PoincareVAE(VAE):
                     )  # decoding distribution is assumed unit variance  N(mu, I)
 
                 elif self.model_config.reconstruction_loss == "bce":
-
                     log_p_x_given_z = -F.binary_cross_entropy(
                         recon_x.reshape(x_rep.shape[0], -1),
                         x_rep.reshape(x_rep.shape[0], -1),

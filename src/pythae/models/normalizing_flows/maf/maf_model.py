@@ -19,7 +19,6 @@ class MAF(BaseNF):
     """
 
     def __init__(self, model_config: MAFConfig):
-
         BaseNF.__init__(self, model_config=model_config)
 
         self.net = []

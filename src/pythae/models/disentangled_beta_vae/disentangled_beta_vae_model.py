@@ -40,7 +40,6 @@ class DisentangledBetaVAE(VAE):
         encoder: Optional[BaseEncoder] = None,
         decoder: Optional[BaseDecoder] = None,
     ):
-
         VAE.__init__(self, model_config=model_config, encoder=encoder, decoder=decoder)
 
         assert (
@@ -89,20 +88,14 @@ class DisentangledBetaVAE(VAE):
         return output
 
     def loss_function(self, recon_x, x, mu, log_var, z, epoch):
-
         if self.model_config.reconstruction_loss == "mse":
-
-            recon_loss = (
-                0.5
-                * F.mse_loss(
-                    recon_x.reshape(x.shape[0], -1),
-                    x.reshape(x.shape[0], -1),
-                    reduction="none",
-                ).sum(dim=-1)
-            )
+            recon_loss = 0.5 * F.mse_loss(
+                recon_x.reshape(x.shape[0], -1),
+                x.reshape(x.shape[0], -1),
+                reduction="none",
+            ).sum(dim=-1)
 
         elif self.model_config.reconstruction_loss == "bce":
-
             recon_loss = F.binary_cross_entropy(
                 recon_x.reshape(x.shape[0], -1),
                 x.reshape(x.shape[0], -1),

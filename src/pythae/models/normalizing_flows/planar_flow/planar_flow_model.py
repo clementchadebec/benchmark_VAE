@@ -26,7 +26,6 @@ class PlanarFlow(BaseNF):
     """
 
     def __init__(self, model_config: PlanarFlowConfig):
-
         BaseNF.__init__(self, model_config)
 
         self.w = nn.Parameter(torch.randn(1, self.input_dim))

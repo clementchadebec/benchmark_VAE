@@ -38,7 +38,6 @@ class GaussianMixtureSampler(BaseSampler):
     def __init__(
         self, model: BaseAE, sampler_config: GaussianMixtureSamplerConfig = None
     ):
-
         if sampler_config is None:
             sampler_config = GaussianMixtureSamplerConfig()
 
@@ -146,7 +145,6 @@ class GaussianMixtureSampler(BaseSampler):
         x_gen_list = []
 
         for i in range(full_batch_nbr):
-
             z = (
                 torch.tensor(self.gmm.sample(batch_size)[0])
                 .to(self.device)

@@ -86,7 +86,6 @@ class Test_Model_Building:
             )
 
     def test_build_custom_arch(self, model_configs, custom_encoder, custom_decoder):
-
         model = VAMP(model_configs, encoder=custom_encoder, decoder=custom_decoder)
 
         assert model.encoder == custom_encoder
@@ -109,7 +108,6 @@ class Test_Model_Building:
 
 class Test_Model_Saving:
     def test_default_model_saving(self, tmpdir, model_configs):
-
         tmpdir.mkdir("dummy_folder")
         dir_path = dir_path = os.path.join(tmpdir, "dummy_folder")
 
@@ -137,7 +135,6 @@ class Test_Model_Saving:
         )
 
     def test_custom_encoder_model_saving(self, tmpdir, model_configs, custom_encoder):
-
         tmpdir.mkdir("dummy_folder")
         dir_path = dir_path = os.path.join(tmpdir, "dummy_folder")
 
@@ -165,7 +162,6 @@ class Test_Model_Saving:
         )
 
     def test_custom_decoder_model_saving(self, tmpdir, model_configs, custom_decoder):
-
         tmpdir.mkdir("dummy_folder")
         dir_path = dir_path = os.path.join(tmpdir, "dummy_folder")
 
@@ -195,7 +191,6 @@ class Test_Model_Saving:
     def test_full_custom_model_saving(
         self, tmpdir, model_configs, custom_encoder, custom_decoder
     ):
-
         tmpdir.mkdir("dummy_folder")
         dir_path = dir_path = os.path.join(tmpdir, "dummy_folder")
 
@@ -231,7 +226,6 @@ class Test_Model_Saving:
     def test_raises_missing_files(
         self, tmpdir, model_configs, custom_encoder, custom_decoder
     ):
-
         tmpdir.mkdir("dummy_folder")
         dir_path = dir_path = os.path.join(tmpdir, "dummy_folder")
 
@@ -280,7 +274,6 @@ class Test_Model_forward:
         return VAMP(model_configs)
 
     def test_model_train_output(self, vamp, demo_data):
-
         vamp.train()
 
         out = vamp(demo_data)
@@ -298,8 +291,8 @@ class Test_Model_forward:
 class Test_Model_interpolate:
     @pytest.fixture(
         params=[
-            torch.randn(3, 2, 3, 1),
-            torch.randn(3, 2, 2),
+            torch.rand(3, 2, 3, 1),
+            torch.rand(3, 2, 2),
             torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))[:][
                 "data"
             ],
@@ -323,21 +316,17 @@ class Test_Model_interpolate:
 
         interp = ae.interpolate(demo_data, demo_data, granularity)
 
-        assert (
-            tuple(interp.shape)
-            == (
-                demo_data.shape[0],
-                granularity,
-            )
-            + (demo_data.shape[1:])
-        )
+        assert tuple(interp.shape) == (
+            demo_data.shape[0],
+            granularity,
+        ) + (demo_data.shape[1:])
 
 
 class Test_Model_reconstruct:
     @pytest.fixture(
         params=[
-            torch.randn(3, 2, 3, 1),
-            torch.randn(3, 2, 2),
+            torch.rand(3, 2, 3, 1),
+            torch.rand(3, 2, 2),
             torch.load(os.path.join(PATH, "data/mnist_clean_train_dataset_sample"))[:][
                 "data"
             ],
@@ -352,7 +341,6 @@ class Test_Model_reconstruct:
         return VAMP(model_configs)
 
     def test_reconstruct(self, ae, demo_data):
-
         recon = ae.reconstruct(demo_data)
         assert tuple(recon.shape) == demo_data.shape
 
@@ -440,7 +428,6 @@ class Test_VAMP_Training:
         return trainer
 
     def test_vamp_train_step(self, trainer):
-
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
         step_1_loss = trainer.train_step(epoch=1)
@@ -456,7 +443,6 @@ class Test_VAMP_Training:
         )
 
     def test_vamp_predict_step(self, trainer, train_dataset):
-
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
         inputs, recon, generated = trainer.predict(trainer.model)
@@ -468,7 +454,6 @@ class Test_VAMP_Training:
         assert generated.shape == inputs.shape
 
     def test_vamp_main_train_loop(self, trainer):
-
         start_model_state_dict = deepcopy(trainer.model.state_dict())
 
         trainer.train()
@@ -484,7 +469,6 @@ class Test_VAMP_Training:
         )
 
     def test_checkpoint_saving(self, vamp, trainer, training_configs):
-
         dir_path = training_configs.output_dir
 
         # Make a training step
@@ -622,7 +606,6 @@ class Test_VAMP_Training:
         )
 
     def test_final_model_saving(self, vamp, trainer, training_configs):
-
         dir_path = training_configs.output_dir
 
         trainer.train()
@@ -673,7 +656,6 @@ class Test_VAMP_Training:
         assert type(model_rec.decoder.cpu()) == type(model.decoder.cpu())
 
     def test_vamp_training_pipeline(self, vamp, train_dataset, training_configs):
-
         dir_path = training_configs.output_dir
 
         # build pipeline

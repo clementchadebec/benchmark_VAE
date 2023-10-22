@@ -19,7 +19,6 @@ class PixelCNN(BaseNF):
     """
 
     def __init__(self, model_config: PixelCNNConfig):
-
         BaseNF.__init__(self, model_config=model_config)
 
         self.model_config = model_config

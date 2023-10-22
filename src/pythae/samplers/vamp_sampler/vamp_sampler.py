@@ -16,7 +16,6 @@ class VAMPSampler(BaseSampler):
     """
 
     def __init__(self, model: VAMP, sampler_config: VAMPSamplerConfig = None):
-
         assert isinstance(model, VAMP), "This sampler is only suitable for VAMP model"
 
         if sampler_config is None:

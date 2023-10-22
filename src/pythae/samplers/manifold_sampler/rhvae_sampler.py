@@ -16,7 +16,6 @@ class RHVAESampler(BaseSampler):
     """
 
     def __init__(self, model: RHVAE, sampler_config: RHVAESamplerConfig = None):
-
         if sampler_config is None:
             sampler_config = RHVAESamplerConfig()
 
@@ -65,7 +64,6 @@ class RHVAESampler(BaseSampler):
         x_gen_list = []
 
         for i in range(full_batch_nbr):
-
             samples = self.hmc_sampling(batch_size)
             x_gen = self.model.decoder(z=samples)["reconstruction"].detach()
 
@@ -98,9 +96,7 @@ class RHVAESampler(BaseSampler):
             return torch.cat(x_gen_list, dim=0)
 
     def hmc_sampling(self, n_samples: int):
-
         with torch.no_grad():
-
             idx = torch.randint(len(self.model.centroids_tens), (n_samples,))
 
             z0 = self.model.centroids_tens[idx]
@@ -108,7 +104,6 @@ class RHVAESampler(BaseSampler):
             beta_sqrt_old = self.beta_zero_sqrt
             z = z0
             for i in range(self.mcmc_steps_nbr):
-
                 gamma = torch.randn_like(z, device=self.device)
                 rho = gamma / self.beta_zero_sqrt
 
@@ -116,7 +111,6 @@ class RHVAESampler(BaseSampler):
                 # print(model.G_inv(z).det())
 
                 for k in range(self.n_lf):
-
                     g = -self.grad_func(z, self.model).reshape(
                         n_samples, self.model.latent_dim
                     )
@@ -171,7 +165,7 @@ class RHVAESampler(BaseSampler):
             @ torch.transpose(
                 (
                     -2
-                    / (model.temperature ** 2)
+                    / (model.temperature**2)
                     * (model.centroids_tens.unsqueeze(0) - z.unsqueeze(1)).unsqueeze(2)
                     @ (
                         model.M_tens.unsqueeze(0)
@@ -181,7 +175,7 @@ class RHVAESampler(BaseSampler):
                                 dim=-1,
                             )
                             ** 2
-                            / (model.temperature ** 2)
+                            / (model.temperature**2)
                         )
                         .unsqueeze(-1)
                         .unsqueeze(-1)

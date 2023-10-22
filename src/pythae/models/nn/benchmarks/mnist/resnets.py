@@ -125,7 +125,6 @@ class Encoder_ResNet_AE_MNIST(BaseEncoder):
         max_depth = self.depth
 
         if output_layer_levels is not None:
-
             assert all(
                 self.depth >= levels > 0 or levels == -1
                 for levels in output_layer_levels
@@ -268,7 +267,6 @@ class Encoder_ResNet_VAE_MNIST(BaseEncoder):
         max_depth = self.depth
 
         if output_layer_levels is not None:
-
             assert all(
                 self.depth >= levels > 0 or levels == -1
                 for levels in output_layer_levels
@@ -411,7 +409,6 @@ class Encoder_ResNet_SVAE_MNIST(BaseEncoder):
         max_depth = self.depth
 
         if output_layer_levels is not None:
-
             assert all(
                 self.depth >= levels > 0 or levels == -1
                 for levels in output_layer_levels
@@ -554,7 +551,6 @@ class Encoder_ResNet_VQVAE_MNIST(BaseEncoder):
         max_depth = self.depth
 
         if output_layer_levels is not None:
-
             assert all(
                 self.depth >= levels > 0 or levels == -1
                 for levels in output_layer_levels
@@ -708,7 +704,6 @@ class Decoder_ResNet_AE_MNIST(BaseDecoder):
         max_depth = self.depth
 
         if output_layer_levels is not None:
-
             assert all(
                 self.depth >= levels > 0 or levels == -1
                 for levels in output_layer_levels
@@ -863,7 +858,6 @@ class Decoder_ResNet_VQVAE_MNIST(BaseDecoder):
         max_depth = self.depth
 
         if output_layer_levels is not None:
-
             assert all(
                 self.depth >= levels > 0 or levels == -1
                 for levels in output_layer_levels

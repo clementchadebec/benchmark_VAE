@@ -41,7 +41,6 @@ class VQVAE(AE):
         encoder: Optional[BaseEncoder] = None,
         decoder: Optional[BaseDecoder] = None,
     ):
-
         AE.__init__(self, model_config=model_config, encoder=encoder, decoder=decoder)
 
         self._set_quantizer(model_config)
@@ -49,7 +48,6 @@ class VQVAE(AE):
         self.model_name = "VQVAE"
 
     def _set_quantizer(self, model_config):
-
         if model_config.input_dim is None:
             raise AttributeError(
                 "No input dimension provided !"
@@ -122,7 +120,6 @@ class VQVAE(AE):
         return output
 
     def loss_function(self, recon_x, x, quantizer_output):
-
         recon_loss = F.mse_loss(
             recon_x.reshape(x.shape[0], -1), x.reshape(x.shape[0], -1), reduction="none"
         ).sum(dim=-1)

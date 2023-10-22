@@ -32,7 +32,6 @@ class MAFSampler(BaseSampler):
     """
 
     def __init__(self, model: BaseAE, sampler_config: MAFSamplerConfig = None):
-
         self.is_fitted = False
 
         if sampler_config is None:
@@ -115,7 +114,6 @@ class MAFSampler(BaseSampler):
         eval_dataset = None
 
         if eval_data is not None:
-
             if not isinstance(eval_data, Dataset):
                 eval_data = data_processor.process_data(eval_data)
                 eval_dataset = data_processor.to_dataset(eval_data)
@@ -202,7 +200,6 @@ class MAFSampler(BaseSampler):
         x_gen_list = []
 
         for i in range(full_batch_nbr):
-
             u = self.prior.sample((batch_size,))
             z = self.maf_model.inverse(u).out
             x_gen = self.model.decoder(z).reconstruction.detach()

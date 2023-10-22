@@ -16,7 +16,6 @@ class NormalSampler(BaseSampler):
     """
 
     def __init__(self, model: BaseAE, sampler_config: NormalSamplerConfig = None):
-
         if sampler_config is None:
             sampler_config = NormalSamplerConfig()
 

@@ -19,7 +19,6 @@ from .two_stage_sampler_config import TwoStageVAESamplerConfig
 
 class SecondEncoder(BaseEncoder):
     def __init__(self, model: VAE, sampler_config: TwoStageVAESamplerConfig):
-
         BaseEncoder.__init__(self)
 
         layers = []
@@ -55,7 +54,6 @@ class SecondEncoder(BaseEncoder):
 
 class SecondDecoder(BaseDecoder):
     def __init__(self, model: VAE, sampler_config: TwoStageVAESamplerConfig):
-
         BaseDecoder.__init__(self)
 
         self.gamma_z = nn.Parameter(torch.ones(1, 1), requires_grad=True)
@@ -110,7 +108,6 @@ class TwoStageVAESampler(BaseSampler):
     """
 
     def __init__(self, model: VAE, sampler_config: TwoStageVAESamplerConfig = None):
-
         assert issubclass(model.__class__, VAE), (
             "The TwoStageVAESampler is only"
             f"applicable for VAE based models. Got {model.__class__}."
@@ -194,7 +191,6 @@ class TwoStageVAESampler(BaseSampler):
         eval_dataset = None
 
         if eval_data is not None:
-
             if not isinstance(eval_data, Dataset):
                 eval_data = data_processor.process_data(eval_data)
                 eval_dataset = data_processor.to_dataset(eval_data)
@@ -282,7 +278,6 @@ class TwoStageVAESampler(BaseSampler):
         x_gen_list = []
 
         for i in range(full_batch_nbr):
-
             u = torch.randn(batch_size, self.model.latent_dim).to(self.device)
             z = self.second_vae.decoder(u).reconstruction
             x_gen = self.model.decoder(z)["reconstruction"].detach()
