@@ -32,7 +32,7 @@ setup(
         "pydantic>=2.0",
         "scikit-learn",
         "scipy>=1.7.1",
-        "torch>=2.0",
+        "torch>=2.0.1",
         "tqdm",
         "typing_extensions",
         "dataclasses>=0.6",
