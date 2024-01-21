@@ -50,14 +50,14 @@ class Quantizer(nn.Module):
         commitment_loss = F.mse_loss(
             quantized.detach().reshape(-1, self.embedding_dim),
             z.reshape(-1, self.embedding_dim),
-            reduction="mean",
+            reduction="sum",
         )
 
         embedding_loss = F.mse_loss(
             quantized.reshape(-1, self.embedding_dim),
             z.detach().reshape(-1, self.embedding_dim),
-            reduction="mean",
-        ).mean(dim=-1)
+            reduction="sum",
+        )
 
         quantized = z + (quantized - z).detach()
 
@@ -147,7 +147,7 @@ class QuantizerEMA(nn.Module):
         commitment_loss = F.mse_loss(
             quantized.detach().reshape(-1, self.embedding_dim),
             z.reshape(-1, self.embedding_dim),
-            reduction="mean",
+            reduction="sum",
         )
 
         quantized = z + (quantized - z).detach()
