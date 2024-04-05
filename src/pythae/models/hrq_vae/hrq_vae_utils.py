@@ -45,8 +45,6 @@ class HierarchicalResidualQuantizer(nn.Module):
 
         input_shape = z.shape
 
-        # print(z.shape)
-
         z = z.reshape(-1, self.embedding_dim)
 
         loss = torch.zeros(z.shape[0]).to(z.device)
@@ -57,36 +55,34 @@ class HierarchicalResidualQuantizer(nn.Module):
         codes = []
         all_probs = []
 
-        # print('z\t', z.shape)
-
         for head_ix, embedding in enumerate(self.embeddings):
-
             if head_ix > 0:
-                resid_error = z - torch.sum(torch.cat(quantized, dim=0), dim=0)
+                resid_error = z - torch.sum(torch.cat(quantized, dim=1), dim=1)
 
-            # print('resid_err\t', resid_error.shape)
-
-            distances = -1 * (
-                (resid_error.reshape(-1, self.embedding_dim) ** 2).sum(
-                    dim=-1, keepdim=True
-                )
-                + (embedding.weight**2).sum(dim=-1)
-                - 2 * resid_error.reshape(-1, self.embedding_dim) @ embedding.weight.T
+            distances = -1.0 * (
+                torch.sum(resid_error**2, dim=-1, keepdim=True)
+                + torch.sum(embedding.weight**2, dim=-1)
+                - 2 * torch.matmul(resid_error, embedding.weight.T)
             )
 
-            # print('dist\t', distances.shape)
+            gumbel_sched_weight = torch.exp(
+                -torch.tensor(float(epoch))
+                / float(self.model_config.temp_schedule_gamma * 1.5**head_ix)
+            )
+            gumbel_temp = max(gumbel_sched_weight, 0.5)
 
             if self.training:
-                gumbel_sched_weight = torch.exp(
-                    -torch.tensor(float(epoch))
-                    / float(self.model_config.temp_schedule_gamma * 1.5**head_ix)
-                )
-                gumbel_temp = max(gumbel_sched_weight, 0.5)
 
-                probs = F.gumbel_softmax(distances, tau=gumbel_temp, hard=True, dim=-1)
+                sample_onehot = F.gumbel_softmax(
+                    distances, tau=gumbel_temp, hard=True, dim=-1
+                )
             else:
                 indices = torch.argmax(distances, dim=-1)
-                probs = F.one_hot(indices, num_classes=self.num_embeddings).float()
+                sample_onehot = F.one_hot(
+                    indices, num_classes=self.num_embeddings
+                ).float()
+
+            probs = F.softmax(distances / gumbel_temp, dim=-1)
 
             # KL loss
             prior = (
@@ -100,23 +96,16 @@ class HierarchicalResidualQuantizer(nn.Module):
             loss += kl * self.model_config.kl_weight
 
             # quantization
-            this_quantized = probs @ embedding.weight
+            this_quantized = sample_onehot @ embedding.weight
             this_quantized = this_quantized.reshape_as(z)
 
-            # print('prob\t', probs.shape)
-            # print('quant\t', this_quantized.shape)
-
             quantized.append(this_quantized.unsqueeze(-2))
-            codes.append(torch.argmax(probs, dim=-1).unsqueeze(-1))
+            codes.append(torch.argmax(sample_onehot, dim=-1).unsqueeze(-1))
             all_probs.append(probs.unsqueeze(-2))
 
-        # print('---')
         quantized = torch.cat(quantized, dim=-2)
         quantized_indices = torch.cat(codes, dim=-1)
         all_probs = torch.cat(all_probs, dim=-2)
-
-        # print("quant\t", quantized.shape)
-        # print("codes\t", quantized_indices.shape)
 
         # Calculate the norm loss
         if self.model_config.norm_loss_weight is not None:
@@ -129,9 +118,6 @@ class HierarchicalResidualQuantizer(nn.Module):
                 )
                 - 1.0
             ) ** 2
-
-            # print("loss\t", loss.shape)
-            # print("normloss\t", norm_loss.shape)
 
             loss += norm_loss.mean(dim=1) * self.model_config.norm_loss_weight
 
@@ -147,23 +133,17 @@ class HierarchicalResidualQuantizer(nn.Module):
             mask = torch.cumprod(mask, dim=1).to(quantized.device)
             quantized = quantized * mask
 
-        # print(quantized.shape)
-
         quantized = quantized.sum(dim=-2).reshape(*input_shape)
         quantized = quantized.permute(0, 3, 1, 2)
 
         loss = loss.reshape(input_shape[0], -1).mean(dim=1)
 
-        # print(input_shape)
-        # print(quantized_indices.shape)
-
         quantized_indices = quantized_indices.reshape(
             *input_shape[:-1], self.num_levels
         )
 
-        # print(quantized.shape)
-
         output = ModelOutput(
+            z_orig=z,
             quantized_vector=quantized,
             quantized_indices=quantized_indices,
             loss=loss,

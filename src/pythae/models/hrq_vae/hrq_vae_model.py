@@ -94,8 +94,6 @@ class HRQVAE(AE):
         quantizer_output = self.quantizer(embeddings, epoch=epoch, uses_ddp=uses_ddp)
 
         quantized_embed = quantizer_output.quantized_vector
-        quantized_indices = quantizer_output.quantized_indices
-        hrq_loss = quantizer_output.loss
 
         if reshape_for_decoding:
             quantized_embed = quantized_embed.reshape(embeddings.shape[0], -1)
@@ -110,7 +108,8 @@ class HRQVAE(AE):
             hrq_loss=hrq_loss,
             recon_x=recon_x,
             z=quantized_embed,
-            quantized_indices=quantized_indices,
+            z_orig=quantizer_output.z_orig,
+            quantized_indices=quantizer_output.quantized_indices,
             probs=quantizer_output.probs,
         )
 
