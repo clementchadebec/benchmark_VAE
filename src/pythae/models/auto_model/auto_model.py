@@ -74,6 +74,11 @@ class AutoModel(nn.Module):
 
             model = HVAE.load_from_folder(dir_path=dir_path)
 
+        elif model_name == "HRQVAEConfig":
+            from ..hrq_vae import HRQVAE
+
+            model = HRQVAE.load_from_folder(dir_path=dir_path)
+
         elif model_name == "INFOVAE_MMD_Config":
             from ..info_vae import INFOVAE_MMD
 
