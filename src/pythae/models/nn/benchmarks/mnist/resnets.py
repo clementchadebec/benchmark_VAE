@@ -580,22 +580,22 @@ class Encoder_ResNet_VQVAE_MNIST(BaseEncoder):
 
 class Encoder_ResNet_HRQVAE_MNIST(BaseEncoder):
     """
-    A ResNet encoder suited for MNIST and Vector Quantized VAE models.
+    A ResNet encoder suited for MNIST and VQ- or HRQ- VAE models. It differs from the VQVAE ResNet in that it outputs only a single embedding vector.
 
     It can be built as follows:
 
     .. code-block::
 
-        >>> from pythae.models.nn.benchmarks.mnist import Encoder_ResNet_VQVAE_MNIST
-        >>> from pythae.models import VQVAEConfig
-        >>> model_config = VQVAEConfig(input_dim=(1, 28, 28), latent_dim=16)
-        >>> encoder = Encoder_ResNet_VQVAE_MNIST(model_config)
+        >>> from pythae.models.nn.benchmarks.mnist import Encoder_ResNet_HRQVAE_MNIST
+        >>> from pythae.models import HRQVAEConfig
+        >>> model_config = HRQVAEConfig(input_dim=(1, 28, 28), latent_dim=16)
+        >>> encoder = Encoder_ResNet_HRQVAE_MNIST(model_config)
 
 
     and then passed to a :class:`pythae.models` instance
 
-        >>> from pythae.models import VQVAE
-        >>> model = VQVAE(model_config=model_config, encoder=encoder)
+        >>> from pythae.models import HRQVAE
+        >>> model = HRQVAE(model_config=model_config, encoder=encoder)
         >>> model.encoder == encoder
         ... True
 
@@ -610,7 +610,7 @@ class Encoder_ResNet_HRQVAE_MNIST(BaseEncoder):
             >>> input = torch.rand(2, 1, 28, 28)
             >>> out = encoder(input)
             >>> out.embedding.shape
-            ... torch.Size([2, 16, 4,  4])
+            ... torch.Size([2, 16, 1,  1])
 
     """
 
@@ -648,6 +648,7 @@ class Encoder_ResNet_HRQVAE_MNIST(BaseEncoder):
         """Forward method
 
         Args:
+            x (torch.Tensor): A batch of inputs.  
             output_layer_levels (List[int]): The levels of the layers where the outputs are
                 extracted. If None, the last layer's output is returned. Default: None.
 
@@ -998,20 +999,20 @@ class Decoder_ResNet_VQVAE_MNIST(BaseDecoder):
 
 class Decoder_ResNet_HRQVAE_MNIST(BaseDecoder):
     """
-    A ResNet decoder suited for MNIST and Vector Quantized VAE models.
+    A ResNet decoder suited for MNIST and VQ- or HRQ- VAE models. It differs from the VQVAE ResNet in that it expects only a single embedding vector as input.
 
     .. code-block::
 
-        >>> from pythae.models.nn.benchmarks.mnist import Decoder_ResNet_VQVAE_MNIST
-        >>> from pythae.models import VQVAEConfig
-        >>> model_config = VQVAEConfig(input_dim=(1, 28, 28), latent_dim=16)
-        >>> decoder = Decoder_ResNet_VQVAE_MNIST(model_config)
+        >>> from pythae.models.nn.benchmarks.mnist import Decoder_ResNet_HRQVAE_MNIST
+        >>> from pythae.models import HRQVAEConfig
+        >>> model_config = HRQVAEConfig(input_dim=(1, 28, 28), latent_dim=16)
+        >>> decoder = Decoder_ResNet_HRQVAE_MNIST(model_config)
 
 
     and then passed to a :class:`pythae.models` instance
 
-        >>> from pythae.models import VQVAE
-        >>> model = VQVAE(model_config=model_config, decoder=decoder)
+        >>> from pythae.models import HRQVAE
+        >>> model = HRQVAE(model_config=model_config, decoder=decoder)
         >>> model.decoder == decoder
         ... True
 
@@ -1022,7 +1023,7 @@ class Decoder_ResNet_HRQVAE_MNIST(BaseDecoder):
         .. code-block::
 
             >>> import torch
-            >>> input = torch.randn(2, 16, 4, 4)
+            >>> input = torch.randn(2, 16, 1, 1)
             >>> out = decoder(input)
             >>> out.reconstruction.shape
             ... torch.Size([2, 1, 28, 28])
@@ -1072,6 +1073,7 @@ class Decoder_ResNet_HRQVAE_MNIST(BaseDecoder):
         """Forward method
 
         Args:
+            z (torch.Tensor): A batch of embeddings.  
             output_layer_levels (List[int]): The levels of the layers where the outputs are
                 extracted. If None, the last layer's output is returned. Default: None.
 

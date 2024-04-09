@@ -1,5 +1,4 @@
-import os
-from typing import Optional, Any
+from typing import Optional, Any, Dict
 
 import torch
 import torch.nn.functional as F
@@ -63,7 +62,7 @@ class HRQVAE(AE):
 
         self.quantizer = HierarchicalResidualQuantizer(model_config=model_config)
 
-    def forward(self, inputs: dict[str, Any], **kwargs) -> ModelOutput:
+    def forward(self, inputs: Dict[str, Any], **kwargs) -> ModelOutput:
         """
         The VAE model
 
