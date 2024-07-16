@@ -1,0 +1,1 @@
+{"name": "PixelCNNConfig", "input_dim": [1, 1, 4], "n_embeddings": 512, "n_layers": 10, "kernel_size": 5}
