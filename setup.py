@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="pythae",
-    version="0.1.2",
+    version="0.1.3",
     author="Clement Chadebec",
     author_email="clement.chadebec@gmail.com",
     description="Unifying Generative Autoencoders in Python",
@@ -17,9 +17,9 @@ setup(
     },
     classifiers=[
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.7",
-        "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
         "License :: OSI Approved :: Apache Software License",
         "Operating System :: OS Independent",
     ],
@@ -32,11 +32,11 @@ setup(
         "pydantic>=2.0",
         "scikit-learn",
         "scipy>=1.7.1",
-        "torch>=1.10.1",
+        "torch>=2.0.1",
         "tqdm",
         "typing_extensions",
         "dataclasses>=0.6",
     ],
     extras_require={':python_version == "3.7.*"': ["pickle5"]},
-    python_requires=">=3.7",
+    python_requires=">=3.9",
 )
