@@ -24,6 +24,7 @@ from .ciwae import CIWAE, CIWAEConfig
 from .disentangled_beta_vae import DisentangledBetaVAE, DisentangledBetaVAEConfig
 from .factor_vae import FactorVAE, FactorVAEConfig
 from .hvae import HVAE, HVAEConfig
+from .hrq_vae import HRQVAE, HRQVAEConfig
 from .info_vae import INFOVAE_MMD, INFOVAE_MMD_Config
 from .iwae import IWAE, IWAEConfig
 from .miwae import MIWAE, MIWAEConfig
@@ -96,4 +97,6 @@ __all__ = [
     "MIWAEConfig",
     "PIWAE",
     "PIWAEConfig",
+    "HRQVAE",
+    "HRQVAEConfig",
 ]

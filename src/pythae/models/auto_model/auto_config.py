@@ -60,6 +60,11 @@ class AutoConfig(BaseConfig):
 
             model_config = HVAEConfig.from_json_file(json_path)
 
+        elif config_name == "HRQVAEConfig":
+            from ..hrq_vae import HRQVAEConfig
+
+            model_config = HRQVAEConfig.from_json_file(json_path)
+
         elif config_name == "INFOVAE_MMD_Config":
             from ..info_vae import INFOVAE_MMD_Config
 

@@ -6,8 +6,8 @@ with open("README.md", "r", encoding="utf-8") as fh:
 setup(
     name="pythae",
     version="0.1.2",
-    author="Clement Chadebec (HekA team INRIA)",
-    author_email="clement.chadebec@inria.fr",
+    author="Clement Chadebec",
+    author_email="clement.chadebec@gmail.com",
     description="Unifying Generative Autoencoders in Python",
     long_description=long_description,
     long_description_content_type="text/markdown",
