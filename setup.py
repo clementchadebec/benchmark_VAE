@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="pythae",
-    version="0.1.2",
+    version="0.1.3",
     author="Clement Chadebec",
     author_email="clement.chadebec@gmail.com",
     description="Unifying Generative Autoencoders in Python",
