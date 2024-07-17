@@ -9,13 +9,13 @@ jobs:
         os: [ubuntu-latest, macos-latest, windows-latest]
     env:
       OS: ${{ matrix.os }}
-      PYTHON: '3.11'
+      PYTHON: '3.10'
     steps:
     - uses: actions/checkout@main
     - name: Setup Python
       uses: actions/setup-python@main
       with:
-        python-version: 3.11
+        python-version: 3.10
     - name: Run tests
       run: |
         pip install .
