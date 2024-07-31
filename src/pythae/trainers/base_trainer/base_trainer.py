@@ -87,11 +87,12 @@ class BaseTrainer:
             device = self._setup_devices()
 
         else:
-            device = (
-                "cuda"
-                if torch.cuda.is_available() and not self.training_config.no_cuda
-                else "cpu"
-            )
+            if torch.cuda.is_available() and not self.training_config.no_cuda:
+                device = "cuda"
+            elif torch.backends.mps.is_available() and not self.training_config.no_cuda:
+                device = "mps"
+            else:
+                device = "cpu"
 
         self.amp_context = (
             torch.autocast("cuda")
@@ -174,8 +175,9 @@ class BaseTrainer:
             device = "cpu"
 
         else:
-            torch.cuda.set_device(self.local_rank)
-            device = torch.device("cuda", self.local_rank)
+            if not device == "mps":
+                torch.cuda.set_device(self.local_rank)
+                device = torch.device("cuda", self.local_rank)
 
             if not dist.is_initialized():
                 dist.init_process_group(
