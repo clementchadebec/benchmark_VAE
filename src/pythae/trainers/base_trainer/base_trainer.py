@@ -497,7 +497,10 @@ class BaseTrainer:
                     global_step=epoch,
                 )
 
-            self.callback_handler.on_epoch_end(training_config=self.training_config)
+            self.callback_handler.on_epoch_end(
+                training_config=self.training_config,
+                metrics=metrics
+            )
 
             # save checkpoints
             if (
